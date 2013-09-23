@@ -14,7 +14,7 @@ icursor.execute("""
 """)
 for row in icursor:
     huc12 = row[0]
-    for typ in ['managements', 'runfiles', 'slopes', 'soils', 'wb', 'env']:
+    for typ in ['man', 'run', 'slp', 'sol', 'wb', 'env']:
         dirname = "%s/%s/%s" % (IDEPHOME, typ, huc12)
         if os.path.isdir(dirname):
             continue
