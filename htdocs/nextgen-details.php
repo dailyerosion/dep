@@ -9,7 +9,7 @@ if ($lon < -96.639706  || $lat < 40.375437 || $lon > -90.140061 || $lat > 43.501
 	echo "ERROR: Point outside of Iowa...";
 	die();
 }
-$dbconn = pg_connect($weppdb);
+$dbconn = pg_connect("dbname=idep host=iemdb user=nobody");
 function timeit($db, $name, $sql){
 	$start = time();
 	$rs = pg_execute($db, $name, $sql);
@@ -19,30 +19,32 @@ function timeit($db, $name, $sql){
 }
 
 /* Find the township this location is in */
-$rs = pg_prepare($dbconn, "SELECT", "SELECT model_twp, county from iatwp WHERE 
-		ST_Within(ST_GeomFromText($1, 4326), ST_Transform(the_geom,4326))
-		and model_twp != 'None'");
+$rs = pg_prepare($dbconn, "SELECT", "SELECT huc_12, 'TODO' as county from ia_huc12 WHERE 
+		ST_Within(ST_GeomFromText($1, 4326), ST_Transform(geom,4326))");
 $rs = timeit($dbconn, "SELECT", Array('POINT('.$lon .' '. $lat .')'));
 if (pg_num_rows($rs) != 1){
 	echo "ERROR: No township found!";
 	die();
 }
 $row = pg_fetch_assoc($rs,0);
-$model_twp = $row["model_twp"];
+$huc_12 = $row["huc_12"];
 $county = $row["county"];
 
-echo "<strong>Township:</strong> $model_twp";
+echo "<strong>HUC 12:</strong> $huc_12";
 echo "<br /><strong>County:</strong> $county";
 echo "<br /><strong>Date:</strong> ". date("d M Y", $date);
 
 /* Find the HRAP cell */
-$rs = pg_prepare($dbconn, "HSELECT", "SELECT hrap_i from hrap_polygons WHERE
+/*
+ $rs = pg_prepare($dbconn, "HSELECT", "SELECT hrap_i from hrap_polygons WHERE
 		ST_Within(ST_GeomFromText($1, 4326), ST_Transform(the_geom,4326))");
 $rs = timeit($dbconn, "HSELECT", Array('POINT('.$lon .' '. $lat .')'));
 $row = pg_fetch_assoc($rs,0);
 $hrap_i = $row["hrap_i"];
+*/
 
 /* Get daily total */
+/*
 $rs = pg_prepare($dbconn, "RAINFALL0", "select rainfall / 25.4 as rainfall
 		from daily_rainfall_$year
 		WHERE valid = $1 and hrap_i = $2");
@@ -53,9 +55,10 @@ if (pg_num_rows($rs) == 0){
 	$row = pg_fetch_assoc($rs, 0);
 	echo "<br /><strong>Rainfall:</strong> ". sprintf("%.2f in", $row["rainfall"]);
 }
-
+*/
 
 /* Get monthly total */
+/*
 $rs = pg_prepare($dbconn, "RAINFALL2", "select rainfall / 25.4 as rainfall
 		from monthly_rainfall_$year
 		WHERE valid = $1 and hrap_i = $2");
@@ -66,8 +69,9 @@ if (pg_num_rows($rs) == 0){
 	$row = pg_fetch_assoc($rs, 0);
 	echo "<br /><strong>". date("M", $date) ." Rainfall:</strong> ". sprintf("%.2f in", $row["rainfall"]);
 }
-
+*/
 /* Get yearly total */
+/*
 $rs = pg_prepare($dbconn, "RAINFALL3", "select avg(rainfall) / 25.4 as rainfall
 		from yearly_rainfall
 		WHERE valid = $1 and hrap_i = $2");
@@ -78,11 +82,11 @@ if (pg_num_rows($rs) == 0){
 	$row = pg_fetch_assoc($rs, 0);
 	echo "<br /><strong>$year Rainfall:</strong> ". sprintf("%.2f in", $row["rainfall"]);
 }
-
+*/
 /* Fetch Results */
-$rs = pg_prepare($dbconn, "RES", "select * from results_by_twp WHERE 
-		valid = $1 and model_twp = $2");
-$rs = timeit($dbconn, "RES", Array(date("Y-m-d", $date), $model_twp));
+$rs = pg_prepare($dbconn, "RES", "select * from results_by_huc12 WHERE 
+		valid = $1 and huc_12 = $2");
+$rs = timeit($dbconn, "RES", Array(date("Y-m-d", $date), $huc_12));
 if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>No Erosion/Runoff</strong>";
 } else{
@@ -94,9 +98,9 @@ if (pg_num_rows($rs) == 0){
 }
 
 /* Get top events */
-$rs = pg_prepare($dbconn, "TRES", "select valid from results_by_twp WHERE
-		model_twp = $1 and valid > '2002-01-01' ORDER by avg_loss DESC LIMIT 10");
-$rs = timeit($dbconn, "TRES", Array($model_twp));
+$rs = pg_prepare($dbconn, "TRES", "select valid from results_by_huc12 WHERE
+		huc_12 = $1 and valid > '2007-01-01' ORDER by avg_loss DESC LIMIT 10");
+$rs = timeit($dbconn, "TRES", Array($huc_12));
 if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>Top events are missing!</strong>";
 } else{

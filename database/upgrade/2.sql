@@ -41,4 +41,6 @@ CREATE TABLE results_by_huc12(
   ve_runoff real
 );
 
+CREATE INDEX results_by_huc12_valid_idx on results_by_huc12(valid);
+
 GRANT SELECT on results_by_huc12 to nobody,apache;
