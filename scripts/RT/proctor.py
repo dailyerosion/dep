@@ -48,7 +48,7 @@ class wepprun:
     
     def get_clifile_fn(self):
         ''' Return the climate filename for this run '''
-        return '%s/cli/%07.3f_%07.3f.cli' % (IDEPHOME, 0 - self.lon, 
+        return '%s/cli/%06.2f0_%06.2f0.cli' % (IDEPHOME, 0 - self.lon, 
                                                   self.lat)
 
     def get_runfile_fn(self):
@@ -95,8 +95,8 @@ class wepprun:
     def run(self):
         ''' Actually run wepp for this event '''
         runfile = self.get_runfile_fn()
-        if not os.path.isfile(runfile):
-            self.make_runfile()
+        #if not os.path.isfile(runfile):
+        self.make_runfile()
         p = subprocess.Popen("~/bin/wepp < %s" % (runfile,), shell=True,
                              stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         print p.stdout.read()
