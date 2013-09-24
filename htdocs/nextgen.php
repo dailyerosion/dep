@@ -85,8 +85,8 @@ var tilecache = "http://mesonet.agron.iastate.edu";
 <div id="quick">
 <ul>
 	<li><a href="javascript: selectEvent(1);">May6, 07</a></li>
-	<li><a href="javascript: selectEvent(2);">May24, 04</a></li>
-	<li><a href="javascript: selectEvent(3);">Sep14, 04</a></li>
+	<li><a href="javascript: selectEvent(2);">Jun4, 08</a></li>
+	<li><a href="javascript: selectEvent(3);">Jun9, 11</a></li>
 	<li><a href="javascript: selectEvent(4);">Aug25, 12</a></li>
 	<li><a href="javascript: selectEvent(5);">Aug26, 12</a></li>
 </ul>

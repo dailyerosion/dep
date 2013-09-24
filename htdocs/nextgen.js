@@ -1,14 +1,14 @@
 var map, tms;
 var appstate = {
-		lat: 42.0,
-		lon: -95.0,
+		lat: 42.22,
+		lon: -95.489,
 		date: null,
 		ltype: 'loss2'
 };
 var events = {
 		1 : {year: 2007, month: 5, day: 6},
-		2 : {year: 2004, month: 5, day: 24},
-		3 : {year: 2004, month: 9, day: 14},
+		2 : {year: 2008, month: 6, day: 4},
+		3 : {year: 2011, month: 6, day: 9},
 		4 : {year: 2012, month: 8, day: 25},
 		5 : {year: 2012, month: 8, day: 26}
 };
@@ -149,6 +149,26 @@ function init(){
                     getURL : get_my_url2,
                     isBaseLayer : false
             });
+    var huc12 = new OpenLayers.Layer.TMS('HUC 12',
+			tilecache +'/c/c.py/', {
+                layername : 'iahuc12-900913',
+                service : '1.0.0',
+                type : 'png',
+                visibility : false,
+                opacity : 1,
+                getURL : get_my_url2,
+                isBaseLayer : false
+        });
+    var huc8 = new OpenLayers.Layer.TMS('HUC 8',
+			tilecache +'/c/c.py/', {
+                layername : 'iahuc8-900913',
+                service : '1.0.0',
+                type : 'png',
+                visibility : false,
+                opacity : 1,
+                getURL : get_my_url2,
+                isBaseLayer : false
+        });
     var blank = new OpenLayers.Layer("Blank", {
         isBaseLayer : true,
         visibility : false
@@ -159,7 +179,7 @@ function init(){
           //restrictedExtent : extent,
           projection: new OpenLayers.Projection("EPSG:900913"),
           theme: null,
-          layers: [blank, osm, tms, counties, states, markers],
+          layers: [blank, osm, tms, counties, states, huc12, huc8, markers],
           center: new OpenLayers.LonLat(-95, 42),
           zoom: 1
       });

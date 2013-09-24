@@ -19,7 +19,7 @@ function timeit($db, $name, $sql){
 }
 
 /* Find the township this location is in */
-$rs = pg_prepare($dbconn, "SELECT", "SELECT huc_12, 'TODO' as county from ia_huc12 WHERE 
+$rs = pg_prepare($dbconn, "SELECT", "SELECT huc_12, hu_12_name from ia_huc12 WHERE 
 		ST_Within(ST_GeomFromText($1, 4326), ST_Transform(geom,4326))");
 $rs = timeit($dbconn, "SELECT", Array('POINT('.$lon .' '. $lat .')'));
 if (pg_num_rows($rs) != 1){
@@ -28,10 +28,10 @@ if (pg_num_rows($rs) != 1){
 }
 $row = pg_fetch_assoc($rs,0);
 $huc_12 = $row["huc_12"];
-$county = $row["county"];
+$hu12name = $row["hu_12_name"];
 
 echo "<strong>HUC 12:</strong> $huc_12";
-echo "<br /><strong>County:</strong> $county";
+echo "<br /><strong>Name:</strong> $hu12name";
 echo "<br /><strong>Date:</strong> ". date("d M Y", $date);
 
 /* Find the HRAP cell */
@@ -91,7 +91,7 @@ if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>No Erosion/Runoff</strong>";
 } else{
 	$row = pg_fetch_assoc($rs, 0);
-	echo "<br />--- Township Summary ---";
+	echo "<br />--- HUC 12 Summary ---";
 	echo "<br /><strong>Avg Rainfall:</strong> ". sprintf("%.2f in", $row["avg_precip"] / 25.4);
 	echo "<br /><strong>Soil Displacement:</strong> ". sprintf("%.2f T/A", $row["avg_loss"] * 4.463);
 	echo "<br /><strong>Avg Runoff:</strong> ". sprintf("%.2f in", $row["avg_runoff"] / 25.4);
