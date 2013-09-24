@@ -24,6 +24,7 @@ def do(ts):
         precip = []
         for fn in glob.glob("*.env"):
             runs += 1
+            found = False
             for line in open(fn):
                 tokens = line.strip().split()
                 if len(tokens) < 5 or tokens[0] in ['day', '---'] or line.find('******') > -1:
@@ -31,15 +32,18 @@ def do(ts):
                 if (int(tokens[0]) == ts.day and 
                     int(tokens[1]) == ts.month and
                     int(tokens[2])+ 2006 == ts.year):
-                    runoff.append( float(tokens[5]) )
-                    loss.append( float(tokens[7]) )
-                    precip.append( float(tokens[4]) )
+                    #if huc12 == '071000081505':
+                    #    print fn, line[:-1]
+                    found = True
+                    runoff.append( float(tokens[4]) )
+                    loss.append( float(tokens[6]) )
+                    precip.append( float(tokens[3]) )
                     break
+            if not found:
+                precip.append( 0 ) # BUG
+                loss.append( 0 )
+                runoff.append( 0 )
         if runs > 0:
-            if len(precip) == 0:
-                precip = [0]
-                loss = [0]
-                runoff = [0]
             avgloss = sum(loss) / float(runs)
             avgprecip = sum(precip) / float(runs)
             avgrunoff = sum(runoff) / float(runs)
