@@ -28,7 +28,7 @@ float: left;
                 position: absolute;
                 bottom: 1em;
                 right: 1em;
-                width: 220px;
+                width: 240px;
                 z-index: 20001;
                 background-color: #53675A;
                 padding: 0.1em;
