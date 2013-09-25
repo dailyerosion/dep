@@ -8,9 +8,9 @@ var appstate = {
 var events = {
 		1 : {year: 2007, month: 5, day: 6},
 		2 : {year: 2008, month: 6, day: 4},
-		3 : {year: 2011, month: 6, day: 9},
-		4 : {year: 2012, month: 8, day: 25},
-		5 : {year: 2012, month: 8, day: 26}
+		3 : {year: 2008, month: 7, day: 24},
+		4 : {year: 2007, month: 8, day: 24},
+		5 : {year: 2010, month: 7, day: 22}
 };
 function selectEvent(e){
 	setDate( events[e].year, events[e].month, events[e].day);

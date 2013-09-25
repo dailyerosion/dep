@@ -79,16 +79,16 @@ float: left;
         <script type="text/javascript">
 var tilecache = "http://mesonet.agron.iastate.edu";
         </script>
- <script src='nextgen.js'></script>
+ <script src='nextgen.js?v=2'></script>
 </head>
 <body onload="init()">
 <div id="quick">
 <ul>
 	<li><a href="javascript: selectEvent(1);">May6, 07</a></li>
 	<li><a href="javascript: selectEvent(2);">Jun4, 08</a></li>
-	<li><a href="javascript: selectEvent(3);">Jun9, 11</a></li>
-	<li><a href="javascript: selectEvent(4);">Aug25, 12</a></li>
-	<li><a href="javascript: selectEvent(5);">Aug26, 12</a></li>
+	<li><a href="javascript: selectEvent(3);">Jul24, 08</a></li>
+	<li><a href="javascript: selectEvent(4);">Aug24, 07</a></li>
+	<li><a href="javascript: selectEvent(5);">Jul22, 10</a></li>
 </ul>
 </div>
 <div id="detailsContainer">
