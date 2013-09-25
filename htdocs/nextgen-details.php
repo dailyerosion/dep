@@ -105,13 +105,16 @@ if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>Top events are missing!</strong>";
 } else{
 	echo "<br /><strong>Top 10 Events:</strong><br />";
+	echo "<table>";
 	for ($i=0;$row=@pg_fetch_assoc($rs,$i);$i++){
 		$ts = strtotime($row["valid"]);
-		if ($i > 0 && $i % 2 == 0){ echo "<br />"; }
-		echo sprintf("<a href='javascript:setDate(%s,%s,%s);'>%s</a> &nbsp; ",
-				date("Y", $ts), date("m", $ts), date("d", $ts),
+		if ($i % 2 == 0){ echo "<tr>"; }
+		echo sprintf("<td><small>(%s)</small><a href='javascript:setDate(%s,%s,%s);'>%s</a></td>",
+				$i+1, date("Y", $ts), date("m", $ts), date("d", $ts),
 				date("M j, Y", $ts));
+		if ($i % 2 == 1){ echo "</tr>\n"; }
 	}
+	echo "</table>";
 }
 
 ?>

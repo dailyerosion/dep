@@ -28,7 +28,7 @@ float: left;
                 position: absolute;
                 bottom: 1em;
                 right: 1em;
-                width: 200px;
+                width: 220px;
                 z-index: 20001;
                 background-color: #53675A;
                 padding: 0.1em;
@@ -101,6 +101,9 @@ var tilecache = "http://mesonet.agron.iastate.edu";
 	<form>
 	<input type="text" name="date" id="datepicker" class="dp" />
 	<span style="font-size: 1.3em; color:#FFF; font-weight:bolder;">Iowa Daily Erosion Project</span>
+	<input type="button" onclick="javascript: tms.setOpacity(tms.opacity - 0.1);" value="-"/>
+	<input type="button" onclick="javascript: tms.setOpacity(tms.opacity + 0.1);" value="+"/>
+	
 	<br clear="both"/>&nbsp;<br />
 	<div id="radio">
 		<input type="radio" id="loss2_opt" name="radio" value="loss2" checked="checked" /><label for="loss2_opt">Erosion</label>

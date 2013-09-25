@@ -129,6 +129,7 @@ function init(){
         isBaseLayer : true
     });
     
+    
     var counties = new OpenLayers.Layer.TMS('US Counties',
             tilecache +'/c/c.py/', {
                     layername : 'c-900913',
@@ -173,6 +174,7 @@ function init(){
         isBaseLayer : true,
         visibility : false
     });
+
     var extent =  new OpenLayers.Bounds(-11074808, 4701182, -9780882, 5531594);
     map = new OpenLayers.Map({
           div: 'map',
@@ -187,7 +189,7 @@ function init(){
           map.addControl(controls[key]);
       }
       map.zoomToExtent(extent);
-
+      
       var d = new Date();
       d.setDate( d.getDate() - 1 );
       appstate.date = d;
