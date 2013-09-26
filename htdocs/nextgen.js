@@ -163,9 +163,9 @@ function init(){
                     getURL : get_my_url2,
                     isBaseLayer : false
             });
-    var iarivers = new OpenLayers.Layer.TMS('Iowa NHD Rivers',
+    var iahydro = new OpenLayers.Layer.TMS('Hydrology',
 			tilecache +'/c/c.py/', {
-                layername : 'iarivers-900913',
+                layername : 'iahydrology-900913',
                 service : '1.0.0',
                 type : 'png',
                 visibility : false,
@@ -204,8 +204,8 @@ function init(){
           //restrictedExtent : extent,
           projection: new OpenLayers.Projection("EPSG:900913"),
           theme: null,
-          layers: [blank, osm, iahshd, tms, iarivers, counties, states, huc12, 
-                   huc8, markers],
+          layers: [blank, osm, iahshd, tms, iahydro, counties, 
+                   states, huc12, huc8, markers],
           center: new OpenLayers.LonLat(-95, 42),
           zoom: 1
       });
