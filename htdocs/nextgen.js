@@ -133,7 +133,16 @@ function init(){
         isBaseLayer : true
     });
     
-    
+    var iahshd = new OpenLayers.Layer.TMS('Iowa 100m Hillshade',
+            tilecache +'/c/c.py/', {
+                    layername : 'iahshd-900913',
+                    service : '1.0.0',
+                    type : 'png',
+                    visibility : false,
+                    opacity : 1,
+                    getURL : get_my_url2,
+                    isBaseLayer : true
+            });   
     var counties = new OpenLayers.Layer.TMS('US Counties',
             tilecache +'/c/c.py/', {
                     layername : 'c-900913',
@@ -195,7 +204,7 @@ function init(){
           //restrictedExtent : extent,
           projection: new OpenLayers.Projection("EPSG:900913"),
           theme: null,
-          layers: [blank, osm, tms, iarivers, counties, states, huc12, 
+          layers: [blank, osm, iahshd, tms, iarivers, counties, states, huc12, 
                    huc8, markers],
           center: new OpenLayers.LonLat(-95, 42),
           zoom: 1
