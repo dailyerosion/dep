@@ -143,9 +143,9 @@ function init(){
                     getURL : get_my_url2,
                     isBaseLayer : true
             });   
-    var counties = new OpenLayers.Layer.TMS('US Counties',
+    var counties = new OpenLayers.Layer.TMS('Counties',
             tilecache +'/c/c.py/', {
-                    layername : 'c-900913',
+                    layername : 'iac-900913',
                     service : '1.0.0',
                     type : 'png',
                     visibility : false,
@@ -201,13 +201,14 @@ function init(){
     iaextent =  new OpenLayers.Bounds(-11074808, 4701182, -9780882, 5531594);
     map = new OpenLayers.Map({
           div: 'map',
-          //restrictedExtent : extent,
+          //restrictedExtent : iaextent,
           projection: new OpenLayers.Projection("EPSG:900913"),
           theme: null,
-          layers: [blank, osm, iahshd, tms, iahydro, counties, 
-                   states, huc12, huc8, markers],
+          layers: [blank, osm, iahshd, tms, counties, 
+                   states, huc12, huc8, iahydro, markers],
           center: new OpenLayers.LonLat(-95, 42),
-          zoom: 1
+          zoom: 1,
+          numZoomLevels: 13
       });
       for(var key in controls) {
           map.addControl(controls[key]);
