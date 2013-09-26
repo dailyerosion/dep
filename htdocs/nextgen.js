@@ -1,4 +1,5 @@
 var map, tms;
+var iaextent;
 var appstate = {
 		lat: 42.22,
 		lon: -95.489,
@@ -69,6 +70,9 @@ function setDate(year, month, date){
 	$('#datepicker').datepicker("setDate", appstate.date);
 	remap();
 	updateDetails();
+}
+function zoom_iowa(){
+    map.zoomToExtent(iaextent);
 }
 function init(){
 	markers = new OpenLayers.Layer.Vector( "Query" );
@@ -175,7 +179,7 @@ function init(){
         visibility : false
     });
 
-    var extent =  new OpenLayers.Bounds(-11074808, 4701182, -9780882, 5531594);
+    iaextent =  new OpenLayers.Bounds(-11074808, 4701182, -9780882, 5531594);
     map = new OpenLayers.Map({
           div: 'map',
           //restrictedExtent : extent,
@@ -188,7 +192,8 @@ function init(){
       for(var key in controls) {
           map.addControl(controls[key]);
       }
-      map.zoomToExtent(extent);
+      
+      zoom_iowa();
       
       var d = new Date();
       d.setDate( d.getDate() - 1 );

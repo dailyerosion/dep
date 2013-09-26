@@ -79,7 +79,7 @@ float: left;
         <script type="text/javascript">
 var tilecache = "http://mesonet.agron.iastate.edu";
         </script>
- <script src='nextgen.js?v=2'></script>
+ <script src='nextgen.js?v=3'></script>
 </head>
 <body onload="init()">
 <div id="quick">
@@ -103,13 +103,14 @@ var tilecache = "http://mesonet.agron.iastate.edu";
 	<span style="font-size: 1.3em; color:#FFF; font-weight:bolder;">Iowa Daily Erosion Project</span>
 	<input type="button" onclick="javascript: tms.setOpacity(tms.opacity - 0.1);" value="-"/>
 	<input type="button" onclick="javascript: tms.setOpacity(tms.opacity + 0.1);" value="+"/>
+	<input type="button" onclick="javascript: zoom_iowa();" value="View Iowa"/>
 	
 	<br clear="both"/>&nbsp;<br />
 	<div id="radio">
-		<input type="radio" id="loss2_opt" name="radio" value="loss2" checked="checked" /><label for="loss2_opt">Erosion</label>
-		<input type="radio" id="loss_opt" name="radio" value="loss" /><label for="loss_opt">E.v1</label>
 		<input type="radio" id="precip-in2_opt" name="radio" value="precip-in2" /><label for="precip-in2_opt">Precipitation</label>
 		<input type="radio" id="precip-in_opt" name="radio" value="precip-in" /><label for="precip-in_opt">P.v1</label>
+	    <input type="radio" id="loss2_opt" name="radio" value="loss2" checked="checked" /><label for="loss2_opt">Erosion</label>
+		<input type="radio" id="loss_opt" name="radio" value="loss" /><label for="loss_opt">E.v1</label>
 		<input type="radio" id="runoff2_opt" name="radio" value="runoff2" /><label for="runoff2_opt">Runoff</label>
 		<input type="radio" id="runoff_opt" name="radio" value="runoff" /><label for="runoff_opt">R.v1</label>
 		<!--  <input type="radio" id="vsm_opt" name="radio" value="vsm2" /><label for="vsm_opt">Root Zone Soil Moisture</label>

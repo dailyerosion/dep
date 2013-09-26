@@ -92,9 +92,9 @@ if (pg_num_rows($rs) == 0){
 } else{
 	$row = pg_fetch_assoc($rs, 0);
 	echo "<br />--- HUC 12 Summary ---";
-	echo "<br /><strong>Avg Rainfall:</strong> ". sprintf("%.2f in", $row["avg_precip"] / 25.4);
-	echo "<br /><strong>Soil Displacement:</strong> ". sprintf("%.2f T/A", $row["avg_loss"] * 4.463);
-	echo "<br /><strong>Avg Runoff:</strong> ". sprintf("%.2f in", $row["avg_runoff"] / 25.4);
+	echo "<br /><strong>Average Rainfall:</strong> ". sprintf("%.2f in", $row["avg_precip"] / 25.4);
+	echo "<br /><strong>Average Erosion:</strong> ". sprintf("%.2f T/A", $row["avg_loss"] * 4.463);
+	echo "<br /><strong>Average Runoff:</strong> ". sprintf("%.2f in", $row["avg_runoff"] / 25.4);
 }
 
 /* Get top events */
@@ -104,7 +104,7 @@ $rs = timeit($dbconn, "TRES", Array($huc_12));
 if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>Top events are missing!</strong>";
 } else{
-	echo "<br /><strong>Top 10 Events:</strong><br />";
+	echo "<br />--- Top 10 Events: ---<br />";
 	echo "<table>";
 	for ($i=0;$row=@pg_fetch_assoc($rs,$i);$i++){
 		$ts = strtotime($row["valid"]);
