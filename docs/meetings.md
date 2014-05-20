@@ -1,3 +1,21 @@
+16 May 2014
+  Cruse, Gelder, James, daryl, grad student,Sarah
+  - 16 HUC12s are currently missing cut-dems
+  - Dave noted that some of the HUC12s have too many subcatchments
+  - There is hope that the soil types have intrinsic slope characteristics, so
+    they will break naturally
+  - daryl should check the generalized slopes against individual cell to cell
+    slopes
+  - Brian would like to see the 1km precip displayed on the IDEPv2 map
+  - The flowpaths are going to change as things are iterated, should I create
+    some mechanism to account for these changes.  This could be ugly.
+  - Will I need to version the output...
+  - Dave's flow path computation takes 20 minutes per HUC12
+  - There will be folks at the meeting on the 17th that are ignorant of the
+    project, may have to rehash some things
+  - Does the cutter code top terraces?
+  - Need to ask the Kansas folks where their LIDAR data is!
+   
 23 April 2014 
   Cruse, Gelder, James, daryl, grad student
   - We have settled on 1616 HUC12s
