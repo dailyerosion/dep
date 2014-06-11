@@ -193,6 +193,16 @@ function init(){
                 getURL : get_my_url2,
                 isBaseLayer : false
         });
+    var flowpaths = new OpenLayers.Layer.TMS('Flow Paths',
+			tilecache +'/c/c.py/', {
+                layername : 'flowpaths-900913',
+                service : '1.0.0',
+                type : 'png',
+                visibility : false,
+                opacity : 1,
+                getURL : get_my_url2,
+                isBaseLayer : false
+        });
     var blank = new OpenLayers.Layer("Blank", {
         isBaseLayer : true,
         visibility : false
@@ -205,7 +215,7 @@ function init(){
           projection: new OpenLayers.Projection("EPSG:900913"),
           theme: null,
           layers: [blank, osm, iahshd, tms, counties, 
-                   states, huc12, huc8, iahydro, markers],
+                   states, huc12, huc8, flowpaths, iahydro, markers],
           center: new OpenLayers.LonLat(-95, 42),
           zoom: 1,
           numZoomLevels: 13
@@ -237,7 +247,7 @@ function init(){
       $( '#radio input[type=radio]').change(function(){
     	  tms.redraw();
     	  appstate.ltype = this.value;
-    	  $('#rampimg').attr('src',"images/"+ appstate.ltype +"-ramp.png");
+    	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
       });
       var point = new OpenLayers.Geometry.Point(appstate.lon, appstate.lat);
       var pointFeature = new OpenLayers.Feature.Vector(point.transform(p4326,p900913),null,style_blue);

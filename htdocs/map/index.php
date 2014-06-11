@@ -77,7 +77,7 @@ float: left;
 			}
         </style>
         <script type="text/javascript">
-var tilecache = "http://mesonet.agron.iastate.edu";
+var tilecache = "http://iem.local";
         </script>
  <script src='nextgen.js?v=3'></script>
 </head>
@@ -120,7 +120,7 @@ var tilecache = "http://mesonet.agron.iastate.edu";
 	</form>
 </div>
 <div id="ramp">
-<img src="images/loss2-ramp.png" id="rampimg" />
+<img src="/images/loss2-ramp.png" id="rampimg" />
 <br /> &nbsp; 
 <br /> &nbsp; 
 <br /> &nbsp; 

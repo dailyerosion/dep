@@ -1,13 +1,15 @@
-<html>
-<head>
-	<title>Iowa Daily Erosion Project v2</title>
-</head>
+<?php 
+require '../config/settings.inc.php';
+require '../autoload.php';
 
-<h3>Welcome to the future home of IDEPv2</h3>
+$theme = new Sample\Theme('Iowa Daily Erosion Project');
+$theme->drawHeader();
+?>
 
-<br /><a href="http://mesonet.agron.iastate.edu/archive/data/2013/09/19/iowa_stage4_1d.png">OLD Precip</a>
-<br /><a href="http://mesonet.agron.iastate.edu/archive/data/2013/09/19/iowa_q2_1d.png">NEW Precip</a>
+<h4>Iowa Daily Erosion Project (version 2)</h4>
 
-<p><a href="nextgen.php">Next-Gen Display</a>
+<p><a href="/map/">Next-Gen Display</a>
 
-</html>
+<?php
+$theme->drawFooter(); 
+?>
