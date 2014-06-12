@@ -47,7 +47,7 @@ def do_flowpath(huc_12, fid):
         rows.append( row )
         
     res = {}
-    res['clifile'] = "/i/cli/%03ix%03i/%07.2fx%07.2f.cli" % (0 - rows[0]['x'],
+    res['clifile'] = "/i/cli/%03ix%03i/%06.2fx%06.2f.cli" % (0 - rows[0]['x'],
                                                            rows[0]['y'],
                                                            0 - rows[0]['x'],
                                                            rows[0]['y'])
