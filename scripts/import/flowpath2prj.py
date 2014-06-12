@@ -9,6 +9,20 @@ from math import atan2, degrees, pi
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
+def get_rotation(code, maxmanagement):
+    """ Convert complex things into a simple WEPP management for now """
+    if code == 'CCCCCC':
+        if maxmanagement == 1:
+            return 'corn-no till.rot'
+        return 'corn-fall mulch till.rot'
+    if code.count('C') >= 2 and code.count('B') >= 2:
+        if maxmanagement == 1:
+            return 'corn,soybean-no till.rot'
+        return 'corn,soybean-fall mulch till.rot'
+    
+    print 'Code: %s was problematic to match a rotation!' % (code,)
+    return code
+
 def compute_aspect(x0, y0, x1, y1):
     """ Compute the aspect angle between two points """
     dx = x1 - x0
@@ -26,7 +40,10 @@ def do_flowpath(huc_12, fid):
     ST_Y(ST_Transform(geom,4326)) as y from flowpath_points WHERE flowpath = %s
     ORDER by segid ASC""", (fid,))
     rows = []
+    maxmanagement = 0
     for row in cursor:
+        if row['management'] > maxmanagement:
+            maxmanagement = row['management']
         rows.append( row )
         
     res = {}
@@ -67,7 +84,6 @@ def do_flowpath(huc_12, fid):
 
     res['slpdata'] = slpdata
 
-    mandata = ""
     prevman = None
     lmanstart = 0
     mans = []
@@ -78,12 +94,12 @@ def do_flowpath(huc_12, fid):
             continue
         if prevman != row['lstring']:
             if prevman is not None:
-                mans.append(prevman)
+                mans.append( get_rotation(prevman, maxmanagement) )
                 manlengths.append( row['length'] - lmanstart)
             prevman = row['lstring']
             lmanstart = row['length']
 
-    mans.append(prevman)
+    mans.append( get_rotation(prevman, maxmanagement) )
     manlengths.append( res['length'] - lmanstart)
     res['manbreaks'] = len(manlengths) -1
     res['managements'] = ""
@@ -92,7 +108,7 @@ def do_flowpath(huc_12, fid):
     for d, s in zip(manlengths, mans):
         res['managements'] += """    %s {
         Distance = %.3f
-        File = "/i/man/%s.man"
+        File = "/i/rot/%s"
     }\n""" % (s, d, s)
 
     return res
