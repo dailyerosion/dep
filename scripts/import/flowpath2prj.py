@@ -9,6 +9,8 @@ from math import atan2, degrees, pi
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
+BASE = "Z:\\\\i"
+
 def get_rotation(code, maxmanagement):
     """ Convert complex things into a simple WEPP management for now """
     if code == 'CCCCCC':
@@ -53,6 +55,7 @@ def do_flowpath(huc_12, fid):
                                                            rows[0]['y'])
     res['huc8'] = huc_12[:8]
     res['huc12'] = huc_12
+    res['envfn'] = "/i/env/%s/%s_%s.env" % (res['huc8'], huc_12, fid)
     res['date'] = datetime.datetime.now()
     res['aspect'] = compute_aspect(rows[0]['x'], rows[0]['y'],
                                    rows[-1]['x'], rows[-1]['y'])
@@ -79,10 +82,17 @@ def do_flowpath(huc_12, fid):
                                    row['slope'])
     soils.append(prevsoil)
     soillengths.append( res['length'] - lsoilstart)
+
     res['soilbreaks'] = len(soillengths) -1
     res['soils'] = ""
-
     res['slpdata'] = slpdata
+
+    for d, s in zip(soillengths, soils):
+        res['soils'] += """    %s {
+        Distance = %.3f
+        File = "Z:\\i\\sol\\%s.sol"
+    }\n""" % (s, d, s)
+
 
     prevman = None
     lmanstart = 0
@@ -108,7 +118,7 @@ def do_flowpath(huc_12, fid):
     for d, s in zip(manlengths, mans):
         res['managements'] += """    %s {
         Distance = %.3f
-        File = "/i/rot/%s"
+        File = "agriculture\\%s"
     }\n""" % (s, d, s)
 
     return res
@@ -160,11 +170,9 @@ Management {
 }
 RunOptions {
    Version = 1
-   SoilLossOutputType = 1
-   SoilLossOutputFile = AutoName
-   PlotFile = AutoName
-   GraphFile = AutoName
-   SimulationYears = 8
+   SoilLossOutputType = 4
+   EventFile = "%(envfn)s"
+   SimulationYears = 7
    SmallEventByPass = 1
 }
 
