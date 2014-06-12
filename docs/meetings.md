@@ -1,3 +1,12 @@
+11 Jun 2014
+  Cruse, Gelder, James, daryl, grad student
+  - First iteration had 211,414 flowpaths
+  - Brian is producing 1-5 management codes, which equates to tillage c-fact
+  - Desired products for Tuesday Meeting
+    1) State map of outputs for some days or many days
+    2) Have some sort of comparison engine for IDEPv1 and IDEPv2 outputs
+    3) Provide some highlights in the management changes
+    
 16 May 2014
   Cruse, Gelder, James, daryl, grad student,Sarah
   - 16 HUC12s are currently missing cut-dems
