@@ -106,8 +106,11 @@ def process(fn, df):
                 WHERE fid = %s""" % (",".join(lstring), fid)
             cursor.execute(sql)
         else:
-            print '---> ERROR: %s flowpath %s had less than 2 points' % (
+            print '---> ERROR: %s flowpath %s < 2 points, deleting' % (
                                                             fn, flowpath,)
+            cursor.execute("""DELETE from flowpath_points 
+                where flowpath = %s""", (fid,))
+            cursor.execute("""DELETE from flowpaths where fid = %s""", (fid,))
 
 if __name__ == '__main__':
     os.chdir("../../data/flowpaths")
@@ -121,7 +124,7 @@ if __name__ == '__main__':
         df = get_data(fn)
         process(fn, df)
         ets = datetime.datetime.now()
-        print '%4i/%4i %6.3fs %s' % (i+1, total, 
+        print '%4i/%4i %7.3fs %s' % (i+1, total, 
             (ets - sts).microseconds / 100000. + (ets - sts).seconds, fn)
     
     cursor.close()
