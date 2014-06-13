@@ -20,18 +20,9 @@ import pandas as pd
 from pandas import Series
 import psycopg2
 import datetime
-import random
-
-ROTS = ['C', 'B']
 
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor()
-
-def filterd(val):
-    """ Convert D's into a random choice of C or B """
-    if val == 'D':
-        return random.choice(ROTS)
-    return val
 
 def get_flowpath(huc12, fpath):
     cursor.execute("""
@@ -78,23 +69,23 @@ def process(fn, df):
                 slope = 0
             else:
                 slope = dy/dx
-            lu = row['LU6_%s' % (huc8[:6],)]
+            lu = row['CropRotatn']
             if lu.strip() == "":
                 lu = [None, None, None, None, None, None]
             sql = """INSERT into flowpath_points(flowpath, segid, 
-                elevation, length, landuse, surgo, management, slope, geom,
+                elevation, length,  surgo, management, slope, geom,
                 landuse1, landuse2, landuse3, landuse4, landuse5, landuse6) 
-                values(%s, %s , %s, %s,
+                values(%s, %s , %s,
                 %s, %s, %s, %s, 'SRID=26915;POINT(%s %s)',
                 %s, %s, %s, %s, %s, %s);
                 """ 
             args = (fid, segid,  
                        row['ec3m%s' % (huc8[:6],)]/100.,
                row['fpLen%s' % (huc8[:5],)]/100., 
-               row['GenLU%s' % (huc8[:5],)], row['gSSURGO'], 
+                row['gSSURGO'], 
                row['Management'], slope, row['X'], 
-               row['Y'], filterd(lu[0]), filterd(lu[1]), filterd(lu[2]), 
-               filterd(lu[3]), filterd(lu[4]), filterd(lu[5]))
+               row['Y'], lu[0], lu[1], lu[2], 
+               lu[3], lu[4], lu[5])
             cursor.execute(sql, args)
             
             lstring.append("%s %s" % (row['X'], row['Y']))
