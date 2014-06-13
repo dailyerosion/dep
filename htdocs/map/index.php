@@ -6,6 +6,7 @@ date_default_timezone_set('America/Chicago');
  <link type="text/css" href="/css/ui-lightness/jquery-ui-1.8.22.custom.css" rel="stylesheet" />
  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
  <script type="text/javascript" src="/js/jquery-ui-1.8.22.custom.min.js"></script>
+ <script src="http://maps.google.com/maps/api/js?v=3&amp;sensor=false"></script>
  <script src='/js/OpenLayers.js'></script>
  <link rel='stylesheet' 
   href='/css/default/style.css' type='text/css'>

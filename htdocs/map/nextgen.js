@@ -194,7 +194,7 @@ function init(){
                 isBaseLayer : false
         });
     var flowpaths = new OpenLayers.Layer.TMS('Flow Paths',
-			tilecache +'/c/c.py/', {
+			tilecache +'/cache/c.py/', {
                 layername : 'flowpaths-900913',
                 service : '1.0.0',
                 type : 'png',
@@ -207,24 +207,31 @@ function init(){
         isBaseLayer : true,
         visibility : false
     });
-
+    var gsat = new OpenLayers.Layer.Google(
+            "Google Satellite",
+            {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 22}
+        );
+    var gphy = new OpenLayers.Layer.Google(
+            "Google Physical",
+            {type: google.maps.MapTypeId.TERRAIN, visibility: false}
+        );
     iaextent =  new OpenLayers.Bounds(-11074808, 4701182, -9780882, 5531594);
     map = new OpenLayers.Map({
           div: 'map',
           //restrictedExtent : iaextent,
           projection: new OpenLayers.Projection("EPSG:900913"),
           theme: null,
-          layers: [blank, osm, iahshd, tms, counties, 
+          layers: [blank, osm, gsat, gphy, iahshd, tms, counties, 
                    states, huc12, huc8, flowpaths, iahydro, markers],
           center: new OpenLayers.LonLat(-95, 42),
-          zoom: 1,
-          numZoomLevels: 13
+          zoom: 9,
+          numZoomLevels: 15
       });
       for(var key in controls) {
           map.addControl(controls[key]);
       }
-      
-      zoom_iowa();
+      map.addControl(new OpenLayers.Control.Permalink({anchor: true}));
+      //zoom_iowa();
       
       var d = new Date();
       d.setDate( d.getDate() - 1 );
