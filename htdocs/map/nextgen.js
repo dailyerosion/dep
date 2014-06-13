@@ -223,8 +223,8 @@ function init(){
           theme: null,
           layers: [blank, osm, gsat, gphy, iahshd, tms, counties, 
                    states, huc12, huc8, flowpaths, iahydro, markers],
-          center: new OpenLayers.LonLat(-95, 42),
-          zoom: 9,
+          center: new OpenLayers.LonLat(-10393237, 5161834),
+          zoom: 7,
           numZoomLevels: 15
       });
       for(var key in controls) {
