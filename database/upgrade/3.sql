@@ -1,8 +1,8 @@
 ---
 --- Storage of Flowpaths
 ---
-DROP TABLE flowpaths CASCADE;
-DROP TABLE flowpath_points;
+--- DROP TABLE flowpaths CASCADE;
+--- DROP TABLE flowpath_points;
 
 CREATE TABLE flowpaths(
   fid serial UNIQUE,
