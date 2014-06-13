@@ -9,8 +9,6 @@ from math import atan2, degrees, pi
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-BASE = "Z:\\\\i"
-
 surgo2file = {}
 cursor.execute("""SELECT surgo, soilfile from xref_surgo""")
 for row in cursor:
@@ -22,12 +20,12 @@ def get_rotation(code, maxmanagement):
         return 'grass.rot'
     if code.count('C') > 4:
         if maxmanagement == 1:
-            return 'agriculture\\corn-no till.rot'
-        return 'agriculture\\corn-fall mulch till.rot'
+            return 'agriculture/corn-no till.rot'
+        return 'agriculture/corn-fall mulch till.rot'
     if code.count('C') >= 2 and code.count('B') >= 2:
         if maxmanagement == 1:
-            return 'agriculture\\corn,soybean-no till.rot'
-        return 'agriculture\\corn,soybean-fall mulch till.rot'
+            return 'agriculture/corn,soybean-no till.rot'
+        return 'agriculture/corn,soybean-fall mulch till.rot'
     
     print 'Code: %s was problematic to match a rotation!' % (code,)
     return code
@@ -53,10 +51,12 @@ def do_flowpath(huc_12, fid):
     for row in cursor:
         if row['management'] > maxmanagement:
             maxmanagement = row['management']
+        if row['slope'] < 0.00001:
+            row['slope'] = 0.00001
         rows.append( row )
         
     res = {}
-    res['clifile'] = "Z:\\i\\cli\\%03ix%03i\\%06.2fx%06.2f.cli" % (0 - rows[0]['x'],
+    res['clifile'] = "/i/cli/%03ix%03i/%06.2fx%06.2f.cli" % (0 - rows[0]['x'],
                                                            rows[0]['y'],
                                                            0 - rows[0]['x'],
                                                            rows[0]['y'])
@@ -97,7 +97,7 @@ def do_flowpath(huc_12, fid):
     for d, s in zip(soillengths, soils):
         res['soils'] += """    %s {
         Distance = %.3f
-        File = "Z:\\i\\sol\\%s"
+        File = "/i/sol_input/%s"
     }\n""" % (s, d, surgo2file[s])
 
 
