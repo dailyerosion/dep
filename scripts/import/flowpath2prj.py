@@ -3,6 +3,8 @@
 import psycopg2
 import psycopg2.extras
 import os
+import copy
+import sys
 import datetime
 from math import atan2, degrees, pi
 
@@ -29,6 +31,69 @@ def compute_aspect(x0, y0, x1, y1):
     rads %= 2*pi
     return degrees(rads)
 
+def non_zero(dy,dx):
+    """ Make sure slope is slightly non-zero """
+    if dx == 0:
+        return 0.00001
+    return max(0.00001, dy/dx)
+
+def simplify(rows):
+    """ WEPP can only handle 20 slope points it seems, so we must simplify """
+    newrows = []
+    lrow = rows[0]
+    newrows.append( lrow )
+    for row in rows:
+        # If they are the 'same', continue
+        if row['lstring'] == 'UUUUUU':
+            continue
+        if (row['management'] == lrow['management'] and 
+            row['surgo'] == lrow['surgo'] and
+            row['lstring'] == lrow['lstring']):
+            continue
+        # Recompute slope
+        dy = lrow['elevation'] - row['elevation']
+        dx = row['length'] - lrow['length']
+        row['slope'] = non_zero(dy,dx)
+        newrows.append( copy.deepcopy(row) )
+        lrow = row
+        
+    if newrows[-1]['segid'] != rows[-1]['segid']:
+        # Recompute slope
+        dy = newrows[-1]['elevation'] - rows[-1]['elevation']
+        dx = rows[-1]['length'] - newrows[-1]['length']
+        newrows.append( copy.deepcopy(rows[-1]) )
+        newrows[-1]['slope'] = non_zero(dy,dx)
+    
+    if len(newrows) < 20:
+        return newrows
+    
+    # Brute force!
+    threshold = 0.01
+    while len(newrows) > 19:
+        newrows2 = []
+        newrows2.append( copy.deepcopy(newrows[0]) )
+        for i in range(1, len(newrows)-1):
+            if newrows[i]['slope'] > threshold:
+                newrows2.append( copy.deepcopy(newrows[i]) )
+        newrows2.append( copy.deepcopy(newrows[-1]) )
+        newrows = newrows2
+        threshold += 0.01
+ 
+    # TODO: recompute the slopes
+ 
+    if len(newrows) > 19:
+        print 'Length of old: %s' % (len(rows),)
+        for row in rows:
+            print '%(segid)s %(length)s %(elevation)s %(lstring)s %(surgo)s %(management)s %(slope)s' % row
+    
+        print 'Length of new: %s' % (len(newrows),)
+        for row in newrows:
+            print '%(segid)s %(length)s %(elevation)s %(lstring)s %(surgo)s %(management)s %(slope)s' % row
+
+        sys.exit()
+        
+    return newrows
+
 def do_flowpath(huc_12, fid, fpath):
     """ Process a given flowpathid """
     cursor2.execute("""SELECT segid, elevation, length, surgo, 
@@ -45,7 +110,10 @@ def do_flowpath(huc_12, fid, fpath):
         if row['slope'] < 0.00001:
             row['slope'] = 0.00001
         rows.append( row )
-        
+    
+    if len(rows) > 19:
+        rows = simplify(rows)
+    
     res = {}
     res['clifile'] = "/i/cli/%03ix%03i/%06.2fx%06.2f.cli" % (0 - rows[0]['x'],
                                                            rows[0]['y'],
@@ -57,7 +125,7 @@ def do_flowpath(huc_12, fid, fpath):
     res['date'] = datetime.datetime.now()
     res['aspect'] = compute_aspect(rows[0]['x'], rows[0]['y'],
                                    rows[-1]['x'], rows[-1]['y'])
-    res['prj_fn'] = "/i/prj/%s/%s/%s_%s.prj" % (res['huc8'], huc_12, 
+    res['prj_fn'] = "/i/prj/%s/%s/%s_%s.prj" % (res['huc8'], huc_12[-4:], 
                                                 huc_12, fpath)
     res['length'] = rows[-1]['length']
     res['slope_points'] = len(rows)
@@ -123,9 +191,6 @@ def do_flowpath(huc_12, fid, fpath):
 
 def write_prj(data):
     """ Create the WEPP prj file """
-    dirname = "/i/prj/%s/%s" % (data['huc8'], data['huc12'])
-    if not os.path.isdir(dirname):
-        os.makedirs(dirname)
     out = open(data['prj_fn'], 'w')
     
     # Profile format

@@ -5,15 +5,8 @@ import os
 import glob
 import shutil
 
-EXE = "/home/akrherz/projects/idep/prj2wepp/prj2wepp.exe"
+EXE = "/home/akrherz/projects/idep/prj2wepp/prj2wepp"
 WEPP = "/home/akrherz/projects/idep/prj2wepp/wepp"
-
-def check_dirs(huc8, huc12):
-    """ Make sure directories exist, please """
-    for d in ['man', 'slp', 'sol']:
-        d = "/i/%s/%s/%s" % (d, huc8, huc12)
-        if not os.path.isdir(d):
-            os.makedirs(d)
 
 if __name__ == '__main__':
     # Go Main Go
@@ -23,23 +16,28 @@ if __name__ == '__main__':
     for i, huc8 in enumerate(huc8s):
         print "%04i/%04i %s" % (i+1, sz, huc8)
         os.chdir(huc8)
-        for huc12 in glob.glob("*"):
-            os.chdir(huc12)
-            check_dirs(huc8, huc12)
+        for huc4 in glob.glob("*"):
+            huc12 = "%s%s" % (huc8, huc4)
+            os.chdir(huc4)
             for pfile in glob.glob("*.prj"):
-                fullfn = "/i/%s/%s/%s" % (huc8, huc12, pfile)
-                subprocess.call("%s %s test %s no" % (EXE, fullfn, WEPP),
+                fullfn = "/i/prj/%s/%s/%s" % (huc8, huc4, pfile)
+                proc = subprocess.Popen("%s %s test %s no" % (
+                                                        EXE, fullfn, WEPP),
                             shell=True, stderr=subprocess.PIPE,
                             stdout=subprocess.PIPE)
+                # Need to block the above
+                stdout = proc.stdout.read()
                 if not os.path.isfile('test.man'):
-                    print '---> ERROR generating output for %s' % (huc12,)
+                    print '---> ERROR generating output for %s%s\n%s' % (huc12,
+                                                    proc.stderr.read(),
+                                                    stdout)
                     continue
                 # This generates .cli, .man, .run, .slp, .sol
                 # We need the .man , .slp , .sol from this process
                 for suffix in ['man', 'slp', 'sol']:
                     shutil.copyfile('test.%s' % (suffix,), 
                                     "/i/%s/%s/%s/%s.%s" % (
-                                            suffix, huc8, huc12, 
+                                            suffix, huc8, huc4, 
                                             pfile[:-4], suffix))
                 
                 for suffix in ['cli', 'man', 'run', 'slp', 'sol']:
