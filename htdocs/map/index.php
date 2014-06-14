@@ -80,7 +80,7 @@ float: left;
         <script type="text/javascript">
 var tilecache = "http://mesonet.agron.iastate.edu";
         </script>
- <script src='nextgen.js?v=3'></script>
+ <script src='nextgen.js?v=4'></script>
 </head>
 <body onload="init()">
 <div id="quick">

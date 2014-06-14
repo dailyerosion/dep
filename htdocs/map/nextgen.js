@@ -143,6 +143,16 @@ function init(){
                     getURL : get_my_url2,
                     isBaseLayer : true
             });   
+    var iaglu = new OpenLayers.Layer.TMS('Iowa GLU 0813',
+            tilecache +'/c/c.py/', {
+                    layername : 'iaglu-900913',
+                    service : '1.0.0',
+                    type : 'png',
+                    visibility : false,
+                    opacity : 1,
+                    getURL : get_my_url2,
+                    isBaseLayer : true
+            }); 
     var counties = new OpenLayers.Layer.TMS('Counties',
             tilecache +'/c/c.py/', {
                     layername : 'iac-900913',
@@ -221,7 +231,7 @@ function init(){
           //restrictedExtent : iaextent,
           projection: new OpenLayers.Projection("EPSG:900913"),
           theme: null,
-          layers: [blank, osm, gsat, gphy, iahshd, tms, counties, 
+          layers: [blank, osm, gsat, gphy, iahshd, iaglu, tms, counties, 
                    states, huc12, huc8, flowpaths, iahydro, markers],
           center: new OpenLayers.LonLat(-10393237, 5161834),
           zoom: 7,
