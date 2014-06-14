@@ -13,53 +13,56 @@ class wepprun:
     Filenames have a 51 character restriction
     '''
     
-    def __init__(self, huc12, hsid, lon, lat):
-        ''' We initialize with a huc12 identifier and a hillslope id '''
+    def __init__(self, huc12, fpid, lon, lat):
+        ''' We initialize with a huc12 identifier and a flowpath id '''
         self.huc12 = huc12
-        self.hsid = hsid
+        self.huc8 = huc12[:8]
+        self.subdir = "%s/%s" % (huc12[:8], huc12[8:])
+        self.fpid = fpid
         self.lon = lon
         self.lat = lat
         pass
     
     def get_wb_fn(self):
         ''' Return the water balance filename for this run '''
-        return '%s/wb/%s/hs_%s_%s.wb' % (IDEPHOME, self.huc12, self.huc12,
-                                         self.hsid)
+        return '%s/wb/%s/%s_%s.wb' % (IDEPHOME, self.subdir,
+                                         self.huc12, self.fpid)
 
     def get_env_fn(self):
         ''' Return the event filename for this run '''
-        return '%s/env/%s/hs_%s_%s.env' % (IDEPHOME, self.huc12, self.huc12,
-                                          self.hsid)
+        return '%s/env/%s/%s_%s.env' % (IDEPHOME, self.subdir,
+                                           self.huc12, self.fpid)
 
     def get_man_fn(self):
         ''' Return the management filename for this run '''
-        return '%s/man/%s/hs_%s_%s.man' % (IDEPHOME, self.huc12, 
-                                                  self.huc12, self.hsid)
+        return '%s/man/%s/%s_%s.man' % (IDEPHOME, self.subdir, 
+                                                  self.huc12, self.fpid)
     
     def get_slope_fn(self):
         ''' Return the slope filename for this run '''
-        return '%s/slp/%s/hs_%s_%s.slp' % (IDEPHOME, self.huc12, 
-                                             self.huc12, self.hsid)
+        return '%s/slp/%s/%s_%s.slp' % (IDEPHOME, self.subdir, 
+                                             self.huc12, self.fpid)
 
     def get_soil_fn(self):
         ''' Return the soil filename for this run '''
-        return '%s/sol/%s/hs_%s_%s.sol' % (IDEPHOME, self.huc12, 
-                                            self.huc12, self.hsid)
+        return '%s/sol/%s/%s_%s.sol' % (IDEPHOME, self.subdir, 
+                                            self.huc12, self.fpid)
     
     def get_clifile_fn(self):
         ''' Return the climate filename for this run '''
-        return '%s/cli/%06.2f0_%06.2f0.cli' % (IDEPHOME, 0 - self.lon, 
+        return '%s/cli/%03ix%03i/%06.2fx%06.2f.cli' % (IDEPHOME, 0 - self.lon, 
+                                                  self.lat, 0 - self.lon,
                                                   self.lat)
 
     def get_runfile_fn(self):
         ''' Return the run filename for this run '''
-        return '%s/run/%s/hs_%s_%s.run' % (IDEPHOME, self.huc12, 
-                                               self.huc12, self.hsid)
+        return '%s/run/%s/%s_%s.run' % (IDEPHOME, self.subdir,
+                                               self.huc12, self.fpid)
 
     
     def make_runfile(self):
         ''' Create a runfile for our runs '''
-        print 'Creating runfile for HUC12: %s HS: %s' % (self.huc12, self.hsid)
+        print 'Creating runfile for HUC12: %s HS: %s' % (self.huc12, self.fpid)
 
         o = open(self.get_runfile_fn(), 'w')
         o.write("E\n")      # English units
@@ -87,7 +90,7 @@ class wepprun:
         o.write("%s\n" % (self.get_clifile_fn(),))  # climate file
         o.write("%s\n" % (self.get_soil_fn(),))  # soil file
         o.write("0\n")  # Irrigation
-        o.write("7\n") # years
+        o.write("8\n") # years 2007-2014
         o.write("0\n")  # route all events
 
         o.close()
@@ -106,10 +109,12 @@ def realtime_run():
     idep = psycopg2.connect(database='idep', host='iemdb', user='nobody')
     icursor = idep.cursor()
 
-    icursor.execute("""SELECT huc_12, hs_id, ST_x(geom), ST_y(geom) 
-    from hillslopes""")
+    icursor.execute("""SELECT huc_12, fid, fpath, 
+    ST_x(ST_PointN(ST_Transform(geom,4326),1)), 
+    ST_y(ST_PointN(ST_Transform(geom,4326),1)) 
+    from flowpaths""")
     for row in icursor:
-        r = wepprun(row[0], row[1], row[2], row[3])
+        r = wepprun(row[0], row[2], row[3], row[4])
         r.run()
     
 if __name__ == '__main__':
