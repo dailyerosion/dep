@@ -1,0 +1,3 @@
+5  10 {yr}  1 Tillage	OpCropDef.PLNTFC	{0.050800, 2}
+5  10 {yr}  1 Plant-Annual	CropDef.Corn	 {0.762000}
+10  15 {yr}  1 Harvest-Annual	CropDef.Corn	{}

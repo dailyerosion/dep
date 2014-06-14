@@ -1,0 +1,3 @@
+5  10  {yr}  1 Tillage	OpCropDef.PLNTFC	{0.050000, 2}
+5  10  {yr}  1 Plant-Annual	CropDef.soybean2	 {0.762000}
+10  15  {yr}  1 Harvest-Annual	CropDef.soybean2	{}

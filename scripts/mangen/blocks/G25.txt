@@ -1,0 +1,3 @@
+6  1  {yr}  1 Cut-Perennial	CropDef.ALFALFA	{}
+7  15  {yr}  1 Cut-Perennial	CropDef.ALFALFA	{}
+9  1  {yr}  1 Cut-Perennial	CropDef.ALFALFA	{}
