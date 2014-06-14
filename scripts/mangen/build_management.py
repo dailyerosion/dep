@@ -49,12 +49,16 @@ def do_rotation( code, cfactor ):
     data['code'] = code
     data['name'] = "%s-%s" % (code, cfactor)
     data['initcond'] = INITIAL_COND[code[0]]
-    data['year1'] = read_file(code[0], cfactor, 1)
-    data['year2'] = read_file(code[1], cfactor, 2)
-    data['year3'] = read_file(code[2], cfactor, 3)
-    data['year4'] = read_file(code[3], cfactor, 4)
-    data['year5'] = read_file(code[4], cfactor, 5)
-    data['year6'] = read_file(code[5], cfactor, 6)
+    # IDEP starts in 2007, but our six year starts in 2008, so the below
+    # looks hacky!
+    data['year1'] = read_file(code[5], cfactor, 1) #2007
+    data['year2'] = read_file(code[0], cfactor, 2) #2008
+    data['year3'] = read_file(code[1], cfactor, 3) #2009
+    data['year4'] = read_file(code[2], cfactor, 4) #2010
+    data['year5'] = read_file(code[3], cfactor, 5) #2011
+    data['year6'] = read_file(code[4], cfactor, 6) #2012
+    data['year7'] = read_file(code[5], cfactor, 7) #2013
+    data['year8'] = read_file(code[0], cfactor, 8) #2014
     
     o = open(fn, 'w')
     o.write("""#
@@ -77,6 +81,8 @@ Operations {
 %(year4)s
 %(year5)s
 %(year6)s
+%(year7)s
+%(year8)s
 }
     
     
