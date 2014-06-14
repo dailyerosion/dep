@@ -8,6 +8,7 @@ from math import atan2, degrees, pi
 
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
+cursor2 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 surgo2file = {}
 cursor.execute("""SELECT surgo, soilfile from xref_surgo""")
@@ -16,19 +17,9 @@ for row in cursor:
 
 def get_rotation(code, maxmanagement):
     """ Convert complex things into a simple WEPP management for now """
-    if code.count('P') > 4:
-        return 'grass.rot'
-    if code.count('C') > 4:
-        if maxmanagement == 1:
-            return 'agriculture/corn-no till.rot'
-        return 'agriculture/corn-fall mulch till.rot'
-    if code.count('C') >= 2 and code.count('B') >= 2:
-        if maxmanagement == 1:
-            return 'agriculture/corn,soybean-no till.rot'
-        return 'agriculture/corn,soybean-fall mulch till.rot'
-    
-    print 'Code: %s was problematic to match a rotation!' % (code,)
-    return code
+    fn = "IDEP2/%s/%s/%s-%s.rot" % (code[:2], code[2:4], code,
+                                    "1" if maxmanagement == 1 else "25")
+    return fn
 
 def compute_aspect(x0, y0, x1, y1):
     """ Compute the aspect angle between two points """
@@ -40,7 +31,7 @@ def compute_aspect(x0, y0, x1, y1):
 
 def do_flowpath(huc_12, fid):
     """ Process a given flowpathid """
-    cursor.execute("""SELECT segid, elevation, length, surgo, 
+    cursor2.execute("""SELECT segid, elevation, length, surgo, 
     slope, management,
     landuse1 || landuse2 || landuse3 || landuse4 || landuse5 || landuse6 as lstring,
     ST_X(ST_Transform(geom,4326)) as x, 
@@ -48,7 +39,7 @@ def do_flowpath(huc_12, fid):
     ORDER by segid ASC""", (fid,))
     rows = []
     maxmanagement = 0
-    for row in cursor:
+    for row in cursor2:
         if row['management'] > maxmanagement:
             maxmanagement = row['management']
         if row['slope'] < 0.00001:
@@ -98,7 +89,7 @@ def do_flowpath(huc_12, fid):
         res['soils'] += """    %s {
         Distance = %.3f
         File = "/i/sol_input/%s"
-    }\n""" % (s, d, surgo2file[s])
+    }\n""" % (s, d, surgo2file.get(s,s))
 
 
     prevman = None
@@ -191,7 +182,7 @@ RunOptions {
 
 if __name__ == '__main__':
     # Go main Go
-    cursor.execute("""SELECT fid, huc_12 from flowpaths LIMIT 1""")
+    cursor.execute("""SELECT fid, huc_12 from flowpaths""")
     for row in cursor:
         data = do_flowpath(row['huc_12'], row['fid'])
         write_prj(data)
