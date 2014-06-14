@@ -4,8 +4,8 @@ Adjust IDEPv1 climate files to match our reality
 import glob
 import os
 
-os.chdir('/i/cli/')
-for fn in glob.glob("*.cli"):
+os.chdir('/mnt/idep/data/clifiles/')
+for fn in glob.glob("*.dat"):
     data = open(fn).readlines()
     if data[4].find(" 1997 ") == 0:
         continue

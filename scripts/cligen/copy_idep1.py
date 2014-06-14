@@ -6,6 +6,7 @@ For a first go-around, we are using the IDEPv1 precip data for inputs to IDEPv2
 import psycopg2
 import os
 import shutil
+import subprocess
 
 idep = psycopg2.connect(database='idep', host='iemdb')
 icursor = idep.cursor()
@@ -18,8 +19,8 @@ IDEPHOME = "/i"
 
 icursor.execute("""
   SELECT distinct
-  round(ST_X(ST_CENTROID(ST_TRANSFORM(geom,4326)))::numeric,2),
-  round(ST_Y(ST_CENTROID(ST_TRANSFORM(geom,4326)))::numeric,2)
+  round(ST_X(ST_PointN(ST_TRANSFORM(geom,4326), 1))::numeric,2),
+  round(ST_Y(ST_PointN(ST_TRANSFORM(geom,4326), 1))::numeric,2)
   from flowpaths
 """)
 print 'Found %s distinct IDEPv2 Precip Cells' % (icursor.rowcount,)
@@ -30,14 +31,18 @@ for row in icursor:
     'SRID=4326;POINT(%s %s)'),26915))""" % (row[0], row[1]))
     row2 = wcursor.fetchone()
     if row2 is None:
-        print 'No results?'
+        print '---> No HRAP Polygon for Lon: %.3f Lat: %.3f' % (row[0], row[1])
         continue
     hrap = row2[0]
     
-    oldfn = "/mnt/idep/RT/clifiles/%s.dat"  % (hrap,)
+    oldfn = "/mnt/idep/data/clifiles/%s.dat"  % (hrap,)
     newdir = "/i/cli/%03ix%03i" % (0 - row[0], row[1])
     newfn = "%s/%06.2fx%06.2f.cli" % (newdir, 0 - row[0], row[1])
     if not os.path.isdir(newdir):
         os.makedirs(newdir)
+    if os.path.isfile(newfn):
+        continue
+        #os.unlink(newfn)
     #print oldfn, newfn
-    shutil.copyfile(oldfn, newfn)
+    #shutil.copyfile(oldfn, newfn)
+    subprocess.call("ln -s %s %s" % (oldfn, newfn), shell=True)
