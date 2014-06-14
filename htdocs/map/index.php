@@ -78,7 +78,7 @@ float: left;
 			}
         </style>
         <script type="text/javascript">
-var tilecache = "http://mesonet.agron.iastate.edu";
+var tilecache = "<?php echo TMS_SERVER; ?>";
         </script>
  <script src='nextgen.js?v=4'></script>
 </head>
