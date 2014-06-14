@@ -29,7 +29,7 @@ def compute_aspect(x0, y0, x1, y1):
     rads %= 2*pi
     return degrees(rads)
 
-def do_flowpath(huc_12, fid):
+def do_flowpath(huc_12, fid, fpath):
     """ Process a given flowpathid """
     cursor2.execute("""SELECT segid, elevation, length, surgo, 
     slope, management,
@@ -58,7 +58,7 @@ def do_flowpath(huc_12, fid):
     res['aspect'] = compute_aspect(rows[0]['x'], rows[0]['y'],
                                    rows[-1]['x'], rows[-1]['y'])
     res['prj_fn'] = "/i/prj/%s/%s/%s_%s.prj" % (res['huc8'], huc_12, 
-                                                huc_12, fid)
+                                                huc_12, fpath)
     res['length'] = rows[-1]['length']
     res['slope_points'] = len(rows)
 
@@ -182,7 +182,7 @@ RunOptions {
 
 if __name__ == '__main__':
     # Go main Go
-    cursor.execute("""SELECT fid, huc_12 from flowpaths""")
+    cursor.execute("""SELECT fpath, fid, huc_12 from flowpaths""")
     for row in cursor:
-        data = do_flowpath(row['huc_12'], row['fid'])
+        data = do_flowpath(row['huc_12'], row['fid'], row['fpath'])
         write_prj(data)
