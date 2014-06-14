@@ -1,5 +1,5 @@
 <?php 
-date_default_timezone_set('America/Chicago');
+require_once "../../config/settings.inc.php";
 ?>
 <html>
 <head>
