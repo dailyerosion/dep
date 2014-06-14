@@ -3,7 +3,11 @@
 '''
 import psycopg2
 import os
+import time
 import subprocess
+import threading
+import datetime
+from multiprocessing import Pool
 
 IDEPHOME = "/i" # don't need trailing /
 
@@ -62,7 +66,7 @@ class wepprun:
     
     def make_runfile(self):
         ''' Create a runfile for our runs '''
-        print 'Creating runfile for HUC12: %s HS: %s' % (self.huc12, self.fpid)
+        #print 'Creating runfile for HUC12: %s HS: %s' % (self.huc12, self.fpid)
 
         o = open(self.get_runfile_fn(), 'w')
         o.write("E\n")      # English units
@@ -102,7 +106,9 @@ class wepprun:
         self.make_runfile()
         p = subprocess.Popen("~/bin/wepp < %s" % (runfile,), shell=True,
                              stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-        print p.stdout.read()
+        stdout = p.stdout.read()
+
+QUEUE = []
 
 def realtime_run():
     ''' Do a realtime run, please '''
@@ -114,9 +120,28 @@ def realtime_run():
     ST_y(ST_PointN(ST_Transform(geom,4326),1)) 
     from flowpaths""")
     for row in icursor:
-        r = wepprun(row[0], row[2], row[3], row[4])
-        r.run()
+        QUEUE.append( row )
+    
+    
+def run(row):
+    """ Run ! """
+    r = wepprun(row[0], row[2], row[3], row[4])
+    r.run()
     
 if __name__ == '__main__':
     ''' Go main Go '''
     realtime_run()
+    pool = Pool() # defaults to cpu-count
+    sts = datetime.datetime.now()
+    sz = len(QUEUE)
+    for i,_ in enumerate(pool.imap_unordered(run, QUEUE),1):
+        if i > 0 and i % 100 == 0:
+            delta = datetime.datetime.now() - sts
+            secs = delta.microseconds / 1000000. + delta.seconds
+            speed = i / secs
+            remaining = ((sz - i) / speed) / 3600.
+            print ('%8.2fs Processed %6s/%6s [%.2f runs per sec] '
+                   +'remaining: %5.2fh') % (secs, i, sz, speed, remaining )
+
+    
+    
