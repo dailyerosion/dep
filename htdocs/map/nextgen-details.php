@@ -10,6 +10,7 @@ if ($lon < -96.639706  || $lat < 40.375437 || $lon > -90.140061 || $lat > 43.501
 	die();
 }
 $dbconn = pg_connect("dbname=idep host=iemdb user=nobody");
+$weppconn = pg_connect("dbname=wepp host=iemdb user=nobody");
 function timeit($db, $name, $sql){
 	$start = time();
 	$rs = pg_execute($db, $name, $sql);
@@ -19,6 +20,13 @@ function timeit($db, $name, $sql){
 }
 
 /* Find the township this location is in */
+$rs = pg_prepare($weppconn, "SELECT", "SELECT model_twp from iatwp WHERE
+		ST_Within(ST_GeomFromText($1, 4326), ST_Transform(the_geom,4326))");
+$rs = timeit($weppconn, "SELECT", Array('POINT('.$lon .' '. $lat .')'));
+$row = pg_fetch_assoc($rs,0);
+$model_twp = $row["model_twp"];
+
+/* Find the HUC12 this location is in */
 $rs = pg_prepare($dbconn, "SELECT", "SELECT huc_12, hu_12_name from ia_huc12 WHERE 
 		ST_Within(ST_GeomFromText($1, 4326), ST_Transform(geom,4326))");
 $rs = timeit($dbconn, "SELECT", Array('POINT('.$lon .' '. $lat .')'));
@@ -32,6 +40,7 @@ $hu12name = $row["hu_12_name"];
 
 echo "<strong>HUC 12:</strong> $huc_12";
 echo "<br /><strong>Name:</strong> $hu12name";
+echo "<br /><strong>IDEPv1 Township:</strong> ". $model_twp;
 echo "<br /><strong>Date:</strong> ". date("d M Y", $date);
 
 /* Find the HRAP cell */
@@ -83,7 +92,24 @@ if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>$year Rainfall:</strong> ". sprintf("%.2f in", $row["rainfall"]);
 }
 */
+
 /* Fetch Results */
+echo "<br />--- IDEPv1 Township Summary ---";
+$rs = pg_prepare($weppconn, "RES", "select * from results_by_twp WHERE
+		valid = $1 and model_twp = $2");
+$rs = timeit($weppconn, "RES", Array(date("Y-m-d", $date), $model_twp));
+if (pg_num_rows($rs) == 0){
+	echo "<br /><strong>No Erosion/Runoff</strong>";
+} else{
+	$row = pg_fetch_assoc($rs, 0);
+	echo "<br /><strong>Average Rainfall:</strong> ". sprintf("%.2f in", $row["avg_precip"] / 25.4);
+	echo "<br /><strong>Average Erosion:</strong> ". sprintf("%.2f T/A", $row["avg_loss"] * 4.463);
+	echo "<br /><strong>Average Runoff:</strong> ". sprintf("%.2f in", $row["avg_runoff"] / 25.4);
+}
+
+
+/* Fetch Results */
+echo "<br />--- IDEPv2 HUC 12 Summary ---";
 $rs = pg_prepare($dbconn, "RES", "select * from results_by_huc12 WHERE 
 		valid = $1 and huc_12 = $2");
 $rs = timeit($dbconn, "RES", Array(date("Y-m-d", $date), $huc_12));
@@ -91,7 +117,6 @@ if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>No Erosion/Runoff</strong>";
 } else{
 	$row = pg_fetch_assoc($rs, 0);
-	echo "<br />--- HUC 12 Summary ---";
 	echo "<br /><strong>Average Rainfall:</strong> ". sprintf("%.2f in", $row["avg_precip"] / 25.4);
 	echo "<br /><strong>Average Erosion:</strong> ". sprintf("%.2f T/A", $row["avg_loss"] * 4.463);
 	echo "<br /><strong>Average Runoff:</strong> ". sprintf("%.2f in", $row["avg_runoff"] / 25.4);
