@@ -38,6 +38,9 @@ $row = pg_fetch_assoc($rs,0);
 $huc_12 = $row["huc_12"];
 $hu12name = $row["hu_12_name"];
 
+echo <<<EOF
+<div style="float: right; border: 1px solid #000;"><a href="javascript:hideDetails();">X</a></div>
+EOF;
 echo "<strong>HUC 12:</strong> $huc_12";
 echo "<br /><strong>Name:</strong> $hu12name";
 echo "<br /><strong>IDEPv1 Township:</strong> ". $model_twp;

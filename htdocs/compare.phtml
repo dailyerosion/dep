@@ -9,6 +9,30 @@ $huc12 = isset($_REQUEST["huc_12"]) ? $_REQUEST["huc_12"] : "102300050105";
 $wepp_pgconn = pg_connect("dbname=wepp host=iemdb user=nobody");
 $idep_pgconn = pg_connect("dbname=idep host=iemdb user=nobody");
 
+/* Yearly Totals */
+$rs = pg_prepare($idep_pgconn, "YRSELECT", "SELECT 
+		extract(year from valid) as d,
+		sum(avg_loss) from results_by_huc12
+		WHERE huc_12 = $1 GROUP by d");
+$rs = pg_prepare($wepp_pgconn, "YRSELECT", "SELECT 
+		extract(year from valid) as d,
+		sum(avg_loss) from results_by_twp
+		WHERE model_twp = $1 and valid > '2007-01-01' GROUP by d");
+$wepprs = pg_execute($wepp_pgconn, "YRSELECT", Array($model_twp));
+$ideprs = pg_execute($idep_pgconn, "YRSELECT", Array($huc12));
+$yrtotals = Array();
+for ($i=0; $row = @pg_fetch_array($wepprs, $i); $i++){
+	$yrtotals[ $row["d"] ] = Array("wepp"=>$row);
+}
+for ($i=0; $row = @pg_fetch_array($ideprs, $i); $i++){
+	if (! array_key_exists($row["d"], $yrtotals)){
+		$yrtotals[$row["d"]] = Array();
+	}
+	$yrtotals[ $row["d"] ]["idep"] = $row;
+}
+
+
+/* Daily Totals for the year */
 $rs = pg_prepare($idep_pgconn, "SELECTOR", "SELECT to_char(valid, 'YYYYMMDD') as d, 
 		avg_loss, avg_runoff, avg_precip from results_by_huc12
 		WHERE huc_12 = $1 and valid BETWEEN $2 and $3");
@@ -41,14 +65,36 @@ function p($val){
 	return sprintf("%.02f", $val / 25.4);
 }
 
+$table2 = <<<EOF
+<table class="wd-Table--striped wd-Table--hover">
+<thead><tr><th rowspan="2">Year</th>
+<th>IDEP v1 (Township $model_twp)</th>
+<th>IDEP v2 (HUC 12 $huc12)</th>
+</tr>
+<tr><th>Loss [tons/acre]</th><th>Loss [tons/acre]</th></tr></thead>
+<tbody>
+EOF;
+$dates = array_keys($yrtotals);
+asort($dates);
+while (list($k,$v)=each($dates)){
+	$table2 .= @sprintf("<tr><th><a href=\"compare.phtml?year=%s&model_twp=%s&huc_12=%s\">%s</a></th><td>%s</td><td>%s</td></tr>", 
+			$v, $model_twp, $huc12, $v,
+			l($yrtotals[$v]["wepp"]["sum"]), 
+			l($yrtotals[$v]["idep"]["sum"]));
+}
+
+$table2 .= "</tbody></table>";
+
+
 $table = <<<EOF
-<table border="1" cellspacing="2" cellpadding="0">
-<tr><th rowspan="2">Date</th>
+<table class="wd-Table--striped wd-Table--hover">
+<thead><tr><th rowspan="2">Date</th>
 <th colspan="3">IDEP v1 (Township $model_twp)</th>
 <th colspan="3">IDEP v2 (HUC 12 $huc12)</th>
 </tr>
 <tr><th>Precip [in]</th><th>Runoff [in]</th><th>Loss [tons/acre]</th>
-<th>Precip [in]</th><th>Runoff [in]</th><th>Loss [tons/acre]</th></tr>
+<th>Precip [in]</th><th>Runoff [in]</th><th>Loss [tons/acre]</th></tr></thead>
+<tbody>
 EOF;
 $dates = array_keys($events);
 asort($dates);
@@ -61,24 +107,21 @@ while (list($k,$v)=each($dates)){
 		l($events[$v]["idep"]["avg_loss"]));
 }
 
-$table .= "</table>";
+$table .= "</tbody></table>";
 
 
 $theme = new Sample\Theme('IDEP :: Daily Comparison IDEPv1 vs IDEPv2');
 $theme->drawHeader();
 
+
 echo <<<EOF
-<form method="GET" name="uyear">
-<input type="hidden" name="model_twp" value="{$model_twp}">
-<input type="hidden" name="huc12" value="{$huc12}">
-<p><strong>Enter Year:</strong> 
-<input maxlength="4" size="8" type="text" name="year" value="{$year}">
-<input type="submit" value="Change Year">
-</form>
+<h3>Yearly Totals</h3>
+Click on the year to view daily output for that year.<br />
+$table2
 
+<h3>{$year} Daily Output</h3>
+$table
 EOF;
-
-echo $table; 
 
 $theme->drawFooter(); 
 ?>

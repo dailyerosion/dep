@@ -96,6 +96,7 @@ var tilecache = "<?php echo TMS_SERVER; ?>";
 	<div id="details">
 		<div id="details_loading"><img src="/images/wait24trans.gif" /> Loading...</div>
 		<div id="details_details"></div>
+		<div id="details_hidden">Move icon on map to load again</div>
 	</div>
 </div>
 <div id="controller">

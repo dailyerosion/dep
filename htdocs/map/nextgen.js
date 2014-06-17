@@ -50,7 +50,13 @@ function get_my_url2(bounds) {
     return url + this.service + "/" + this.layername + "/" + path;
 
 }
+function hideDetails(){
+	$('#details_hidden').css('display', 'block');
+	$('#details_details').css('display', 'none');
+	$('#details_loading').css('display', 'none');
+}
 function updateDetails(){
+	$('#details_hidden').css('display', 'none');
 	$('#details_details').css('display', 'none');
 	$('#details_loading').css('display', 'block');
     $.get('nextgen-details.php', {lat: appstate.lat, lon: appstate.lon,
@@ -267,7 +273,10 @@ function init(){
     	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
       });
       var point = new OpenLayers.Geometry.Point(appstate.lon, appstate.lat);
-      var pointFeature = new OpenLayers.Feature.Vector(point.transform(p4326,p900913),null,style_blue);
+      var pointFeature = new OpenLayers.Feature.Vector(
+    		  point.transform(p4326,p900913),
+    		  null,
+    		  style_blue);
       markers.addFeatures([pointFeature]);
       
       controls.drag.activate();
