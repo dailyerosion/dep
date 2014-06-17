@@ -110,11 +110,16 @@ while (list($k,$v)=each($dates)){
 $table .= "</tbody></table>";
 
 
-$theme = new Sample\Theme('IDEP :: Daily Comparison IDEPv1 vs IDEPv2');
+$theme = new Sample\Theme('IDEP :: Comparison IDEPv1 vs IDEPv2');
 $theme->drawHeader();
 
 
 echo <<<EOF
+
+<h3>Slope Comparison</h3>
+
+<img src="/plots/slopes_{$huc12}_{$model_twp}.png" />
+
 <h3>Yearly Totals</h3>
 Click on the year to view daily output for that year.<br />
 $table2
