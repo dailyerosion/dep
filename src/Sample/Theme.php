@@ -6,18 +6,26 @@ class Theme extends \IastateTheme\Theme
     public function init()
     {
         $this->setOptions(array(
-            'site_title' => 'Department Title',
+            'site_title' => 'Iowa Daily Erosion Project (IDEP)',
             'sidebar' => array(
                 array(
                     'label' => 'Home',
                     'uri' => '/',
                 ),
                 array(
-                    'label' => 'Sample',
-                    'uri' => '/sample/',
+                    'label' => 'Map',
+                    'uri' => '/map/',
                 ),
-            ),
-            'page_footer' => '<p>Unit name, address, (555) 555-5555, '. $this->email('email') .'.</p>',
+                array(
+                    'label' => 'Diagnostics',
+                	'showchildren' => True,
+                	'pages' => Array(
+            			array('label' => 'Compare v1 v2', 
+            				  'uri' => 'compare.phtml'),
+            		),
+                ),
+             ),
+            'page_footer' => '<p>Department of Agronomy, 2101 Agronomy Hall, (515) 294-5978, '. $this->email('email') .'.</p>',
         ));
     }
 }
