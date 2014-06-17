@@ -141,5 +141,7 @@ if (pg_num_rows($rs) == 0){
 	}
 	echo "</table>";
 }
-
+echo "--- Diagnostics ---";
+echo sprintf("<br /><a target=\"_new\" href=\"/compare.phtml?year=%s&model_twp=%s&huc_12=%s\">Daily Comparison</a>",
+		date("Y", $date), $model_twp, $huc_12);
 ?>

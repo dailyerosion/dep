@@ -94,7 +94,7 @@ var tilecache = "<?php echo TMS_SERVER; ?>";
 </div>
 <div id="detailsContainer">
 	<div id="details">
-		<div id="details_loading"><img src="images/wait24trans.gif" /> Loading...</div>
+		<div id="details_loading"><img src="/images/wait24trans.gif" /> Loading...</div>
 		<div id="details_details"></div>
 	</div>
 </div>
