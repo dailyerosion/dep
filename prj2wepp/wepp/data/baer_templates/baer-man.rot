@@ -1,0 +1,15 @@
+#
+# WEPP rotation saved on: 9/20/2012 10:21:37 AM 
+#
+# Created with ArcGeoWEPP - BAER 
+#
+Version = 2006.5
+Name = 30.0 ground cover - high severity fire
+Description {
+}
+Color = 0 128 0
+LandUse = 1
+InitialConditions = IniCropDef.30_0_30_02
+
+Operations {
+}

@@ -1,0 +1,41 @@
+#
+# WEPP project written: Thu Mar 29 12:03:37 AM 2001 
+#
+Version = 98.6
+Name = ww
+Comments {
+
+}
+Units = English
+Landuse = 1
+Length = 91.440
+Profile {
+   File = "uniform 300',40%.slp"
+}
+Climate {
+   File = "Walla Walla WA.cli"
+}
+Soil {
+   Breaks = 0
+   PALOUSE     {
+      Distance = 91.440
+      File = "PALOUSE.sol"
+   }
+}
+Management {
+   Breaks = 0
+   Winter Wheat-Conventional {
+      Distance = 91.440
+      File = "winter wheat, Conventional till.rot"
+   }
+}
+RunOptions {
+   Version = 1
+   SoilLossOutputType = 1
+   SoilLossOutputFile = AutoName
+   PlotFile = AutoName
+   GraphFile = AutoName
+   YieldFile = AutoName
+   SimulationYears = 20
+   SmallEventByPass = 1
+}

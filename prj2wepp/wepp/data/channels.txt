@@ -1,0 +1,10 @@
+DITCH|ditch
+GRADED|Graded
+UNGRADED|Ungraded
+WATERWAY|Waterway
+OnEarth|Earth Channel
+OnGravel|Gravel Channel
+OnRock|Rock Channel
+Dit_5713|Ditch in forest
+For_0060|Forest road ditch
+Wat_8397|Waterway through forest

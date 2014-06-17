@@ -1,0 +1,31 @@
+#
+# WEPP rotation saved on: Wed Mar 17 09:14:39 AM 2004
+#
+# Created with WEPPWIN verion: Mar 15 2004 
+#
+Version = 98.7
+Name = jims custom rotation
+Description {
+}
+Color = 64 128 128
+LandUse = 1
+InitialConditions = IniCropDef.Default
+
+Drainage {
+    0 DrainDef.plastic5
+}
+Operations {
+2  15  1  1 Residue-Addition	ResidueDef.jim_8672	{}
+5  5  1  1 Tillage	OpCropDef.jim_7000	{0.101600, 2}
+5  5  1  1 Residue-Removal	ResidueDef.jim_8992	{}
+5  5  1  1 Start-Contour	ContourDef.2%_10306	{}
+5  5  1  1 Start-Irrigation	IrrDef.dep_22924	{}
+5  7  1  1 Start-Grazing	GrazeDef.jim_9834	{}
+5  8  1  1 Irrigate	DailyIrrDef.jim_0066	{}
+5  10  1  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
+5  10  1  1 Plant-Annual	CropDef.jim_7894	 {0.762000}
+6  5  1  1 Tillage	OpCropDef.CULTMUSW	{0.076200, 2}
+10  15  1  1 Harvest-Annual	CropDef.jim_7894	{}
+11  1  1  1 Tillage	OpCropDef.CHISSTSP	{0.203200, 1}
+12  1  1  1 Stop-Contour	ContourDef.2%_10306	{}
+}

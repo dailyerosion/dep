@@ -1,0 +1,5 @@
+AuthUserFile /home/httpd/passwd/.htpasswd
+AuthGroupFile /dev/null
+AuthName "Weather" 
+AuthType Basic
+require user nserl 

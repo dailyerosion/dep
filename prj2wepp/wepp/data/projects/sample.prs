@@ -1,0 +1,27 @@
+$(ROOT)\Data\Projects\default.prj
+$(ROOT)\Data\Projects\Barley, conventional tillage.prj
+$(ROOT)\Data\Projects\Barley, mulch tillage.prj
+$(ROOT)\Data\Projects\Barley, no till.prj
+$(ROOT)\Data\Projects\corn,soybean,wheat,alfalfa(4yrs)- no till.prj
+$(ROOT)\Data\Projects\corn,soybean,wheat,alfalfa(4yrs)-consv till.prj
+$(ROOT)\Data\Projects\corn,soybean,wheat,alfalfa(4yrs)-conv till.prj
+$(ROOT)\Data\Projects\corn,soybean-fall moldboard plow.prj
+$(ROOT)\Data\Projects\corn,soybean-fall mulch till.prj
+$(ROOT)\Data\Projects\corn,soybean-no till.prj
+$(ROOT)\Data\Projects\corn,soybean-spring chisel plow.prj
+$(ROOT)\Data\Projects\corn-fall moldboard plow.prj
+$(ROOT)\Data\Projects\corn-fall mulch till.prj
+$(ROOT)\Data\Projects\corn-no till.prj
+$(ROOT)\Data\Projects\corn-spring chisel plow.prj
+$(ROOT)\Data\Projects\alfalfa with cuttings.prj
+$(ROOT)\Data\Projects\fallow tilled 0.5% contours.prj
+$(ROOT)\Data\Projects\fallow tilled.prj
+$(ROOT)\Data\Projects\fallow.prj
+$(ROOT)\Data\Projects\grass.prj
+$(ROOT)\Data\Projects\soybean-fall moldboard plow.prj
+$(ROOT)\Data\Projects\soybean-fall mulch till.prj
+$(ROOT)\Data\Projects\soybean-no till.prj
+$(ROOT)\Data\Projects\soybean-spring chisel plow.prj
+$(ROOT)\Data\Projects\winter wheat-Conventional till.prj
+$(ROOT)\Data\Projects\winter wheat-mulch till.prj
+$(ROOT)\Data\Projects\winter wheat-No till.prj

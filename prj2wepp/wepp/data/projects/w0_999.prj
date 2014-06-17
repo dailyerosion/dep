@@ -1,0 +1,32 @@
+Version = 98.6
+Name = watershedChannel
+Comments {
+}
+Units = English
+Landuse = 1
+Length = 10
+Profile {
+   File = "temporary.slp"
+}
+Climate {
+   File = "/home/wepp/59dcc32dcaa4d1539fd08687958dc7e0/runs/wepp.cli"
+}
+Soil {
+   Breaks = 0
+   Soil {
+      Distance = 10
+      File = "chan.sol"
+   }
+}
+Management {
+   Breaks = 0
+   man_0 {
+      Distance = 10
+      File = "grass.rot"
+   }
+}
+RunOptions {
+  Version = 1
+  SoilLossOutputType = 1
+  SimulationYears = 1
+}

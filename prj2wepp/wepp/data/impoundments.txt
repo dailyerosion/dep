@@ -1,0 +1,11 @@
+default|default
+dro_1538|drop spillway with rect riser and barrel
+dro_1717|drop spillway with rect riser and circ barrel
+eme_1341|emergency spillway
+fil_8526|filter fence
+per_1025|perforated riser
+roc_1239|rock fill dam
+str_1367|straw bales
+str_2911|straw bales - no stage discharge
+Cul_1683|Culvert for forest road-2' diameter
+Sed_9735|Sediment basin-small

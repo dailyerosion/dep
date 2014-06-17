@@ -1,0 +1,32 @@
+#
+# WEPP rotation saved on: 2014-06-13 22:52:09.752136
+#
+# Created with scripts/mangen/build_management.py 
+#
+Version = 98.7
+Name = UUUPPP-1
+Description {
+}
+Color = 0 255 0
+LandUse = 1
+InitialConditions = IniCropDef.Default
+
+Operations {
+
+
+
+6  1  4  1 Cut-Perennial	CropDef.ALFALFA	{}
+7  15  4  1 Cut-Perennial	CropDef.ALFALFA	{}
+9  1  4  1 Cut-Perennial	CropDef.ALFALFA	{}
+
+6  1  5  1 Cut-Perennial	CropDef.ALFALFA	{}
+7  15  5  1 Cut-Perennial	CropDef.ALFALFA	{}
+9  1  5  1 Cut-Perennial	CropDef.ALFALFA	{}
+
+6  1  6  1 Cut-Perennial	CropDef.ALFALFA	{}
+7  15  6  1 Cut-Perennial	CropDef.ALFALFA	{}
+9  1  6  1 Cut-Perennial	CropDef.ALFALFA	{}
+
+}
+    
+    

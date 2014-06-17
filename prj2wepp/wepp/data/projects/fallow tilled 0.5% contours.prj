@@ -1,0 +1,40 @@
+#
+# WEPP project written: Fri Nov 17 08:26:39 AM 2000 
+#
+Version = 98.6
+Name = default
+Comments {
+
+}
+Units = English
+Landuse = 1
+Length = 39.020
+Profile {
+   File = "default.slp"
+}
+Climate {
+   File = "weppdemo.cli"
+}
+Soil {
+   Breaks = 0
+   Duncanon {
+      Distance = 39.020
+      File = "DUNCANON.sol"
+   }
+}
+Management {
+   Breaks = 0
+   fallow {
+      Distance = 39.020
+      File = "fallow tilled 0.5% contours.rot"
+   }
+}
+RunOptions {
+   Version = 1
+   SoilLossOutputType = 1
+   SoilLossOutputFile = AutoName
+   PlotFile = AutoName
+   GraphFile = AutoName
+   SimulationYears = 1
+   SmallEventByPass = 1
+}

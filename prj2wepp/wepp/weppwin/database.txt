@@ -1,0 +1,23 @@
+Database CropDef  = $(ROOT)/data/crop.db  write
+Database OpCropDef = $(ROOT)/data/cropop.db write
+Database IniCropDef = $(ROOT)/data/cropini.db write
+Database RangeDef = $(ROOT)/datar/range.db write
+Database DrainDef = $(ROOT)/data/drain.db write
+Database ContourDef = $(ROOT)/data/contour.db write
+Database ResidueDef = $(ROOT)/data/residue.db write
+Database IniRangeDef = $(ROOT)/data/rangeini.db write
+Database GrazeDef = $(ROOT)/data/graze.db write
+Database IrrDef = $(ROOT)/data/irrigation.db write
+Database ChannelDef = $(ROOT)/data/channel.db write
+Database ImpoundmentDef = $(ROOT)/data/impound.db write
+Database DailyIrrDef = $(ROOT)/data/dailyIrr.db write
+Database PesticideDef = $(ROOT)/data/pesticide.db write
+Database FertilizerDef = $(ROOT)/data/fertilizer.db write
+Database CenterPivotDef = $(ROOT)/data/pivot.db write
+Database Soils = $(ROOT)/data/soils
+Database Managements = $(ROOT)/data/managements
+Database Projects = $(ROOT)/data/projects
+Database Slopes = $(ROOT)/data/slopes
+Database Climates = $(ROOT)/data/climates/cligen
+Database Chemistry = $(ROOT)/data/chemistry
+

@@ -1,0 +1,40 @@
+#
+# WEPP project written: Tue Nov 21 03:14:30 PM 2000 
+#
+Version = 98.6
+Name = default
+Comments {
+
+}
+Units = English
+Landuse = 2
+Length = 39.020
+Profile {
+   File = "default.slp"
+}
+Climate {
+   File = "Idaho falls.cli"
+}
+Soil {
+   Breaks = 0
+   ROBIN {
+      Distance = 39.020
+      File = "ROBIN.sol"
+   }
+}
+Management {
+   Breaks = 0
+   Mountain big sagebrush-Poor condition-2 cow/calf per section  {
+      Distance = 39.020
+      File = "Rangeland\rangeland low grazing.rot"
+   }
+}
+RunOptions {
+   Version = 1
+   SoilLossOutputType = 1
+   SoilLossOutputFile = AutoName
+   PlotFile = AutoName
+   GraphFile = AutoName
+   SimulationYears = 1
+   SmallEventByPass = 1
+}

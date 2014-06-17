@@ -1,0 +1,15 @@
+# Fire Name|Date|Size|Land Management Unit|File
+Doce|2013-06-18|1000|Prescott National Forest, AZ|AZ3459511259620130618_20130618_20130623_dnbr.tif
+Duck_Lake|2012-06-14|21069|Michigan Division of Forestry|mi4663708543320120524_20110611_20120614_barc256.tif
+Dugan|2012-09-14|10675|Custer National Forsest, MT|mt4583610457120120914_20110912_20120922_dnbr.tif
+Trinity Ridge|2012-08-03|145971|Boise National Forest|id4371111536820120803_20110913_20120907_dnbr.tif
+Big Salmon Lake|2011-08-16|5213|Flathead, Ronan, MT|upperayres_20110929_barc256_alb.img
+Horseshoe 2|2011-06-25|222954|Coronado, Brisbee, AZ|horseshoe2_20110623_barc256_alb.img
+Las Conchas|2011-06-26|154619|Santa Fe, NM|LasConchas_FinalBurnSeverity_Exported_barc4.img
+Four Mile Canyon|2010-09-13|6250|Arapahoe/Roosevelt Forest, CO|fourmilecanyon2_barc4_100917-100910_100821_utm_clip.img
+Tripod Complex|2006-07-24|6250|Okanogan-Wenatchee, WA|tripod_20060911_barc4_alb.img
+School|2005-08-05|49515|Umatilla Forest, Pomeroy, WA|school_082505_barc256_alb.img
+Sim_Flame East Dear Creek|8888-88-88|88888|National Colville Forest, WA|Sim_flame_AnuragSrivastara.tif
+Black Fire|2013-07-01|4901|Ely District BLM, Ely, NV & Great Basin NP, Baker, NV|black.tif
+Snow Creek Fire|2013-08-08|1211|Ely District BLM, Ely, NV|snowck.tif
+Rim|2013-08-18|size?|Stanislaus National Forest, CA|RIM_SBS_final_10m.img

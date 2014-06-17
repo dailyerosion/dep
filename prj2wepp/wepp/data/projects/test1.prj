@@ -1,0 +1,40 @@
+#
+# WEPP project written: Sun Nov 19 10:26:26 AM 2000 
+#
+Version = 98.6
+Name = test1
+Comments {
+
+}
+Units = English
+Landuse = 1
+Length = 30.480
+Profile {
+   File = "S-Shaped10.SLP"
+}
+Climate {
+   File = "ALABAMA STATE FARM AL.CLI"
+}
+Soil {
+   Breaks = 0
+   ASCALON {
+      Distance = 30.480
+      File = "ASCALON.sol"
+   }
+}
+Management {
+   Breaks = 0
+   alfalfa with cuttings {
+      Distance = 30.480
+      File = "alfalfa with cuttings.rot"
+   }
+}
+RunOptions {
+   Version = 1
+   SoilLossOutputType = 1
+   SoilLossOutputFile = AutoName
+   PlotFile = AutoName
+   GraphFile = AutoName
+   SimulationYears = 5
+   SmallEventByPass = 1
+}

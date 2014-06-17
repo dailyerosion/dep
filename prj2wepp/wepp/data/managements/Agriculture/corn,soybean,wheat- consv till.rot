@@ -1,0 +1,32 @@
+#
+# WEPP rotation saved on: Thu Jun 12 11:12:38 PM 2014
+#
+# Created with WEPPWIN verion: Sep 17 2012 
+#
+Version = 98.7
+Name = corn,soybean,wheat (consv till)
+Description {
+}
+Color = 128 128 255
+LandUse = 1
+InitialConditions = IniCropDef.Aft_32194 {0.000000, 0}
+
+Operations {
+4  15  1  1 Tillage	OpCropDef.CHIS0006	{0.152400, 2}
+4  20  1  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
+4  21  1  1 Tillage	OpCropDef.DITAFI9	{0.050800, 2}
+4  22  1  1 Tillage	OpCropDef.HAPR	{0.050800, 2}
+5  10  1  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
+5  10  1  1 Plant-Annual	CropDef.CORNSD	 {0.800000}
+5  20  1  1 Tillage	OpCropDef.ROW_0004	{0.050800, 2}
+10  15  1  1 Harvest-Annual	CropDef.CORNSD	{}
+10  20  1  1 Tillage	OpCropDef.CHIS0006	{0.203200, 2}
+5  1  2  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
+5  10  2  1 Tillage	OpCropDef.DRDDO	{0.050800, 2}
+5  10  2  1 Plant-Annual	CropDef.SOYBEASD	 {0.254000}
+10  15  2  1 Harvest-Annual	CropDef.SOYBEASD	{}
+10  20  2  1 Tillage	OpCropDef.CULTMUSW	{0.050000, 2}
+10  20  2  1 Tillage	OpCropDef.DRDDO	{0.101600, 2}
+10  20  2  1 Plant-Annual	CropDef.WHEATSD	 {0.203200}
+7  2  3  1 Harvest-Annual	CropDef.WHEATSD	{}
+}

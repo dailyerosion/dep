@@ -1,0 +1,5 @@
+5 Water
+101 Unburned
+102 Low_Burn_Severity
+103 Mod_Burn_Severity
+104 High_Burn_Severity
