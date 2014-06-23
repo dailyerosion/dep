@@ -80,7 +80,7 @@ float: left;
         <script type="text/javascript">
 var tilecache = "<?php echo TMS_SERVER; ?>";
         </script>
- <script src='nextgen.js?v=4'></script>
+ <script src='nextgen.js?v=5'></script>
 </head>
 <body onload="init()">
 <div id="quick">

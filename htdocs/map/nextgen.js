@@ -1,5 +1,6 @@
 var map, tms;
 var iaextent;
+var MRMS_FLOOR = new Date("2013/08/20");
 var appstate = {
 		lat: 42.22,
 		lon: -95.489,
@@ -259,6 +260,14 @@ function init(){
     	  maxDate: d,
     	   onSelect: function(dateText, inst) {
     		   appstate.date = $("#datepicker").datepicker("getDate");
+    		   if ((appstate.ltype == 'mrms-calday') && (appstate.date < MRMS_FLOOR)){
+    			   appstate.ltype = 'precip-in2';
+    		    	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
+    	       }
+    		   if ((appstate.ltype == 'precip-in2') && (appstate.date > MRMS_FLOOR)){
+    			   appstate.ltype = 'mrms-calday';
+    		    	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
+    	       }
     		   remap(); 
     		   updateDetails();
     	   }
@@ -269,7 +278,11 @@ function init(){
       $( "#radio" ).buttonset();
       $( '#radio input[type=radio]').change(function(){
     	  tms.redraw();
-    	  appstate.ltype = this.value;
+    	  if ((this.value == 'mrms-calday') && (appstate.date < MRMS_FLOOR)){
+    		  appstate.ltype = 'precip-in2';
+    	  } else {
+    		  appstate.ltype = this.value;
+    	  }
     	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
       });
       var point = new OpenLayers.Geometry.Point(appstate.lon, appstate.lat);
