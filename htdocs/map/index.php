@@ -109,7 +109,7 @@ var tilecache = "<?php echo TMS_SERVER; ?>";
 	
 	<br clear="both"/>&nbsp;<br />
 	<div id="radio">
-		<input type="radio" id="precip-in2_opt" name="radio" value="precip-in2" /><label for="precip-in2_opt">Precipitation</label>
+		<input type="radio" id="precip-in2_opt" name="radio" value="mrms-calday" /><label for="precip-in2_opt">Precipitation</label>
 		<input type="radio" id="precip-in_opt" name="radio" value="precip-in" /><label for="precip-in_opt">P.v1</label>
 	    <input type="radio" id="loss2_opt" name="radio" value="loss2" checked="checked" /><label for="loss2_opt">Erosion</label>
 		<input type="radio" id="loss_opt" name="radio" value="loss" /><label for="loss_opt">E.v1</label>
