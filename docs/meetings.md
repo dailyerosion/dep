@@ -1,3 +1,13 @@
+17 Jun 2014
+  Team project meetings, lots of attendees
+  - The main issue was that our initial flow paths were too long and probably 
+    the reason for the high erosion estimates
+  - If we expand, the project name is just Daily Erosion Project at that point
+  - Dennis Flanagan was also noting that our flow paths were way too long
+  - Kansas is probably only interested in the area two counties west of ICT
+    to the eastern border
+  - Average irrigation in Kansas is 14.5 inches per year
+  
 11 Jun 2014
   Cruse, Gelder, James, daryl, grad student
   - First iteration had 211,414 flowpaths
