@@ -28,7 +28,7 @@ for row in icursor:
     wcursor.execute("""
     select hrap_i from hrap_polygons where 
     ST_contains(the_geom, ST_Transform(ST_Geometryfromtext(
-    'SRID=4326;POINT(%s %s)'),26915))""" % (row[0], row[1]))
+    'SRID=4326;POINT(%s %s)'),26915)) and used""" % (row[0], row[1]))
     row2 = wcursor.fetchone()
     if row2 is None:
         print '---> No HRAP Polygon for Lon: %.3f Lat: %.3f' % (row[0], row[1])
