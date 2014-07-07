@@ -102,7 +102,7 @@ def do_flowpath(huc_12, fid, fpath):
     landuse1 || landuse2 || landuse3 || landuse4 || landuse5 || landuse6 as lstring,
     ST_X(ST_Transform(geom,4326)) as x, 
     ST_Y(ST_Transform(geom,4326)) as y from flowpath_points WHERE flowpath = %s
-    and length < 311
+    and length < 121
     ORDER by segid ASC""", (fid,))
     rows = []
     maxmanagement = 0
