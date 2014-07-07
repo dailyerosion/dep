@@ -1,3 +1,13 @@
+ 2 Jul 2014
+  Update meeting, Cruse, Gelder, Victoria, grad student, James
+  - We should ask Dennis F if he has LS curve graphics to share
+  - Can the WEPP code tell us when we should truncate flowpaths?  Perhaps it
+    has some internal flag for when it things we have left sheet-rill
+  - James is going to look more into 9999 soils, perhaps something else is
+    up, these are when some soil property is missing
+  - daryl should send some soil 9999 diagnostics
+  - Are we reporting yield or detactment erosion!  gasp
+  
 17 Jun 2014
   Team project meetings, lots of attendees
   - The main issue was that our initial flow paths were too long and probably 
