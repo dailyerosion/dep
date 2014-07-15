@@ -126,10 +126,11 @@ def do_flowpath(huc_12, fid, fpath):
         rows = simplify(rows)
     
     res = {}
-    res['clifile'] = "/i/cli/%03ix%03i/%06.2fx%06.2f.cli" % (0 - rows[0]['x'],
-                                                           rows[0]['y'],
-                                                           0 - rows[0]['x'],
-                                                           rows[0]['y'])
+    res['clifile'] = "/i/cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (
+                                                        0 - rows[0]['x'],
+                                                        rows[0]['y'],
+                                                        0 - rows[0]['x'],
+                                                        rows[0]['y'])
     res['huc8'] = huc_12[:8]
     res['huc12'] = huc_12
     res['envfn'] = "/i/env/%s/%s_%s.env" % (res['huc8'], huc_12, fid)
