@@ -54,7 +54,8 @@ class wepprun:
     
     def get_clifile_fn(self):
         ''' Return the climate filename for this run '''
-        return '%s/cli/%03ix%03i/%06.2fx%06.2f.cli' % (IDEPHOME, 0 - self.lon, 
+        return '%s/cli/%03.0fx%03.0f/%06.2fx%06.2f.cli' % (IDEPHOME, 
+                                                           0 - self.lon, 
                                                   self.lat, 0 - self.lon,
                                                   self.lat)
 
