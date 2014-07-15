@@ -34,7 +34,7 @@ for row in icursor:
         # Find the closest hrap_polygon
         wcursor.execute("""select hrap_i, 
         ST_Distance(ST_Geometryfromtext('SRID=4326;POINT(%s %s)'), 
-        ST_Transform(the_geom,4326)) from hrap_polygons 
+        ST_Transform(the_geom,4326)) from hrap_polygons WHERE used
         ORDER by st_distance ASC LIMIT 1""" % (row[0], row[1]))
         row2 = wcursor.fetchone()
         print '---> No HRAP Polygon for Lon: %.3f Lat: %.3f, assign: %s' % (
@@ -48,8 +48,8 @@ for row in icursor:
     if not os.path.isdir(newdir):
         os.makedirs(newdir)
     if os.path.isfile(newfn):
-        continue
-        #os.unlink(newfn)
-    print oldfn, newfn
+        #continue
+        os.unlink(newfn)
+    #print oldfn, newfn
     shutil.copyfile(oldfn, newfn)
     #subprocess.call("ln -s %s %s" % (oldfn, newfn), shell=True)
