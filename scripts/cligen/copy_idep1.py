@@ -36,7 +36,7 @@ for row in icursor:
     hrap = row2[0]
     
     oldfn = "/mnt/idep/data/clifiles/%s.dat"  % (hrap,)
-    newdir = "/i/cli/%03ix%03i" % (0 - row[0], row[1])
+    newdir = "/i/cli/%03.0fx%03.0f" % (0 - row[0], row[1])
     newfn = "%s/%06.2fx%06.2f.cli" % (newdir, 0 - row[0], row[1])
     if not os.path.isdir(newdir):
         os.makedirs(newdir)
