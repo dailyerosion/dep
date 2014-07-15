@@ -94,9 +94,16 @@ def simplify(rows):
         
     return newrows
 
+def compute_slope(fid):
+    """ Compute the simple slope for the fid """
+    cursor2.execute("""SELECT max(elevation), min(elevation), max(length)
+    from flowpath_points where flowpath = %s and length < 121""", (fid,))
+    row = cursor2.fetchone()
+    return (row[0] - row[1]) / row[2]
+
 def do_flowpath(huc_12, fid, fpath):
     """ Process a given flowpathid """
-    # IMPORTANT: truncate at 311 meters as per discussion at 17 June meeting
+    slope = compute_slope(fid) 
     cursor2.execute("""SELECT segid, elevation, length, surgo, 
     slope, management,
     landuse1 || landuse2 || landuse3 || landuse4 || landuse5 || landuse6 as lstring,
@@ -109,8 +116,10 @@ def do_flowpath(huc_12, fid, fpath):
     for row in cursor2:
         if row['management'] > maxmanagement:
             maxmanagement = row['management']
-        if row['slope'] < 0.00001:
-            row['slope'] = 0.00001
+        #if row['slope'] < 0.00001:
+        #    row['slope'] = 0.00001
+        # hard coded...
+        row['slope'] = slope
         rows.append( row )
     
     if len(rows) > 19:
