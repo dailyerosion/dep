@@ -104,16 +104,22 @@ def compute_slope(fid):
 def do_flowpath(huc_12, fid, fpath):
     """ Process a given flowpathid """
     slope = compute_slope(fid) 
-    cursor2.execute("""SELECT segid, elevation, length, surgo, 
+    cursor2.execute("""SELECT segid, elevation, length, f.surgo, 
     slope, management,
     landuse1 || landuse2 || landuse3 || landuse4 || landuse5 || landuse6 as lstring,
-    ST_X(ST_Transform(geom,4326)) as x, 
-    ST_Y(ST_Transform(geom,4326)) as y from flowpath_points WHERE flowpath = %s
-    and length < 121
+    round(ST_X(ST_Transform(geom,4326))::numeric,2) as x, 
+    round(ST_Y(ST_Transform(geom,4326))::numeric,2) as y from 
+    flowpath_points f JOIN xref_surgo x on (x.surgo = f.surgo) 
+    WHERE flowpath = %s and length < 121 and x.soilfile != 'IA9999.SOL'
     ORDER by segid ASC""", (fid,))
     rows = []
+    x = None
+    y = None
     maxmanagement = 0
-    for row in cursor2:
+    for i, row in enumerate(cursor2):
+        if i == 0:
+            x = row['x']
+            y = row['y']
         if row['management'] > maxmanagement:
             maxmanagement = row['management']
         #if row['slope'] < 0.00001:
@@ -122,15 +128,18 @@ def do_flowpath(huc_12, fid, fpath):
         row['slope'] = slope
         rows.append( row )
     
+    if len(rows) < 2:
+        print ' Not enough data for fid: %s, skipping' % (fid,)
+        return None
     if len(rows) > 19:
         rows = simplify(rows)
     
     res = {}
     res['clifile'] = "/i/cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (
-                                                        0 - rows[0]['x'],
-                                                        rows[0]['y'],
-                                                        0 - rows[0]['x'],
-                                                        rows[0]['y'])
+                                                        0 - x,
+                                                        y,
+                                                        0 - x,
+                                                        y)
     res['huc8'] = huc_12[:8]
     res['huc12'] = huc_12
     res['envfn'] = "/i/env/%s/%s_%s.env" % (res['huc8'], huc_12, fid)
@@ -262,4 +271,5 @@ if __name__ == '__main__':
     cursor.execute("""SELECT fpath, fid, huc_12 from flowpaths""")
     for row in cursor:
         data = do_flowpath(row['huc_12'], row['fid'], row['fpath'])
-        write_prj(data)
+        if data is not None:
+            write_prj(data)
