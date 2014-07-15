@@ -31,8 +31,15 @@ for row in icursor:
     'SRID=4326;POINT(%s %s)'),26915)) and used""" % (row[0], row[1]))
     row2 = wcursor.fetchone()
     if row2 is None:
-        print '---> No HRAP Polygon for Lon: %.3f Lat: %.3f' % (row[0], row[1])
-        continue
+        # Find the closest hrap_polygon
+        wcursor.execute("""select hrap_i, 
+        ST_Distance(ST_Geometryfromtext('SRID=4326;POINT(%s %s)'), 
+        ST_Transform(the_geom,4326)) from hrap_polygons 
+        ORDER by st_distance ASC LIMIT 1""" % (row[0], row[1]))
+        row2 = wcursor.fetchone()
+        print '---> No HRAP Polygon for Lon: %.3f Lat: %.3f, assign: %s' % (
+                                        row[0], row[1], row2[0])
+        
     hrap = row2[0]
     
     oldfn = "/mnt/idep/data/clifiles/%s.dat"  % (hrap,)
@@ -43,6 +50,6 @@ for row in icursor:
     if os.path.isfile(newfn):
         continue
         #os.unlink(newfn)
-    #print oldfn, newfn
-    #shutil.copyfile(oldfn, newfn)
-    subprocess.call("ln -s %s %s" % (oldfn, newfn), shell=True)
+    print oldfn, newfn
+    shutil.copyfile(oldfn, newfn)
+    #subprocess.call("ln -s %s %s" % (oldfn, newfn), shell=True)
