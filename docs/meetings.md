@@ -1,3 +1,15 @@
+23 Jul 2014
+  Update meeting, Cruse, Gelder, James, Victoria, Hao, Sarah
+  - James would like to look into soil table differences
+  - Gelder talked about differences between HS in WEPP and the explicit slopes
+    we are feeding WEPP, perhaps this is not ideal and we should attempt to
+    provide more generalized hill slopes for WEPP
+  - Continued discussion about if WEPP can provide us guidance on when gullies
+    start
+  - daryl should email James about the upfact used in IDEPv1
+  - Perhaps we could use Iowa Flood center data to validate the runoff output
+  - Some of us probably should attend EGU in Vienna in April 2015
+
  2 Jul 2014
   Update meeting, Cruse, Gelder, Victoria, grad student, James
   - We should ask Dennis F if he has LS curve graphics to share
