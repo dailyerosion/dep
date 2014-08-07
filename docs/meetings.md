@@ -1,3 +1,14 @@
+ 6 Aug 2014
+  Update meeting, Cruse, Gelder, James
+  - A side project with Gelder was funded by Iowa Nutrient Reduction Strategy
+  - Should find out this month about the main grant application needed for
+    agronomy matching funds
+  - Great deal of discussion on the grid ordering work and how this can be 
+    used to find converging flow.  Gelder wants to rerun cutter, but this will
+    take considerable time.
+  - Lots of discussion about what we are going to do with terracess.  Initially,
+    just need to quantify how many are there.
+     
 23 Jul 2014
   Update meeting, Cruse, Gelder, James, Victoria, Hao, Sarah
   - James would like to look into soil table differences
