@@ -127,8 +127,8 @@ def realtime_run():
     icursor = idep.cursor()
 
     icursor.execute("""SELECT huc_12, fid, fpath, 
-    ST_x(ST_PointN(ST_Transform(geom,4326),1)), 
-    ST_y(ST_PointN(ST_Transform(geom,4326),1)) 
+    round(ST_X(ST_PointN(ST_TRANSFORM(geom,4326), 1))::numeric,2),
+    round(ST_Y(ST_PointN(ST_TRANSFORM(geom,4326), 1))::numeric,2) 
     from flowpaths where scenario = %s""" % (SCENARIO,))
     for row in icursor:
         QUEUE.append( row )
