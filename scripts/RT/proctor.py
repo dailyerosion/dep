@@ -3,13 +3,15 @@
 '''
 import psycopg2
 import os
+import sys
 import time
 import subprocess
 import threading
 import datetime
 from multiprocessing import Pool
 
-IDEPHOME = "/i" # don't need trailing /
+SCENARIO = sys.argv[1]
+IDEPHOME = "/i/%s" % (SCENARIO,) # don't need trailing /
 
 class wepprun:
     ''' Represents a single run of WEPP 
@@ -119,7 +121,7 @@ def realtime_run():
     icursor.execute("""SELECT huc_12, fid, fpath, 
     ST_x(ST_PointN(ST_Transform(geom,4326),1)), 
     ST_y(ST_PointN(ST_Transform(geom,4326),1)) 
-    from flowpaths""")
+    from flowpaths where scenario = %s""" % (SCENARIO,))
     for row in icursor:
         QUEUE.append( row )
     
@@ -141,8 +143,9 @@ if __name__ == '__main__':
             secs = delta.microseconds / 1000000. + delta.seconds
             speed = i / secs
             remaining = ((sz - i) / speed) / 3600.
-            print ('%8.2fs Processed %6s/%6s [%.2f runs per sec] '
-                   +'remaining: %5.2fh') % (secs, i, sz, speed, remaining )
+            print ('%5.2fh Processed %6s/%6s [%.2f runs per sec] '
+                   +'remaining: %5.2fh') % (secs /3600., i, sz, speed, 
+                                            remaining )
 
     
     

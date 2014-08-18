@@ -10,10 +10,11 @@ idep = psycopg2.connect(database='idep', host='iemdb')
 icursor = idep.cursor()
 
 IDEPHOME = "/i"
+SCENARIO=sys.argv[1]
 
 def do():
     ''' Process for this date! '''
-    os.chdir("/i/env") 
+    os.chdir("/i/%s/env" % (SCENARIO,)) 
     for huc8 in glob.glob("*"):
         os.chdir(huc8)
         for huc4 in glob.glob("*"):
@@ -29,6 +30,8 @@ def do():
                         continue
                     ts = datetime.datetime( 2006 + int(tokens[2]), int(tokens[1]),
                                             int(tokens[0]) )
+                    #if ts.year == 2010 and ts.month == 7 and ts.day == 22:
+                    #    print fn, tokens[6]
                     if not data.has_key(ts):
                         data[ts] = {'runoff': [],
                                     'loss': [],
@@ -45,12 +48,13 @@ def do():
                     INSERT into results_by_huc12(huc_12, valid, 
                     min_precip, avg_precip, max_precip,
                     min_loss, avg_loss, max_loss,
-                    min_runoff, avg_runoff, max_runoff) VALUES
-                    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    min_runoff, avg_runoff, max_runoff, scenario) VALUES
+                    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, %s)
                     """, (huc12, ts, 
                           min(data[ts]['precip']), avgprecip, max(data[ts]['precip']),
                           min(data[ts]['loss']), avgloss, max(data[ts]['loss']),
-                          min(data[ts]['runoff']), avgrunoff, max(data[ts]['runoff'])))
+                          min(data[ts]['runoff']), avgrunoff, 
+                          max(data[ts]['runoff']), SCENARIO))
             os.chdir("..")
         os.chdir("..")
  
