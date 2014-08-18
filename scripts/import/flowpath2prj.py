@@ -2,11 +2,12 @@
 '''
 import psycopg2
 import psycopg2.extras
-import os
 import copy
 import sys
 import datetime
 from math import atan2, degrees, pi
+
+SCENARIO = sys.argv[1]
 
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -97,21 +98,22 @@ def simplify(rows):
 def compute_slope(fid):
     """ Compute the simple slope for the fid """
     cursor2.execute("""SELECT max(elevation), min(elevation), max(length)
-    from flowpath_points where flowpath = %s and length < 121""", (fid,))
+    from flowpath_points where flowpath = %s and length < 9999
+    and scenario = %s""", (fid, SCENARIO))
     row = cursor2.fetchone()
     return (row[0] - row[1]) / row[2]
 
 def do_flowpath(huc_12, fid, fpath):
     """ Process a given flowpathid """
-    slope = compute_slope(fid) 
+    #slope = compute_slope(fid) 
     cursor2.execute("""SELECT segid, elevation, length, f.surgo, 
-    slope, management,
+    slope, management, x.soilfile,
     landuse1 || landuse2 || landuse3 || landuse4 || landuse5 || landuse6 as lstring,
     round(ST_X(ST_Transform(geom,4326))::numeric,2) as x, 
     round(ST_Y(ST_Transform(geom,4326))::numeric,2) as y from 
     flowpath_points f JOIN xref_surgo x on (x.surgo = f.surgo) 
-    WHERE flowpath = %s and length < 121 and x.soilfile != 'IA9999.SOL'
-    ORDER by segid ASC""", (fid,))
+    WHERE flowpath = %s and length < 9999 and scenario = %s
+    ORDER by segid ASC""", (fid, SCENARIO))
     rows = []
     x = None
     y = None
@@ -120,12 +122,14 @@ def do_flowpath(huc_12, fid, fpath):
         if i == 0:
             x = row['x']
             y = row['y']
+        if row['soilfile'] == 'IA9999.SOL':
+            continue
         if row['management'] > maxmanagement:
             maxmanagement = row['management']
-        #if row['slope'] < 0.00001:
-        #    row['slope'] = 0.00001
+        if row['slope'] < 0.00001:
+            row['slope'] = 0.00001
         # hard coded...
-        row['slope'] = slope
+        #row['slope'] = slope
         rows.append( row )
     
     if len(rows) < 2:
@@ -135,19 +139,21 @@ def do_flowpath(huc_12, fid, fpath):
         rows = simplify(rows)
     
     res = {}
-    res['clifile'] = "/i/cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (
+    res['clifile'] = "/i/%s/cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (SCENARIO,
                                                         0 - x,
                                                         y,
                                                         0 - x,
                                                         y)
     res['huc8'] = huc_12[:8]
     res['huc12'] = huc_12
-    res['envfn'] = "/i/env/%s/%s_%s.env" % (res['huc8'], huc_12, fid)
+    res['envfn'] = "/i/%s/env/%s/%s_%s.env" % (SCENARIO,
+                                               res['huc8'], huc_12, fid)
     res['date'] = datetime.datetime.now()
     res['aspect'] = compute_aspect(rows[0]['x'], rows[0]['y'],
                                    rows[-1]['x'], rows[-1]['y'])
-    res['prj_fn'] = "/i/prj/%s/%s/%s_%s.prj" % (res['huc8'], huc_12[-4:], 
-                                                huc_12, fpath)
+    res['prj_fn'] = "/i/%s/prj/%s/%s/%s_%s.prj" % (SCENARIO,
+                                                   res['huc8'], huc_12[-4:], 
+                                                   huc_12, fpath)
     res['length'] = rows[-1]['length']
     res['slope_points'] = len(rows)
 
@@ -165,6 +171,8 @@ def do_flowpath(huc_12, fid, fpath):
                 soillengths.append( row['length'] - lsoilstart)
             prevsoil = row['surgo']
             lsoilstart = row['length']
+        if res['length'] == 0:
+            continue
         slpdata += " %.3f,%.5f" % (row['length'] / res['length'],
                                    row['slope'])
     soils.append(prevsoil)
@@ -177,8 +185,8 @@ def do_flowpath(huc_12, fid, fpath):
     for d, s in zip(soillengths, soils):
         res['soils'] += """    %s {
         Distance = %.3f
-        File = "/i/sol_input/%s"
-    }\n""" % (s, d, surgo2file.get(s,s))
+        File = "/i/%s/sol_input/%s"
+    }\n""" % (s, d, SCENARIO, surgo2file.get(s,s))
 
 
     prevman = None
@@ -196,6 +204,9 @@ def do_flowpath(huc_12, fid, fpath):
             prevman = row['lstring']
             lmanstart = row['length']
 
+    if prevman is None:
+        print 'Unsure how we got here'
+        return 
     mans.append( get_rotation(prevman, maxmanagement) )
     manlengths.append( res['length'] - lmanstart)
     res['manbreaks'] = len(manlengths) -1
@@ -268,7 +279,8 @@ RunOptions {
 
 if __name__ == '__main__':
     # Go main Go
-    cursor.execute("""SELECT fpath, fid, huc_12 from flowpaths""")
+    cursor.execute("""SELECT fpath, fid, huc_12 from flowpaths 
+    WHERE scenario = %s""", (SCENARIO,))
     for row in cursor:
         data = do_flowpath(row['huc_12'], row['fid'], row['fpath'])
         if data is not None:

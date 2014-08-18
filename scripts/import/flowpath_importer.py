@@ -20,18 +20,23 @@ import pandas as pd
 from pandas import Series
 import psycopg2
 import datetime
+import sys
+
+SCENARIO = sys.argv[1]
 
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor()
 
 def get_flowpath(huc12, fpath):
     cursor.execute("""
-    SELECT fid from flowpaths where huc_12 = %s and fpath = %s
-    """, (huc12, fpath))
+    SELECT fid from flowpaths where huc_12 = %s and fpath = %s 
+    and scenario = %s
+    """, (huc12, fpath, SCENARIO))
     if cursor.rowcount == 0:
         cursor.execute("""
-        INSERT into flowpaths(huc_12, fpath) values (%s, %s) RETURNING fid
-        """, (huc12, fpath))
+        INSERT into flowpaths(huc_12, fpath, scenario) 
+        values (%s, %s, %s) RETURNING fid
+        """, (huc12, fpath, SCENARIO))
     return cursor.fetchone()[0]    
 
 def get_data(fn):
@@ -47,14 +52,16 @@ def process(fn, df):
     '''Process a given filename into the database '''
     huc12 = fn[4:-4]
     huc8 = huc12[:-4]
+    #print df.keys()
     flowpaths = Series(df['fp%s' % (huc8,)]).unique()
     flowpaths.sort()
     for flowpath in flowpaths:
         df2 = df[df['fp%s' % (huc8,)]==flowpath]
         df2 = df2.sort('fpLen%s' % (huc8[:5],), ascending=True)
         fid = get_flowpath(huc12, flowpath)
-        cursor.execute("""DELETE from flowpath_points WHERE flowpath = %s""",
-                       (fid,))
+        cursor.execute("""DELETE from flowpath_points WHERE flowpath = %s
+            and scenario = %s""",
+                       (fid, SCENARIO))
         lstring = []
         sz = len(df2.index)
         for segid, row in enumerate(df2.iterrows()):
@@ -63,7 +70,7 @@ def process(fn, df):
                 row2 = df2.irow(segid-1)
             else:
                 row2 = df2.irow(segid+1)
-            dy = row['ec3m%s' % (huc8[:6],)] - row2['ec3m%s' % (huc8[:6],)]
+            dy = row['ep3m%s' % (huc8[:6],)] - row2['ep3m%s' % (huc8[:6],)]
             dx =  row2['fpLen%s' % (huc8[:5],)] - row['fpLen%s' % (huc8[:5],)]
             if dx == 0:
                 slope = 0
@@ -74,18 +81,19 @@ def process(fn, df):
                 lu = [None, None, None, None, None, None]
             sql = """INSERT into flowpath_points(flowpath, segid, 
                 elevation, length,  surgo, management, slope, geom,
-                landuse1, landuse2, landuse3, landuse4, landuse5, landuse6) 
+                landuse1, landuse2, landuse3, landuse4, landuse5, landuse6,
+                scenario) 
                 values(%s, %s , %s,
                 %s, %s, %s, %s, 'SRID=26915;POINT(%s %s)',
-                %s, %s, %s, %s, %s, %s);
+                %s, %s, %s, %s, %s, %s, %s);
                 """ 
             args = (fid, segid,  
-                       row['ec3m%s' % (huc8[:6],)]/100.,
+                       row['ep3m%s' % (huc8[:6],)]/100.,
                row['fpLen%s' % (huc8[:5],)]/100., 
                 row['gSSURGO'], 
                row['Management'], slope, row['X'], 
                row['Y'], lu[0], lu[1], lu[2], 
-               lu[3], lu[4], lu[5])
+               lu[3], lu[4], lu[5], SCENARIO)
             cursor.execute(sql, args)
             
             lstring.append("%s %s" % (row['X'], row['Y']))
@@ -94,17 +102,19 @@ def process(fn, df):
             #print '%s %s Save flowpath %s GEOM, length %s' % (huc12, flowpath, fid, 
             #                                               len(lstring))
             sql = """UPDATE flowpaths SET geom = 'SRID=26915;LINESTRING(%s)' 
-                WHERE fid = %s""" % (",".join(lstring), fid)
+                WHERE fid = %s and scenario = %s""" % (",".join(lstring), fid,
+                                                       SCENARIO)
             cursor.execute(sql)
         else:
             print '---> ERROR: %s flowpath %s < 2 points, deleting' % (
                                                             fn, flowpath,)
             cursor.execute("""DELETE from flowpath_points 
-                where flowpath = %s""", (fid,))
-            cursor.execute("""DELETE from flowpaths where fid = %s""", (fid,))
+                where flowpath = %s and scenario = %s""", (fid, SCENARIO))
+            cursor.execute("""DELETE from flowpaths where fid = %s
+                and scenario = %s""", (fid, SCENARIO))
 
 if __name__ == '__main__':
-    os.chdir("../../data/flowpaths")
+    os.chdir("../../data/dbfsOrgnlTesting")
     fns = glob.glob("*.dbf")
     total = len(fns)
     for i, fn in enumerate(fns):
