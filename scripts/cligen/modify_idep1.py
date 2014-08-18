@@ -3,8 +3,11 @@ Adjust IDEPv1 climate files to match our reality
 '''
 import glob
 import os
+import sys
 
-os.chdir('/i/cli/')
+SCENARIO = sys.argv[1]
+
+os.chdir('/i/%s/cli/' % (SCENARIO,))
 for d in glob.glob("*"):
     os.chdir(d)
     for fn in glob.glob("*.cli"):

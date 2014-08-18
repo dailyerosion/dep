@@ -7,6 +7,9 @@ import psycopg2
 import os
 import shutil
 import subprocess
+import sys
+
+SCENARIO = sys.argv[1]
 
 idep = psycopg2.connect(database='idep', host='iemdb')
 icursor = idep.cursor()
@@ -21,7 +24,7 @@ icursor.execute("""
   SELECT distinct
   round(ST_X(ST_PointN(ST_TRANSFORM(geom,4326), 1))::numeric,2),
   round(ST_Y(ST_PointN(ST_TRANSFORM(geom,4326), 1))::numeric,2)
-  from flowpaths
+  from flowpaths where substr(huc_12,1,8) in ('07020009', '07100007')
 """)
 print 'Found %s distinct IDEPv2 Precip Cells' % (icursor.rowcount,)
 for row in icursor:
@@ -43,7 +46,7 @@ for row in icursor:
     hrap = row2[0]
     
     oldfn = "/mnt/idep/data/clifiles/%s.dat"  % (hrap,)
-    newdir = "/i/cli/%03.0fx%03.0f" % (0 - row[0], row[1])
+    newdir = "/i/%s/cli/%03.0fx%03.0f" % (SCENARIO, 0 - row[0], row[1])
     newfn = "%s/%06.2fx%06.2f.cli" % (newdir, 0 - row[0], row[1])
     if not os.path.isdir(newdir):
         os.makedirs(newdir)
