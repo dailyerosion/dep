@@ -8,7 +8,7 @@ SCENARIO = sys.argv[1]
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor()
 
-PREFIXES = 'env  man  prj  run  slp  sol  wb'.split()
+PREFIXES = 'env  man  prj  run  slp  sol  wb error'.split()
 
 def do(huc12):
     """ Directory creator! """

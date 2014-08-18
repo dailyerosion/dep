@@ -38,7 +38,10 @@ class wepprun:
         ''' Return the event filename for this run '''
         return '%s/env/%s/%s_%s.env' % (IDEPHOME, self.subdir,
                                            self.huc12, self.fpid)
-
+    def get_error_fn(self):
+        ''' Return the event filename for this run '''
+        return '%s/error/%s/%s_%s.env' % (IDEPHOME, self.subdir,
+                                           self.huc12, self.fpid)
     def get_man_fn(self):
         ''' Return the management filename for this run '''
         return '%s/man/%s/%s_%s.man' % (IDEPHOME, self.subdir, 
@@ -79,7 +82,7 @@ class wepprun:
         o.write("No\n")     # pass file output?
         o.write("1\n")      # abbreviated annual output
         o.write("No\n")     # initial conditions output
-        o.write("wepp.out\n")   # soil loss output file
+        o.write("/dev/null\n")   # soil loss output file
         o.write("Yes\n")        # Do water balance output
         o.write("%s\n" % (self.get_wb_fn(),))   # water balance output file
         o.write("No\n")     # crop output
@@ -110,6 +113,11 @@ class wepprun:
         p = subprocess.Popen("~/bin/wepp < %s" % (runfile,), shell=True,
                              stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         stdout = p.stdout.read()
+        if stdout[-13:-1] != 'SUCCESSFULLY':
+            print 'Run HUC12: %s FPATH: %4s errored!' % (self.huc12, self.fpid)
+            e = open(self.get_error_fn(), 'w')
+            e.write(stdout)
+            e.close()
 
 QUEUE = []
 
