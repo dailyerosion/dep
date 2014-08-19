@@ -5,6 +5,7 @@ require '../autoload.php';
 $year = isset($_REQUEST["year"]) ? intval($_REQUEST["year"]) : 2014;
 $model_twp = isset($_REQUEST["model_twp"]) ? $_REQUEST["model_twp"] : "T90NR39W";
 $huc12 = isset($_REQUEST["huc_12"]) ? $_REQUEST["huc_12"] : "102300050105";
+$scenario = isset($_REQUEST["scenario"]) ? intval($_REQUEST["scenario"]): 0;
 
 $wepp_pgconn = pg_connect("dbname=wepp host=iemdb user=nobody");
 $idep_pgconn = pg_connect("dbname=idep host=iemdb user=nobody");
@@ -118,7 +119,7 @@ echo <<<EOF
 
 <h3>Slope Comparison</h3>
 
-<img src="/plots/slopes_{$huc12}_{$model_twp}.png" />
+<img src="/plots/slopes{$scenario}_{$huc12}_{$model_twp}.png" />
 
 <h3>Yearly Totals</h3>
 Click on the year to view daily output for that year.<br />

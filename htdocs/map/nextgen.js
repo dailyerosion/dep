@@ -1,5 +1,6 @@
 var map, tms;
 var iaextent;
+var scenario = 0;
 var MRMS_FLOOR = new Date("2013/08/20");
 var appstate = {
 		lat: 42.22,
@@ -31,7 +32,7 @@ function get_my_url (bounds) {
         if (url instanceof Array) {
             url = this.selectUrl(path, url);
         }
-        this.layername = 'idep::'+ appstate.ltype +'::'+$.datepicker.formatDate("yy-mm-dd", appstate.date);
+        this.layername = 'idep'+ scenario +'::'+ appstate.ltype +'::'+$.datepicker.formatDate("yy-mm-dd", appstate.date);
         return url + this.service +"/"+ this.layername +"/"+ path;
 
    }

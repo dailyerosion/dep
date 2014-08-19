@@ -33,21 +33,40 @@ def read_slope(fn):
 
     return x2, h2
 
-def make_plot(model_twp, huc_12, mc, mckey):
+def make_plot(scenario, model_twp, huc_12, mc, mckey):
+    import matplotlib
+    matplotlib.use('agg')
     import matplotlib.pyplot as plt
     import psycopg2
     import cStringIO
     (fig, ax) = plt.subplots(2,1)
 
 
-    ax[0].set_title("IDEP Slope Comparison\nHUC12: %s MODEL_TWP: %s" % (
-                                                    huc_12, model_twp))
 
     slopes2 = []
-    for fn in glob.glob("/i/slp/%s/%s/*.slp" % (huc_12[:8], huc_12[8:])):
+    slopes3 = []
+    for fn in glob.glob("/i/%s/slp/%s/%s/*.slp" % (scenario, huc_12[:8], 
+                                                   huc_12[8:])):
         x,y = read_slope(fn)
         slopes2.append(  (y[-1] - y[0]) / (x[-1] - x[0]) )
         ax[0].plot(x, y, color='r', zorder=1)
+
+    for fn in glob.glob("/i/1/slp/%s/%s/*.slp" % ( huc_12[:8], 
+                                                   huc_12[8:])):
+        x,y = read_slope(fn)
+        slopes3.append(  (y[-1] - y[0]) / (x[-1] - x[0]) )
+        ax[0].plot(x, y, color='g', zorder=2)
+
+
+    IDEPDB = psycopg2.connect(database='idep', host='iemdb')
+    cursor = IDEPDB.cursor()
+
+    cursor.execute("""SELECT label from scenarios where id = %s""",
+                   (scenario,))
+    slabel = cursor.fetchone()[0]
+    ax[0].set_title(("IDEP Slope Comparison (scenario:%s %s)"
+                     +"\nHUC12: %s MODEL_TWP: %s") % (scenario, slabel,
+                                                    huc_12, model_twp))
 
     WEPPDB = psycopg2.connect(database='wepp', host='iemdb')
     cursor = WEPPDB.cursor()
@@ -57,15 +76,15 @@ def make_plot(model_twp, huc_12, mc, mckey):
     for row in cursor:
         x2,y2 = read_slope("/mnt/idep/data/slopes/%s.slp" % (row[0],))
         slopes1.append(  (y2[-1] - y2[0]) / (x2[-1] - x2[0]) )
-        ax[0].plot(x2, y2, color='b', zorder=2)
+        ax[0].plot(x2, y2, color='b', zorder=3)
 
     ax[0].grid(True)
     ax[0].set_ylabel("Elevation $\Delta$ [m]")
     ax[0].set_xlabel("Length along slope [m]")
 
-    ax[1].boxplot([slopes1, slopes2])
-    ax[1].set_xticks([1,2])
-    ax[1].set_xticklabels(['IDEPv1 (Blue)', 'IDEPv2 (Red)'])
+    ax[1].boxplot([slopes1, slopes2, slopes3])
+    ax[1].set_xticks([1,2, 3])
+    ax[1].set_xticklabels(['IDEPv1 (Blue)', 'IDEPv2 (Red)', 'IDEPv2 (Green) G4'])
     ax[1].set_ylabel("Slope Distribution [m/m]")
     ax[1].grid(True)
 
@@ -85,12 +104,13 @@ if __name__ == '__main__':
     form = cgi.FieldStorage()
     model_twp = form.getfirst('model_twp', 'T82NR39W')
     huc_12 = form.getfirst('huc_12', '102300070302')
+    scenario = int(form.getfirst('scenario', 0))
 
     mc = memcache.Client(['iem-memcached:11211'], debug=0)
-    mckey = "idep/plots/slopes_%s_%s.png" % (model_twp, huc_12)
+    mckey = "%s/idep/12plots/slopes_%s_%s.png" % (scenario, model_twp, huc_12)
     res = mc.get(mckey)
     if res:
         sys.stdout.write("Content-type: image/png\n\n")
         sys.stdout.write( res )
     else:
-        make_plot(model_twp, huc_12, mc, mckey)
+        make_plot(scenario, model_twp, huc_12, mc, mckey)

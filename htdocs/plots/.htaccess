@@ -2,4 +2,4 @@ AddHandler cgi-script .py
 Options +ExecCGI
 
 RewriteEngine On
-RewriteRule ^slopes_([0-9]{12})_([0-9A-Z]+).png$ slopes.py?huc_12=$1&model_twp=$2
+RewriteRule ^slopes([0-9]+)_([0-9]{12})_([0-9A-Z]+).png$ slopes.py?scenario=$1&huc_12=$2&model_twp=$3
