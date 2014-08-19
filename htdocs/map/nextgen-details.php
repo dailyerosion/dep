@@ -3,6 +3,7 @@ date_default_timezone_set('America/Chicago');
 $lat = isset($_REQUEST['lat'])? floatval($_REQUEST['lat']): die();
 $lon = isset($_REQUEST['lon'])? floatval($_REQUEST['lon']): die();
 $date = isset($_REQUEST['date'])? strtotime($_REQUEST['date']): die();
+$scenario = isset($_REQUEST["scenario"]) ? intval($_REQUEST["scenario"]): 0;
 $year = date("Y", $date);
 
 if ($lon < -96.639706  || $lat < 40.375437 || $lon > -90.140061 || $lat > 43.501196){
@@ -99,7 +100,7 @@ if (pg_num_rows($rs) == 0){
 /* Fetch Results */
 echo "<br />--- IDEPv1 Township Summary ---";
 $rs = pg_prepare($weppconn, "RES", "select * from results_by_twp WHERE
-		valid = $1 and model_twp = $2");
+		valid = $1 and model_twp = $2 ");
 $rs = timeit($weppconn, "RES", Array(date("Y-m-d", $date), $model_twp));
 if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>No Erosion/Runoff</strong>";
@@ -114,8 +115,8 @@ if (pg_num_rows($rs) == 0){
 /* Fetch Results */
 echo "<br />--- IDEPv2 HUC 12 Summary ---";
 $rs = pg_prepare($dbconn, "RES", "select * from results_by_huc12 WHERE 
-		valid = $1 and huc_12 = $2");
-$rs = timeit($dbconn, "RES", Array(date("Y-m-d", $date), $huc_12));
+		valid = $1 and huc_12 = $2 and scenario = $3");
+$rs = timeit($dbconn, "RES", Array(date("Y-m-d", $date), $huc_12, $scenario));
 if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>No Erosion/Runoff</strong>";
 } else{
@@ -127,8 +128,9 @@ if (pg_num_rows($rs) == 0){
 
 /* Get top events */
 $rs = pg_prepare($dbconn, "TRES", "select valid from results_by_huc12 WHERE
-		huc_12 = $1 and valid > '2007-01-01' ORDER by avg_loss DESC LIMIT 10");
-$rs = timeit($dbconn, "TRES", Array($huc_12));
+		huc_12 = $1 and valid > '2007-01-01' and scenario =$2
+		ORDER by avg_loss DESC LIMIT 10");
+$rs = timeit($dbconn, "TRES", Array($huc_12, $scenario));
 if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>Top events are missing!</strong>";
 } else{
@@ -145,6 +147,6 @@ if (pg_num_rows($rs) == 0){
 	echo "</table>";
 }
 echo "--- Diagnostics ---";
-echo sprintf("<br /><a target=\"_new\" href=\"/compare.phtml?year=%s&model_twp=%s&huc_12=%s\">Daily Comparison</a>",
-		date("Y", $date), $model_twp, $huc_12);
+echo sprintf("<br /><a target=\"_new\" href=\"/compare.phtml?scenario=%s&year=%s&model_twp=%s&huc_12=%s\">Daily Comparison</a>",
+		$scenario, date("Y", $date), $model_twp, $huc_12);
 ?>
