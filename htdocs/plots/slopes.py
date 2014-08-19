@@ -44,18 +44,11 @@ def make_plot(scenario, model_twp, huc_12, mc, mckey):
 
 
     slopes2 = []
-    slopes3 = []
     for fn in glob.glob("/i/%s/slp/%s/%s/*.slp" % (scenario, huc_12[:8], 
                                                    huc_12[8:])):
         x,y = read_slope(fn)
         slopes2.append(  (y[-1] - y[0]) / (x[-1] - x[0]) )
         ax[0].plot(x, y, color='r', zorder=1)
-
-    for fn in glob.glob("/i/1/slp/%s/%s/*.slp" % ( huc_12[:8], 
-                                                   huc_12[8:])):
-        x,y = read_slope(fn)
-        slopes3.append(  (y[-1] - y[0]) / (x[-1] - x[0]) )
-        ax[0].plot(x, y, color='g', zorder=2)
 
 
     IDEPDB = psycopg2.connect(database='idep', host='iemdb')
@@ -82,9 +75,9 @@ def make_plot(scenario, model_twp, huc_12, mc, mckey):
     ax[0].set_ylabel("Elevation $\Delta$ [m]")
     ax[0].set_xlabel("Length along slope [m]")
 
-    ax[1].boxplot([slopes1, slopes2, slopes3])
-    ax[1].set_xticks([1,2, 3])
-    ax[1].set_xticklabels(['IDEPv1 (Blue)', 'IDEPv2 (Red)', 'IDEPv2 (Green) G4'])
+    ax[1].boxplot([slopes1, slopes2])
+    ax[1].set_xticks([1,2])
+    ax[1].set_xticklabels(['IDEPv1 (Blue)', 'IDEPv2 (Red)'])
     ax[1].set_ylabel("Slope Distribution [m/m]")
     ax[1].grid(True)
 
@@ -107,7 +100,7 @@ if __name__ == '__main__':
     scenario = int(form.getfirst('scenario', 0))
 
     mc = memcache.Client(['iem-memcached:11211'], debug=0)
-    mckey = "%s/idep/12plots/slopes_%s_%s.png" % (scenario, model_twp, huc_12)
+    mckey = "%s/idep/plots/slopes_%s_%s.png" % (scenario, model_twp, huc_12)
     res = mc.get(mckey)
     if res:
         sys.stdout.write("Content-type: image/png\n\n")
