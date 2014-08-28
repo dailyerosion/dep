@@ -1,3 +1,17 @@
+28 Aug 2014
+  Update meeting, Cruse, Gelder, James, Hao
+  - Gelder is running G4 now for all the HUC12s, the hope is to have data by
+    sometime in the mid-week
+  - Are we able to harvest individual OFE results to look at what is happening
+    near these fake terracces.
+  - Victoria may have a chapter in her dissertation on looking at sensitivity
+    to grid order
+  - Would like to have things working by Baker Council meeting, early Oct
+  - Should hear about CIG proposal by 15 Sept
+  - James will be presenting lots of our stuff to NRCS technical folks soon
+  - [action] email Gelder about 72 hour precip
+  - [action] look into how WEPP reports water balance for each OFE?
+
  6 Aug 2014
   Update meeting, Cruse, Gelder, James
   - A side project with Gelder was funded by Iowa Nutrient Reduction Strategy
