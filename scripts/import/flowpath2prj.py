@@ -12,6 +12,7 @@ SCENARIO = sys.argv[1]
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cursor2 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
+cursor3 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 surgo2file = {}
 cursor.execute("""SELECT surgo, soilfile from xref_surgo""")
@@ -152,10 +153,14 @@ def do_flowpath(huc_12, fid, fpath):
                                                         y,
                                                         0 - x,
                                                         y)
+    cursor3.execute("""UPDATE flowpaths SET climate_file = %s 
+    WHERE fid = %s """, (res['clifile'], fid))
+    if cursor3.rowcount != 1:
+        print 'ERROR Updating climate_file for FID: %s' % (fid,)
     res['huc8'] = huc_12[:8]
     res['huc12'] = huc_12
     res['envfn'] = "/i/%s/env/%s/%s_%s.env" % (SCENARIO,
-                                               res['huc8'], huc_12, fid)
+                                               res['huc8'], huc_12, fpath)
     res['date'] = datetime.datetime.now()
     res['aspect'] = compute_aspect(rows[0]['x'], rows[0]['y'],
                                    rows[-1]['x'], rows[-1]['y'])
@@ -296,3 +301,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    cursor3.close()
+    PGCONN.commit()
