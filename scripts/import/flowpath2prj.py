@@ -106,6 +106,7 @@ def compute_slope(fid):
 def do_flowpath(huc_12, fid, fpath):
     """ Process a given flowpathid """
     #slope = compute_slope(fid) 
+    # I need bad soilfiles so that the length can be computed
     cursor2.execute("""SELECT segid, elevation, length, f.surgo, 
     slope, management, x.soilfile,
     landuse1 || landuse2 || landuse3 || landuse4 || landuse5 || landuse6 as lstring,
@@ -118,12 +119,12 @@ def do_flowpath(huc_12, fid, fpath):
     x = None
     y = None
     maxmanagement = 0
-    for i, row in enumerate(cursor2):
-        if i == 0:
-            x = row['x']
-            y = row['y']
+    for row in cursor2:
         if row['soilfile'] == 'IA9999.SOL':
             continue
+        if x is None:
+            x = row['x']
+            y = row['y']
         if row['management'] > maxmanagement:
             maxmanagement = row['management']
         if row['slope'] < 0.00001:
@@ -132,11 +133,18 @@ def do_flowpath(huc_12, fid, fpath):
         #row['slope'] = slope
         rows.append( row )
     
+    if x is None:
+        print '%s,%s had no valid soils, skipping' % (huc_12, fpath)
+        return None
     if len(rows) < 2:
-        print ' Not enough data for fid: %s, skipping' % (fid,)
+        print '%s,%s had only 1 row of data, skipping' % (huc_12, fpath)
         return None
     if len(rows) > 19:
         rows = simplify(rows)
+    
+    if rows[-1]['length'] < 1:
+        print '%s,%s has zero length, skipping' % (huc_12, fpath)
+        return None
     
     res = {}
     res['clifile'] = "/i/%s/cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (SCENARIO,
@@ -197,7 +205,7 @@ def do_flowpath(huc_12, fid, fpath):
     for row in rows:
         if row['lstring'] is None:
             continue
-        if prevman != row['lstring']:
+        if prevman is None or prevman != row['lstring']:
             if prevman is not None:
                 mans.append( get_rotation(prevman, maxmanagement) )
                 manlengths.append( row['length'] - lmanstart)
@@ -205,7 +213,7 @@ def do_flowpath(huc_12, fid, fpath):
             lmanstart = row['length']
 
     if prevman is None:
-        print 'Unsure how we got here'
+        print '%s,%s has no managements, skipping' % (huc_12, fpath)
         return 
     mans.append( get_rotation(prevman, maxmanagement) )
     manlengths.append( res['length'] - lmanstart)
@@ -277,11 +285,14 @@ RunOptions {
     """ %  data )
     out.close()
 
-if __name__ == '__main__':
-    # Go main Go
+def main():
+    """ Go main go """
     cursor.execute("""SELECT fpath, fid, huc_12 from flowpaths 
-    WHERE scenario = %s""", (SCENARIO,))
+    WHERE scenario = %s and fpath != 0""", (SCENARIO,))
     for row in cursor:
         data = do_flowpath(row['huc_12'], row['fid'], row['fpath'])
         if data is not None:
             write_prj(data)
+
+if __name__ == '__main__':
+    main()
