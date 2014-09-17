@@ -21,7 +21,7 @@ def get_latlon(clifile):
     """ Convert a clifile name into lon and latitude """
     fn = clifile.split("/")[-1]
     lat = float(fn[7:13])
-    lon = 0 - float(fn[0:7])
+    lon = 0 - float(fn[:6])
     return lon, lat
 
 icursor.execute("""
@@ -30,7 +30,7 @@ icursor.execute("""
 """, (SCENARIO,) )
 print 'Found %s distinct IDEPv2 Precip Cells' % (icursor.rowcount,)
 for row in icursor:
-    clifile = row[0]
+    clifile = "/i/%s/%s" % (SCENARIO, row[0])
     if os.path.isfile(clifile):
         continue
     lon, lat = get_latlon( clifile )
