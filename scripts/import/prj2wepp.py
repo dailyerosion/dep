@@ -33,8 +33,7 @@ if __name__ == '__main__':
                     print '---> ERROR generating output for %s%s\n%s' % (huc12,
                                                     proc.stderr.read(),
                                                     stdout)
-                    #sys.exit()
-                    continue
+                    sys.exit()
                 # This generates .cli, .man, .run, .slp, .sol
                 # We need the .man , .slp , .sol from this process
                 for suffix in ['man', 'slp', 'sol']:
