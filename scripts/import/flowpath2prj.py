@@ -148,13 +148,14 @@ def do_flowpath(huc_12, fid, fpath):
         return None
     
     res = {}
-    res['clifile'] = "/i/%s/cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (SCENARIO,
-                                                        0 - x,
+    clifile = "cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (0 - x,
                                                         y,
                                                         0 - x,
                                                         y)
+    res['clifile'] = "/i/%s/%s" % (SCENARIO, clifile)
+    
     cursor3.execute("""UPDATE flowpaths SET climate_file = %s 
-    WHERE fid = %s """, (res['clifile'], fid))
+    WHERE fid = %s """, (clifile, fid))
     if cursor3.rowcount != 1:
         print 'ERROR Updating climate_file for FID: %s' % (fid,)
     res['huc8'] = huc_12[:8]
@@ -294,7 +295,10 @@ def main():
     """ Go main go """
     cursor.execute("""SELECT fpath, fid, huc_12 from flowpaths 
     WHERE scenario = %s and fpath != 0""", (SCENARIO,))
-    for row in cursor:
+    cnt = cursor.rowcount
+    for i, row in enumerate(cursor):
+        if i % 1000 == 0:
+            print '%06i/%06i' % (i, cnt)
         data = do_flowpath(row['huc_12'], row['fid'], row['fpath'])
         if data is not None:
             write_prj(data)
