@@ -52,7 +52,7 @@ for row in icursor:
     hrap = row2[0]
     
     oldfn = "/mnt/idep/data/clifiles/%s.dat"  % (hrap,)
-    newdir = os.path.basename(clifile)
+    newdir = os.path.dirname(clifile)
     if not os.path.isdir(newdir):
         os.makedirs(newdir)
 
