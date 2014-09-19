@@ -11,10 +11,10 @@ os.chdir('/i/%s/cli/' % (SCENARIO,))
 for d in glob.glob("*"):
     os.chdir(d)
     for fn in glob.glob("*.cli"):
+        print 'Modify: %s' % (fn,)
         data = open(fn).readlines()
         if data[4].find(" 1997 ") == 0:
             continue
-        print 'Modify: %s' % (fn,)
         o = open(fn, 'w')
         newdata = False
         for i, line in enumerate(data):
