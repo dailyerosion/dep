@@ -1,3 +1,23 @@
+19 Sep 2014
+  Update meeting, Cruse, Gelder, James
+  - Iowa Flood Center has some project verifying runoff using their stream 
+    gauges.  May be interesting to collaborate on this.
+  - Discussion on my map of flowpaths per HUC12 and how many points is enough
+  - [action] send a new map with the ratio of provided flowpaths and what my
+    algo ended up with
+  - We should consider removing some HUC12s that are mostly urban or have 
+    little ag land.
+  - James: maybe we should stop flowpaths when they hit a 'bad' soil, currently
+    I skip them an use the previous soil along the path
+  - Cruse would like to get a press release out the door soon, will do once
+    we are comfortable and the website is in a bit better shape!
+  - Discussion about how WEPP can deal with cover crops.  Perhaps it does 
+    but can't handle two crops growing at once.
+  - Can we generate a comparison with the other erosion models, like RUSLE2
+  - Would be nice to do a grand comparison
+  - A deadline for stuff could be 25 Sept when Gelder presents stuff to 
+    extension
+    
 28 Aug 2014
   Update meeting, Cruse, Gelder, James, Hao
   - Gelder is running G4 now for all the HUC12s, the hope is to have data by
