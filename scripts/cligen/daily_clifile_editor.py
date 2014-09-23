@@ -1,13 +1,13 @@
 """
   This is it, we shall create our gridded weather analysis and edit the
   climate files!
-  
+
   development laptop has data for 9 Sep 2014
-  
+
 """
 import numpy as np
 import datetime
-import pytz 
+import pytz
 import sys
 import os
 import osgeo.gdal as gdal
@@ -24,17 +24,17 @@ EAST = -91.01
 WEST = -96.73
 YS = int((NORTH - SOUTH) * 100.)
 XS = int((EAST - WEST) * 100.)
-high_temp = np.zeros( (YS+1,XS+1) )
-low_temp = np.zeros( (YS+1,XS+1) )
-dewpoint = np.zeros( (YS+1,XS+1) )
-wind = np.zeros( (YS+1,XS+1) )
-solar = np.zeros( (YS+1,XS+1) )
-precip = np.zeros( (30*24, YS, XS ), np.uint8)
+high_temp = np.zeros((YS+1, XS+1))
+low_temp = np.zeros((YS+1, XS+1))
+dewpoint = np.zeros((YS+1, XS+1))
+wind = np.zeros((YS+1, XS+1))
+solar = np.zeros((YS+1, XS+1))
+precip = np.zeros((30*24, YS, XS), np.uint8)
 
 # used for breakpoint logic
-ZEROHOUR = datetime.datetime(2000,1,1,0,0)
+ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
 
-def load_asos( valid ):
+def load_asos(valid):
     """ Load temps and family """
     xaxis = np.arange(WEST, EAST, 0.01)
     yaxis = np.arange(SOUTH, NORTH, 0.01)
@@ -43,7 +43,7 @@ def load_asos( valid ):
     nt = NetworkTable(["IA_ASOS", "AWOS"])
     pgconn = psycopg2.connect(database='asos', host='iemdb', user='nobody')
     cursor = pgconn.cursor()
-    
+
     cursor.execute("""select station, 
     avg(sknt), avg(dwpf), max(tmpf), min(tmpf) from alldata 
     where valid BETWEEN '%s 00:00' and '%s 00:00' 
@@ -58,14 +58,15 @@ def load_asos( valid ):
     dwpc = []
     smps = []
     for row in cursor:
-        if row[1] is None or row[2] is None or row[3] is None or row[4] is None:
+        if (row[1] is None or row[2] is None or 
+            row[3] is None or row[4] is None):
             continue
-        lons.append( nt.sts[row[0]]['lon'] )
-        lats.append( nt.sts[row[0]]['lat'] )
-        hic.append( temperature(row[3], 'F').value('C') )
-        loc.append( temperature(row[4], 'F').value('C') )
-        dwpc.append( temperature(row[2], 'F').value('C') )
-        smps.append( speed(row[1], 'KT').value('MPS') )
+        lons.append(nt.sts[row[0]]['lon'])
+        lats.append(nt.sts[row[0]]['lat'])
+        hic.append(temperature(row[3], 'F').value('C'))
+        loc.append(temperature(row[4], 'F').value('C'))
+        dwpc.append(temperature(row[2], 'F').value('C'))
+        smps.append(speed(row[1], 'KT').value('MPS'))
 
 
     nn = NearestNDInterpolator((np.array(lons), np.array(lats)), 
@@ -170,7 +171,6 @@ def compute_breakpoint( ar ):
     accum = 0
     lastaccum = 0
     lasti = 0
-    firsti = -1
     for i, intensity in enumerate( ar ):
         if intensity == 0:
             continue
@@ -228,7 +228,7 @@ def myjob( row ):
     o.write( data[:pos] + thisday + data[pos2:])
     o.close()
 
-def workflow( valid ):
+def workflow():
     """ The workflow to get the weather data variables we want! """
     
     # 1. Max Temp C
@@ -256,10 +256,10 @@ def workflow( valid ):
         if i > 0 and i % 10000 == 0:
             delta = datetime.datetime.now() - sts
             secs = delta.microseconds / 1000000. + delta.seconds
-            speed = i / secs
-            remaining = ((sz - i) / speed) / 3600.
+            rate = i / secs
+            remaining = ((sz - i) / rate) / 3600.
             print ('%5.2fh Processed %6s/%6s [%.2f runs per sec] '
-                   +'remaining: %5.2fh') % (secs /3600., i, sz, speed,
+                   +'remaining: %5.2fh') % (secs /3600., i, sz, rate,
                                             remaining )
 
 
@@ -271,4 +271,4 @@ if __name__ == '__main__':
         valid = datetime.date( int(sys.argv[2]), int(sys.argv[3]),
                                int(sys.argv[4]))
 
-    workflow( valid )
+    workflow()
