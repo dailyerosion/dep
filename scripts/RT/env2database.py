@@ -1,6 +1,6 @@
-'''
+"""
 Process the ENV output to the database, for a given date
-'''
+"""
 import sys
 import datetime
 import glob
@@ -12,12 +12,21 @@ icursor = idep.cursor()
 IDEPHOME = "/i"
 SCENARIO=sys.argv[1]
 
-def do():
-    ''' Process for this date! '''
-    os.chdir("/i/%s/env" % (SCENARIO,)) 
+def do(date):
+    """ Process for this date! """
+    icursor.execute("""DELETE from results_by_huc12 WHERE 
+                        valid = %s""", (date,))
+    if icursor.rowcount != 0:
+        print '... env2database.py removed %s rows for date: %s' % (
+                                                icursor.rowcount, date)
+    
+    os.chdir("/i/%s/env" % (SCENARIO,))
+    hits = 0
+    count = 0
     for huc8 in glob.glob("*"):
         os.chdir(huc8)
         for huc4 in glob.glob("*"):
+            count += 1
             os.chdir(huc4)
             huc12 = huc8+huc4
             runs = 0
@@ -26,12 +35,13 @@ def do():
                 runs += 1
                 for line in open(fn):
                     tokens = line.strip().split()
-                    if len(tokens) < 5 or tokens[0] in ['day', '---'] or line.find('******') > -1:
+                    if (len(tokens) < 5 or tokens[0] in ['day', '---'] 
+                        or line.find('******') > -1):
                         continue
-                    ts = datetime.datetime( 2006 + int(tokens[2]), int(tokens[1]),
-                                            int(tokens[0]) )
-                    #if ts.year == 2010 and ts.month == 7 and ts.day == 22:
-                    #    print fn, tokens[6]
+                    ts = datetime.date(2006 + int(tokens[2]), 
+                                            int(tokens[1]), int(tokens[0]))
+                    if date != ts:
+                        continue
                     if not data.has_key(ts):
                         data[ts] = {'runoff': [],
                                     'loss': [],
@@ -50,19 +60,32 @@ def do():
                     min_loss, avg_loss, max_loss,
                     min_runoff, avg_runoff, max_runoff, scenario) VALUES
                     (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, %s)
-                    """, (huc12, ts, 
-                          min(data[ts]['precip']), avgprecip, max(data[ts]['precip']),
-                          min(data[ts]['loss']), avgloss, max(data[ts]['loss']),
-                          min(data[ts]['runoff']), avgrunoff, 
-                          max(data[ts]['runoff']), SCENARIO))
+                    """, (huc12, ts, min(data[ts]['precip']), 
+                          avgprecip, max(data[ts]['precip']),
+                          min(data[ts]['loss']), avgloss, 
+                          max(data[ts]['loss']), min(data[ts]['runoff']), 
+                          avgrunoff, max(data[ts]['runoff']), SCENARIO))
+                    hits += 1
             os.chdir("..")
         os.chdir("..")
+    
+    print '... env2database.py %s produced %s/%s huc12s with erosion' % (
+                                            date, hits, count)
+ 
+def main():
+    """ go main go """
+    if len(sys.argv) == 5:
+        ts = datetime.date( int(sys.argv[2]), int(sys.argv[3]), 
+                             int(sys.argv[4]))
+    else:
+        ts = datetime.date.today() - datetime.timedelta(days=1)
+        
+    do(ts)
+        
  
 if __name__ == '__main__':
-    #ts = datetime.datetime( int(sys.argv[1]), 
-    #                        int(sys.argv[2]), 
-    #                        int(sys.argv[3]))
-    do()
+    # Do something
+    main()
     icursor.close()
     idep.commit()
     idep.close()

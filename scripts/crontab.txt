@@ -1,0 +1,3 @@
+# 
+# crontab entry for the IDEP realtime work
+30 00 * * * cd /mesonet/www/apps/idep/scripts; sh MASTER.sh
