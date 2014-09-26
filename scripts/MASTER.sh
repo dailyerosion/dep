@@ -1,6 +1,6 @@
 # Master exec script for the IDEP realtime run
 
-cd scripts
+cd cligen
 python daily_clifile_editor.py 0
 
 cd ../RT
