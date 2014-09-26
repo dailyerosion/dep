@@ -72,15 +72,24 @@ def do(date):
     print '... env2database.py %s produced %s/%s huc12s with erosion' % (
                                             date, hits, count)
  
+def update_properties(date):
+    """ Update database properties to let us know we ran this date! """
+    icursor.execute("""UPDATE properties SET value = %s 
+    WHERE key = 'last_date'""", (date,))
+    if icursor.rowcount == 0:
+        icursor.execute("""INSERT into properties(key, value) VALUES
+        (%s, %s)""", ('last_date', date))
+ 
 def main():
     """ go main go """
     if len(sys.argv) == 5:
         ts = datetime.date( int(sys.argv[2]), int(sys.argv[3]), 
                              int(sys.argv[4]))
+        do(ts)
     else:
         ts = datetime.date.today() - datetime.timedelta(days=1)
-        
-    do(ts)
+        do(ts)
+        update_properties(ts)
         
  
 if __name__ == '__main__':

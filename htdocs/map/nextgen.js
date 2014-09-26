@@ -251,14 +251,12 @@ function init(){
       map.addControl(new OpenLayers.Control.Permalink({anchor: true}));
       //zoom_iowa();
       
-      var d = new Date();
-      d.setDate( d.getDate() - 1 );
-      appstate.date = d;
+      appstate.date = lastdate;
       
       $("#datepicker").datepicker({
     	  dateFormat: 'M d, yy',
     	  minDate: new Date(2002, 1, 1),
-    	  maxDate: d,
+    	  maxDate: lastdate,
     	   onSelect: function(dateText, inst) {
     		   appstate.date = $("#datepicker").datepicker("getDate");
     		   if ((appstate.ltype == 'mrms-calday') && (appstate.date < MRMS_FLOOR)){
@@ -274,7 +272,7 @@ function init(){
     	   }
       });
 
-      $("#datepicker").datepicker('setDate', d);
+      $("#datepicker").datepicker('setDate', lastdate);
       
       $( "#radio" ).buttonset();
       $( '#radio input[type=radio]').change(function(){

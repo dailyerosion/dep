@@ -1,5 +1,9 @@
 <?php 
 require_once "../../config/settings.inc.php";
+$dbconn = pg_connect("dbname=idep host=iemdb user=nobody");
+$rs = pg_query($dbconn, "SELECT value from properties where key = 'last_date'");
+$row = pg_fetch_assoc($rs, 0);
+$last_date = $row['value'];
 ?>
 <html>
 <head>
@@ -79,6 +83,7 @@ float: left;
         </style>
         <script type="text/javascript">
 var tilecache = "<?php echo TMS_SERVER; ?>";
+var lastdate = new Date("<?php echo str_replace("-","/", $last_date); ?>");
         </script>
  <script src='nextgen.js?v=5'></script>
 </head>
