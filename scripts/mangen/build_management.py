@@ -14,6 +14,9 @@ G/P - Pasture           P1          P25    IniCropDef.gra_3425
 import psycopg2
 import os
 import datetime
+import sys
+
+SCENARIO = sys.argv[1]
 
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor()
@@ -93,7 +96,7 @@ if __name__ == '__main__':
     # Go Main Go
     cursor.execute("""SELECT distinct 
         landuse1 || landuse2 || landuse3 || landuse4 || landuse5 || landuse6
-        from flowpath_points """)
+        from flowpath_points WHERE scenario = %s""", (SCENARIO,))
     for row in cursor:
         if row[0] is None:
             continue
