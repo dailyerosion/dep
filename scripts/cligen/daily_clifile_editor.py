@@ -147,7 +147,9 @@ def load_precip( valid ):
             # this is y,x with start in upper left -130 55
             # units are 0.1mm
             imgdata = img.ReadAsArray()
-            precip[tidx,:,:] = imgdata[top:bottom,left:right]
+            data = imgdata[top:bottom,left:right]
+            # Turn 255 (missing) into zeros
+            precip[tidx,:,:] = np.where( data < 255, data, 0)
             
         else:
             print 'daily_clifile_editor missing: %s' % (fn,)
@@ -176,8 +178,10 @@ def compute_breakpoint( ar ):
             continue
         if bp is None:
             bp = ["00.00    0.00",]
-        accum += float(intensity) / 10.
+        accum += (float(intensity) / 10.)
         lasti = i
+        if i == 0: # Can't have immediate accumulation
+            continue
         if (accum - lastaccum) > 10: # record every 10mm
             lastaccum = accum
             # 23.90       0.750
