@@ -146,7 +146,7 @@ if __name__ == '__main__':
     sts = datetime.datetime.now()
     sz = len(QUEUE)
     for i,_ in enumerate(pool.imap_unordered(run, QUEUE),1):
-        if i > 0 and i % 100 == 0:
+        if i > 0 and i % 5000 == 0:
             delta = datetime.datetime.now() - sts
             secs = delta.microseconds / 1000000. + delta.seconds
             speed = i / secs
