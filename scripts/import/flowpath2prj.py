@@ -104,6 +104,15 @@ def compute_slope(fid):
     row = cursor2.fetchone()
     return (row[0] - row[1]) / row[2]
 
+def delete_flowpath(fid):
+    """ remove this flowpath as its invalid """
+    cursor3.execute("""DELETE from flowpath_points where flowpath = %s and
+    scenario = %s""", (fid, SCENARIO))
+    cursor3.execute("""DELETE from flowpaths where fid = %s and
+    scenario = %s""", (fid, SCENARIO))
+    if cursor3.rowcount != 1:
+        print 'Whoa, delete_flowpath failed for %s' % (fid,)
+
 def do_flowpath(huc_12, fid, fpath):
     """ Process a given flowpathid """
     #slope = compute_slope(fid) 
@@ -135,16 +144,19 @@ def do_flowpath(huc_12, fid, fpath):
         rows.append( row )
     
     if x is None:
-        print '%s,%s had no valid soils, skipping' % (huc_12, fpath)
+        print '%s,%s had no valid soils, deleting' % (huc_12, fpath)
+        delete_flowpath(fid)
         return None
     if len(rows) < 2:
-        print '%s,%s had only 1 row of data, skipping' % (huc_12, fpath)
+        print '%s,%s had only 1 row of data, deleting' % (huc_12, fpath)
+        delete_flowpath(fid)
         return None
     if len(rows) > 19:
         rows = simplify(rows)
     
     if rows[-1]['length'] < 1:
-        print '%s,%s has zero length, skipping' % (huc_12, fpath)
+        print '%s,%s has zero length, deleting' % (huc_12, fpath)
+        delete_flowpath(fid)
         return None
     
     res = {}
