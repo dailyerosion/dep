@@ -127,9 +127,9 @@ def load_precip( valid ):
     tomorrow = midnight + datetime.timedelta(hours=36)
     tomorrow = tomorrow.replace(hour=0)
 
-    top = int((NORTH - 20.) * 100.)
+    top = int((NORTH - 20.) * 100.)-1
     left = int((WEST - -130) * 100.)
-    bottom = int((SOUTH - 20.) * 100. )-1
+    bottom = int((SOUTH - 20.) * 100. )
     right =  int((EAST - -130) * 100.)-1
     
 
