@@ -127,9 +127,9 @@ def load_precip( valid ):
     tomorrow = midnight + datetime.timedelta(hours=36)
     tomorrow = tomorrow.replace(hour=0)
 
-    top = int((55. - NORTH) * 100.)
+    top = int((NORTH - 20.) * 100.)
     left = int((WEST - -130) * 100.)
-    bottom = int((55. - SOUTH) * 100. )-1
+    bottom = int((SOUTH - 20.) * 100. )-1
     right =  int((EAST - -130) * 100.)-1
     
 
@@ -144,10 +144,10 @@ def load_precip( valid ):
                 # Abort as we are in CST->CDT
                 return precip
             img = gdal.Open(fn, 0)
-            # this is y,x with start in upper left -130 55
+            # this is y,x with start in lower left -130 20
             # units are 0.1mm
             imgdata = img.ReadAsArray()
-            data = imgdata[top:bottom,left:right]
+            data = imgdata[bottom:top,left:right]
             # Turn 255 (missing) into zeros
             precip[tidx,:,:] = np.where( data < 255, data, 0)
             
