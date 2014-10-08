@@ -85,13 +85,8 @@ def load_asos(valid):
                                np.array(smps))
     wind[:] = nn(xi, yi)
 
-
-def load_solar( valid ):
-    """ Grid out the solar radiation data! """
-    xaxis = np.arange(WEST, EAST, 0.01)
-    yaxis = np.arange(SOUTH, NORTH, 0.01)
-    xi, yi = np.meshgrid(xaxis, yaxis)
-    
+def get_isusm_solar(valid):
+    """ Retrieve the ISUSM solar radiation data """
     nt = NetworkTable("ISUSM")
     pgconn = psycopg2.connect(database='isuag', host='iemdb', user='nobody')
     cursor = pgconn.cursor()
@@ -111,6 +106,24 @@ def load_solar( valid ):
         lons.append( nt.sts[row[0]]['lon'] )
         lats.append( nt.sts[row[0]]['lat'] )
         vals.append( rad )
+
+    return lons, lats, vals
+
+def load_solar( valid ):
+    """ Grid out the solar radiation data! """
+    xaxis = np.arange(WEST, EAST, 0.01)
+    yaxis = np.arange(SOUTH, NORTH, 0.01)
+    xi, yi = np.meshgrid(xaxis, yaxis)
+    
+    lons, lats, vals = get_isusm_solar(valid)
+    if len(lons) < 3:
+        print('Warning: load_solar() found only %s obs!' % (len(lons),))
+        lons, lats, vals = get_isusm_solar(valid - datetime.timedelta(days=1))
+        if len(lons) < 3:
+            print('Fatal: load_solar() found %s obs for yesterday!' % (
+                                                            len(lons),))
+            sys.exit()
+    
     nn = NearestNDInterpolator((np.array(lons), np.array(lats)), 
                                np.array(vals))
     solar[:] = nn(xi, yi)

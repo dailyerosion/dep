@@ -17,6 +17,14 @@ class Theme extends \IastateTheme\Theme
                     'uri' => '/map/',
                 ),
                 array(
+                    'label' => 'Documentation',
+                	'showchildren' => True,
+                	'pages' => Array(
+            			array('label' => 'Climate Files', 
+            				  'uri' => 'docs/climate.phtml'),
+            		),
+                ),
+            	array(
                     'label' => 'Diagnostics',
                 	'showchildren' => True,
                 	'pages' => Array(

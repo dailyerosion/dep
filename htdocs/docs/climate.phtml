@@ -1,0 +1,35 @@
+<?php 
+require '../../config/settings.inc.php';
+require '../../autoload.php';
+
+$theme = new Sample\Theme('IDEP :: Climate File Documentation');
+$theme->drawHeader();
+
+
+echo <<<EOF
+
+<h3>Climate File Documentation</h3>
+
+<h4>Solar Radiation</h4>
+
+<p>The amount of energy received by the Earth's surface from the sun is the
+important driver of plant growth.  The WEPP model contains a crop growth model
+that is sensitive to daily solar radiation data.  For IDEPv2, this information
+is provided on a 0.01 degree grid based on a nearest neighbor analysis of 
+<a href="http://mesonet.agron.iastate.edu/agclimate/">Iowa State Soil Moisture Network</a>
+data.  This routine does not produce fine scale detail as there are only 20 
+some observations in the state. In the future, the hope is to use high resolution
+numerical modelling analysis to provide fine scale detail.</p>
+
+<p>The realtime runs are started at 12:30 AM each day.  On some days, for
+various reasons, the solar radiation summary data is not yet available at this 
+time.  When this situation happens, the climate file generation script uses the
+previous day's data as today's data.  A process later in the day attempts to 
+correct this estimate as the actual data comes in.  Having missing solar 
+radiation data at 12:30 AM is not considered a show stopping issue and the
+previous day's estimates are "good enough".</p>
+
+EOF;
+
+$theme->drawFooter(); 
+?>
