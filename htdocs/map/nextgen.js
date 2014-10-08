@@ -105,7 +105,7 @@ function init(){
 	var p900913 = new OpenLayers.Projection('EPSG:900913');
     tms = new OpenLayers.Layer.TMS(
             'IDEP Data Layer',
-            tilecache +'/c/tile.py/',
+            tilecache +'/cache/tile.py/',
             {layername      : 'idep',
             service         : '1.0.0',
             type            : 'png',
