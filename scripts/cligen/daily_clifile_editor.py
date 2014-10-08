@@ -16,6 +16,7 @@ from pyiem.network import Table as NetworkTable
 from scipy.interpolate import NearestNDInterpolator
 from pyiem.datatypes import temperature, speed
 from multiprocessing import Pool
+import unittest
 
 SCENARIO = sys.argv[1]
 SOUTH = 40.28
@@ -195,7 +196,7 @@ def compute_breakpoint( ar ):
     # Any total less than 10 (1mm) is not of concern, might as well be zero
     if total < 10:
         return []
-    bp = None
+    bp = ["00.00    0.00",]
     # in mm
     accum = 0
     lastaccum = 0
@@ -203,8 +204,6 @@ def compute_breakpoint( ar ):
     for i, intensity in enumerate( ar ):
         if intensity == 0:
             continue
-        if bp is None:
-            bp = ["00.00    0.00",]
         accum += (float(intensity) / 10.)
         lasti = i
         if i == 0: # Can't have immediate accumulation
@@ -216,7 +215,7 @@ def compute_breakpoint( ar ):
             bp.append("%02i.%02i  %6.2f" % (ts.hour, ts.minute / 60.0 * 100.,
                                           accum))
     if accum != lastaccum:
-        ts = ZEROHOUR + datetime.timedelta(minutes=(lasti*2))
+        ts = ZEROHOUR + datetime.timedelta(minutes=(max(lasti,1)*2))
         bp.append("%02i.%02i  %6.2f" % (ts.hour, ts.minute / 60.0 * 100.,
                                       accum))
     return bp
@@ -303,3 +302,13 @@ if __name__ == '__main__':
                                int(sys.argv[4]))
 
     workflow()
+    
+
+class test(unittest.TestCase):
+    
+    def test_bp(self):
+        """ issue #6 invalid time """
+        data = np.zeros([30*24])
+        data[0] = 32
+        bp = compute_breakpoint(data)
+        self.assertEqual(bp[1], "00.03    3.20")
