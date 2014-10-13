@@ -115,3 +115,24 @@
     break will be on slope, then soil, then management
   - daryl should email Laflen to see what he now has...
   - Need to get IDEPv2 running in realtime, even with the few watersheds
+  
+03 Feb 2014
+ Progress meeting in conference room with KS folks and others
+ - Our current project deadline is 1 June 2014
+ - Gelder is geting closer to getting a big push of computing done on ISU GIS
+   lab systems, meeting with Robin on 4th
+ - James points out that fallow acres in 2013 will cause some grief as there
+   was lots of acres.
+ - IDEPv2 rotations may be based on 2008-2013
+ - Laflen has most of the crops completed
+ - There is a PhD student coming in March for six months, that may have interest
+   in working with us on sensitivity stuff
+ - Will want to have some "beta" notation on the website for our outputs until
+   we resolve 'validation'
+ - I need to look into the KS Mesonet website and see what all they are up 
+   to these days.  Looks to have a number of locations now
+ - Kansas State would like their logo on stuff, but codes/data can live at ISU
+ - KS wants to have a powerpoint detailing what we are up to as they look for
+   funding
+ - Dr Cruse is interested in app development or some special way to showcase
+   our data and get it out into the hands of those out in the field.
