@@ -15,7 +15,7 @@ SCENARIO=sys.argv[1]
 def do(date):
     """ Process for this date! """
     icursor.execute("""DELETE from results_by_huc12 WHERE 
-                        valid = %s""", (date,))
+                        valid = %s and scenario = %s""", (date, SCENARIO))
     if icursor.rowcount != 0:
         print '... env2database.py removed %s rows for date: %s' % (
                                                 icursor.rowcount, date)
