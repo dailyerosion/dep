@@ -1,3 +1,17 @@
+20 Sep 2014
+  Sanity Check, Cruse, Gelder, James, Victoria
+  - [action] daryl emails Jim and asks about units of Sediment Delivery
+  - We should be harvesting more than just detachment, maybe harvest them all?
+  - Does Avg Detachment - Avg Deposition = Delivery?
+  - Can I output on a per OFE basis?
+  - Can I harvest the OFE summary data for quicker comparisons / QC ?
+  - [action] check out the code to see about enabling all output!
+  - Gelder is going to send me the G4 dataset, but with full paths
+  - daryl was confused about what this G4 dataset was.  They are new 
+    paths that can't be directly compared to previous ones.
+  - [action] send out how many OFEs my system generated
+  - [action] send out how many bad soils I hit...
+  
 19 Sep 2014
   Update meeting, Cruse, Gelder, James
   - Iowa Flood Center has some project verifying runoff using their stream 
