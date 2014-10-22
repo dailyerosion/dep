@@ -53,11 +53,11 @@ def process(fn, df):
     huc12 = fn[4:-4]
     huc8 = huc12[:-4]
     #print df.keys()
-    flowpaths = Series(df['g4%s' % (huc8,)]).unique()
+    flowpaths = Series(df['fp%s' % (huc8,)]).unique()
     flowpaths.sort()
     for flowpath in flowpaths:
-        df2 = df[df['g4%s' % (huc8,)]==flowpath]
-        df2 = df2.sort('g4Len%s' % (huc8[:5],), ascending=True)
+        df2 = df[df['fp%s' % (huc8,)]==flowpath]
+        df2 = df2.sort('fpLen%s' % (huc8[:5],), ascending=True)
         fid = get_flowpath(huc12, flowpath)
         cursor.execute("""DELETE from flowpath_points WHERE flowpath = %s
             and scenario = %s""",
@@ -71,7 +71,7 @@ def process(fn, df):
             else:
                 row2 = df2.irow(segid+1)
             dy = row['ep3m%s' % (huc8[:6],)] - row2['ep3m%s' % (huc8[:6],)]
-            dx =  row2['g4Len%s' % (huc8[:5],)] - row['g4Len%s' % (huc8[:5],)]
+            dx =  row2['fpLen%s' % (huc8[:5],)] - row['fpLen%s' % (huc8[:5],)]
             if dx == 0:
                 slope = 0
             else:
@@ -89,7 +89,7 @@ def process(fn, df):
                 """ 
             args = (fid, segid,  
                        row['ep3m%s' % (huc8[:6],)]/100.,
-               row['g4Len%s' % (huc8[:5],)]/100., 
+               row['fpLen%s' % (huc8[:5],)]/100., 
                 row['gSSURGO'], 
                row['Management'], slope, row['X'], 
                row['Y'], lu[0], lu[1], lu[2], 
@@ -115,7 +115,7 @@ def process(fn, df):
 
 def main():
     """ Lets go main go """
-    os.chdir("../../data/dbfsGo4")
+    os.chdir("../../data/%s" % (sys.argv[2],))
     fns = glob.glob("*.dbf")
     total = len(fns)
     for i, fn in enumerate(fns):
