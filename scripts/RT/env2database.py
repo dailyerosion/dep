@@ -25,7 +25,16 @@ def do(date, process_all):
         if icursor.rowcount != 0:
             print '... env2database.py removed %s rows for date: %s' % (
                                                     icursor.rowcount, date)
-        
+    # Compute dictionary of slope lengths
+    lengths = {}
+    icursor.execute("""
+    SELECT huc_12, fpath, ST_Length(geom) from flowpaths where
+    scenario = %s
+    """, (SCENARIO,))
+    for row in icursor:
+        lengths["%s_%s" % (row[0], row[1])] = row[2]
+    
+    
     os.chdir("/i/%s/env" % (SCENARIO,))
     hits = 0
     count = 0
@@ -56,7 +65,8 @@ def do(date, process_all):
                     data[ts]['runoff'].append( float(tokens[4]) )
                     data[ts]['loss'].append( float(tokens[6]) )
                     data[ts]['precip'].append( float(tokens[3]) )
-                    data[ts]['delivery'].append( float(tokens[12]) )
+                    data[ts]['delivery'].append( float(tokens[12]) /
+                                                 lengths[fn[:-4]])
             if runs > 0:
                 for ts in data.keys():
                     avgloss = sum(data[ts]['loss']) / float(runs)
