@@ -6,20 +6,26 @@ import datetime
 import glob
 import os
 import psycopg2
+import numpy as np
 idep = psycopg2.connect(database='idep', host='iemdb')
 icursor = idep.cursor()
 
 IDEPHOME = "/i"
-SCENARIO=sys.argv[1]
+SCENARIO = int(sys.argv[1])
 
-def do(date):
-    """ Process for this date! """
-    icursor.execute("""DELETE from results_by_huc12 WHERE 
-                        valid = %s and scenario = %s""", (date, SCENARIO))
-    if icursor.rowcount != 0:
-        print '... env2database.py removed %s rows for date: %s' % (
-                                                icursor.rowcount, date)
-    
+def do(date, process_all):
+    """ Process for this date, if process_all is true, then do it all!"""
+    if process_all:
+        print("Deleting all results_by_huc12 for scenario: %s" % (SCENARIO,))
+        icursor.execute("""DELETE from results_by_huc12 WHERE 
+                            scenario = %s""", (SCENARIO,))
+    else:
+        icursor.execute("""DELETE from results_by_huc12 WHERE 
+                            valid = %s and scenario = %s""", (date, SCENARIO))
+        if icursor.rowcount != 0:
+            print '... env2database.py removed %s rows for date: %s' % (
+                                                    icursor.rowcount, date)
+        
     os.chdir("/i/%s/env" % (SCENARIO,))
     hits = 0
     count = 0
@@ -40,30 +46,35 @@ def do(date):
                         continue
                     ts = datetime.date(2006 + int(tokens[2]), 
                                             int(tokens[1]), int(tokens[0]))
-                    if date != ts:
+                    if not process_all and date != ts:
                         continue
                     if not data.has_key(ts):
                         data[ts] = {'runoff': [],
                                     'loss': [],
-                                    'precip': []}
+                                    'precip': [],
+                                    'delivery': []}
                     data[ts]['runoff'].append( float(tokens[4]) )
                     data[ts]['loss'].append( float(tokens[6]) )
                     data[ts]['precip'].append( float(tokens[3]) )
+                    data[ts]['delivery'].append( float(tokens[12]) )
             if runs > 0:
                 for ts in data.keys():
                     avgloss = sum(data[ts]['loss']) / float(runs)
-                    avgprecip = sum(data[ts]['precip']) / float(runs)
+                    avgprecip = np.average(data[ts]['precip'])
                     avgrunoff = sum(data[ts]['runoff']) / float(runs)
+                    avgdelivery = sum(data[ts]['delivery']) / float(runs)
                     icursor.execute("""
                     INSERT into results_by_huc12(huc_12, valid, 
                     min_precip, avg_precip, max_precip,
                     min_loss, avg_loss, max_loss,
+                    min_delivery, avg_delivery, max_delivery,
                     min_runoff, avg_runoff, max_runoff, scenario) VALUES
-                    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, %s)
+                    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     """, (huc12, ts, min(data[ts]['precip']), 
                           avgprecip, max(data[ts]['precip']),
-                          min(data[ts]['loss']), avgloss, 
-                          max(data[ts]['loss']), min(data[ts]['runoff']), 
+                    min(data[ts]['loss']), avgloss, max(data[ts]['loss']), 
+                    min(data[ts]['delivery']), avgdelivery, max(data[ts]['delivery']), 
+                          min(data[ts]['runoff']), 
                           avgrunoff, max(data[ts]['runoff']), SCENARIO))
                     hits += 1
             os.chdir("..")
@@ -85,10 +96,11 @@ def main():
     if len(sys.argv) == 5:
         ts = datetime.date( int(sys.argv[2]), int(sys.argv[3]), 
                              int(sys.argv[4]))
-        do(ts)
     else:
         ts = datetime.date.today() - datetime.timedelta(days=1)
-        do(ts)
+
+    do(ts, (len(sys.argv) == 3 and sys.argv[2] == 'all'))
+    if SCENARIO == 0:
         update_properties(ts)
         
  
