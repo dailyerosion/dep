@@ -59,27 +59,6 @@ float: left;
                 z-index: 20000;
                 padding-left: 0.5em;
             }
-			#quick {
-				position: absolute;
-				top: 0px;
-				left: 50px;
-				z-index: 20000;
-			}
-			#quick ul {
-				float: right;
-				list-style-type: none;
-				padding: 0;
-				margin: 0;
-				margin-right: -2px;
-			}
-			#quick li {
-				float: left;
-				margin: 0;
-				border: 1px solid #999;
-				padding: 6px 8px 3px 8px;
-				margin-left: -1px;
-				background: white;
-			}
         </style>
         <script type="text/javascript">
 var tilecache = "<?php echo TMS_SERVER; ?>";
@@ -88,15 +67,6 @@ var lastdate = new Date("<?php echo str_replace("-","/", $last_date); ?>");
  <script src='nextgen.js?v=5'></script>
 </head>
 <body onload="init()">
-<div id="quick">
-<ul>
-	<li><a href="javascript: selectEvent(1);">May6, 07</a></li>
-	<li><a href="javascript: selectEvent(2);">Jun4, 08</a></li>
-	<li><a href="javascript: selectEvent(3);">Jul24, 08</a></li>
-	<li><a href="javascript: selectEvent(4);">Aug24, 07</a></li>
-	<li><a href="javascript: selectEvent(5);">Jul22, 10</a></li>
-</ul>
-</div>
 <div id="detailsContainer">
 	<div id="details">
 		<div id="details_loading"><img src="/images/wait24trans.gif" /> Loading...</div>
@@ -116,7 +86,8 @@ var lastdate = new Date("<?php echo str_replace("-","/", $last_date); ?>");
 	<div id="radio">
 		<input type="radio" id="precip-in2_opt" name="radio" value="mrms-calday" /><label for="precip-in2_opt">Precipitation</label>
 		<input type="radio" id="precip-in_opt" name="radio" value="precip-in" /><label for="precip-in_opt">P.v1</label>
-	    <input type="radio" id="loss2_opt" name="radio" value="loss2" checked="checked" /><label for="loss2_opt">Erosion</label>
+	    <input type="radio" id="delivery2_opt" name="radio" value="delivery2" checked="checked" /><label for="delivery2_opt">Delivery</label>
+		<input type="radio" id="loss2_opt" name="radio" value="loss2" checked="checked" /><label for="loss2_opt">Erosion</label>
 		<input type="radio" id="loss_opt" name="radio" value="loss" /><label for="loss_opt">E.v1</label>
 		<input type="radio" id="runoff2_opt" name="radio" value="runoff2" /><label for="runoff2_opt">Runoff</label>
 		<input type="radio" id="runoff_opt" name="radio" value="runoff" /><label for="runoff_opt">R.v1</label>
