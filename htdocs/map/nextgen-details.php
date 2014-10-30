@@ -44,7 +44,7 @@ echo <<<EOF
 EOF;
 echo "<strong>HUC 12:</strong> $huc_12";
 echo "<br /><strong>Name:</strong> $hu12name";
-echo "<br /><strong>IDEPv1 Township:</strong> ". $model_twp;
+//echo "<br /><strong>IDEPv1 Township:</strong> ". $model_twp;
 echo "<br /><strong>Date:</strong> ". date("d M Y", $date);
 
 /* Find the HRAP cell */
@@ -97,7 +97,7 @@ if (pg_num_rows($rs) == 0){
 }
 */
 
-/* Fetch Results */
+/* Fetch Results 
 echo "<br />--- IDEPv1 Township Summary ---";
 $rs = pg_prepare($weppconn, "RES", "select * from results_by_twp WHERE
 		valid = $1 and model_twp = $2 ");
@@ -110,7 +110,7 @@ if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>Average Erosion:</strong> ". sprintf("%.2f T/A", $row["avg_loss"] * 4.463);
 	echo "<br /><strong>Average Runoff:</strong> ". sprintf("%.2f in", $row["avg_runoff"] / 25.4);
 }
-
+*/
 
 /* Fetch Results */
 echo "<br />--- IDEPv2 HUC 12 Summary ---";
