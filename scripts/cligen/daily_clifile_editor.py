@@ -21,7 +21,7 @@ import unittest
 SCENARIO = sys.argv[1]
 SOUTH = 40.28
 NORTH = 43.69
-EAST = -91.01
+EAST = -90.01
 WEST = -96.73
 YS = int((NORTH - SOUTH) * 100.)
 XS = int((EAST - WEST) * 100.)
