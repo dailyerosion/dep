@@ -13,6 +13,8 @@ icursor = idep.cursor()
 IDEPHOME = "/i"
 SCENARIO = int(sys.argv[1])
 
+TODAY = datetime.date.today()
+
 def do(date, process_all):
     """ Process for this date, if process_all is true, then do it all!"""
     if process_all:
@@ -69,6 +71,9 @@ def do(date, process_all):
                                                  lengths[fn[:-4]])
             if runs > 0:
                 for ts in data.keys():
+                    # Don't ingest data from the future!
+                    if ts >= TODAY:
+                        continue
                     avgloss = sum(data[ts]['loss']) / float(runs)
                     avgprecip = np.average(data[ts]['precip'])
                     avgrunoff = sum(data[ts]['runoff']) / float(runs)
