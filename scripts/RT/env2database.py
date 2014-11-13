@@ -115,7 +115,9 @@ def main():
         ts = datetime.date.today() - datetime.timedelta(days=1)
 
     do(ts, (len(sys.argv) == 3 and sys.argv[2] == 'all'))
-    if SCENARIO == 0:
+    # Only update the last processing date when this script is run without
+    # arguments, which is a realtime run
+    if SCENARIO == 0 and len(sys.argv) == 2:
         update_properties(ts)
         
  
