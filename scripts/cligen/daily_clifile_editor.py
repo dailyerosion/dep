@@ -8,6 +8,7 @@
 import numpy as np
 import datetime
 import pytz
+import pygrib
 import sys
 import os
 import osgeo.gdal as gdal
@@ -30,7 +31,8 @@ low_temp = np.zeros((YS+1, XS+1))
 dewpoint = np.zeros((YS+1, XS+1))
 wind = np.zeros((YS+1, XS+1))
 solar = np.zeros((YS+1, XS+1))
-precip = np.zeros((30*24, YS, XS), np.uint8)
+precip = np.zeros((30*24, YS+1, XS+1), np.uint8)
+stage4 = np.zeros((YS+1, XS+1))
 
 # used for breakpoint logic
 ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
@@ -129,6 +131,75 @@ def load_solar( valid ):
                                np.array(vals))
     solar[:] = nn(xi, yi)
 
+def load_stage4(valid):
+    """ It sucks, but we need to load the stage IV data to give us something
+    to benchmark the MRMS data against, to account for two things:
+    1) Wind Farms
+    2) Over-estimates
+    """
+    midnight = datetime.datetime(valid.year, valid.month, valid.day, 12, 0)
+    midnight = midnight.replace(tzinfo=pytz.timezone("UTC"))
+    midnight = midnight.astimezone(pytz.timezone("America/Chicago"))
+    midnight = midnight.replace(hour=1, minute=0, second=0)
+    # clever hack for CST/CDT
+    tomorrow = midnight + datetime.timedelta(hours=36)
+    tomorrow = tomorrow.replace(hour=0)
+    
+    lats = None
+    lons = None
+    totals = None
+    now = midnight
+    while now <= tomorrow:
+        utc = now.astimezone(pytz.timezone("UTC"))
+        gribfn = utc.strftime(("/mesonet/ARCHIVE/data/%Y/%m/%d/stage4/"
+                               +"ST4.%Y%m%d%H.01h.grib"))
+        if not os.path.isfile(gribfn):
+            print("%s is missing" % (gribfn,))
+            now += datetime.timedelta(hours=1)
+            continue
+        
+        grbs = pygrib.open(gribfn)
+        grb = grbs[1]
+        if totals is None:
+            lats, lons = grb.latlons()
+            totals = grb['values'] + 0.001  # Always non-zero this way
+        else:
+            totals += grb['values']
+        
+        now += datetime.timedelta(hours=1)
+
+    if totals is None:
+        print('No StageIV data found, aborting...')
+        sys.exit()
+    
+    xaxis = np.arange(WEST, EAST, 0.01)
+    yaxis = np.arange(SOUTH, NORTH, 0.01)
+    xi, yi = np.meshgrid(xaxis, yaxis)
+    nn = NearestNDInterpolator((lons.flatten(), lats.flatten()), 
+                               totals.flatten())
+    stage4[:] = nn(xi, yi)
+
+def qc_precip():
+    """ Do the quality control on the precip product """
+    mrms_total = np.sum(precip, 0)
+    # So what is our logic here.  We should care about aggregious differences
+    # Lets make MRMS be within 33% of stage IV
+    ratio = (mrms_total /10.0) / stage4
+    for y in range(YS+1):
+        for x in range(XS+1):
+            if ratio[y,x] < 1.3:
+                continue
+            # Don't fuss over small differences, if mrms_total is less
+            # than 10 mm (100 value)
+            if mrms_total[y,x] < 100:
+                continue
+            # Pull the functional form down to stage4 total
+            precip[:,y,x] = (precip[:,y,x] / ratio[y,x]).astype(np.uint8)
+
+            print 'QC y: %3i x: %3i stageIV: %5.1f MRMS: %5.1f New: %5.1f' % (
+                    y, x, stage4[y,x], mrms_total[y,x] / 10.0,
+                                    np.sum(precip[:,y,x])/10.0)
+    
 def load_precip( valid ):
     """ Load the 5 minute precipitation data into our ginormus grid """
     ts = 30 * 24  # 2 minute
@@ -142,9 +213,9 @@ def load_precip( valid ):
     tomorrow = tomorrow.replace(hour=0)
 
     top = int((55. - NORTH) * 100.)
-    bottom = int((55. - SOUTH) * 100. )-1
+    bottom = int((55. - SOUTH) * 100. )
 
-    right =  int((EAST - -130.) * 100.)-1
+    right =  int((EAST - -130.) * 100.)
     left = int((WEST - -130.) * 100.)
     
     #samplex = int((-96.37 - -130.)*100.)
@@ -270,9 +341,10 @@ def workflow():
     load_solar( valid )
     # 5. wind direction (always zero)
     # 7. breakpoint precip mm
-    load_precip( valid )
-
-
+    load_stage4(valid)
+    load_precip(valid)
+    qc_precip()
+    
 
     QUEUE = []
     for y in range(YS):
@@ -304,7 +376,7 @@ if __name__ == '__main__':
     workflow()
     
 
-class test(unittest.TestCase):
+class test(unittest.TestCase):        
     
     def test_bp(self):
         """ issue #6 invalid time """
