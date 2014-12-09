@@ -34,6 +34,11 @@ class wepprun(object):
         return '%s/env/%s/%s_%s.env' % (IDEPHOME, self.subdir,
                                            self.huc12, self.fpid)
 
+    def get_ofe_fn(self):
+        """ Return the filename used for OFE output """
+        return '%s/ofe/%s/%s_%s.ofe' % (IDEPHOME, self.subdir, self.huc12,
+                                        self.fpid)
+
     def get_error_fn(self):
         ''' Return the event filename for this run '''
         return '%s/error/%s/%s_%s.env' % (IDEPHOME, self.subdir,
@@ -84,7 +89,8 @@ class wepprun(object):
         o.write("No\n")     # large graphics output
         o.write("Yes\n")    # event by event output
         o.write("%s\n" % (self.get_env_fn(),))  # event file output
-        o.write("No\n")     # element output
+        o.write("Yes\n")     # element output
+        o.write("%s\n" % (self.get_ofe_fn(),))
         o.write("No\n")     # final summary output
         o.write("No\n")     # daily winter output
         o.write("No\n")     # plant yield output
