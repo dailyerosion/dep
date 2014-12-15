@@ -44,7 +44,7 @@ def simplify(rows):
     newrows = []
     lrow = rows[0]
     newrows.append( lrow )
-    for row in rows:
+    for i, row in enumerate(rows):
         # If they are the 'same', continue
         if row['lstring'] == 'UUUUUU':
             continue
@@ -52,6 +52,7 @@ def simplify(rows):
             row['surgo'] == lrow['surgo'] and
             row['lstring'] == lrow['lstring']):
             continue
+        print 'Add row %s' % (i,)
         # Recompute slope
         dy = lrow['elevation'] - row['elevation']
         dx = row['length'] - lrow['length']

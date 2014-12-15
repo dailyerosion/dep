@@ -22,7 +22,7 @@ import psycopg2
 import datetime
 import sys
 
-SCENARIO = sys.argv[1]
+SCENARIO = int(sys.argv[1])
 
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor()
@@ -52,12 +52,15 @@ def process(fn, df):
     '''Process a given filename into the database '''
     huc12 = fn[4:-4]
     huc8 = huc12[:-4]
+    prefix = 'g4' if SCENARIO == 0 else 'fp'
     #print df.keys()
-    flowpaths = Series(df['fp%s' % (huc8,)]).unique()
+    flowpaths = Series(df['%s%s' % (prefix, huc8)]).unique()
     flowpaths.sort()
     for flowpath in flowpaths:
-        df2 = df[df['fp%s' % (huc8,)]==flowpath]
-        df2 = df2.sort('fpLen%s' % (huc8[:5],), ascending=True)
+        if flowpath != 162:
+            continue
+        df2 = df[df['%s%s' % (prefix, huc8)]==flowpath]
+        df2 = df2.sort('%sLen%s' % (prefix, huc8[:5]), ascending=True)
         fid = get_flowpath(huc12, flowpath)
         cursor.execute("""DELETE from flowpath_points WHERE flowpath = %s
             and scenario = %s""",
@@ -71,12 +74,13 @@ def process(fn, df):
             else:
                 row2 = df2.irow(segid+1)
             dy = row['ep3m%s' % (huc8[:6],)] - row2['ep3m%s' % (huc8[:6],)]
-            dx =  row2['fpLen%s' % (huc8[:5],)] - row['fpLen%s' % (huc8[:5],)]
+            dx =  row2['%sLen%s' % (prefix, huc8[:5])] - row['%sLen%s' % (prefix,huc8[:5])]
             if dx == 0:
                 slope = 0
             else:
                 slope = dy/dx
             lu = row['CropRotatn']
+            print "%3s %7.1f %7.1f %7.4f %s" % (segid, dx, dy, slope, lu)
             if lu.strip() == "":
                 lu = [None, None, None, None, None, None]
             sql = """INSERT into flowpath_points(flowpath, segid, 
@@ -89,7 +93,7 @@ def process(fn, df):
                 """ 
             args = (fid, segid,  
                        row['ep3m%s' % (huc8[:6],)]/100.,
-               row['fpLen%s' % (huc8[:5],)]/100., 
+               row['%sLen%s' % (prefix, huc8[:5])]/100., 
                 row['gSSURGO'], 
                row['Management'], slope, row['X'], 
                row['Y'], lu[0], lu[1], lu[2], 
@@ -129,7 +133,7 @@ def main():
         print '%4i/%4i %7.3fs %s' % (i+1, total, 
             (ets - sts).microseconds / 100000. + (ets - sts).seconds, fn)
     
-    cursor.close()
+    #cursor.close()
     PGCONN.commit()
 
 if __name__ == '__main__':
