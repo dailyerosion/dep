@@ -18,15 +18,19 @@ TODAY = datetime.date.today()
 def do(date, process_all):
     """ Process for this date, if process_all is true, then do it all!"""
     if process_all:
-        print("Deleting all results_by_huc12 for scenario: %s" % (SCENARIO,))
+        print("Deleting all {results_by_huc12,results} for scenario: %s" % (
+                                                                SCENARIO,))
         icursor.execute("""DELETE from results_by_huc12 WHERE 
                             scenario = %s""", (SCENARIO,))
+        icursor.execute("""DELETE from results WHERE 
+                            scenario = %s""", (SCENARIO,))
     else:
-        icursor.execute("""DELETE from results_by_huc12 WHERE 
+        for tbl in ['results', 'results_by_huc12']:
+            icursor.execute("""DELETE from """+tbl+""" WHERE 
                             valid = %s and scenario = %s""", (date, SCENARIO))
-        if icursor.rowcount != 0:
-            print '... env2database.py removed %s rows for date: %s' % (
-                                                    icursor.rowcount, date)
+            if icursor.rowcount != 0:
+                print '... env2database.py removed %s %s rows for date: %s' % (
+                                                tbl, icursor.rowcount, date)
     # Compute dictionary of slope lengths
     lengths = {}
     icursor.execute("""
@@ -50,6 +54,7 @@ def do(date, process_all):
             data = {}
             for fn in glob.glob("*.env"):
                 runs += 1
+                hsid = fn.split("_")[1][:-4]
                 for line in open(fn):
                     tokens = line.strip().split()
                     if (len(tokens) < 5 or tokens[0] in ['day', '---'] 
@@ -69,6 +74,12 @@ def do(date, process_all):
                     data[ts]['precip'].append( float(tokens[3]) )
                     data[ts]['delivery'].append( float(tokens[12]) /
                                                  lengths[fn[:-4]])
+                    icursor.execute("""INSERT into results(huc_12, hs_id,
+                    valid, runoff, loss, precip, scenario, delivery) VALUES(
+                    %s, %s, %s, %s, %s, %s, %s, %s)""", (huc12, hsid,
+                    ts, float(tokens[4]), float(tokens[6]),
+                     float(tokens[3]), SCENARIO, float(tokens[12]) /
+                                                 lengths[fn[:-4]]))
             if runs > 0:
                 for ts in data.keys():
                     # Don't ingest data from the future!
