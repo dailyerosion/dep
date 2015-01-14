@@ -1,3 +1,20 @@
+13 Jan 2015 -
+  Cruse, Gelder, James, Carl, Claudette
+  - Introduced new team members Claudette and Carl
+  - A long discussion ensued about Carl's potential convergence work. A TODO
+    item was for daryl to email Jean Opsomer about potential paths forward.
+    The issue is how to increase the number of samples within the HUC12 to
+    test for convergence.
+  - We really need to look into the time resolution issue of the precipitation
+    and its impact on the erosion estimates.  Is two minute interval too fine?
+  - Illinois LIDAR data is problematic, so expansion into that state is tough
+  - An open question is how we will handle irrigation in WEPP
+  - James noted that major effort in expansion is dealing with field boundaries
+  - Discussed central IT storage and Robin's GIS Lab capabilities.  For 10
+    cents per gig per month, we can probably take advantage of that
+  - James discussed a vision for where ACPF could go and how perhaps it would
+    eventually follow DEP's lead 
+
 20 Sep 2014
   Sanity Check, Cruse, Gelder, James, Victoria
   - [action] daryl emails Jim and asks about units of Sediment Delivery
