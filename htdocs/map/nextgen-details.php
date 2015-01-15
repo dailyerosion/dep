@@ -149,6 +149,6 @@ if (pg_num_rows($rs) == 0){
 echo "--- Diagnostics ---";
 echo sprintf("<br /><a target=\"_new\" href=\"/compare.phtml?scenario=%s&year=%s&model_twp=%s&huc_12=%s\">Daily Comparison</a>",
 		$scenario, date("Y", $date), $model_twp, $huc_12);
-echo sprintf("<br /><a target=\"_new\" href=\"javascript:showConvergence(%s);\">Erosion Convergence</a>",
+echo sprintf("<br /><a target=\"_new\" href=\"javascript:showConvergence('%s');\">Erosion Convergence</a>",
 		$huc_12);
 ?>
