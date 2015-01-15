@@ -81,8 +81,8 @@ var lastdate = new Date("<?php echo str_replace("-","/", $last_date); ?>");
 	<form>
 	<input type="text" name="date" id="datepicker" class="dp" />
 	<span style="font-size: 1.3em; color:#FFF; font-weight:bolder;">Iowa Daily Erosion Project</span>
-	<input type="button" onclick="javascript: tms.setOpacity(tms.opacity - 0.1);" value="-"/>
-	<input type="button" onclick="javascript: tms.setOpacity(tms.opacity + 0.1);" value="+"/>
+	<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() - 0.1);" value="-"/>
+	<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() + 0.1);" value="+"/>
 	<input type="button" onclick="javascript: zoom_iowa();" value="View Iowa"/>
 	
 	<br clear="both"/>&nbsp;<br />
