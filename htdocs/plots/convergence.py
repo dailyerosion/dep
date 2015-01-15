@@ -40,7 +40,7 @@ def make_plot(huc_12):
         stddev = np.std(data[yr])
         mu = y[-1]
         cnt = np.sum(np.where(data[yr]>(mu+2.*stddev), 1, 0))
-        ax.plot(x, y, label="%i $\mu$=%.1f\n$\sigma$=%.1f <$2\sigma$%%=%.1f" % (
+        ax.plot(x, y, label="%i $\mu$=%.1f\n$\sigma$=%.1f <$2\sigma$=%.1f%%" % (
                             yr, mu, stddev, 
                             (len(data[yr])-cnt)/float(len(data[yr]))*100.))
 
