@@ -7,11 +7,14 @@ $last_date = $row['value'];
 ?>
 <html>
 <head>
+ <link type="text/css" href="http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/css/ol.css" rel="stylesheet" />
+ <link type="text/css" href="http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/css/ol3-layerswitcher.css" rel="stylesheet" />
  <link type="text/css" href="/css/ui-lightness/jquery-ui-1.8.22.custom.css" rel="stylesheet" />
  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
  <script type="text/javascript" src="/js/jquery-ui-1.8.22.custom.min.js"></script>
  <script src="http://maps.google.com/maps/api/js?v=3&amp;sensor=false"></script>
- <script src='/js/OpenLayers.js'></script>
+ <script src='http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/build/ol.js'></script>
+ <script src='http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/build/ol3-layerswitcher.js'></script>
  <link rel='stylesheet' 
   href='/css/default/style.css' type='text/css'>
           <style type="text/css">
@@ -64,9 +67,9 @@ float: left;
 var tilecache = "<?php echo TMS_SERVER; ?>";
 var lastdate = new Date("<?php echo str_replace("-","/", $last_date); ?>");
         </script>
- <script src='nextgen.js?v=5'></script>
+ <script src='nextgen.js?v=6'></script>
 </head>
-<body onload="init()">
+<body>
 <div id="detailsContainer">
 	<div id="details">
 		<div id="details_loading"><img src="/images/wait24trans.gif" /> Loading...</div>

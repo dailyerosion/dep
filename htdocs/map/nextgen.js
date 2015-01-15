@@ -8,55 +8,148 @@ var appstate = {
 		date: null,
 		ltype: 'loss2'
 };
-var events = {
-		1 : {year: 2007, month: 5, day: 6},
-		2 : {year: 2008, month: 6, day: 4},
-		3 : {year: 2008, month: 7, day: 24},
-		4 : {year: 2007, month: 8, day: 24},
-		5 : {year: 2010, month: 7, day: 22}
+
+/**
+ * Define a namespace for the application.
+ */
+window.app = {};
+var app = window.app;
+
+
+
+/**
+ * @constructor
+ * @extends {ol.interaction.Pointer}
+ */
+app.Drag = function() {
+
+  ol.interaction.Pointer.call(this, {
+    handleDownEvent: app.Drag.prototype.handleDownEvent,
+    handleDragEvent: app.Drag.prototype.handleDragEvent,
+    handleMoveEvent: app.Drag.prototype.handleMoveEvent,
+    handleUpEvent: app.Drag.prototype.handleUpEvent
+  });
+
+  /**
+   * @type {ol.Pixel}
+   * @private
+   */
+  this.coordinate_ = null;
+
+  /**
+   * @type {string|undefined}
+   * @private
+   */
+  this.cursor_ = 'pointer';
+
+  /**
+   * @type {ol.Feature}
+   * @private
+   */
+  this.feature_ = null;
+
+  /**
+   * @type {string|undefined}
+   * @private
+   */
+  this.previousCursor_ = undefined;
+
 };
-function selectEvent(e){
-	setDate( events[e].year, events[e].month, events[e].day);
-}
+ol.inherits(app.Drag, ol.interaction.Pointer);
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `true` to start the drag sequence.
+ */
+app.Drag.prototype.handleDownEvent = function(evt) {
+  var map = evt.map;
+
+  var feature = map.forEachFeatureAtPixel(evt.pixel,
+      function(feature, layer) {
+        return feature;
+      });
+
+  if (feature) {
+    this.coordinate_ = evt.coordinate;
+    this.feature_ = feature;
+  }
+
+  return !!feature;
+};
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ */
+app.Drag.prototype.handleDragEvent = function(evt) {
+  var map = evt.map;
+
+  var feature = map.forEachFeatureAtPixel(evt.pixel,
+      function(feature, layer) {
+        return feature;
+      });
+
+  var deltaX = evt.coordinate[0] - this.coordinate_[0];
+  var deltaY = evt.coordinate[1] - this.coordinate_[1];
+
+  var geometry = /** @type {ol.geom.SimpleGeometry} */
+      (this.feature_.getGeometry());
+  geometry.translate(deltaX, deltaY);
+
+  this.coordinate_[0] = evt.coordinate[0];
+  this.coordinate_[1] = evt.coordinate[1];
+};
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Event.
+ */
+app.Drag.prototype.handleMoveEvent = function(evt) {
+  if (this.cursor_) {
+    var map = evt.map;
+    var feature = map.forEachFeatureAtPixel(evt.pixel,
+        function(feature, layer) {
+          return feature;
+        });
+    var element = evt.map.getTargetElement();
+    if (feature) {
+      if (element.style.cursor != this.cursor_) {
+        this.previousCursor_ = element.style.cursor;
+        element.style.cursor = this.cursor_;
+      }
+    } else if (this.previousCursor_ !== undefined) {
+      element.style.cursor = this.previousCursor_;
+      this.previousCursor_ = undefined;
+    }
+  }
+};
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `false` to stop the drag sequence.
+ */
+app.Drag.prototype.handleUpEvent = function(evt) {
+	var c = ol.proj.transform(this.coordinate_, 'EPSG:3857', 'EPSG:4326')
+	appstate.lat = c[1];
+    appstate.lon = c[0];
+    updateDetails();
+	this.coordinate_ = null;
+  this.feature_ = null;
+  return false;
+};
+
 function setType(t){
 	$('#'+ t +'_opt').click();
 }
-function get_my_url (bounds) {
-        var res = this.map.getResolution();
-        var x = Math.round ((bounds.left - this.maxExtent.left) / (res * this.tileSize.w));
-        var y = Math.round ((this.maxExtent.top - bounds.top) / (res * this.tileSize.h));
-        var z = this.map.getZoom();
 
-        var path = z + "/" + x + "/" + y + "." + this.type ;
-        var url = this.url;
-        if (url instanceof Array) {
-            url = this.selectUrl(path, url);
-        }
-        this.layername = 'idep'+ scenario +'::'+ appstate.ltype +'::'+$.datepicker.formatDate("yy-mm-dd", appstate.date);
-        return url + this.service +"/"+ this.layername +"/"+ path;
-
-   }
-function get_my_url2(bounds) {
-    var res = this.map.getResolution();
-    var x = Math.round((bounds.left - this.maxExtent.left)
-                    / (res * this.tileSize.w));
-    var y = Math.round((this.maxExtent.top - bounds.top)
-                    / (res * this.tileSize.h));
-    var z = this.map.getZoom();
-
-    var path = z + "/" + x + "/" + y + "." + this.type ;
-    var url = this.url;
-    if (url instanceof Array) {
-            url = this.selectUrl(path, url);
-    }
-    return url + this.service + "/" + this.layername + "/" + path;
-
-}
 function hideDetails(){
 	$('#details_hidden').css('display', 'block');
 	$('#details_details').css('display', 'none');
 	$('#details_loading').css('display', 'none');
 }
+
 function updateDetails(){
 	$('#details_hidden').css('display', 'none');
 	$('#details_details').css('display', 'none');
@@ -70,8 +163,27 @@ function updateDetails(){
 	});
 
 }
+
+function showConvergence(huc_12){
+	var $dialog = $('<div></div>')
+    .html('Image will appear here shortly!')
+    .dialog({
+        height: 500,
+        width: 600,
+        title: 'Convergence Plot'});
+
+	$dialog.dialog('open');
+	$dialog.html('<img src="/plots/convergence.py?huc_12='+huc_12+'" style="width: 100%;"/>');
+}
+
+function get_tms_url(){
+	// Generate the TMS URL given the current settings
+	return tilecache +'/cache/tile.py/1.0.0/idep0::'+appstate.ltype+'::'+$.datepicker.formatDate("yy-mm-dd", appstate.date)+'/{z}/{x}/{y}.png';
+}
 function remap(){
-	tms.redraw();
+	tms.getSource().setUrl(get_tms_url());
+	tms.setVisible(false);
+	tms.setVisible(true);
 }
 function setDate(year, month, date){
 	appstate.date = new Date(year+"/"+ month +"/"+ date);
@@ -82,216 +194,129 @@ function setDate(year, month, date){
 function zoom_iowa(){
     map.zoomToExtent(iaextent);
 }
-function init(){
-	markers = new OpenLayers.Layer.Vector( "Query" );
 
-    var layer_style = OpenLayers.Util.extend({}, OpenLayers.Feature.Vector.style['default']);
-    layer_style.fillOpacity = 1;
-    layer_style.graphicOpacity = 1;
+function make_iem_tms(title, layername){
+	return new ol.layer.Tile({
+		title : title,
+		visible: false,
+		source : new ol.source.XYZ({
+			url : tilecache +'/c/tile.py/1.0.0/'+layername+'/{z}/{x}/{y}.png'
+		})
+	})
+}
 
-    /*
-     * Blue style
-     */
-    var style_blue = OpenLayers.Util.extend({}, layer_style);
-    style_blue.strokeColor = "black";
-    style_blue.fillColor = "green";
-    style_blue.graphicName = "circle";
-    style_blue.pointRadius = 5;
-    style_blue.strokeWidth = 3;
-    style_blue.rotation = 45;
-    style_blue.strokeLinecap = "butt";
+$(document).ready(function(){
+
+	appstate.date = lastdate;
+
+	// Vector Layer to hold the query marker that allows us to interogate the
+	// data layer
+	var pointFeature = new ol.Feature(new ol.geom.Point(
+			ol.proj.transform([-95.489, 42.22], 'EPSG:4326', 'EPSG:3857')));
+	markers = new ol.layer.Vector({
+	      source: new ol.source.Vector({
+	    	  projection: ol.proj.get('EPSG:3857'),
+	          features: [pointFeature]
+	        }),
+	        style: new ol.style.Style({
+	          image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+	            anchor: [0.5, 0.5],
+	            anchorXUnits: 'fraction',
+	            anchorYUnits: 'fraction',
+	            opacity: 0.95,
+	            src: '/images/zoom-best-fit.png'
+	          })),
+	          stroke: new ol.style.Stroke({
+	            width: 3,
+	            color: [255, 0, 0, 1]
+	          }),
+	          fill: new ol.style.Fill({
+	            color: [0, 0, 255, 0.6]
+	          })
+	        })
+	      });
 	
-	var p4326 = new OpenLayers.Projection('EPSG:4326');
-	var p900913 = new OpenLayers.Projection('EPSG:900913');
-    tms = new OpenLayers.Layer.TMS(
-            'IDEP Data Layer',
-            tilecache +'/cache/tile.py/',
-            {layername      : 'idep',
-            service         : '1.0.0',
-            type            : 'png',
-            visibility      : true,
-            getURL          : get_my_url,
-            isBaseLayer     : false}
-    );
-
-    controls = {
-    	attr:  new OpenLayers.Control.Attribution(),
-    	nav:  new OpenLayers.Control.TouchNavigation({
-                  dragPanOptions: {
-                      enableKinetic: true
-                  }
-         }),
-        ls : new OpenLayers.Control.LayerSwitcher(),
-        zoom: new OpenLayers.Control.Zoom(),
-        drag: new OpenLayers.Control.DragFeature(markers, {
-            onComplete: function(feature, pixel) {
-                    geo = feature.geometry.clone();
-                    geo.transform(map.getProjectionObject(), p4326);
-                    appstate.lat = geo.y;
-                    appstate.lon = geo.x;
-                    updateDetails();
-            }
-    })
-
-    };
-    
-    var osm = new OpenLayers.Layer.OSM('OpenStreetMap (Internet)', null, {
-        transitionEffect: 'resize',
-        visibility : false,
-        isBaseLayer : true
+	// Our base tile map service layer, which we adjust to include the data
+	// the user wants
+	tms = new ol.layer.Tile({
+		title : 'IDEP Data Layer',
+		source : new ol.source.XYZ({
+			url : get_tms_url()
+		})
+	});
+	
+	// Create map instance
+    map = new ol.Map({
+        target: 'map',
+        interactions: ol.interaction.defaults().extend([new app.Drag()]),
+        controls: [
+            
+        ],
+        layers: [new ol.layer.Tile({
+            	title: 'OpenStreetMap',
+        		source: new ol.source.OSM()
+        	}),
+        	new ol.layer.Tile({
+                title: "Global Imagery",
+                visible: false,
+                source: new ol.source.TileWMS({
+                        url: 'http://maps.opengeo.org/geowebcache/service/wms',
+                        params: {LAYERS: 'bluemarble', VERSION: '1.1.1'}
+                })
+        	}),
+        	make_iem_tms('Iowa 100m Hillshade', 'iahshd-900913'),
+        	make_iem_tms('Iowa GLU 0813', 'iaglu-900913'),
+        	tms,
+        	make_iem_tms('Iowa Counties', 'iac-900913'),
+        	make_iem_tms('US States', 's-900913'),
+        	make_iem_tms('Hydrology', 'iahydrology-900913'),
+        	make_iem_tms('HUC 12', 'iahuc12-900913'),
+        	make_iem_tms('HUC 8', 'iahuc8-900913'),
+        	make_iem_tms('Flow Paths', 'flowpaths-900913'),
+        	markers
+        ],
+        view: new ol.View({
+                projection: 'EPSG:3857',
+                center: ol.proj.transform([-95.489, 42.22], 'EPSG:4326', 'EPSG:3857'),
+                zoom: 7
+        })
     });
-    
-    var iahshd = new OpenLayers.Layer.TMS('Iowa 100m Hillshade',
-            tilecache +'/c/c.py/', {
-                    layername : 'iahshd-900913',
-                    service : '1.0.0',
-                    type : 'png',
-                    visibility : false,
-                    opacity : 1,
-                    getURL : get_my_url2,
-                    isBaseLayer : true
-            });   
-    var iaglu = new OpenLayers.Layer.TMS('Iowa GLU 0813',
-            tilecache +'/c/c.py/', {
-                    layername : 'iaglu-900913',
-                    service : '1.0.0',
-                    type : 'png',
-                    visibility : false,
-                    opacity : 1,
-                    getURL : get_my_url2,
-                    isBaseLayer : true
-            }); 
-    var counties = new OpenLayers.Layer.TMS('Counties',
-            tilecache +'/c/c.py/', {
-                    layername : 'iac-900913',
-                    service : '1.0.0',
-                    type : 'png',
-                    visibility : false,
-                    opacity : 1,
-                    getURL : get_my_url2,
-                    isBaseLayer : false
-            });
-    var states = new OpenLayers.Layer.TMS('US States',
-    			tilecache +'/c/c.py/', {
-                    layername : 's-900913',
-                    service : '1.0.0',
-                    type : 'png',
-                    visibility : true,
-                    opacity : 1,
-                    getURL : get_my_url2,
-                    isBaseLayer : false
-            });
-    var iahydro = new OpenLayers.Layer.TMS('Hydrology',
-			tilecache +'/c/c.py/', {
-                layername : 'iahydrology-900913',
-                service : '1.0.0',
-                type : 'png',
-                visibility : false,
-                opacity : 1,
-                getURL : get_my_url2,
-                isBaseLayer : false
-        });
-    var huc12 = new OpenLayers.Layer.TMS('HUC 12',
-			tilecache +'/c/c.py/', {
-                layername : 'iahuc12-900913',
-                service : '1.0.0',
-                type : 'png',
-                visibility : false,
-                opacity : 1,
-                getURL : get_my_url2,
-                isBaseLayer : false
-        });
-    var huc8 = new OpenLayers.Layer.TMS('HUC 8',
-			tilecache +'/c/c.py/', {
-                layername : 'iahuc8-900913',
-                service : '1.0.0',
-                type : 'png',
-                visibility : false,
-                opacity : 1,
-                getURL : get_my_url2,
-                isBaseLayer : false
-        });
-    var flowpaths = new OpenLayers.Layer.TMS('Flow Paths',
-			tilecache +'/cache/c.py/', {
-                layername : 'flowpaths-900913',
-                service : '1.0.0',
-                type : 'png',
-                visibility : false,
-                opacity : 1,
-                getURL : get_my_url2,
-                isBaseLayer : false
-        });
-    var blank = new OpenLayers.Layer("Blank", {
-        isBaseLayer : true,
-        visibility : false
-    });
-    var gsat = new OpenLayers.Layer.Google(
-            "Google Satellite",
-            {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 22}
-        );
-    var gphy = new OpenLayers.Layer.Google(
-            "Google Physical",
-            {type: google.maps.MapTypeId.TERRAIN, visibility: false}
-        );
-    iaextent =  new OpenLayers.Bounds(-11074808, 4701182, -9780882, 5531594);
-    map = new OpenLayers.Map({
-          div: 'map',
-          //restrictedExtent : iaextent,
-          projection: new OpenLayers.Projection("EPSG:900913"),
-          theme: null,
-          layers: [blank, osm, gsat, gphy, iahshd, iaglu, tms, counties, 
-                   states, huc12, huc8, flowpaths, iahydro, markers],
-          center: new OpenLayers.LonLat(-10393237, 5161834),
-          zoom: 7,
-          numZoomLevels: 15
-      });
-      for(var key in controls) {
-          map.addControl(controls[key]);
-      }
-      map.addControl(new OpenLayers.Control.Permalink({anchor: true}));
-      //zoom_iowa();
-      
-      appstate.date = lastdate;
-      
-      $("#datepicker").datepicker({
-    	  dateFormat: 'M d, yy',
-    	  minDate: new Date(2002, 1, 1),
-    	  maxDate: lastdate,
-    	   onSelect: function(dateText, inst) {
-    		   appstate.date = $("#datepicker").datepicker("getDate");
-    		   if ((appstate.ltype == 'mrms-calday') && (appstate.date < MRMS_FLOOR)){
-    			   appstate.ltype = 'precip-in2';
-    		    	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
-    	       }
-    		   if ((appstate.ltype == 'precip-in2') && (appstate.date > MRMS_FLOOR)){
-    			   appstate.ltype = 'mrms-calday';
-    		    	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
-    	       }
-    		   remap(); 
-    		   updateDetails();
-    	   }
-      });
 
-      $("#datepicker").datepicker('setDate', lastdate);
+    // Create a LayerSwitcher instance and add it to the map
+    var layerSwitcher = new ol.control.LayerSwitcher();
+    map.addControl(layerSwitcher);
+    
+    $("#datepicker").datepicker({
+  	  dateFormat: 'M d, yy',
+  	  minDate: new Date(2002, 1, 1),
+  	  maxDate: lastdate,
+  	   onSelect: function(dateText, inst) {
+  		   appstate.date = $("#datepicker").datepicker("getDate");
+  		   if ((appstate.ltype == 'mrms-calday') && (appstate.date < MRMS_FLOOR)){
+  			   appstate.ltype = 'precip-in2';
+  		    	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
+  	       }
+  		   if ((appstate.ltype == 'precip-in2') && (appstate.date > MRMS_FLOOR)){
+  			   appstate.ltype = 'mrms-calday';
+  		    	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
+  	       }
+  		   remap(); 
+  		   updateDetails();
+  	   }
+    });
+
+    $("#datepicker").datepicker('setDate', lastdate);
+    
+    $( "#radio" ).buttonset();
+    $( '#radio input[type=radio]').change(function(){
+    	if ((this.value == 'mrms-calday') && (appstate.date < MRMS_FLOOR)){
+    		appstate.ltype = 'precip-in2';
+  	  	} else {
+  	  		appstate.ltype = this.value;
+  	  	}
+    	remap();
+  	  	$('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
+    });
+    updateDetails();
       
-      $( "#radio" ).buttonset();
-      $( '#radio input[type=radio]').change(function(){
-    	  tms.redraw();
-    	  if ((this.value == 'mrms-calday') && (appstate.date < MRMS_FLOOR)){
-    		  appstate.ltype = 'precip-in2';
-    	  } else {
-    		  appstate.ltype = this.value;
-    	  }
-    	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
-      });
-      var point = new OpenLayers.Geometry.Point(appstate.lon, appstate.lat);
-      var pointFeature = new OpenLayers.Feature.Vector(
-    		  point.transform(p4326,p900913),
-    		  null,
-    		  style_blue);
-      markers.addFeatures([pointFeature]);
-      
-      controls.drag.activate();
-      updateDetails();
-      
-} /* End of init() */
+}); // End of document.ready()
