@@ -195,10 +195,10 @@ function zoom_iowa(){
     map.zoomToExtent(iaextent);
 }
 
-function make_iem_tms(title, layername){
+function make_iem_tms(title, layername, visible){
 	return new ol.layer.Tile({
 		title : title,
-		visible: false,
+		visible: visible,
 		source : new ol.source.XYZ({
 			url : tilecache +'/c/tile.py/1.0.0/'+layername+'/{z}/{x}/{y}.png'
 		})
@@ -264,15 +264,15 @@ $(document).ready(function(){
                         params: {LAYERS: 'bluemarble', VERSION: '1.1.1'}
                 })
         	}),
-        	make_iem_tms('Iowa 100m Hillshade', 'iahshd-900913'),
-        	make_iem_tms('Iowa GLU 0813', 'iaglu-900913'),
+        	make_iem_tms('Iowa 100m Hillshade', 'iahshd-900913', false),
+        	make_iem_tms('Iowa GLU 0813', 'iaglu-900913', false),
         	tms,
-        	make_iem_tms('Iowa Counties', 'iac-900913'),
-        	make_iem_tms('US States', 's-900913'),
-        	make_iem_tms('Hydrology', 'iahydrology-900913'),
-        	make_iem_tms('HUC 12', 'iahuc12-900913'),
-        	make_iem_tms('HUC 8', 'iahuc8-900913'),
-        	make_iem_tms('Flow Paths', 'flowpaths-900913'),
+        	make_iem_tms('Iowa Counties', 'iac-900913', false),
+        	make_iem_tms('US States', 's-900913', false),
+        	make_iem_tms('Hydrology', 'iahydrology-900913', false),
+        	make_iem_tms('HUC 12', 'iahuc12-900913', true),
+        	make_iem_tms('HUC 8', 'iahuc8-900913', false),
+        	make_iem_tms('Flow Paths', 'flowpaths-900913', false),
         	markers
         ],
         view: new ol.View({
