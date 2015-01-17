@@ -12,7 +12,6 @@ $last_date = $row['value'];
  <link type="text/css" href="/css/ui-lightness/jquery-ui-1.8.22.custom.css" rel="stylesheet" />
  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
  <script type="text/javascript" src="/js/jquery-ui-1.8.22.custom.min.js"></script>
- <script src="http://maps.google.com/maps/api/js?v=3&amp;sensor=false"></script>
  <script src='http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/build/ol.js'></script>
  <script src='http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/build/ol3-layerswitcher.js'></script>
  <link rel='stylesheet' 

@@ -249,11 +249,12 @@ $(document).ready(function(){
     map = new ol.Map({
         target: 'map',
         interactions: ol.interaction.defaults().extend([new app.Drag()]),
-        controls: [
-            
+        controls: [new ol.control.Zoom(),
+            new ol.control.ZoomToExtent()
         ],
         layers: [new ol.layer.Tile({
             	title: 'OpenStreetMap',
+            	visible: false,
         		source: new ol.source.OSM()
         	}),
         	new ol.layer.Tile({
@@ -268,7 +269,7 @@ $(document).ready(function(){
         	make_iem_tms('Iowa GLU 0813', 'iaglu-900913', false),
         	tms,
         	make_iem_tms('Iowa Counties', 'iac-900913', false),
-        	make_iem_tms('US States', 's-900913', false),
+        	make_iem_tms('US States', 's-900913', true),
         	make_iem_tms('Hydrology', 'iahydrology-900913', false),
         	make_iem_tms('HUC 12', 'iahuc12-900913', true),
         	make_iem_tms('HUC 8', 'iahuc8-900913', false),
