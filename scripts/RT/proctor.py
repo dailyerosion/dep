@@ -89,8 +89,8 @@ class wepprun(object):
         o.write("No\n")     # large graphics output
         o.write("Yes\n")    # event by event output
         o.write("%s\n" % (self.get_env_fn(),))  # event file output
-        o.write("Yes\n")     # element output
-        o.write("%s\n" % (self.get_ofe_fn(),))
+        o.write("No\n")     # element output
+        #o.write("%s\n" % (self.get_ofe_fn(),))
         o.write("No\n")     # final summary output
         o.write("No\n")     # daily winter output
         o.write("No\n")     # plant yield output
