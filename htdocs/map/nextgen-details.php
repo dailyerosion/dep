@@ -42,11 +42,14 @@ $hu12name = $row["hu_12_name"];
 echo <<<EOF
 <div style="float: right; border: 1px solid #000;"><a href="javascript:hideDetails();">X</a></div>
 EOF;
-echo "<strong>HUC 12:</strong> $huc_12";
-echo "<br /><strong>Name:</strong> $hu12name";
-//echo "<br /><strong>IDEPv1 Township:</strong> ". $model_twp;
-echo "<br /><strong>Date:</strong> ". date("d M Y", $date);
-
+$nicedate = date("d M Y", $date);
+echo <<<EOF
+<form name="changer" method="GET">
+<strong>HUC 12:</strong> <input type="text" value="$huc_12" name="huc_12" size="12"/>
+<br /><strong>Name:</strong> $hu12name
+<br /><strong>Date:</strong> $nicedate
+</form>
+EOF;
 /* Find the HRAP cell */
 /*
  $rs = pg_prepare($dbconn, "HSELECT", "SELECT hrap_i from hrap_polygons WHERE

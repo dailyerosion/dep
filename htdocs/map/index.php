@@ -4,6 +4,21 @@ $dbconn = pg_connect("dbname=idep host=iemdb user=nobody");
 $rs = pg_query($dbconn, "SELECT value from properties where key = 'last_date'");
 $row = pg_fetch_assoc($rs, 0);
 $last_date = $row['value'];
+
+$lat = 42.22;
+$lon = -95.489;
+if (isset($_GET["huc_12"])){
+	$huc12 = substr($_GET["huc_12"],0,12);
+	$rs = pg_query($dbconn, "with d as "
+		."(select ST_transform(st_centroid(geom),4326) as g from ia_huc12 "
+		."where huc_12 = '$huc12') select st_x(d.g), st_y(d.g) from d");
+	if (pg_num_rows($rs) == 1){
+		$row = pg_fetch_assoc($rs,0);
+		$lat = $row["st_y"];
+		$lon = $row["st_x"];
+	}
+}
+
 ?>
 <html>
 <head>
@@ -65,6 +80,12 @@ float: left;
         <script type="text/javascript">
 var tilecache = "<?php echo TMS_SERVER; ?>";
 var lastdate = new Date("<?php echo str_replace("-","/", $last_date); ?>");
+var appstate = {
+		lat: <?php echo $lat; ?>,
+		lon: <?php echo $lon; ?>,
+		date: null,
+		ltype: 'loss2'
+};
         </script>
  <script src='nextgen.js?v=6'></script>
 </head>

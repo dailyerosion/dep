@@ -2,12 +2,6 @@ var map, tms;
 var iaextent;
 var scenario = 0;
 var MRMS_FLOOR = new Date("2013/08/20");
-var appstate = {
-		lat: 42.22,
-		lon: -95.489,
-		date: null,
-		ltype: 'loss2'
-};
 
 /**
  * Define a namespace for the application.
@@ -212,7 +206,7 @@ $(document).ready(function(){
 	// Vector Layer to hold the query marker that allows us to interogate the
 	// data layer
 	var pointFeature = new ol.Feature(new ol.geom.Point(
-			ol.proj.transform([-95.489, 42.22], 'EPSG:4326', 'EPSG:3857')));
+			ol.proj.transform([appstate.lon, appstate.lat], 'EPSG:4326', 'EPSG:3857')));
 	markers = new ol.layer.Vector({
 	      source: new ol.source.Vector({
 	    	  projection: ol.proj.get('EPSG:3857'),
@@ -278,7 +272,7 @@ $(document).ready(function(){
         ],
         view: new ol.View({
                 projection: 'EPSG:3857',
-                center: ol.proj.transform([-95.489, 42.22], 'EPSG:4326', 'EPSG:3857'),
+                center: ol.proj.transform([-93.5, 42.1], 'EPSG:4326', 'EPSG:3857'),
                 zoom: 7
         })
     });
