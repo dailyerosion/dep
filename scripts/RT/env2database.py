@@ -7,6 +7,7 @@ import glob
 import os
 import psycopg2
 import numpy as np
+from pyiem.datatypes import distance
 idep = psycopg2.connect(database='idep', host='iemdb')
 icursor = idep.cursor()
 
@@ -15,8 +16,18 @@ SCENARIO = int(sys.argv[1])
 
 TODAY = datetime.date.today()
 
+def load_precip(date):
+    """Load up our QC'd daily precip dataset """
+    fn = date.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.npy")
+    if not os.path.isfile(fn):
+        print("load_precip(%s) failed, no such file" % (date,))
+        return
+    return distance(np.load(fn), 'MM').value("IN")
+
 def do(date, process_all):
     """ Process for this date, if process_all is true, then do it all!"""
+    precip = load_precip(date)
+    
     if process_all:
         print("Deleting all {results_by_huc12,results} for scenario: %s" % (
                                                                 SCENARIO,))
@@ -40,6 +51,21 @@ def do(date, process_all):
     for row in icursor:
         lengths["%s_%s" % (row[0], row[1])] = row[2]
     
+    huc12_centroids = {}
+    if precip is not None:
+        icursor.execute("""
+        WITH centers as (
+         SELECT huc_12, ST_Transform(ST_Centroid(geom),4326) as g from ia_huc12
+        )
+        
+        SELECT huc_12, ST_x(g), ST_y(g) from centers
+        """)
+        SOUTH = 40.28
+        WEST = -96.73
+        for row in icursor:
+            y = int((row[2] - SOUTH) * 100.)
+            x = int((row[1] - WEST) * 100.)
+            huc12_centroids[row[0]] = precip[y,x]
     
     os.chdir("/i/%s/env" % (SCENARIO,))
     hits = 0
@@ -80,8 +106,10 @@ def do(date, process_all):
                     ts, float(tokens[4]), float(tokens[6]),
                      float(tokens[3]), SCENARIO, float(tokens[12]) /
                                                  lengths[fn[:-4]]))
+            qcprecip = huc12_centroids.get(huc12, 0)        
             if runs > 0:
-                for ts in data.keys():
+                keys = data.keys()
+                for ts in keys:
                     # Don't ingest data from the future!
                     if ts >= TODAY:
                         continue
@@ -90,19 +118,25 @@ def do(date, process_all):
                     avgrunoff = sum(data[ts]['runoff']) / float(runs)
                     avgdelivery = sum(data[ts]['delivery']) / float(runs)
                     icursor.execute("""
-                    INSERT into results_by_huc12(huc_12, valid, 
-                    min_precip, avg_precip, max_precip,
-                    min_loss, avg_loss, max_loss,
-                    min_delivery, avg_delivery, max_delivery,
-                    min_runoff, avg_runoff, max_runoff, scenario) VALUES
-                    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        INSERT into results_by_huc12(huc_12, valid, 
+                        min_precip, avg_precip, max_precip, qc_precip,
+                        min_loss, avg_loss, max_loss,
+                        min_delivery, avg_delivery, max_delivery,
+                        min_runoff, avg_runoff, max_runoff, scenario) VALUES
+                        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     """, (huc12, ts, min(data[ts]['precip']), 
-                          avgprecip, max(data[ts]['precip']),
-                    min(data[ts]['loss']), avgloss, max(data[ts]['loss']), 
-                    min(data[ts]['delivery']), avgdelivery, max(data[ts]['delivery']), 
-                          min(data[ts]['runoff']), 
-                          avgrunoff, max(data[ts]['runoff']), SCENARIO))
+                          avgprecip, max(data[ts]['precip']), qcprecip,
+                          min(data[ts]['loss']), avgloss, max(data[ts]['loss']), 
+                          min(data[ts]['delivery']), avgdelivery, 
+                          max(data[ts]['delivery']), 
+                          min(data[ts]['runoff']), avgrunoff, 
+                          max(data[ts]['runoff']), SCENARIO))
                     hits += 1
+                if len(keys) == 0 and qcprecip >= 0.01:
+                    icursor.execute("""INSERT into results_by_huc12
+                        (huc_12, valid, qc_precip, scenario) 
+                        VALUES (%s,%s,%s,%s)""", (huc12, date, qcprecip,
+                                                  SCENARIO))
             os.chdir("..")
         os.chdir("..")
     

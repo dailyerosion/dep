@@ -329,6 +329,15 @@ def myjob( row ):
     o.write( data[:pos] + thisday + data[pos2:])
     o.close()
 
+def save_daily_precip():
+    """Save off the daily precip totals for usage later in computing huc_12""" 
+    data = np.sum(precip, 0) / 10.0
+    basedir = "/mnt/idep2/data/dailyprecip/"+str(valid.year)
+    if not os.path.isdir(basedir):
+        os.makedirs(basedir)
+    np.save(valid.strftime(basedir+"/%Y%m%d.npy"), data)
+    
+
 def workflow():
     """ The workflow to get the weather data variables we want! """
     
@@ -344,7 +353,7 @@ def workflow():
     load_stage4(valid)
     load_precip(valid)
     qc_precip()
-    
+    save_daily_precip()
 
     QUEUE = []
     for y in range(YS):
