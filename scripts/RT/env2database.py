@@ -7,7 +7,6 @@ import glob
 import os
 import psycopg2
 import numpy as np
-from pyiem.datatypes import distance
 idep = psycopg2.connect(database='idep', host='iemdb')
 icursor = idep.cursor()
 
@@ -22,7 +21,7 @@ def load_precip(date):
     if not os.path.isfile(fn):
         print("load_precip(%s) failed, no such file" % (date,))
         return
-    return distance(np.load(fn), 'MM').value("IN")
+    return np.load(fn)
 
 def do(date, process_all):
     """ Process for this date, if process_all is true, then do it all!"""
