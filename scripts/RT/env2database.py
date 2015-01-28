@@ -69,6 +69,7 @@ def do(date, process_all):
     os.chdir("/i/%s/env" % (SCENARIO,))
     hits = 0
     count = 0
+    justrain = 0
     for huc8 in glob.glob("*"):
         os.chdir(huc8)
         for huc4 in glob.glob("*"):
@@ -136,11 +137,12 @@ def do(date, process_all):
                         (huc_12, valid, qc_precip, scenario) 
                         VALUES (%s,%s,%s,%s)""", (huc12, date, qcprecip,
                                                   SCENARIO))
+                    justrain += 1
             os.chdir("..")
         os.chdir("..")
     
-    print '... env2database.py %s produced %s/%s huc12s with erosion' % (
-                                            date, hits, count)
+    print '... env2database.py %s -> %s/%s/%s (Erosion/Prec/Tot) huc12s' % (
+                                            date, hits, justrain, count)
  
 def update_properties(date):
     """ Update database properties to let us know we ran this date! """
