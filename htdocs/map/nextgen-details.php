@@ -131,7 +131,7 @@ if (pg_num_rows($rs) == 0){
 
 /* Get top events */
 $rs = pg_prepare($dbconn, "TRES", "select valid from results_by_huc12 WHERE
-		huc_12 = $1 and valid > '2007-01-01' and scenario =$2
+		huc_12 = $1 and valid > '2007-01-01' and scenario =$2 and avg_loss > 0
 		ORDER by avg_loss DESC LIMIT 10");
 $rs = timeit($dbconn, "TRES", Array($huc_12, $scenario));
 if (pg_num_rows($rs) == 0){
