@@ -1,3 +1,17 @@
+27 Jan 2015 -
+  Cruse, Gelder, Carl, Tim
+  - The 2007 erosion number is important as it was used in the EWG paper, I had
+    better look more closely into it for IDEPv2
+  - Tim Sklenar is joining our group, or will potentially join us
+  - Discussion on approach for Karl's sampling.  The resolution was to generate
+    at least one HUC12 with 'all' flowpaths and see where that gets us. Gelder
+    will teach Karl how to do this.
+  - Gelder shared a paper by Dennis showing his characteristic hillslope
+  - daryl needs to check out 102300031504 for 15 Jun 2014
+  - improve yearly totals shown on summarize page
+  - daryl should email the group his status in the coming days as per scheduling
+    upcoming meeting with brass
+
 13 Jan 2015 -
   Cruse, Gelder, James, Carl, Claudette
   - Introduced new team members Claudette and Carl
