@@ -87,7 +87,7 @@ var appstate = {
 		ltype: 'loss2'
 };
         </script>
- <script src='nextgen.js?v=6'></script>
+ <script src='nextgen.js?v=7'></script>
 </head>
 <body>
 <div id="detailsContainer">
@@ -107,7 +107,8 @@ var appstate = {
 	
 	<br clear="both"/>&nbsp;<br />
 	<div id="radio">
-		<input type="radio" id="precip-in2_opt" name="radio" value="mrms-calday" /><label for="precip-in2_opt">Precipitation</label>
+		<input type="radio" id="mrms_opt" name="radio" value="mrms-calday" /><label for="mrms_opt">MRMS</label>
+	<input type="radio" id="precip-in2_opt" name="radio" value="precip-in2" /><label for="precip-in2_opt">Precipitation</label>
 		<!-- <input type="radio" id="precip-in_opt" name="radio" value="precip-in" /><label for="precip-in_opt">P.v1</label> -->
 	    <input type="radio" id="delivery2_opt" name="radio" value="delivery2" checked="checked" /><label for="delivery2_opt">Delivery</label>
 		<input type="radio" id="loss2_opt" name="radio" value="loss2" checked="checked" /><label for="loss2_opt">Erosion</label>

@@ -13,7 +13,9 @@ $idep_pgconn = pg_connect("dbname=idep host=iemdb user=nobody");
 /* Yearly Totals */
 $rs = pg_prepare($idep_pgconn, "YRSELECT", "SELECT 
 		extract(year from valid) as d,
-		sum(avg_loss) from results_by_huc12
+		sum(avg_loss) as sum_avg_loss, 
+		sum(avg_runoff) as sum_avg_runoff, 
+		sum(avg_delivery) as sum_avg_delivery from results_by_huc12
 		WHERE huc_12 = $1 GROUP by d");
 $rs = pg_prepare($wepp_pgconn, "YRSELECT", "SELECT 
 		extract(year from valid) as d,
@@ -67,21 +69,29 @@ function p($val){
 }
 
 $table2 = <<<EOF
-<table class="wd-Table--striped wd-Table--hover">
+<table class="wd-Table--striped wd-Table--hover wd-Table--bordered">
 <thead><tr><th rowspan="2">Year</th>
 <th>IDEP v1 (Township $model_twp)</th>
-<th>IDEP v2 (HUC 12 $huc12)</th>
+<th colspan="3">IDEP v2 (HUC 12 $huc12)</th>
 </tr>
-<tr><th>Loss [tons/acre]</th><th>Loss [tons/acre]</th></tr></thead>
+<tr>
+ <th>Loss [tons/acre]</th>
+ <th>Loss [tons/acre]</th>
+ <th>Delivery [tons/acre]</th>
+ <th>Runoff [inch]</th>
+</tr>
+</thead>
 <tbody>
 EOF;
 $dates = array_keys($yrtotals);
 asort($dates);
 while (list($k,$v)=each($dates)){
-	$table2 .= @sprintf("<tr><th><a href=\"compare.phtml?year=%s&model_twp=%s&huc_12=%s\">%s</a></th><td>%s</td><td>%s</td></tr>", 
+	$table2 .= @sprintf("<tr><th><a href=\"compare.phtml?year=%s&model_twp=%s&huc_12=%s\">%s</a></th><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", 
 			$v, $model_twp, $huc12, $v,
 			l($yrtotals[$v]["wepp"]["sum"]), 
-			l($yrtotals[$v]["idep"]["sum"]));
+			l($yrtotals[$v]["idep"]["sum_avg_loss"]),
+			l($yrtotals[$v]["idep"]["sum_avg_delivery"]),
+			p($yrtotals[$v]["idep"]["sum_avg_runoff"]));
 }
 
 $table2 .= "</tbody></table>";

@@ -287,14 +287,14 @@ $(document).ready(function(){
   	  maxDate: lastdate,
   	   onSelect: function(dateText, inst) {
   		   appstate.date = $("#datepicker").datepicker("getDate");
-  		   if ((appstate.ltype == 'mrms-calday') && (appstate.date < MRMS_FLOOR)){
+/*  		   if ((appstate.ltype == 'mrms-calday') && (appstate.date < MRMS_FLOOR)){
   			   appstate.ltype = 'precip-in2';
   		    	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
   	       }
   		   if ((appstate.ltype == 'precip-in2') && (appstate.date > MRMS_FLOOR)){
   			   appstate.ltype = 'mrms-calday';
   		    	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
-  	       }
+  	       }*/
   		   remap(); 
   		   updateDetails();
   	   }
@@ -304,11 +304,11 @@ $(document).ready(function(){
     
     $( "#radio" ).buttonset();
     $( '#radio input[type=radio]').change(function(){
-    	if ((this.value == 'mrms-calday') && (appstate.date < MRMS_FLOOR)){
-    		appstate.ltype = 'precip-in2';
-  	  	} else {
+    	//if ((this.value == 'mrms-calday') && (appstate.date < MRMS_FLOOR)){
+    	//	appstate.ltype = 'precip-in2';
+  	  	//} else {
   	  		appstate.ltype = this.value;
-  	  	}
+  	  	//}
     	remap();
   	  	$('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
     });
