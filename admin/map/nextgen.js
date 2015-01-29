@@ -158,6 +158,18 @@ function updateDetails(){
 
 }
 
+function showConvergence(huc_12){
+	var $dialog = $('<div></div>')
+    .html('Image will appear here shortly!')
+    .dialog({
+        height: 500,
+        width: 600,
+        title: 'Convergence Plot'});
+
+	$dialog.dialog('open');
+	$dialog.html('<img src="/admin/plots/convergence.py?huc_12='+huc_12+'" style="width: 100%;"/>');
+}
+
 function get_tms_url(){
 	// Generate the TMS URL given the current settings
 	return tilecache +'/cache/tile.py/1.0.0/idep0::'+appstate.ltype+'::'+$.datepicker.formatDate("yy-mm-dd", appstate.date)+'/{z}/{x}/{y}.png';
@@ -248,12 +260,14 @@ $(document).ready(function(){
                 })
         	}),
         	make_iem_tms('Iowa 100m Hillshade', 'iahshd-900913', false),
+        	make_iem_tms('Iowa GLU 0813', 'iaglu-900913', false),
         	tms,
         	make_iem_tms('Iowa Counties', 'iac-900913', false),
         	make_iem_tms('US States', 's-900913', true),
         	make_iem_tms('Hydrology', 'iahydrology-900913', false),
         	make_iem_tms('HUC 12', 'iahuc12-900913', true),
         	make_iem_tms('HUC 8', 'iahuc8-900913', false),
+        	make_iem_tms('Flow Paths', 'flowpaths-900913', false),
         	markers
         ],
         view: new ol.View({

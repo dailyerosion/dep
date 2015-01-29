@@ -51,7 +51,7 @@ def make_plot(scenario, model_twp, huc_12, mc, mckey):
         ax[0].plot(x, y, color='r', zorder=1)
 
 
-    IDEPDB = psycopg2.connect(database='idep', host='iemdb')
+    IDEPDB = psycopg2.connect(database='idep', host='iemdb', user='nobody')
     cursor = IDEPDB.cursor()
 
     cursor.execute("""SELECT label from scenarios where id = %s""",
@@ -61,7 +61,7 @@ def make_plot(scenario, model_twp, huc_12, mc, mckey):
                      +"\nHUC12: %s MODEL_TWP: %s") % (scenario, slabel,
                                                     huc_12, model_twp))
 
-    WEPPDB = psycopg2.connect(database='wepp', host='iemdb')
+    WEPPDB = psycopg2.connect(database='wepp', host='iemdb', user='nobody')
     cursor = WEPPDB.cursor()
 
     cursor.execute("""SELECT id from nri WHERE model_twp = %s""", (model_twp,))

@@ -108,6 +108,7 @@ var appstate = {
 	
 	<br clear="both"/>&nbsp;<br />
 	<div id="radio">
+		<input type="radio" id="mrms_opt" name="radio" value="mrms-calday" /><label for="mrms_opt">MRMS</label>
 	<input type="radio" id="precip-in2_opt" name="radio" value="precip-in2" /><label for="precip-in2_opt">Precip</label>
 		<!-- <input type="radio" id="precip-in_opt" name="radio" value="precip-in" /><label for="precip-in_opt">P.v1</label> -->
 	    <input type="radio" id="delivery2_opt" name="radio" value="delivery2" checked="checked" /><label for="delivery2_opt">Delivery</label>

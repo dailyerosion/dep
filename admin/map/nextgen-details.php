@@ -11,6 +11,7 @@ if ($lon < -96.639706  || $lat < 40.375437 || $lon > -90.140061 || $lat > 43.501
 	die();
 }
 $dbconn = pg_connect("dbname=idep host=iemdb user=nobody");
+$weppconn = pg_connect("dbname=wepp host=iemdb user=nobody");
 function timeit($db, $name, $sql){
 	$start = time();
 	$rs = pg_execute($db, $name, $sql);
@@ -18,6 +19,13 @@ function timeit($db, $name, $sql){
 	//echo "<br />Query time: ". ($end - $start);
 	return $rs;
 }
+
+/* Find the township this location is in */
+$rs = pg_prepare($weppconn, "SELECT", "SELECT model_twp from iatwp WHERE
+		ST_Within(ST_GeomFromText($1, 4326), ST_Transform(the_geom,4326))");
+$rs = timeit($weppconn, "SELECT", Array('POINT('.$lon .' '. $lat .')'));
+$row = pg_fetch_assoc($rs,0);
+$model_twp = $row["model_twp"];
 
 /* Find the HUC12 this location is in */
 $rs = pg_prepare($dbconn, "SELECT", "SELECT huc_12, hu_12_name from ia_huc12 WHERE 
@@ -141,4 +149,9 @@ if (pg_num_rows($rs) == 0){
 	}
 	echo "</table>";
 }
+echo "--- Diagnostics ---";
+echo sprintf("<br /><a target=\"_new\" href=\"/admin/compare.phtml?scenario=%s&year=%s&model_twp=%s&huc_12=%s\">Daily Comparison</a>",
+		$scenario, date("Y", $date), $model_twp, $huc_12);
+echo sprintf("<br /><a href=\"javascript:showConvergence('%s');\">Erosion Convergence</a>",
+		$huc_12);
 ?>
