@@ -41,7 +41,7 @@ class wepprun(object):
 
     def get_error_fn(self):
         ''' Return the event filename for this run '''
-        return '%s/error/%s/%s_%s.env' % (IDEPHOME, self.subdir,
+        return '%s/error/%s/%s_%s.error' % (IDEPHOME, self.subdir,
                                            self.huc12, self.fpid)
     def get_man_fn(self):
         ''' Return the management filename for this run '''
