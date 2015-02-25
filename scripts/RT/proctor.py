@@ -1,14 +1,17 @@
-'''
+"""
  I do the realtime run!
-'''
+"""
 import psycopg2
 import sys
+import os
 import subprocess
 import datetime
 from multiprocessing import Pool
 
 SCENARIO = sys.argv[1]
-IDEPHOME = "/i/%s" % (SCENARIO,) # don't need trailing /
+# don't need trailing /
+IDEPHOME = "/i/%s" % (SCENARIO, )
+
 
 class wepprun(object):
     """ Represents a single run of WEPP
@@ -27,12 +30,12 @@ class wepprun(object):
     def get_wb_fn(self):
         ''' Return the water balance filename for this run '''
         return '%s/wb/%s/%s_%s.wb' % (IDEPHOME, self.subdir,
-                                         self.huc12, self.fpid)
+                                      self.huc12, self.fpid)
 
     def get_env_fn(self):
         ''' Return the event filename for this run '''
         return '%s/env/%s/%s_%s.env' % (IDEPHOME, self.subdir,
-                                           self.huc12, self.fpid)
+                                        self.huc12, self.fpid)
 
     def get_ofe_fn(self):
         """ Return the filename used for OFE output """
@@ -42,21 +45,22 @@ class wepprun(object):
     def get_error_fn(self):
         ''' Return the event filename for this run '''
         return '%s/error/%s/%s_%s.error' % (IDEPHOME, self.subdir,
-                                           self.huc12, self.fpid)
+                                            self.huc12, self.fpid)
+
     def get_man_fn(self):
         ''' Return the management filename for this run '''
         return '%s/man/%s/%s_%s.man' % (IDEPHOME, self.subdir,
-                                                  self.huc12, self.fpid)
+                                        self.huc12, self.fpid)
 
     def get_slope_fn(self):
         ''' Return the slope filename for this run '''
         return '%s/slp/%s/%s_%s.slp' % (IDEPHOME, self.subdir,
-                                             self.huc12, self.fpid)
+                                        self.huc12, self.fpid)
 
     def get_soil_fn(self):
         ''' Return the soil filename for this run '''
         return '%s/sol/%s/%s_%s.sol' % (IDEPHOME, self.subdir,
-                                            self.huc12, self.fpid)
+                                        self.huc12, self.fpid)
 
     def get_clifile_fn(self):
         ''' Return the climate filename for this run '''
@@ -65,13 +69,10 @@ class wepprun(object):
     def get_runfile_fn(self):
         ''' Return the run filename for this run '''
         return '%s/run/%s/%s_%s.run' % (IDEPHOME, self.subdir,
-                                               self.huc12, self.fpid)
-
+                                        self.huc12, self.fpid)
 
     def make_runfile(self):
         ''' Create a runfile for our runs '''
-        #print 'Creating runfile for HUC12: %s HS: %s' % (self.huc12, self.fpid)
-
         o = open(self.get_runfile_fn(), 'w')
         o.write("E\n")      # English units
         o.write("Yes\n")    # Run Hillslope
@@ -90,7 +91,7 @@ class wepprun(object):
         o.write("Yes\n")    # event by event output
         o.write("%s\n" % (self.get_env_fn(),))  # event file output
         o.write("No\n")     # element output
-        #o.write("%s\n" % (self.get_ofe_fn(),))
+        # o.write("%s\n" % (self.get_ofe_fn(),))
         o.write("No\n")     # final summary output
         o.write("No\n")     # daily winter output
         o.write("No\n")     # plant yield output
@@ -99,7 +100,7 @@ class wepprun(object):
         o.write("%s\n" % (self.get_clifile_fn(),))  # climate file
         o.write("%s\n" % (self.get_soil_fn(),))  # soil file
         o.write("0\n")  # Irrigation
-        o.write("8\n") # years 2007-2014
+        o.write("8\n")  # years 2007-2014
         o.write("0\n")  # route all events
 
         o.close()
@@ -107,18 +108,20 @@ class wepprun(object):
     def run(self):
         ''' Actually run wepp for this event '''
         runfile = self.get_runfile_fn()
-        #if not os.path.isfile(runfile):
-        self.make_runfile()
-        p = subprocess.Popen("~/bin/wepp < %s" % (runfile,), shell=True,
-                             stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-        stdout = p.stdout.read()
-        if stdout[-13:-1] != 'SUCCESSFULLY':
+        if not os.path.isfile(runfile):
+            self.make_runfile()
+        p = subprocess.Popen(["wepp", ], stderr=subprocess.PIPE,
+                             stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+        p.stdin.write(open(runfile).read())
+        res = p.stdout.read()
+        if res[-13:-1] != 'SUCCESSFULLY':
             print 'Run HUC12: %s FPATH: %4s errored!' % (self.huc12, self.fpid)
             e = open(self.get_error_fn(), 'w')
-            e.write(stdout)
+            e.write(res)
             e.close()
 
 QUEUE = []
+
 
 def realtime_run():
     ''' Do a realtime run, please '''
@@ -139,7 +142,7 @@ def run(row):
 if __name__ == '__main__':
     # Go main Go
     realtime_run()
-    pool = Pool() # defaults to cpu-count
+    pool = Pool()  # defaults to cpu-count
     sts = datetime.datetime.now()
     sz = len(QUEUE)
     for i, _ in enumerate(pool.imap_unordered(run, QUEUE), 1):
@@ -149,5 +152,5 @@ if __name__ == '__main__':
             speed = i / secs
             remaining = ((sz - i) / speed) / 3600.
             print ('%5.2fh Processed %6s/%6s [%.2f runs per sec] '
-                   +'remaining: %5.2fh') % (secs /3600., i, sz, speed,
-                                            remaining)
+                   'remaining: %5.2fh') % (secs / 3600., i, sz, speed,
+                                           remaining)
