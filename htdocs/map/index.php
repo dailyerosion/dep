@@ -101,10 +101,10 @@ var appstate = {
 <div id="controller">
 	<form>
 	<input type="text" name="date" id="datepicker" class="dp" />
-	<span style="font-size: 1.3em; color:#FFF; font-weight:bolder;">Daily Erosion Project</span>
+	<span style="font-size: 1.3em; color:#FFF; font-weight:bolder;">Daily Erosion Project </span>
 	<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() - 0.1);" value="-"/>
 	<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() + 0.1);" value="+"/>
-	<input type="button" onclick="javascript: zoom_iowa();" value="View Iowa"/>
+	<input type="button" onclick="javascript: get_shapefile();" value="Get Shapefile"/>
 	
 	<br clear="both"/>&nbsp;<br />
 	<div id="radio">

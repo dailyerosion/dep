@@ -134,6 +134,12 @@ app.Drag.prototype.handleUpEvent = function(evt) {
   return false;
 };
 
+// When user clicks the "Get Shapefile" Button
+function get_shapefile(){
+	dt = $.datepicker.formatDate("yy-mm-dd", appstate.date);
+	window.location.href = 'http://iem.local/cgi-bin/request/idep2.py?dt='+dt;
+}
+
 function setType(t){
 	$('#'+ t +'_opt').click();
 }
