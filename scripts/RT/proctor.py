@@ -110,7 +110,8 @@ class wepprun(object):
         runfile = self.get_runfile_fn()
         if not os.path.isfile(runfile):
             self.make_runfile()
-        p = subprocess.Popen(["wepp", ], stderr=subprocess.PIPE,
+        p = subprocess.Popen(["~/bin/wepp", ],
+                             stderr=subprocess.PIPE,
                              stdout=subprocess.PIPE, stdin=subprocess.PIPE)
         p.stdin.write(open(runfile).read())
         res = p.stdout.read()
