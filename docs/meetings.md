@@ -1,3 +1,20 @@
+24 Feb 2015 -
+  Cruse, Gelder, James, Tim, Carl
+  - James noted that during a demo of the site yesterday, it was very slow to
+    respond around 2 PM.  daryl investigated and am unsure what is up.
+  - We settled on 3 HUC12s per MLRA for the convergence test
+  - For each sub-catchment, we need to over-sample more than just 10 as we want
+    10 good ones and some times some of the samples are invalid
+  - It was noted that two of the small MLRAs in the state may not have any 
+    valid hillslopes to make runs for
+  - We should do randoming picking from the 10 samples and not just append onto
+    each as we iterate up to 10.
+  - [TODO] truncate any slopes that go over 30% steep
+  - Perhaps for this test, we should use the same climate file for all run
+  - Do we dare ever do a substanciative comparison of IDEPv1 vs IDEPv2?  No
+    as the numbers are likely not comparable
+  - Discussion of pursuits of future funding for the project...
+
 27 Jan 2015 -
   Cruse, Gelder, Carl, Tim
   - The 2007 erosion number is important as it was used in the EWG paper, I had
