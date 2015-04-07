@@ -1,3 +1,30 @@
+ 2 Apr 2015 -
+  Cruse, Gelder, James, Tim, Carl, Claudette
+  - Gelder reported on his South Korea trip, maybe invited back again
+  - The Kansas work is hopefully done by the end of the semester
+  - Are we using Laflen's new cropping parameters in IDEPv2?
+  - Am I using the new 2014 soils file that James provided?
+  - There is a need to archive the old extracted hillslopes, soils, managements
+  - Wait to change anything until the new cropping dataset is produced
+  - There is a need for summarized time slices on the website
+  - Tim suggested being able to average over a period over the years to get
+    an average for comparison
+  - Carl is going to send out the convergence plots to the group for comment
+  - There is a need to get started on two papers
+    1) The IDEPv2 paper that resembles IDEPv1 paper
+    2) A comparison of the yearly values against the current accepted values
+  - Did I filter out the 30% slopes from the runs?
+  - The 10m DEM will be providing thresholds to bound the 3m DEM values
+  - Need to resurrect the soil moisture stuff for the website/ processing
+  - How to properly average out the soil water content?
+  - Does WEPP have soil temperatures?
+  - Tim has purchased dailyerosion.org and would like to create a frontpage
+    for it
+  - Talk with Tim about how DNS mapping works
+  - Invite Kansas to a virtual meeting to discuss our progress
+  - I had better start expanding the rainfall product, so when the Kansas data
+    is ready to go, I am ready also...
+
 24 Feb 2015 -
   Cruse, Gelder, James, Tim, Carl
   - James noted that during a demo of the site yesterday, it was very slow to
