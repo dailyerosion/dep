@@ -6,7 +6,7 @@ import sys
 import shutil
 
 
-def missing_logic(fn):
+def missing_logic(scenario, fn):
     """Figure out what to do when this filename is missing"""
     print("Searching for replacement for '%s'" % (fn,))
     lon = float(fn[17:23])
@@ -15,8 +15,8 @@ def missing_logic(fn):
         for yoff in [0, -1, 1, -2, 2, -3, 3]:
             lon2 = lon + xoff / 100.0
             lat2 = lat + yoff / 100.0
-            testfn = "cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (lon2, lat2,
-                                                              lon2, lat2)
+            testfn = ("/i/%s/cli/%03.0fx%03.0f/%06.2fx%06.2f.cli"
+                      ) % (scenario, lon2, lat2, lon2, lat2)
             if not os.path.isfile(testfn):
                 continue
             print("%s->%s" % (testfn, fn))
@@ -37,7 +37,7 @@ def main(argv):
         fn = "/i/%s/%s" % (scenario, row[0])
         if os.path.isfile(fn):
             continue
-        missing_logic(fn)
+        missing_logic(scenario, fn)
 
 if __name__ == '__main__':
     main(sys.argv)
