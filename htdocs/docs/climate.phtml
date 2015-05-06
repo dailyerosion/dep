@@ -1,15 +1,37 @@
 <?php 
 require '../../config/settings.inc.php';
-require '../../autoload.php';
+require_once '../../include/myview.php';
 
-$theme = new Sample\Theme('IDEP :: Climate File Documentation');
-$theme->drawHeader();
-
-
-echo <<<EOF
+$t = new MyView();
+$t->title = "Climate File Documentation";
+$t->content = <<<EOF
+<ol class="breadcrumb">
+		<li><a href="/">IDEP Homepage</a></li>
+		<li class="active">Climate File Documentation</li>
+</ol>
 
 <h3>Climate File Documentation</h3>
 
+<h4>Precipitation</h4>
+
+<p>Of course, precipitation is vital to erosion modeling.  One of the unique
+		aspects of our project is how we use high resolution depictions of 
+		precipitation to drive our estimates.  One of the major updates included
+		with IDEPv2 was the change from using NCEP stage IV precipitation estimates
+		to NCEP MRMS estimates.  Here is an example:</p>
+		
+<div class="row">
+	<div class="col-md-6">
+    <img src="/images/stage4_example.png" alt="Stage IV Example"
+		class="img img-responsive"/>
+	</div>
+	<div class="col-md-6">
+    <img src="/images/mrms_example.png" alt="Stage IV Example"
+		class="img img-responsive"/>
+	</div>
+		
+</div>
+    	
 <h4>Solar Radiation</h4>
 
 <p>The amount of energy received by the Earth's surface from the sun is the
@@ -29,7 +51,14 @@ correct this estimate as the actual data comes in.  Having missing solar
 radiation data at 12:30 AM is not considered a show stopping issue and the
 previous day's estimates are "good enough".</p>
 
+<h4>Temperature</h4>
+
+<p>WEPP requires the daily high and low temperature.  In general and with
+Iowa's flat terrain, these values are very smooth over the state.  An 
+approximate 24 km analysis of <a href="http://mesonet.agron.iastate.edu/">Iowa Mesonet</a>
+		observations provides these variables to WEPP.</p>
+
 EOF;
 
-$theme->drawFooter(); 
+$t->render('single.phtml');
 ?>

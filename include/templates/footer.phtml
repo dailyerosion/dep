@@ -1,0 +1,39 @@
+<?php 
+$jsextra = array_key_exists('jsextra', $this->vars)? $this->jsextra : '';
+if (array_key_exists('iemss', $this->vars)){
+	$jsextra .= <<<EOF
+<script src="/assets/openlayers/3.0.0/build/ol.js"></script>
+<script src="/js/iemss.js"></script>
+EOF;
+}
+
+?>
+<div class="container" id="iem-footer">
+<hr />
+
+ <div class="pull-right">
+ <form method="get" action="https://www.google.com/search" name="search" 
+ class="inline-form">
+ <input value="idep.agron.iastate.edu" name="sitesearch" type="hidden" />
+ 
+ <div class="form-group">
+    <label for="inputsearch">Site Site with Google</label>
+    <input type="text" class="form-control" name="q" id="inputsearch" placeholder="Enter search term">
+  </div>
+ </form>
+ </div>
+
+Copyright &copy; 2013-<?php echo date("Y"); ?>, Iowa State University of Science and Technology.
+<br />All rights reserved.
+ <i class="glyphicon glyphicon-earphone"></i> <a href="/contacts.php">contact us</a>
+ <i class="glyphicon glyphicon-wrench"></i> <a href="https://github.com/akrherz/idep">development</a>
+ <i class="glyphicon glyphicon-warning-sign"></i> <a href="/disclaimer.php">disclaimer</a>
+ 
+</div><!-- /.iem-footer -->
+
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/assets/jquery/1.11.3/jquery-1.11.3.min.js"></script>
+    <script src="/assets/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <?php echo $jsextra; ?>
+  </body>
+</html>

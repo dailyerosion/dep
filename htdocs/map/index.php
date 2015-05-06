@@ -1,5 +1,6 @@
 <?php 
 require_once "../../config/settings.inc.php";
+require_once "../../include/myview.php";
 $dbconn = pg_connect("dbname=idep host=iemdb user=nobody");
 $rs = pg_query($dbconn, "SELECT value from properties where key = 'last_date'");
 $row = pg_fetch_assoc($rs, 0);
@@ -19,20 +20,15 @@ if (isset($_GET["huc_12"])){
 	}
 }
 
-?>
-<html>
-<head>
- <title>Daily Erosion Project:: Map Interface</title>
+$t = new MyView();
+$t->title = "Map Interface";
+$t->headextra = <<<EOF
  <link type="text/css" href="http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/css/ol.css" rel="stylesheet" />
  <link type="text/css" href="http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/css/ol3-layerswitcher.css" rel="stylesheet" />
  <link type="text/css" href="/css/ui-lightness/jquery-ui-1.8.22.custom.css" rel="stylesheet" />
- <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
- <script type="text/javascript" src="/js/jquery-ui-1.8.22.custom.min.js"></script>
- <script src='http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/build/ol.js'></script>
- <script src='http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/build/ol3-layerswitcher.js'></script>
- <link rel='stylesheet' 
-  href='/css/default/style.css' type='text/css'>
+ <link rel='stylesheet' href='/css/default/style.css' type='text/css'>
           <style type="text/css">
+		#iem-footer { display: none; }
      .dp {
      border: 0px;
 background: black;
@@ -78,19 +74,28 @@ float: left;
                 padding-left: 0.5em;
             }
         </style>
+EOF;
+$ddd = str_replace("-","/", $last_date);
+$TMS_SERVER = TMS_SERVER;
+$t->jsextra = <<<EOF
+ <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+ <script type="text/javascript" src="/js/jquery-ui-1.8.22.custom.min.js"></script>
+ <script src='http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/build/ol.js'></script>
+ <script src='http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/build/ol3-layerswitcher.js'></script>
         <script type="text/javascript">
-var tilecache = "<?php echo TMS_SERVER; ?>";
-var lastdate = new Date("<?php echo str_replace("-","/", $last_date); ?>");
+var tilecache = "{$TMS_SERVER}";
+var lastdate = new Date("{$ddd}");
 var appstate = {
-		lat: <?php echo $lat; ?>,
-		lon: <?php echo $lon; ?>,
+		lat: {$lat},
+		lon: {$lon},
 		date: null,
 		ltype: 'loss2'
 };
         </script>
  <script src='nextgen.js?v=7'></script>
-</head>
-<body>
+EOF;
+
+$t->content = <<<EOF
 <div id="detailsContainer">
 	<div id="details">
 		<div id="details_loading"><img src="/images/wait24trans.gif" /> Loading...</div>
@@ -101,7 +106,10 @@ var appstate = {
 <div id="controller">
 	<form>
 	<input type="text" name="date" id="datepicker" class="dp" />
+	<a href="/">
+	<span class="glyphicon glyphicon-home"></span>
 	<span style="font-size: 1.3em; color:#FFF; font-weight:bolder;">Daily Erosion Project </span>
+	</a>
 	<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() - 0.1);" value="-"/>
 	<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() + 0.1);" value="+"/>
 	<input type="button" onclick="javascript: get_shapefile();" value="Get Shapefile"/>
@@ -129,5 +137,6 @@ var appstate = {
 <br /> &nbsp; 
 </div>
 <div id="map"></div>
-</body>
-</html>
+EOF;
+$t->render('app.phtml');
+?>

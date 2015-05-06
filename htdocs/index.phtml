@@ -1,18 +1,19 @@
 <?php 
 require '../config/settings.inc.php';
-require '../autoload.php';
+require_once '../include/myview.php';
 
-$theme = new Sample\Theme('Iowa Daily Erosion Project');
-$theme->drawHeader();
-?>
+$t = new MyView();
 
+$t->title = 'Iowa Daily Erosion Project';
+
+$t->content = <<<EOF
 <div class="wd-Alert--info">This website is a work-in-progress of updated
 datasets and methodologies to produce daily estimates of soil displacement
 for Iowa.  Eventually, this website will replace the output found on 
 <a href="http://wepp.mesonet.agron.iastate.edu">IDEP version 1</a>.</div>
 
 <p><a href="/map/">Next-Gen Display</a>
+EOF;
 
-<?php
-$theme->drawFooter(); 
+$t->render('single.phtml');
 ?>
