@@ -10,7 +10,7 @@ use RuntimeException;
  */
 class Theme
 {
-	const VERSION = '1.4.31';
+	const VERSION = '1.4.38';
 
 	/**
 	 * Configuration options used by the theme.
@@ -153,7 +153,7 @@ class Theme
 					'type' => 'image/x-icon',
 					'href' => '{{theme_asset_path}}/favicon.ico?v='. self::VERSION,
 				),
-				'font-awesome' => '//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css',
+				'font-awesome' => '//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.css',
 			),
 			'head_style' => array(),
 			'head_script' => array(
@@ -170,7 +170,7 @@ class Theme
 					{
 						if ($theme->getOption('responsive'))
 						{
-							return "/* Responsive design */ (function(f){if(!f.querySelector||!f.addEventListener)return;var g='add',cc='contains',cr='remove',ct='toggle',sa='active',sb='wd-p-OffCanvasBar',sn='wd-p-OffCanvasNav',ss='wd-p-OffCanvasSearch',ip='.wd-l-SearchBox input[type=\"text\"]',ed='preventDefault',q=function(a,b){return(b||f).querySelectorAll(a)},c=function(a,b,c){b=b||cr;c=c||f.body;a=' '+a+' ';var d=' '+c.className.trim()+' ';var e=d.indexOf(a)!=-1;if(b==cc)return e;else if(!e&&(b==ct||b==g))c.className=d+a;else if(e&&(b==ct||b==cr))c.className=d.replace(a,' ')},h=function(b,c,d){for(var e=q(b),i=e.length;i--;){if(e[i].tagName!='A'||e[i].getAttribute('href')=='javascript:;'){if(!d)e[i].addEventListener('click',function(a){a[ed]()},0);e[i].addEventListener('ontouchstart'in window?'touchstart':'mousedown',c,0)}}},m=q('.wd-l-TopStripMenu-toolbar'),md=function(){q(ip)[0]&&q(ip)[0].blur();for(var i=m.length;i--;)c(sa,cr,m[i])};h('.wd-ResponsiveToggles-nav',function(a){md();c(sb);c(ss);c(sn,ct);a[ed]()});h('.wd-ResponsiveToggles-search',function(a){md();c(sb);c(ss,ct);if(c(ss,cc))q(ip)[0]&&q(ip)[0].focus();c(sn);a[ed]()});h('.wd-l-TopStripMenu-header',function(a){var b=q('.wd-l-TopStripMenu-toolbar',this.parentNode)[0];if(c(sa,cc,b)){c(sa,cr,b);c(sb)}else{md();c(sa,g,b);c(sb,g);c(ss)}a[ed]()});h('.wd-l-Content',function(a){if(c(sn,cc))a[ed]();c(sn)},true)})(document);";
+							return "/* Responsive design */ (function(f){if(!f.querySelector||!f.addEventListener)return;var g='add',cc='contains',cr='remove',ct='toggle',sa='active',sb='wd-p-OffCanvasBar',sn='wd-p-OffCanvasNav',ss='wd-p-OffCanvasSearch',ip='.wd-l-SearchBox input[type=\"text\"]',ed='preventDefault',q=function(a,b){return(b||f).querySelectorAll(a)},c=function(a,b,c){b=b||cr;c=c||f.body;a=' '+a+' ';var d=' '+c.className.trim()+' ';var e=d.indexOf(a)!=-1;if(b==cc)return e;else if(!e&&(b==ct||b==g))c.className=d+a;else if(e&&(b==ct||b==cr))c.className=d.replace(a,' ')},h=function(b,c,d){for(var e=q(b),i=e.length;i--;){if(e[i].tagName!='A'){if(!d)e[i].addEventListener('click',function(a){a[ed]()},0);e[i].addEventListener('ontouchstart'in window?'touchstart':'mousedown',c,0)}}},m=q('.wd-l-TopStripMenu-toolbar'),md=function(){q(ip)[0]&&q(ip)[0].blur();for(var i=m.length;i--;)c(sa,cr,m[i])};h('.wd-ResponsiveToggles-nav',function(a){md();c(sb);c(ss);c(sn,ct);a[ed]()});h('.wd-ResponsiveToggles-search',function(a){md();c(sb);c(ss,ct);if(c(ss,cc))q(ip)[0]&&q(ip)[0].focus();c(sn);a[ed]()});h('.wd-l-TopStripMenu-header',function(a){var b=q('.wd-l-TopStripMenu-toolbar',this.parentNode)[0];if(c(sa,cc,b)){c(sa,cr,b);c(sb)}else{md();c(sa,g,b);c(sb,g);c(ss)}a[ed]()});h('.wd-l-Content',function(a){if(c(sn,cc))a[ed]();c(sn)},true)})(document);";
 						}
 						return null;
 					},
@@ -888,10 +888,10 @@ HTML;
 		return <<<HTML
 <ul class="wd-l-TopStripMenu-group wd-l-TopStripMenu-group--signons first">
 	<li>
-		<a class="wd-l-TopStripMenu-header" href="javascript:;">Sign-ons <i class="fa fa-angle-down"></i></a>
+		<button class="wd-l-TopStripMenu-header">Sign-ons <i class="fa fa-angle-down"></i></button>
 		<ul class="wd-l-TopStripMenu-toolbar">
 			<li class="first"><a href="http://cymail.iastate.edu/">CyMail</a></li>
-			<li><a href="http://exchange.iastate.edu/">Outlook</a></li>
+			<li><a href="http://outlook.iastate.edu/">Outlook</a></li>
 			<li><a href="http://bb.its.iastate.edu/">Blackboard</a></li>
 			<li class="last"><a href="http://accessplus.iastate.edu/">AccessPlus</a></li>
 		</ul>
@@ -935,7 +935,7 @@ HTML;
 		return <<<HTML
 <ul class="wd-l-TopStripMenu-group wd-l-TopStripMenu-group--directory last">
 	<li>
-		<a class="wd-l-TopStripMenu-header" href="javascript:;">More <i class="fa fa-angle-down"></i></a>
+		<button class="wd-l-TopStripMenu-header">More <i class="fa fa-angle-down"></i></button>
 		<ul class="wd-l-TopStripMenu-toolbar">
 			<li class="first"><a href="http://info.iastate.edu/">Directory</a></li>
 			<li><a href="http://www.fpm.iastate.edu/maps/">Maps</a></li>
@@ -1187,18 +1187,20 @@ HTML;
 		$html = array();
 		$html[] = '<select class="wd-Navigation-alt ' . $legacyClass . '" onchange="window.location=this.value" title="Navigation">';
 
+		$hasActiveOption = false;
 		$index = $this->sort($pages);
 		foreach ($index as $i)
 		{
 			$page = $pages[$i];
-			$active = $activePages[$i]['value'] > 0;
+			$isActive = $activePages[$i]['value'] > 0;
 
 			$attr = array(
 				'value' => $this->render($page['uri']),
 			);
-			if ($active)
+			if ($isActive && !$hasActiveOption)
 			{
 				$attr['selected'] = 'selected';
+				$hasActiveOption = true;
 			}
 			$html[] = '<option '. $this->createAttributesString($attr) .'>' . $this->escape($page['label']) . '</option>';
 			if (is_array($page['pages']))
@@ -1207,14 +1209,15 @@ HTML;
 				foreach ($childIndex as $ci)
 				{
 					$child = $page['pages'][$ci];
-					$active = $activePages[$i]['pages'][$ci]['value'] > 0;
+					$isActive = $activePages[$i]['pages'][$ci]['value'] > 0;
 
 					$attr = array(
 						'value' => $this->render($child['uri']),
 					);
-					if ($active)
+					if ($isActive && !$hasActiveOption)
 					{
 						$attr['selected'] = 'selected';
+						$hasActiveOption = true;
 					}
 					$html[] = '<option '. $this->createAttributesString($attr) .'>- ' . $this->escape($child['label']) . '</option>';
 				}
@@ -1595,9 +1598,8 @@ HTML;
 		$legacyId = $this->getOption('legacy_html_id_support') ? 'id="container"' : '';
 
 		return <<<HTML
-<div class="wd-l-Container">
+<div class="wd-l-Container" id="skip-content">
 	<div class="wd-l-Container-inner {$legacyClass}" {$legacyId}>
-		<a name="skip-content"></a>
 HTML;
 	}
 
@@ -1780,7 +1782,7 @@ HTML;
 		return <<<HTML
 <div class="wd-Grid-cell wd-Grid-cell--1">
 	<div class="wd-l-PageFooter-nameplate">
-		<a class="wd-Nameplate {$legacyClass}" href="/">{$this->renderSprite()}</a>
+		<a class="wd-Nameplate {$legacyClass}" href="{$this->getOption('org_url')}">{$this->renderSprite()}</a>
 	</div>
 </div>
 HTML;
