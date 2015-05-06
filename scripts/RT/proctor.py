@@ -11,6 +11,7 @@ from multiprocessing import Pool
 SCENARIO = sys.argv[1]
 # don't need trailing /
 IDEPHOME = "/i/%s" % (SCENARIO, )
+YEARS = datetime.date.today().year - 2006
 
 
 class wepprun(object):
@@ -100,7 +101,7 @@ class wepprun(object):
         o.write("%s\n" % (self.get_clifile_fn(),))  # climate file
         o.write("%s\n" % (self.get_soil_fn(),))  # soil file
         o.write("0\n")  # Irrigation
-        o.write("8\n")  # years 2007-2014
+        o.write("%s\n" % (YEARS,))  # years 2007-
         o.write("0\n")  # route all events
 
         o.close()
