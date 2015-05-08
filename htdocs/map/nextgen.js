@@ -40,7 +40,7 @@ function get_tms_url(){
 	return '/geojson/huc12.py?date='+$.datepicker.formatDate("yy-mm-dd", appstate.date);
 }
 function rerender_vectors(){
-	console.log("rerender_vectors() called");
+	//console.log("rerender_vectors() called");
 	vectorLayer.changed();
 }
 function remap(){
