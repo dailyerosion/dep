@@ -1,15 +1,10 @@
 <?php 
 date_default_timezone_set('America/Chicago');
-$lat = isset($_REQUEST['lat'])? floatval($_REQUEST['lat']): die();
-$lon = isset($_REQUEST['lon'])? floatval($_REQUEST['lon']): die();
+$huc_12 = isset($_REQUEST['huc12'])? $_REQUEST['huc12']: die();
 $date = isset($_REQUEST['date'])? strtotime($_REQUEST['date']): die();
 $scenario = isset($_REQUEST["scenario"]) ? intval($_REQUEST["scenario"]): 0;
 $year = date("Y", $date);
 
-if ($lon < -96.639706  || $lat < 40.375437 || $lon > -90.140061 || $lat > 43.501196){
-	echo "ERROR: Point outside of Iowa...";
-	die();
-}
 $dbconn = pg_connect("dbname=idep host=iemdb user=nobody");
 function timeit($db, $name, $sql){
 	$start = time();
@@ -20,20 +15,16 @@ function timeit($db, $name, $sql){
 }
 
 /* Find the HUC12 this location is in */
-$rs = pg_prepare($dbconn, "SELECT", "SELECT huc_12, hu_12_name from ia_huc12 WHERE 
-		ST_Within(ST_GeomFromText($1, 4326), ST_Transform(geom,4326))");
-$rs = timeit($dbconn, "SELECT", Array('POINT('.$lon .' '. $lat .')'));
+$rs = pg_prepare($dbconn, "SELECT", "SELECT hu_12_name from ia_huc12 WHERE 
+		huc_12 = $1");
+$rs = timeit($dbconn, "SELECT", Array($huc_12));
 if (pg_num_rows($rs) != 1){
 	echo "ERROR: No township found!";
 	die();
 }
 $row = pg_fetch_assoc($rs,0);
-$huc_12 = $row["huc_12"];
 $hu12name = $row["hu_12_name"];
 
-echo <<<EOF
-<div style="float: right; border: 1px solid #000;"><a href="javascript:hideDetails();">X</a></div>
-EOF;
 $nicedate = date("d M Y", $date);
 echo <<<EOF
 <form name="changer" method="GET">
@@ -116,8 +107,9 @@ if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>No Erosion/Runoff</strong>";
 } else{
 	$row = pg_fetch_assoc($rs, 0);
-	echo "<br /><strong>Average Rainfall:</strong> ". sprintf("%.2f in", $row["avg_precip"] / 25.4);
-	echo "<br /><strong>Average Erosion:</strong> ". sprintf("%.2f T/A", $row["avg_loss"] * 4.463);
+	echo "<br /><strong>Average Delivery:</strong> ". sprintf("%.2f T/A", $row["avg_delivery"] * 4.463);
+	echo "<br /><strong>Average Detachment:</strong> ". sprintf("%.2f T/A", $row["avg_loss"] * 4.463);
+	echo "<br /><strong>Average Rainfall:</strong> ". sprintf("%.2f in", $row["qc_precip"] / 25.4);
 	echo "<br /><strong>Average Runoff:</strong> ". sprintf("%.2f in", $row["avg_runoff"] / 25.4);
 }
 

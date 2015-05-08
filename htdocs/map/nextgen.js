@@ -1,138 +1,9 @@
-var map, tms;
+var map;
+var vectorLayer;
 var iaextent;
 var scenario = 0;
 var MRMS_FLOOR = new Date("2013/08/20");
-
-/**
- * Define a namespace for the application.
- */
-window.app = {};
-var app = window.app;
-
-
-
-/**
- * @constructor
- * @extends {ol.interaction.Pointer}
- */
-app.Drag = function() {
-
-  ol.interaction.Pointer.call(this, {
-    handleDownEvent: app.Drag.prototype.handleDownEvent,
-    handleDragEvent: app.Drag.prototype.handleDragEvent,
-    handleMoveEvent: app.Drag.prototype.handleMoveEvent,
-    handleUpEvent: app.Drag.prototype.handleUpEvent
-  });
-
-  /**
-   * @type {ol.Pixel}
-   * @private
-   */
-  this.coordinate_ = null;
-
-  /**
-   * @type {string|undefined}
-   * @private
-   */
-  this.cursor_ = 'pointer';
-
-  /**
-   * @type {ol.Feature}
-   * @private
-   */
-  this.feature_ = null;
-
-  /**
-   * @type {string|undefined}
-   * @private
-   */
-  this.previousCursor_ = undefined;
-
-};
-ol.inherits(app.Drag, ol.interaction.Pointer);
-
-
-/**
- * @param {ol.MapBrowserEvent} evt Map browser event.
- * @return {boolean} `true` to start the drag sequence.
- */
-app.Drag.prototype.handleDownEvent = function(evt) {
-  var map = evt.map;
-
-  var feature = map.forEachFeatureAtPixel(evt.pixel,
-      function(feature, layer) {
-        return feature;
-      });
-
-  if (feature) {
-    this.coordinate_ = evt.coordinate;
-    this.feature_ = feature;
-  }
-
-  return !!feature;
-};
-
-
-/**
- * @param {ol.MapBrowserEvent} evt Map browser event.
- */
-app.Drag.prototype.handleDragEvent = function(evt) {
-  var map = evt.map;
-
-  var feature = map.forEachFeatureAtPixel(evt.pixel,
-      function(feature, layer) {
-        return feature;
-      });
-
-  var deltaX = evt.coordinate[0] - this.coordinate_[0];
-  var deltaY = evt.coordinate[1] - this.coordinate_[1];
-
-  var geometry = /** @type {ol.geom.SimpleGeometry} */
-      (this.feature_.getGeometry());
-  geometry.translate(deltaX, deltaY);
-
-  this.coordinate_[0] = evt.coordinate[0];
-  this.coordinate_[1] = evt.coordinate[1];
-};
-
-
-/**
- * @param {ol.MapBrowserEvent} evt Event.
- */
-app.Drag.prototype.handleMoveEvent = function(evt) {
-  if (this.cursor_) {
-    var map = evt.map;
-    var feature = map.forEachFeatureAtPixel(evt.pixel,
-        function(feature, layer) {
-          return feature;
-        });
-    var element = evt.map.getTargetElement();
-    if (feature) {
-      if (element.style.cursor != this.cursor_) {
-        this.previousCursor_ = element.style.cursor;
-        element.style.cursor = this.cursor_;
-      }
-    } else if (this.previousCursor_ !== undefined) {
-      element.style.cursor = this.previousCursor_;
-      this.previousCursor_ = undefined;
-    }
-  }
-};
-
-
-/**
- * @param {ol.MapBrowserEvent} evt Map browser event.
- * @return {boolean} `false` to stop the drag sequence.
- */
-app.Drag.prototype.handleUpEvent = function(evt) {
-	var c = ol.proj.transform(this.coordinate_, 'EPSG:3857', 'EPSG:4326')
-	appstate.lat = c[1];
-    appstate.lon = c[0];
-    updateDetails();
-	this.coordinate_ = null;
-  this.feature_ = null;
-  return false;
-};
+var geojsonFormat = new ol.format.GeoJSON();
 
 // When user clicks the "Get Shapefile" Button
 function get_shapefile(){
@@ -150,11 +21,11 @@ function hideDetails(){
 	$('#details_loading').css('display', 'none');
 }
 
-function updateDetails(){
+function updateDetails(huc12){
 	$('#details_hidden').css('display', 'none');
 	$('#details_details').css('display', 'none');
 	$('#details_loading').css('display', 'block');
-    $.get('nextgen-details.php', {lat: appstate.lat, lon: appstate.lon,
+    $.get('nextgen-details.php', {huc12: huc12,
 		date: $.datepicker.formatDate("yy-mm-dd", appstate.date)},
 		function(data){
 			$('#details_details').css('display', 'block');
@@ -166,18 +37,22 @@ function updateDetails(){
 
 function get_tms_url(){
 	// Generate the TMS URL given the current settings
-	return tilecache +'/cache/tile.py/1.0.0/idep0::'+appstate.ltype+'::'+$.datepicker.formatDate("yy-mm-dd", appstate.date)+'/{z}/{x}/{y}.png';
+	return '/geojson/huc12.py?date='+$.datepicker.formatDate("yy-mm-dd", appstate.date);
+}
+function rerender_vectors(){
+	console.log("rerender_vectors() called");
+	vectorLayer.changed();
 }
 function remap(){
-	tms.getSource().setUrl(get_tms_url());
-	tms.setVisible(false);
-	tms.setVisible(true);
+	vectorLayer.setSource(new ol.source.Vector({
+		url: get_tms_url(),
+		format: geojsonFormat
+	}));	
 }
 function setDate(year, month, date){
 	appstate.date = new Date(year+"/"+ month +"/"+ date);
 	$('#datepicker').datepicker("setDate", appstate.date);
 	remap();
-	updateDetails();
 }
 function zoom_iowa(){
     map.zoomToExtent(iaextent);
@@ -197,46 +72,103 @@ $(document).ready(function(){
 
 	appstate.date = lastdate;
 
-	// Vector Layer to hold the query marker that allows us to interogate the
-	// data layer
-	var pointFeature = new ol.Feature(new ol.geom.Point(
-			ol.proj.transform([appstate.lon, appstate.lat], 'EPSG:4326', 'EPSG:3857')));
-	markers = new ol.layer.Vector({
-	      source: new ol.source.Vector({
-	    	  projection: ol.proj.get('EPSG:3857'),
-	          features: [pointFeature]
-	        }),
-	        style: new ol.style.Style({
-	          image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
-	            anchor: [0.5, 0.5],
-	            anchorXUnits: 'fraction',
-	            anchorYUnits: 'fraction',
-	            opacity: 0.95,
-	            src: '/images/zoom-best-fit.png'
-	          })),
-	          stroke: new ol.style.Stroke({
-	            width: 3,
-	            color: [255, 0, 0, 1]
-	          }),
-	          fill: new ol.style.Fill({
-	            color: [0, 0, 255, 0.6]
-	          })
-	        })
-	      });
-	
-	// Our base tile map service layer, which we adjust to include the data
-	// the user wants
-	tms = new ol.layer.Tile({
-		title : 'IDEP Data Layer',
-		source : new ol.source.XYZ({
-			url : get_tms_url()
-		})
-	});
+	var style = new ol.style.Style({
+		  fill: new ol.style.Fill({
+		    color: 'rgba(255, 255, 255, 0.6)'
+		  }),
+		  stroke: new ol.style.Stroke({
+		    color: '#319FD3',
+		    width: 1
+		  }),
+		  text: new ol.style.Text({
+		    font: '12px Calibri,sans-serif',
+		    fill: new ol.style.Fill({
+		      color: '#000'
+		    }),
+		    stroke: new ol.style.Stroke({
+		      color: '#fff',
+		      width: 3
+		    })
+		  })
+		});
+
+	vectorLayer = new ol.layer.Vector({
+		title : 'IDEPv2 Data Layer',
+		  source: new ol.source.Vector({
+		    url: get_tms_url(),
+		    format: geojsonFormat
+		  }),
+		  style: function(feature, resolution) {
+			  val = feature.get(appstate.ltype);
+			  var c;
+			  if (appstate.ltype == 'qc_precip'){
+				  if (val >= 8){
+					  c = 'rgba(255, 102, 0, 1)';
+				  } else if (val >= 7){
+					  c = 'rgba(255, 153, 0, 1)';
+				  } else if (val >= 6){
+					  c = 'rgba(255, 153, 0, 1)';
+				  } else if (val >= 5){
+					  c = 'rgba(255, 204, 0, 1)';
+				  } else if (val >= 4){
+					  c = 'rgba(255, 232, 0, 1)';
+				  } else if (val >= 3){
+					  c = 'rgba(255, 255, 0, 1)';
+				  } else if (val >= 2){
+					  c = 'rgba(204, 255, 0, 1)';
+				  } else if (val >= 1.5){
+					  c = 'rgba(51, 255, 0, 1)';
+				  } else if (val >= 1){
+					  c = 'rgba(102, 255, 153, 1)';
+				  } else if (val >= 0.5){
+					  c = 'rgba(24, 255, 255, 1)';
+				  } else if (val >= 0.25){
+					  c = 'rgba(0, 212, 255, 1)';
+				  } else if (val >= 0.1){
+					  c = 'rgba(0, 102, 255, 1)';
+				  } else if (val > 0){
+					  c = 'rgba(0, 0, 255, 1)';
+				  } else {
+					  c = 'rgba(255, 255, 255, 0.6)';				  
+				  }
+			  } else {
+				  if (val >= 7){
+					  c = 'rgba(255, 102, 0, 1)';
+				  } else if (val >= 5){
+					  c = 'rgba(255, 153, 0, 1)';
+				  } else if (val >= 3){
+					  c = 'rgba(255, 153, 0, 1)';
+				  } else if (val >= 2){
+					  c = 'rgba(255, 204, 0, 1)';
+				  } else if (val >= 1.5){
+					  c = 'rgba(255, 232, 0, 1)';
+				  } else if (val >= 1){
+					  c = 'rgba(255, 255, 0, 1)';
+				  } else if (val >= 0.75){
+					  c = 'rgba(204, 255, 0, 1)';
+				  } else if (val >= 0.5){
+					  c = 'rgba(51, 255, 0, 1)';
+				  } else if (val >= 0.25){
+					  c = 'rgba(102, 255, 153, 1)';
+				  } else if (val >= 0.1){
+					  c = 'rgba(24, 255, 255, 1)';
+				  } else if (val >= 0.05){
+					  c = 'rgba(0, 212, 255, 1)';
+				  } else if (val > 0){
+					  c = 'rgba(0, 0, 255, 1)';
+				  } else {
+					  c = 'rgba(255, 255, 255, 0.6)';				  
+				  }
+			  }
+			  style.getFill().setColor(c); 
+		    // style.getText().setText(resolution < 5000 ? feature.get('avg_loss') : '');
+		    return [style];
+		  }
+		});
 	
 	// Create map instance
     map = new ol.Map({
         target: 'map',
-        interactions: ol.interaction.defaults().extend([new app.Drag()]),
         controls: [new ol.control.Zoom(),
             new ol.control.ZoomToExtent()
         ],
@@ -254,13 +186,11 @@ $(document).ready(function(){
                 })
         	}),
         	make_iem_tms('Iowa 100m Hillshade', 'iahshd-900913', false),
-        	tms,
+        	vectorLayer,
         	make_iem_tms('Iowa Counties', 'iac-900913', false),
         	make_iem_tms('US States', 's-900913', true),
         	make_iem_tms('Hydrology', 'iahydrology-900913', false),
-        	make_iem_tms('HUC 12', 'iahuc12-900913', true),
-        	make_iem_tms('HUC 8', 'iahuc8-900913', false),
-        	markers
+        	make_iem_tms('HUC 8', 'iahuc8-900913', false)
         ],
         view: new ol.View({
                 projection: 'EPSG:3857',
@@ -269,6 +199,89 @@ $(document).ready(function(){
         })
     });
 
+    var highlightStyleCache = {};
+
+    var featureOverlay = new ol.FeatureOverlay({
+      map: map,
+      style: function(feature, resolution) {
+        var text = resolution < 5000 ? feature.get('name') : '';
+        if (!highlightStyleCache[text]) {
+          highlightStyleCache[text] = [new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: '#f00',
+              width: 1
+            }),
+            fill: new ol.style.Fill({
+              color: 'rgba(255,0,0,0.1)'
+            }),
+            text: new ol.style.Text({
+              font: '12px Calibri,sans-serif',
+              text: text,
+              fill: new ol.style.Fill({
+                color: '#000'
+              }),
+              stroke: new ol.style.Stroke({
+                color: '#f00',
+                width: 3
+              })
+            })
+          })];
+        }
+        return highlightStyleCache[text];
+      }
+    });
+
+    var highlight;
+    var displayFeatureInfo = function(pixel) {
+
+      var feature = map.forEachFeatureAtPixel(pixel, function(feature, layer) {
+        return feature;
+      });
+
+      var info = document.getElementById('info');
+      if (feature) {
+    	  $('#info-huc12').html( feature.getId() );
+    	  $('#info-loss').html( feature.get('avg_loss').toFixed(3) + " T/a" );
+    	  $('#info-runoff').html( feature.get('avg_runoff').toFixed(2) + " in" );
+    	  $('#info-delivery').html( feature.get('avg_delivery').toFixed(3) + " T/a" );
+    	  $('#info-precip').html( feature.get('qc_precip').toFixed(2) + " in");
+      } else {
+          $('#info-huc12').html('&nbsp;');
+          $('#info-loss').html('&nbsp;');
+          $('#info-runoff').html('&nbsp;');
+          $('#info-delivery').html('&nbsp;');
+          $('#info-precip').html('&nbsp;');
+      }
+
+      if (feature !== highlight) {
+        if (highlight) {
+          featureOverlay.removeFeature(highlight);
+        }
+        if (feature) {
+          featureOverlay.addFeature(feature);
+        }
+        highlight = feature;
+      }
+
+    };
+
+    map.on('pointermove', function(evt) {
+      if (evt.dragging) {
+        return;
+      }
+      var pixel = map.getEventPixel(evt.originalEvent);
+      displayFeatureInfo(pixel);
+    });
+
+    map.on('click', function(evt) {
+    	var pixel = map.getEventPixel(evt.originalEvent);
+    	var feature = map.forEachFeatureAtPixel(pixel, function(feature, layer) {
+            return feature;
+        });
+    	updateDetails(feature.getId());
+    	
+    });
+    
     // Create a LayerSwitcher instance and add it to the map
     var layerSwitcher = new ol.control.LayerSwitcher();
     map.addControl(layerSwitcher);
@@ -288,7 +301,6 @@ $(document).ready(function(){
   		    	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
   	       }*/
   		   remap(); 
-  		   updateDetails();
   	   }
     });
 
@@ -301,9 +313,8 @@ $(document).ready(function(){
   	  	//} else {
   	  		appstate.ltype = this.value;
   	  	//}
-    	remap();
+    	rerender_vectors();
   	  	$('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
     });
-    updateDetails();
       
 }); // End of document.ready()

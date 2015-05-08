@@ -7,12 +7,13 @@ $t = new MyView();
 $t->title = 'Iowa Daily Erosion Project';
 
 $t->content = <<<EOF
-<div class="wd-Alert--info">This website is a work-in-progress of updated
+<div class="alert alert-success">This website is a work-in-progress of updated
 datasets and methodologies to produce daily estimates of soil displacement
 for Iowa.  Eventually, this website will replace the output found on 
 <a href="http://wepp.mesonet.agron.iastate.edu">IDEP version 1</a>.</div>
 
-<p><a href="/map/">Next-Gen Display</a>
+<p>Currently, about all there is to show is this <a href="/map/">Next-Gen Display</a>!  
+Please stay tuned for many new features to show up on this website.</p>
 EOF;
 
 $t->render('single.phtml');
