@@ -19,11 +19,11 @@ def do(ts):
         from ia_huc12), obs as (
         SELECT huc_12,
             coalesce(avg_loss, 0) * 4.463 as avg_loss,
-            coalesce(avg_delivery, 0) * 4.464 as avg_delivery,
+            coalesce(avg_delivery, 0) * 4.463 as avg_delivery,
             coalesce(qc_precip, 0) / 25.4 as qc_precip,
             coalesce(avg_runoff, 0) / 25.4 as avg_runoff
         from results_by_huc12 WHERE
-        valid = %s)
+        valid = %s and scenario = 0)
 
         SELECT d.g, d.huc_12, o.avg_loss, o.qc_precip, o.avg_delivery,
         o.avg_runoff from
@@ -52,11 +52,23 @@ def do(ts):
 def main(argv):
     """Do Fun things"""
     sys.stdout.write("Content-Type: application/vnd.geo+json\n\n")
-    field = cgi.FieldStorage()
-    ts = datetime.datetime.strptime(field.getfirst('date', '2015-05-05'),
+    form = cgi.FieldStorage()
+    cb = form.getfirst('callback', None)
+    ts = datetime.datetime.strptime(form.getfirst('date', '2015-05-05'),
                                     '%Y-%m-%d')
-    res = do(ts)
-    sys.stdout.write(res)
+
+    mckey = "/geojson/huc12/%s" % (ts.strftime("%Y%m%d"),)
+    mc = memcache.Client(['iem-memcached:11211'], debug=0)
+    res = mc.get(mckey)
+    if not res:
+        res = do(ts)
+        mc.set(mckey, res, 15)
+
+    if cb is None:
+        sys.stdout.write(res)
+    else:
+        sys.stdout.write("%s(%s)" % (cb, res))
+
 
 if __name__ == '__main__':
     main(sys.argv)
