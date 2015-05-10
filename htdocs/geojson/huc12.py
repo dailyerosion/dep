@@ -14,7 +14,7 @@ def do(ts):
     cursor = pgconn.cursor()
     utcnow = datetime.datetime.utcnow()
     cursor.execute("""WITH data as (
-        SELECT ST_asGeoJson(ST_Transform(ST_Simplify(geom,500),4326)) as g,
+        SELECT ST_asGeoJson(ST_Transform(simple_geom, 4326), 4) as g,
         huc_12
         from ia_huc12), obs as (
         SELECT huc_12,
