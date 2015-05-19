@@ -37,7 +37,11 @@ function updateDetails(huc12){
 
 function get_tms_url(){
 	// Generate the TMS URL given the current settings
-	return '/geojson/huc12.py?date='+$.datepicker.formatDate("yy-mm-dd", appstate.date);
+	var uri = '/geojson/huc12.py?date='+$.datepicker.formatDate("yy-mm-dd", appstate.date);
+	if (appstate.date2 !== null){
+		uri = uri + "&date2="+ $.datepicker.formatDate("yy-mm-dd", appstate.date2);
+	}
+	return uri;
 }
 function rerender_vectors(){
 	//console.log("rerender_vectors() called");
@@ -71,6 +75,7 @@ function make_iem_tms(title, layername, visible){
 $(document).ready(function(){
 
 	appstate.date = lastdate;
+	appstate.date2 = null;
 
 	var style = new ol.style.Style({
 		  fill: new ol.style.Fill({
@@ -101,64 +106,32 @@ $(document).ready(function(){
 		  style: function(feature, resolution) {
 			  val = feature.get(appstate.ltype);
 			  var c;
-			  if (appstate.ltype == 'qc_precip'){
-				  if (val >= 8){
-					  c = 'rgba(255, 102, 0, 1)';
-				  } else if (val >= 7){
-					  c = 'rgba(255, 153, 0, 1)';
-				  } else if (val >= 6){
-					  c = 'rgba(255, 153, 0, 1)';
-				  } else if (val >= 5){
-					  c = 'rgba(255, 204, 0, 1)';
-				  } else if (val >= 4){
-					  c = 'rgba(255, 232, 0, 1)';
-				  } else if (val >= 3){
-					  c = 'rgba(255, 255, 0, 1)';
-				  } else if (val >= 2){
-					  c = 'rgba(204, 255, 0, 1)';
-				  } else if (val >= 1.5){
-					  c = 'rgba(51, 255, 0, 1)';
-				  } else if (val >= 1){
-					  c = 'rgba(102, 255, 153, 1)';
-				  } else if (val >= 0.5){
-					  c = 'rgba(24, 255, 255, 1)';
-				  } else if (val >= 0.25){
-					  c = 'rgba(0, 212, 255, 1)';
-				  } else if (val >= 0.1){
-					  c = 'rgba(0, 102, 255, 1)';
-				  } else if (val > 0){
-					  c = 'rgba(0, 0, 255, 1)';
-				  } else {
-					  c = 'rgba(255, 255, 255, 0.6)';				  
-				  }
+			  if (val >= 7){
+				  c = 'rgba(255, 102, 0, 1)';
+			  } else if (val >= 5){
+				  c = 'rgba(255, 153, 0, 1)';
+			  } else if (val >= 3){
+				  c = 'rgba(255, 153, 0, 1)';
+			  } else if (val >= 2){
+				  c = 'rgba(255, 204, 0, 1)';
+			  } else if (val >= 1.5){
+				  c = 'rgba(255, 232, 0, 1)';
+			  } else if (val >= 1){
+				  c = 'rgba(255, 255, 0, 1)';
+			  } else if (val >= 0.75){
+				  c = 'rgba(204, 255, 0, 1)';
+			  } else if (val >= 0.5){
+				  c = 'rgba(51, 255, 0, 1)';
+			  } else if (val >= 0.25){
+				  c = 'rgba(102, 255, 153, 1)';
+			  } else if (val >= 0.1){
+				  c = 'rgba(24, 255, 255, 1)';
+			  } else if (val >= 0.05){
+				  c = 'rgba(0, 212, 255, 1)';
+			  } else if (val > 0){
+				  c = 'rgba(0, 0, 255, 1)';
 			  } else {
-				  if (val >= 7){
-					  c = 'rgba(255, 102, 0, 1)';
-				  } else if (val >= 5){
-					  c = 'rgba(255, 153, 0, 1)';
-				  } else if (val >= 3){
-					  c = 'rgba(255, 153, 0, 1)';
-				  } else if (val >= 2){
-					  c = 'rgba(255, 204, 0, 1)';
-				  } else if (val >= 1.5){
-					  c = 'rgba(255, 232, 0, 1)';
-				  } else if (val >= 1){
-					  c = 'rgba(255, 255, 0, 1)';
-				  } else if (val >= 0.75){
-					  c = 'rgba(204, 255, 0, 1)';
-				  } else if (val >= 0.5){
-					  c = 'rgba(51, 255, 0, 1)';
-				  } else if (val >= 0.25){
-					  c = 'rgba(102, 255, 153, 1)';
-				  } else if (val >= 0.1){
-					  c = 'rgba(24, 255, 255, 1)';
-				  } else if (val >= 0.05){
-					  c = 'rgba(0, 212, 255, 1)';
-				  } else if (val > 0){
-					  c = 'rgba(0, 0, 255, 1)';
-				  } else {
-					  c = 'rgba(255, 255, 255, 0.6)';				  
-				  }
+				  c = 'rgba(255, 255, 255, 0.6)';				  
 			  }
 			  style.getFill().setColor(c); 
 		    // style.getText().setText(resolution < 5000 ? feature.get('avg_loss') : '');
@@ -288,33 +261,45 @@ $(document).ready(function(){
     
     $("#datepicker").datepicker({
   	  dateFormat: 'M d, yy',
-  	  minDate: new Date(2002, 1, 1),
+  	  minDate: new Date(2007, 1, 1),
   	  maxDate: lastdate,
   	   onSelect: function(dateText, inst) {
   		   appstate.date = $("#datepicker").datepicker("getDate");
-/*  		   if ((appstate.ltype == 'mrms-calday') && (appstate.date < MRMS_FLOOR)){
-  			   appstate.ltype = 'precip-in2';
-  		    	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
-  	       }
-  		   if ((appstate.ltype == 'precip-in2') && (appstate.date > MRMS_FLOOR)){
-  			   appstate.ltype = 'mrms-calday';
-  		    	  $('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
-  	       }*/
   		   remap(); 
   	   }
     });
 
     $("#datepicker").datepicker('setDate', lastdate);
+
+    $("#datepicker2").datepicker({
+    	disable: true,
+    	  dateFormat: 'M d, yy',
+    	  minDate: new Date(2007, 1, 1),
+    	  maxDate: lastdate,
+    	   onSelect: function(dateText, inst) {
+    		   appstate.date2 = $("#datepicker2").datepicker("getDate");
+    		   remap(); 
+    	   }
+      });
+
+      $("#datepicker2").datepicker('setDate', lastdate);
+  	$("#datepicker2").css('display', 'none');
     
-    $( "#radio" ).buttonset();
+    $("#radio").buttonset();
     $( '#radio input[type=radio]').change(function(){
-    	//if ((this.value == 'mrms-calday') && (appstate.date < MRMS_FLOOR)){
-    	//	appstate.ltype = 'precip-in2';
-  	  	//} else {
-  	  		appstate.ltype = this.value;
-  	  	//}
+  	  	appstate.ltype = this.value;
     	rerender_vectors();
-  	  	$('#rampimg').attr('src',"/images/"+ appstate.ltype +"-ramp.png");
+    	if (appstate.ltype == 'qc_precip' || appstate.ltype == 'runoff'){
+    		$("#mapunits").html("<b>inches</b>");
+    	} else {
+    		$("#mapunits").html("<b>tons per acre</b>");
+    	}
+    });
+    
+    $('#enablerange').click(function(){
+    	$("#enablerange").css('display', 'none');
+    	$("#datepicker2").css('display', 'block');
+    	return false;
     });
       
 }); // End of document.ready()

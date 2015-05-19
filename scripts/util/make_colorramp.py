@@ -1,12 +1,13 @@
 from PIL import Image, ImageDraw, ImageFont
 import numpy
 
-font = ImageFont.truetype("/home/akrherz/projects/pyVBCam/lib/veramono.ttf", 16)
-sfont = ImageFont.truetype("/home/akrherz/projects/pyVBCam/lib/veramono.ttf", 14)
+FPATH = "/home/akrherz/projects/pyVBCam/lib/veramono.ttf"
+font = ImageFont.truetype(FPATH, 16)
+sfont = ImageFont.truetype(FPATH, 14)
 
 units = "tons/acre"
 #vals = [0.1, 0.25, 0.5, 1, 1.5, 2, 3, 5, 6,7, 8, '']
-vals = [0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 5, 7, '']
+vals = [0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 5, '7+', '']
 
 data = """
         COLOR 0 0 255
@@ -29,34 +30,47 @@ for line in data.split("\n"):
     tokens = line.strip().split()
     rgb.append((int(tokens[1]), int(tokens[2]), int(tokens[3])))
 
-width = 80
-boxsize = 20
+width = 350
+boxsize = 25
 borderx = 10
-bordery = 30
+bordery = 20
 vertoffset = 10
-height = 320
+height = 65
 
-png = Image.new('RGB', (width, height))
+png = Image.new('RGB', (width, height), color=(255, 255, 255))
 draw = ImageDraw.Draw(png)
 
-draw.rectangle([borderx, height-bordery-boxsize, borderx+boxsize, height-bordery], fill=(180,180,180))
-draw.text( (borderx+boxsize+5, height-bordery-boxsize), '0', fill='white', font=font)
+# Draw the empty one!
+draw.rectangle([borderx, bordery, borderx+boxsize,
+                bordery+boxsize], fill=(0, 0, 0))
+draw.rectangle([borderx+1, bordery+1, borderx+boxsize-1,
+                bordery+boxsize-1], fill=(255, 255, 255))
+(w, h) = draw.textsize('0', font=font)
+draw.text((borderx+(boxsize)-(w/2), bordery-h-5), '0',
+          fill='black', font=font)
 
-for i, (c,v) in enumerate(zip(rgb, vals)):
-    s = "%s" % (v,)
-    (w,h) = draw.textsize(s, font=font)
-    ulx = borderx
-    uly = height-bordery-(boxsize*(i+2)) - vertoffset
-    lrx = borderx + boxsize
-    lry = uly + boxsize
+for i, (c, v) in enumerate(zip(rgb, vals)):
+    s = ("%s" % (v,)).replace("0.", ".")
+    (w, h) = draw.textsize(s, font=font)
+    uly = bordery
+    ulx = borderx+(boxsize*(i+1))
+    lry = bordery + boxsize
+    lrx = ulx + boxsize
     draw.rectangle([ulx, uly, lrx, lry], fill=c, outline='black')
-    draw.text([lrx+5, uly-(h/2)], '%s' % (v,), fill='white', font=font)
+    if i % 2 == 0:
+        uly = lry + h + 5
+    else:
+        uly -= 5
+    draw.text([lrx-(w/2), uly-h], s, fill='black', font=font)
 
-(w,h) = draw.textsize(units, font=font)
+"""
+(w, h) = draw.textsize(units, font=font)
 if w >= width:
-    (w,h) = draw.textsize(units, font=sfont)
-    draw.text([(width/2)-(w/2), height-bordery+(h/2)], units, fill='white', font=sfont)
+    (w, h) = draw.textsize(units, font=sfont)
+    draw.text([(width/2)-(w/2), height-bordery+(h/2)], units, fill='black',
+              font=sfont)
 else:
-    draw.text([(width/2)-(w/2), height-bordery+(h/2)], units, fill='white', font=font)
-
+    draw.text([(width/2)-(w/2), height-bordery+(h/2)], units, fill='black',
+              font=font)
+"""
 png.save("test.png")

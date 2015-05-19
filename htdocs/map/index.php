@@ -25,10 +25,9 @@ $t->title = "Map Interface";
 $t->headextra = <<<EOF
  <link type="text/css" href="/vendor/openlayers/3.5.0/ol.css" rel="stylesheet" />
  <link type="text/css" href="/vendor/openlayers/3.5.0/ol3-layerswitcher.css" rel="stylesheet" />
- <link type="text/css" href="/css/ui-lightness/jquery-ui-1.8.22.custom.css" rel="stylesheet" />
+ <link type="text/css" href="/vendor/jquery-ui/1.11.4/jquery-ui.min.css" rel="stylesheet" />
  <link rel='stylesheet' href='/css/default/style.css' type='text/css'>
           <style type="text/css">
-		#iem-footer { display: none; }
      .dp {
      border: 0px;
 background: black;
@@ -38,48 +37,16 @@ font-size: 1.3em;
 width: 149px;
 float: left;
      }
-            html, body, #map {
-                margin: 0;
-                width: 100%;
+           #map {
                 height: 100%;
-            }
-            #detailsContainer {
-                position: absolute;
-                bottom: 1em;
-                right: 1em;
-                width: 240px;
-                z-index: 20001;
-                background-color: #53675A;
-                padding: 0.1em;
-            }
-            #details {
-                background-color: #FFF;
-                padding: 0.1em;
-            }
-            #controller {
-                position: absolute;
-                bottom: 0.5em;
-                left: 0.5em;
-                padding-right: 0.5em;
-                background-color: #000;
-                z-index: 20001;
-                padding-left: 0.5em;
-            }
-            #ramp {
-                position: absolute;
-                bottom: 50px;
-                left: 0.5em;
-                background-color: #000;
-                z-index: 20000;
-                padding-left: 0.5em;
             }
         </style>
 EOF;
 $ddd = str_replace("-","/", $last_date);
 $TMS_SERVER = TMS_SERVER;
 $t->jsextra = <<<EOF
- <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
- <script type="text/javascript" src="/js/jquery-ui-1.8.22.custom.min.js"></script>
+ <script type="text/javascript" src="/vendor/jquery/1.11.3/jquery-1.11.3.min.js"></script>
+ <script type="text/javascript" src="/vendor/jquery-ui/1.11.4/jquery-ui.min.js"></script>
  <script src='/vendor/openlayers/3.5.0/ol.js'></script>
  <script src='/vendor/openlayers/3.5.0/ol3-layerswitcher.js'></script>
         <script type="text/javascript">
@@ -96,9 +63,31 @@ var appstate = {
 EOF;
 
 $t->content = <<<EOF
-<div id="detailsContainer">
-	<div style="float: right; border: 1px solid #000;"><a href="javascript:hideDetails();">X</a></div>
-	<div id="details">
+<form>
+
+
+<h3>Daily Erosion Project Map Interface</h3>
+		
+	<div class="row">
+		<div class="col-md-4">Displaying: <span id="mapdate"><b>Single Daily Event Output for </b></span>
+		<br />Map Display Units: <span id="mapunits"><b>tons per acre</b></span></div>
+		<div class="col-md-8"><h4 class="pull-right">Select IDEP Variable to View:</h4></div>
+	</div>
+<div class="row">
+	<div class="col-md-4">
+		<img src="/images/map-ramp.png" class="img img-responsive" />
+	</div>
+	<div class="col-md-8">
+		<div id="radio" class="pull-right">
+		<input type="radio" id="precip-in2_opt" name="whichlayer" value="qc_precip"><label for="precip-in2_opt">Precip</label>
+	    <input type="radio" id="delivery2_opt" name="whichlayer" value="avg_delivery"><label for="delivery2_opt">Delivery</label>
+		<input type="radio" id="loss2_opt" name="whichlayer" value="avg_loss" checked="checked"><label for="loss2_opt">Detachment</label>
+		<input type="radio" id="runoff2_opt" name="whichlayer" value="avg_runoff"><label for="runoff2_opt">Runoff</label>
+		</div>
+	</div>
+</div>
+<div class="row">
+<div id="detailsContainer" class="col-md-3 well">
 		<p><strong>Mouseover Quick Data</strong></p>
 		<table class="table table-condensed table-bordered">
 		<tr><th>HUC12</th><td><div id="info-huc12"></div></td></tr>
@@ -111,42 +100,22 @@ $t->content = <<<EOF
 		<div id="details_loading" class="hidden"><img src="/images/wait24trans.gif" /> Loading...</div>
 		<div id="details_details"></div>
 		<div id="details_hidden">Click on HUC12 to load detailed data.</div>
-	</div>
 </div>
-<div id="controller">
-	<form>
+<div class="col-md-9">
+	<div id="map"></div>
+	<div id="controller">
 	<input type="text" name="date" id="datepicker" class="dp" />
-	<a href="/">
-	<span class="glyphicon glyphicon-home"></span>
-	<span style="font-size: 1.3em; color:#FFF; font-weight:bolder;">Daily Erosion Project </span>
-	</a>
+	<input type="text" name="date2" id="datepicker2" class="dp" />
+	<input type="button" id="enablerange" value="Enable Date Range" >
 	<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() - 0.1);" value="-"/>
 	<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() + 0.1);" value="+"/>
-	<input type="button" onclick="javascript: get_shapefile();" value="Get Shapefile"/>
-	
-	<br clear="both"/>&nbsp;<br />
-	<div id="radio">
-	<input type="radio" id="precip-in2_opt" name="radio" value="qc_precip" /><label for="precip-in2_opt">Precip</label>
-		<!-- <input type="radio" id="precip-in_opt" name="radio" value="precip-in" /><label for="precip-in_opt">P.v1</label> -->
-	    <input type="radio" id="delivery2_opt" name="radio" value="avg_delivery" checked="checked" /><label for="delivery2_opt">Delivery</label>
-		<input type="radio" id="loss2_opt" name="radio" value="avg_loss" checked="checked" /><label for="loss2_opt">Detachment</label>
-		<!-- <input type="radio" id="loss_opt" name="radio" value="avg_loss" /><label for="loss_opt">E.v1</label> -->
-		<input type="radio" id="runoff2_opt" name="radio" value="avg_runoff" /><label for="runoff2_opt">Runoff</label>
-		<!-- <input type="radio" id="runoff_opt" name="radio" value="avg_runoff" /><label for="runoff_opt">R.v1</label> -->
-		<!--  <input type="radio" id="vsm_opt" name="radio" value="vsm2" /><label for="vsm_opt">Root Zone Soil Moisture</label>
-		<input type="radio" id="sm10_opt" name="radio" value="sm102" /><label for="sm10_opt">0-4in Soil Moisture</label> 
-		-->
-	</div>
-	</form>
+	<input type="button" onclick="javascript: get_shapefile();" value="Get Shapefile"/>	
 </div>
-<div id="ramp">
-<img src="/images/avg_loss-ramp.png" id="rampimg" />
-<br /> &nbsp; 
-<br /> &nbsp; 
-<br /> &nbsp; 
-<br /> &nbsp; 
+		</div>
 </div>
-<div id="map"></div>
+
+</form>
+
 EOF;
-$t->render('app.phtml');
+$t->render('single.phtml');
 ?>
