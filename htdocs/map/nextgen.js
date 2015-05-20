@@ -169,7 +169,7 @@ $(document).ready(function(){
         ],
         layers: [new ol.layer.Tile({
             	title: 'OpenStreetMap',
-            	visible: false,
+            	visible: true,
         		source: new ol.source.OSM()
         	}),
         	new ol.layer.Tile({
