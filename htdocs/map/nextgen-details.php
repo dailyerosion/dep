@@ -122,11 +122,11 @@ if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>Top events are missing!</strong>";
 } else{
 	echo "<br />--- Top 10 Events: ---<br />";
-	echo "<table>";
+	echo "<table class=\"table table-condensed table-striped table-bordered\">";
 	for ($i=0;$row=@pg_fetch_assoc($rs,$i);$i++){
 		$ts = strtotime($row["valid"]);
 		if ($i % 2 == 0){ echo "<tr>"; }
-		echo sprintf("<td><small>(%s)</small><a href='javascript:setDate(%s,%s,%s);'>%s</a></td>",
+		echo sprintf("<td><span class=\"badge\">%s</span> <a href='javascript:setDate(%s,%s,%s);'>%s</a></td>",
 				$i+1, date("Y", $ts), date("m", $ts), date("d", $ts),
 				date("M j, Y", $ts));
 		if ($i % 2 == 1){ echo "</tr>\n"; }
