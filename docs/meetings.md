@@ -1,5 +1,31 @@
+20 May 2015 -
+  Cruse(phone), Gelder, James, Tim, Claudette, Karl
+  - ISU Big Data proposal was submitted and will hear back on Friday if we are
+    asked to submit a full proposal
+  - daryl needs to resolve the solar radiation data aspects for MN and KS
+    expansion.  IEMRE is doing it, but is currently unused(?)
+  - Some issues have been found with Minnesota's LIDAR data
+  - There are some positive signs that we may be able to seek funding from MN
+    to do more erosion work in that state
+  - 26 out of the 48 counties we are expanding to in KS are now done
+  - Gelder needs to work on getting the LANDSAT archive built for KS
+  - Discussion that the ordering of map elements needs to change (#13)
+  - Make the map wider (use bootstrap container-fluid)
+  - Suggestion to add full-screen option
+  - Make OSM default as an enabled layer
+  - Correct the hacky layout of the top 10 events
+  - USGS WBD was used for the HUC12 identifiers, this may not match some other
+    sources, like DNR.  daryl needs to investigate this some more.  Our version
+    is vintage Oct 2012
+  - A SMAP soil moisture proposal was submitted to NASA
+  - Discussion about data storage needs and what is currently available from
+    CEAP share
+  - We are going to proceed with Tim's dailyerosion.org URI
+  - Karl will email out the current paper draft
+  - Cruse discussion about having photos to show what numbers look like
+  
  2 Apr 2015 -
-  Cruse, Gelder, James, Tim, Carl, Claudette
+  Cruse, Gelder, James, Tim, Karl, Claudette
   - Gelder reported on his South Korea trip, maybe invited back again
   - The Kansas work is hopefully done by the end of the semester
   - Are we using Laflen's new cropping parameters in IDEPv2?
