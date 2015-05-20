@@ -1,2 +1,4 @@
+SetOutputFilter DEFLATE
+
 Options +ExecCGI
 AddHandler cgi-script .py
