@@ -150,7 +150,7 @@ $(document).ready(function(){
 				  c = 'rgba(24, 255, 255, 1)';
 			  } else if (val >= 0.05){
 				  c = 'rgba(0, 212, 255, 1)';
-			  } else if (val > 0){
+			  } else if (val > 0.001){
 				  c = 'rgba(0, 0, 255, 1)';
 			  } else {
 				  c = 'rgba(255, 255, 255, 0.6)';				  
