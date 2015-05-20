@@ -5,6 +5,27 @@ var scenario = 0;
 var MRMS_FLOOR = new Date("2013/08/20");
 var geojsonFormat = new ol.format.GeoJSON();
 
+var varunits = {
+	avg_runoff: 'inches',
+	avg_loss: 'tons per acre',
+	qc_precip: 'inches',
+	avg_delivery: 'tons per acre'
+};
+var vartitle = {
+	avg_runoff: 'Water Runoff',
+	avg_loss: 'Soil Detachment',
+	qc_precip: 'Daily Precipitation',
+	avg_delivery: 'Soil Delivery'
+};
+
+// Sets the title shown on the page for what is being viewed
+function setTitle(){
+	dt = $.datepicker.formatDate("yy-mm-dd", appstate.date);
+	dtextra = (appstate.date2 === null) ? '': ' to '+$.datepicker.formatDate("yy-mm-dd", appstate.date2);
+	$('#maptitle').html("<h4>Displaying "+ eval('vartitle.'+appstate.ltype) +" ["+
+			eval('varunits.'+appstate.ltype) +"] for "+ dt +" "+ dtextra +"</h4>");
+}
+
 // When user clicks the "Get Shapefile" Button
 function get_shapefile(){
 	dt = $.datepicker.formatDate("yy-mm-dd", appstate.date);
@@ -51,7 +72,8 @@ function remap(){
 	vectorLayer.setSource(new ol.source.Vector({
 		url: get_tms_url(),
 		format: geojsonFormat
-	}));	
+	}));
+	setTitle();
 }
 function setDate(year, month, date){
 	appstate.date = new Date(year+"/"+ month +"/"+ date);
@@ -289,11 +311,7 @@ $(document).ready(function(){
     $( '#radio input[type=radio]').change(function(){
   	  	appstate.ltype = this.value;
     	rerender_vectors();
-    	if (appstate.ltype == 'qc_precip' || appstate.ltype == 'runoff'){
-    		$("#mapunits").html("<b>inches</b>");
-    	} else {
-    		$("#mapunits").html("<b>tons per acre</b>");
-    	}
+    	setTitle();
     });
     
     $('#enablerange').click(function(){
@@ -301,5 +319,7 @@ $(document).ready(function(){
     	$("#datepicker2").css('display', 'block');
     	return false;
     });
+    
+    setTitle();
       
 }); // End of document.ready()

@@ -56,10 +56,11 @@ var appstate = {
 		lat: {$lat},
 		lon: {$lon},
 		date: null,
+		date2: null,
 		ltype: 'avg_loss'
 };
         </script>
- <script src='nextgen.js?v=8'></script>
+ <script src='nextgen.js?v=9'></script>
 EOF;
 
 $t->content = <<<EOF
@@ -69,8 +70,7 @@ $t->content = <<<EOF
 <h3>Daily Erosion Project Map Interface</h3>
 		
 	<div class="row">
-		<div class="col-md-4">Displaying: <span id="mapdate"><b>Single Daily Event Output for </b></span>
-		<br />Map Display Units: <span id="mapunits"><b>tons per acre</b></span></div>
+		<div class="col-md-4"></div>
 		<div class="col-md-8"><h4 class="pull-right">Select IDEP Variable to View:</h4></div>
 	</div>
 <div class="row">
@@ -87,6 +87,18 @@ $t->content = <<<EOF
 	</div>
 </div>
 <div class="row">
+<div class="col-md-9">
+	<div id="maptitle"><h4>Displaying ----</h4></div>
+	<div id="map"></div>
+	<div id="controller">
+		<input type="text" name="date" id="datepicker" class="dp" />
+		<input type="text" name="date2" id="datepicker2" class="dp" />
+		<input type="button" id="enablerange" value="Enable Date Range" >
+		<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() - 0.1);" value="-"/>
+		<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() + 0.1);" value="+"/>
+		<input type="button" onclick="javascript: get_shapefile();" value="Get Shapefile"/>	
+	</div>
+</div>
 <div id="detailsContainer" class="col-md-3 well">
 		<p><strong>Mouseover Quick Data</strong></p>
 		<table class="table table-condensed table-bordered">
@@ -101,17 +113,6 @@ $t->content = <<<EOF
 		<div id="details_details"></div>
 		<div id="details_hidden">Click on HUC12 to load detailed data.</div>
 </div>
-<div class="col-md-9">
-	<div id="map"></div>
-	<div id="controller">
-	<input type="text" name="date" id="datepicker" class="dp" />
-	<input type="text" name="date2" id="datepicker2" class="dp" />
-	<input type="button" id="enablerange" value="Enable Date Range" >
-	<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() - 0.1);" value="-"/>
-	<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() + 0.1);" value="+"/>
-	<input type="button" onclick="javascript: get_shapefile();" value="Get Shapefile"/>	
-</div>
-		</div>
 </div>
 
 </form>
