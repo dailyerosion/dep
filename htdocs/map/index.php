@@ -80,9 +80,9 @@ $t->content = <<<EOF
 	<div class="col-md-8">
 		<div id="radio" class="pull-right">
 		<input type="radio" id="precip-in2_opt" name="whichlayer" value="qc_precip"><label for="precip-in2_opt">Precip</label>
-	    <input type="radio" id="delivery2_opt" name="whichlayer" value="avg_delivery"><label for="delivery2_opt">Delivery</label>
-		<input type="radio" id="loss2_opt" name="whichlayer" value="avg_loss" checked="checked"><label for="loss2_opt">Detachment</label>
 		<input type="radio" id="runoff2_opt" name="whichlayer" value="avg_runoff"><label for="runoff2_opt">Runoff</label>
+		<input type="radio" id="loss2_opt" name="whichlayer" value="avg_loss" checked="checked"><label for="loss2_opt">Detachment</label>
+		<input type="radio" id="delivery2_opt" name="whichlayer" value="avg_delivery"><label for="delivery2_opt">Delivery</label>
 		</div>
 	</div>
 </div>
@@ -103,10 +103,10 @@ $t->content = <<<EOF
 		<p><strong>Mouseover Quick Data</strong></p>
 		<table class="table table-condensed table-bordered">
 		<tr><th>HUC12</th><td><div id="info-huc12"></div></td></tr>
-		<tr><th>Delivery</th><td><div id="info-delivery"></div></td></tr>
-		<tr><th>Detachment</th><td><div id="info-loss"></div></td></tr>
 		<tr><th>Precipitation</th><td><div id="info-precip"></div></td></tr>
 		<tr><th>Runoff</th><td><div id="info-runoff"></div></td></tr>
+		<tr><th>Detachment</th><td><div id="info-loss"></div></td></tr>
+		<tr><th>Delivery</th><td><div id="info-delivery"></div></td></tr>
 		</table>
 		<p><strong>More Detailed Data</strong></p>
 		<div id="details_loading" class="hidden"><img src="/images/wait24trans.gif" /> Loading...</div>
