@@ -305,7 +305,6 @@ $(document).ready(function(){
       });
 
       $("#datepicker2").datepicker('setDate', lastdate);
-  	$("#datepicker2").css('display', 'none');
     
     $("#radio").buttonset();
     $( '#radio input[type=radio]').change(function(){
@@ -313,13 +312,16 @@ $(document).ready(function(){
     	rerender_vectors();
     	setTitle();
     });
-    
-    $('#enablerange').click(function(){
-    	$("#enablerange").css('display', 'none');
-    	$("#datepicker2").css('display', 'block');
-    	return false;
+    $("#t").buttonset();
+    $( '#t input[type=radio]').change(function(){
+    	if (this.value == 'single'){
+        	$("#dp2").css('visibility', 'hidden');    		
+    		
+    	} else {
+        	$("#dp2").css('visibility', 'visible');
+    	}
     });
-    
+        
     setTitle();
       
 }); // End of document.ready()

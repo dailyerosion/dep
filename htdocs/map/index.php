@@ -30,8 +30,6 @@ $t->headextra = <<<EOF
           <style type="text/css">
      .dp {
      border: 0px;
-background: black;
-color: white;
 font-weight: bolder;
 font-size: 1.3em;
 width: 149px;
@@ -90,16 +88,30 @@ $t->content = <<<EOF
 <div class="col-md-9">
 	<div id="maptitle"><h4>Displaying ----</h4></div>
 	<div id="map"></div>
-	<div id="controller">
-		<input type="text" name="date" id="datepicker" class="dp" />
-		<input type="text" name="date2" id="datepicker2" class="dp" />
-		<input type="button" id="enablerange" value="Enable Date Range" >
-		<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() - 0.1);" value="-"/>
-		<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() + 0.1);" value="+"/>
-		<input type="button" onclick="javascript: get_shapefile();" value="Get Shapefile"/>	
+    <div clas="row">
+		<div class="col-md-4">
+			<h4>Days to Display</h4>
+			<div id="t" class="pull-left">
+			<input type="radio" id="single" name="t" value="single" checked="checked"><label for="single">Single</label>
+			<input type="radio" id="multi" name="t" value="multi"><label for="multi">Multi</label>
+			</div>
+		</div>
+		<div class="col-md-3">
+			<h4>Date:</h4>
+			<input type="text" name="date" id="datepicker" class="dp" />
+		</div>
+		<div class="col-md-3" style="visibility: hidden;" id="dp2">
+			<h4>To Date:</h4>
+			<input type="text" name="date2" id="datepicker2" class="dp" />
+		</div>
+		<div class="col-md-2">
+			<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() - 0.1);" value="-"/>
+			<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() + 0.1);" value="+"/>
+			<input type="button" onclick="javascript: get_shapefile();" value="Get Shapefile"/>	
+		</div>
 	</div>
 </div>
-<div id="detailsContainer" class="col-md-3 well">
+<div id="detailsContainer" class="col-md-3">
 		<p><strong>Mouseover Quick Data</strong></p>
 		<table class="table table-condensed table-bordered">
 		<tr><th>HUC12</th><td><div id="info-huc12"></div></td></tr>
@@ -108,10 +120,12 @@ $t->content = <<<EOF
 		<tr><th>Detachment</th><td><div id="info-loss"></div></td></tr>
 		<tr><th>Delivery</th><td><div id="info-delivery"></div></td></tr>
 		</table>
+		<div id="clickDetails" class="well">
 		<p><strong>More Detailed Data</strong></p>
 		<div id="details_loading" class="hidden"><img src="/images/wait24trans.gif" /> Loading...</div>
 		<div id="details_details"></div>
 		<div id="details_hidden">Click on HUC12 to load detailed data.</div>
+		</div>
 </div>
 </div>
 

@@ -107,10 +107,12 @@ if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>No Erosion/Runoff</strong>";
 } else{
 	$row = pg_fetch_assoc($rs, 0);
-	echo "<br /><strong>Average Rainfall:</strong> ". sprintf("%.2f in", $row["qc_precip"] / 25.4);
-	echo "<br /><strong>Average Runoff:</strong> ". sprintf("%.2f in", $row["avg_runoff"] / 25.4);
-	echo "<br /><strong>Average Detachment:</strong> ". sprintf("%.2f T/A", $row["avg_loss"] * 4.463);
-	echo "<br /><strong>Average Delivery:</strong> ". sprintf("%.2f T/A", $row["avg_delivery"] * 4.463);
+	echo '<table class="table table-condensed table-bordered">';
+	echo "<tr><th>Precipitation</th><td>". sprintf("%.2f in", $row["qc_precip"] / 25.4) ."</td></tr>";
+	echo "<tr><th>Runoff</th><td>". sprintf("%.2f in", $row["avg_runoff"] / 25.4) ."</td></tr>";
+	echo "<tr><th>Detachment</th><td>". sprintf("%.3f T/A", $row["avg_loss"] * 4.463) ."</td></tr>";
+	echo "<tr><th>Delivery</th><td>". sprintf("%.3f T/A", $row["avg_delivery"] * 4.463) ."</td></tr>";
+    echo "</table>";
 }
 
 /* Get top events */
