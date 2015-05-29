@@ -30,8 +30,6 @@ def make_map(ts, scenario, v):
     m = MapPlot(axisbg='#EEEEEE', nologo=True,
                 title='IDEPv2 2014 Precipitation by HUC12',
                 caption='Daily Erosion Project')
-    bins = [0.01, 23, 28, 33, 39, 49]
-    norm = mpcolors.BoundaryNorm(bins, cmap.N)
 
     cursor.execute("""
     WITH data as (
@@ -43,14 +41,23 @@ def make_map(ts, scenario, v):
     from ia_huc12 i LEFT JOIN data d
     ON (i.huc_12 = d.huc_12)""")
     patches = []
+    data = []
     for row in cursor:
         polygon = loads(row[0].decode('hex'))
         a = np.asarray(polygon.exterior)
         (x, y) = m.map(a[:, 0], a[:, 1])
         a = zip(x, y)
-        c = cmap(norm([row[1], ]))[0]
-        p = Polygon(a, fc=c, ec='k', zorder=2, lw=.1)
+        p = Polygon(a, fc='white', ec='k', zorder=2, lw=.1)
         patches.append(p)
+        data.append(row[1])
+    data = np.array(data)
+    bins = np.percentile(data, [20, 40, 60, 80, 100])
+    bins = np.concatenate(([np.min(np.where(data > 0, data, 999)), ], bins))
+    bins = np.around(bins.astype('f'), 2)
+    norm = mpcolors.BoundaryNorm(bins, cmap.N)
+    for val, patch in zip(data, patches):
+        c = cmap(norm([val, ]))[0]
+        patch.set_facecolor(c)
 
     m.ax.add_collection(PatchCollection(patches, match_original=True))
     m.draw_colorbar(bins, cmap, norm, units='inches')
