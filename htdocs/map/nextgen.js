@@ -46,8 +46,11 @@ function updateDetails(huc12){
 	$('#details_hidden').css('display', 'none');
 	$('#details_details').css('display', 'none');
 	$('#details_loading').css('display', 'block');
-    $.get('nextgen-details.php', {huc12: huc12,
-		date: $.datepicker.formatDate("yy-mm-dd", appstate.date)},
+    $.get('nextgen-details.php', {
+    	huc12: huc12,
+		date: $.datepicker.formatDate("yy-mm-dd", appstate.date),
+		date2: $.datepicker.formatDate("yy-mm-dd", appstate.date2)
+		},
 		function(data){
 			$('#details_details').css('display', 'block');
 			$('#details_loading').css('display', 'none');
@@ -315,10 +318,13 @@ $(document).ready(function(){
     $("#t").buttonset();
     $( '#t input[type=radio]').change(function(){
     	if (this.value == 'single'){
+    		appstate.date2 = null;
         	$("#dp2").css('visibility', 'hidden');    		
     		
     	} else {
+    		appstate.date2 = $("#datepicker2").datepicker("getDate");
         	$("#dp2").css('visibility', 'visible');
+    		remap();
     	}
     });
         
