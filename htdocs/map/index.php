@@ -62,31 +62,28 @@ var appstate = {
 EOF;
 
 $t->content = <<<EOF
-<form>
-
-
-<h3>Daily Erosion Project Map Interface</h3>
-		
+<form>		
 	<div class="row">
-		<div class="col-md-4"></div>
-		<div class="col-md-8"><h4 class="pull-right">Select IDEP Variable to View:</h4></div>
+		<div class="col-md-6"><div id="maptitle"><h4>----</h4></div></div>
+		<div class="col-md-6"><h4 class="pull-right">Select IDEP Variable to View:</h4></div>
 	</div>
 <div class="row">
-	<div class="col-md-4">
+	<div class="col-md-6">
 		<img src="/images/map-ramp.png" class="img img-responsive" />
 	</div>
-	<div class="col-md-8">
+	<div class="col-md-6">
 		<div id="radio" class="pull-right">
 		<input type="radio" id="precip-in2_opt" name="whichlayer" value="qc_precip"><label for="precip-in2_opt">Precip</label>
 		<input type="radio" id="runoff2_opt" name="whichlayer" value="avg_runoff"><label for="runoff2_opt">Runoff</label>
 		<input type="radio" id="loss2_opt" name="whichlayer" value="avg_loss" checked="checked"><label for="loss2_opt">Detachment</label>
 		<input type="radio" id="delivery2_opt" name="whichlayer" value="avg_delivery"><label for="delivery2_opt">Delivery</label>
 		</div>
+		<br clear="all" />
+		<div id="variable_desc" class="pull-right"></div>
 	</div>
 </div>
 <div class="row">
 <div class="col-md-9">
-	<div id="maptitle"><h4>Displaying ----</h4></div>
 	<div id="map"></div>
     <div clas="row">
 		<div class="col-md-4">

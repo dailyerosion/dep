@@ -3,7 +3,15 @@ var vectorLayer;
 var iaextent;
 var scenario = 0;
 var MRMS_FLOOR = new Date("2013/08/20");
+var myDateFormat = 'M d, yy';
 var geojsonFormat = new ol.format.GeoJSON();
+
+var vardesc = {
+	avg_runoff: 'Runoff is the amount of water that left the hillslope via above ground transport.',
+	avg_loss: 'Soil Detachment is the amount of soil distrubed on the modelled hillslope.',
+	qc_precip: 'Precipitation is the amount of rainfall and melted snow received on the hillslope',
+	avg_delivery: 'Delivery is the amount of soil transported to the bottom of the modelled hillslope',
+}
 
 var varunits = {
 	avg_runoff: 'inches',
@@ -20,10 +28,11 @@ var vartitle = {
 
 // Sets the title shown on the page for what is being viewed
 function setTitle(){
-	dt = $.datepicker.formatDate("yy-mm-dd", appstate.date);
-	dtextra = (appstate.date2 === null) ? '': ' to '+$.datepicker.formatDate("yy-mm-dd", appstate.date2);
-	$('#maptitle').html("<h4>Displaying "+ eval('vartitle.'+appstate.ltype) +" ["+
-			eval('varunits.'+appstate.ltype) +"] for "+ dt +" "+ dtextra +"</h4>");
+	dt = $.datepicker.formatDate(myDateFormat, appstate.date);
+	dtextra = (appstate.date2 === null) ? '': ' to '+$.datepicker.formatDate(myDateFormat, appstate.date2);
+	$('#maptitle').html("<h4><strong>"+ vartitle[appstate.ltype] +" ["+
+			varunits[appstate.ltype] +"] for "+ dt +" "+ dtextra +"</strong></h4>");
+	$('#variable_desc').html(vardesc[appstate.ltype]);
 }
 
 // When user clicks the "Get Shapefile" Button
@@ -285,7 +294,7 @@ $(document).ready(function(){
     map.addControl(layerSwitcher);
     
     $("#datepicker").datepicker({
-  	  dateFormat: 'M d, yy',
+  	  dateFormat: myDateFormat,
   	  minDate: new Date(2007, 1, 1),
   	  maxDate: lastdate,
   	   onSelect: function(dateText, inst) {
@@ -298,7 +307,7 @@ $(document).ready(function(){
 
     $("#datepicker2").datepicker({
     	disable: true,
-    	  dateFormat: 'M d, yy',
+    	  dateFormat: myDateFormat,
     	  minDate: new Date(2007, 1, 1),
     	  maxDate: lastdate,
     	   onSelect: function(dateText, inst) {
@@ -329,5 +338,7 @@ $(document).ready(function(){
     });
         
     setTitle();
-      
+    // Make the map 6x4
+    sz = map.getSize();
+    map.setSize([sz[0], sz[0] / 6. * 4.]);
 }); // End of document.ready()
