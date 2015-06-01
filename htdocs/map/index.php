@@ -55,7 +55,7 @@ var appstate = {
 		lon: {$lon},
 		date: null,
 		date2: null,
-		ltype: 'avg_loss'
+		ltype: 'qc_precip'
 };
         </script>
  <script src='nextgen.js?v=9'></script>
@@ -73,9 +73,9 @@ $t->content = <<<EOF
 	</div>
 	<div class="col-md-6">
 		<div id="radio" class="pull-right">
-		<input type="radio" id="precip-in2_opt" name="whichlayer" value="qc_precip"><label for="precip-in2_opt">Precip</label>
+		<input type="radio" id="precip-in2_opt" name="whichlayer" value="qc_precip" checked="checked"><label for="precip-in2_opt">Precipitation</label>
 		<input type="radio" id="runoff2_opt" name="whichlayer" value="avg_runoff"><label for="runoff2_opt">Runoff</label>
-		<input type="radio" id="loss2_opt" name="whichlayer" value="avg_loss" checked="checked"><label for="loss2_opt">Detachment</label>
+		<input type="radio" id="loss2_opt" name="whichlayer" value="avg_loss"><label for="loss2_opt">Detachment</label>
 		<input type="radio" id="delivery2_opt" name="whichlayer" value="avg_delivery"><label for="delivery2_opt">Delivery</label>
 		</div>
 		<br clear="all" />
@@ -121,7 +121,7 @@ $t->content = <<<EOF
 		<p><strong>More Detailed Data</strong></p>
 		<div id="details_loading" class="hidden"><img src="/images/wait24trans.gif" /> Loading...</div>
 		<div id="details_details"></div>
-		<div id="details_hidden">Click on HUC12 to load detailed data.</div>
+		<div id="details_hidden">Click on a watershed to load detailed data</div>
 		</div>
 </div>
 </div>
