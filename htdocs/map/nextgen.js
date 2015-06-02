@@ -9,10 +9,10 @@ var quickFeature;
 var detailedFeature;
 
 var vardesc = {
-	avg_runoff: 'Runoff is the amount of water that left the hillslope via above ground transport.',
-	avg_loss: 'Soil Detachment is the amount of soil distrubed on the modelled hillslope.',
-	qc_precip: 'Precipitation is the amount of rainfall and melted snow received on the hillslope',
-	avg_delivery: 'Delivery is the amount of soil transported to the bottom of the modelled hillslope',
+	avg_runoff: 'Runoff is the average amount of water that left the hillslopes via above ground transport.',
+	avg_loss: 'Soil Detachment is the average amount of soil disturbed on the modelled hillslopes.',
+	qc_precip: 'Precipitation is the average amount of rainfall and melted snow received on the hillslopes.',
+	avg_delivery: 'Delivery is the average amount of soil transported to the bottom of the modelled hillslopes.',
 }
 
 var varunits = {
