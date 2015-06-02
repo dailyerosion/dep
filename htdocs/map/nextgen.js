@@ -173,7 +173,10 @@ $(document).ready(function(){
     map = new ol.Map({
         target: 'map',
         controls: [new ol.control.Zoom(),
-            new ol.control.ZoomToExtent()
+            new ol.control.ZoomToExtent({
+            	//map.getView().calculateExtent(map.getSize())
+            	extent: [-10889524, 4833877, -9972280, 5488178]
+            })
         ],
         layers: [new ol.layer.Tile({
             	title: 'OpenStreetMap',
