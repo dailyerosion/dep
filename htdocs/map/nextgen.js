@@ -5,6 +5,8 @@ var scenario = 0;
 var MRMS_FLOOR = new Date("2013/08/20");
 var myDateFormat = 'M d, yy';
 var geojsonFormat = new ol.format.GeoJSON();
+var quickFeature;
+var detailedFeature;
 
 var vardesc = {
 	avg_runoff: 'Runoff is the amount of water that left the hillslope via above ground transport.',
@@ -81,11 +83,15 @@ function rerender_vectors(){
 	vectorLayer.changed();
 }
 function remap(){
+	// console.log("remap() called"+ detailedFeature);
 	vectorLayer.setSource(new ol.source.Vector({
 		url: get_tms_url(),
 		format: geojsonFormat
 	}));
 	setTitle();
+	if (detailedFeature){
+		updateDetails(detailedFeature.getId());
+	}
 }
 function setDate(year, month, date){
 	appstate.date = new Date(year+"/"+ month +"/"+ date);
@@ -116,7 +122,7 @@ $(document).ready(function(){
 		    color: 'rgba(255, 255, 255, 0)'
 		  }),
 		  stroke: new ol.style.Stroke({
-		    color: '#EECBAD',
+		    color: '#319FD3',
 		    width: 1
 		  })
 		});
@@ -209,9 +215,6 @@ $(document).ready(function(){
         stroke: new ol.style.Stroke({
             color: '#000',
             width: 2
-          }),
-          fill: new ol.style.Fill({
-            color: 'rgba(0,0,0,0.7)'
           })
     })];
 
@@ -226,8 +229,7 @@ $(document).ready(function(){
       }
     });
 
-    var quickFeature;
-    var detailedFeature;
+
     var displayFeatureInfo = function(pixel) {
 
       var feature = map.forEachFeatureAtPixel(pixel, function(feature, layer) {
@@ -273,6 +275,7 @@ $(document).ready(function(){
 
     // fired as somebody clicks on the map
     map.on('click', function(evt) {
+    	// console.log('map click() called');
     	var pixel = map.getEventPixel(evt.originalEvent);
     	var feature = map.forEachFeatureAtPixel(pixel, function(feature, layer) {
             return feature;
