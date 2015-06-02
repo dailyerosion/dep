@@ -113,21 +113,11 @@ $(document).ready(function(){
 
 	var style = new ol.style.Style({
 		  fill: new ol.style.Fill({
-		    color: 'rgba(255, 255, 255, 0.6)'
+		    color: 'rgba(255, 255, 255, 0)'
 		  }),
 		  stroke: new ol.style.Stroke({
-		    color: '#319FD3',
+		    color: '#EECBAD',
 		    width: 1
-		  }),
-		  text: new ol.style.Text({
-		    font: '12px Calibri,sans-serif',
-		    fill: new ol.style.Fill({
-		      color: '#000'
-		    }),
-		    stroke: new ol.style.Stroke({
-		      color: '#fff',
-		      width: 3
-		    })
 		  })
 		});
 
@@ -165,7 +155,7 @@ $(document).ready(function(){
 			  } else if (val > 0.001){
 				  c = 'rgba(0, 0, 255, 1)';
 			  } else {
-				  c = 'rgba(255, 255, 255, 0.6)';				  
+				  c = 'rgba(255, 255, 255, 0)';				  
 			  }
 			  style.getFill().setColor(c); 
 		    // style.getText().setText(resolution < 5000 ? feature.get('avg_loss') : '');
@@ -206,39 +196,38 @@ $(document).ready(function(){
         })
     });
 
-    var highlightStyleCache = {};
-
-    var featureOverlay = new ol.FeatureOverlay({
-      map: map,
-      style: function(feature, resolution) {
-        var text = resolution < 5000 ? feature.get('name') : '';
-        if (!highlightStyleCache[text]) {
-          highlightStyleCache[text] = [new ol.style.Style({
+    var highlightStyle = [new ol.style.Style({
             stroke: new ol.style.Stroke({
               color: '#f00',
               width: 1
             }),
             fill: new ol.style.Fill({
               color: 'rgba(255,0,0,0.1)'
-            }),
-            text: new ol.style.Text({
-              font: '12px Calibri,sans-serif',
-              text: text,
-              fill: new ol.style.Fill({
-                color: '#000'
-              }),
-              stroke: new ol.style.Stroke({
-                color: '#f00',
-                width: 3
-              })
             })
-          })];
+    })];
+    var clickStyle = [new ol.style.Style({
+        stroke: new ol.style.Stroke({
+            color: '#000',
+            width: 2
+          }),
+          fill: new ol.style.Fill({
+            color: 'rgba(0,0,0,0.7)'
+          })
+    })];
+
+    var featureOverlay = new ol.FeatureOverlay({
+      map: map,
+      style: function(feature, resolution) {
+    	// console.log('processing style for '+ feature.getId());
+        if (feature.get('clicked')){
+        	return clickStyle;
         }
-        return highlightStyleCache[text];
+        return highlightStyle;
       }
     });
 
-    var highlight;
+    var quickFeature;
+    var detailedFeature;
     var displayFeatureInfo = function(pixel) {
 
       var feature = map.forEachFeatureAtPixel(pixel, function(feature, layer) {
@@ -260,18 +249,20 @@ $(document).ready(function(){
           $('#info-precip').html('&nbsp;');
       }
 
-      if (feature !== highlight) {
-        if (highlight) {
-          featureOverlay.removeFeature(highlight);
+      // Keep only one selected
+      if (feature !== quickFeature) {
+        if (quickFeature) {
+          featureOverlay.removeFeature(quickFeature);
         }
         if (feature) {
           featureOverlay.addFeature(feature);
         }
-        highlight = feature;
+        quickFeature = feature;
       }
 
     };
 
+    // fired as the pointer is moved over the map
     map.on('pointermove', function(evt) {
       if (evt.dragging) {
         return;
@@ -280,13 +271,28 @@ $(document).ready(function(){
       displayFeatureInfo(pixel);
     });
 
+    // fired as somebody clicks on the map
     map.on('click', function(evt) {
     	var pixel = map.getEventPixel(evt.originalEvent);
     	var feature = map.forEachFeatureAtPixel(pixel, function(feature, layer) {
             return feature;
         });
-    	updateDetails(feature.getId());
-    	
+    	if (feature){
+    		if (feature != detailedFeature){
+    			if (detailedFeature){
+    				detailedFeature.set('clicked', false);
+    				featureOverlay.removeFeature(detailedFeature);
+    			}
+    			if (feature){
+    				feature.set('clicked', true);
+    				featureOverlay.addFeature(feature);
+    			}
+    			detailedFeature = feature;
+    		}
+    		updateDetails(feature.getId());
+    	} else {
+    		alert("No features found for where you clicked on the map.");
+    	}
     });
     
     // Create a LayerSwitcher instance and add it to the map
