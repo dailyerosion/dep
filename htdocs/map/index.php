@@ -118,7 +118,7 @@ $t->content = <<<EOF
 		<tr><th>Delivery</th><td><div id="info-delivery"></div></td></tr>
 		</table>
 		<div id="clickDetails" class="well">
-		<p><strong>Data for clicked watershed</strong></p>
+		<p><strong>Data for selected watershed</strong></p>
 		<div id="details_loading" class="hidden"><img src="/images/wait24trans.gif" /> Loading...</div>
 		<div id="details_details"></div>
 		<div id="details_hidden">Click on a watershed to load detailed data</div>
