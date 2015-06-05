@@ -7,6 +7,7 @@ var myDateFormat = 'M d, yy';
 var geojsonFormat = new ol.format.GeoJSON();
 var quickFeature;
 var detailedFeature;
+var featureOverlay;
 
 var vardesc = {
 	avg_runoff: 'Runoff is the average amount of water that left the hillslopes via above ground transport.',
@@ -84,10 +85,20 @@ function rerender_vectors(){
 }
 function remap(){
 	// console.log("remap() called"+ detailedFeature);
-	vectorLayer.setSource(new ol.source.Vector({
+	var newsource = new ol.source.Vector({
 		url: get_tms_url(),
 		format: geojsonFormat
-	}));
+	});
+	// We should replace the detailed feature with new information, so that
+	// the mouseover does not encounter this old information
+	newsource.on('change', function(){
+		if (detailedFeature){
+			featureOverlay.removeFeature(detailedFeature);
+			detailedFeature = vectorLayer.getSource().getFeatureById(detailedFeature.getId());
+			featureOverlay.addFeature(detailedFeature);
+		}
+	});
+	vectorLayer.setSource(newsource);
 	setTitle();
 	if (detailedFeature){
 		updateDetails(detailedFeature.getId());
@@ -221,11 +232,11 @@ $(document).ready(function(){
           })
     })];
 
-    var featureOverlay = new ol.FeatureOverlay({
+    featureOverlay = new ol.FeatureOverlay({
       map: map,
       style: function(feature, resolution) {
     	// console.log('processing style for '+ feature.getId());
-        if (feature.get('clicked')){
+        if (feature.getId() == detailedFeature.getId()){
         	return clickStyle;
         }
         return highlightStyle;
@@ -290,7 +301,6 @@ $(document).ready(function(){
     				featureOverlay.removeFeature(detailedFeature);
     			}
     			if (feature){
-    				feature.set('clicked', true);
     				featureOverlay.addFeature(feature);
     			}
     			detailedFeature = feature;
