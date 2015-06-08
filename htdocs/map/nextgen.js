@@ -29,6 +29,13 @@ var vartitle = {
 	avg_delivery: 'Soil Delivery'
 };
 
+// Sets the date back to today
+function setToday(){
+	appstate.date = lastdate;
+	$('#datepicker').datepicker("setDate", appstate.date);
+	remap();
+	$('#settoday').css('display', 'none');
+}
 // Sets the title shown on the page for what is being viewed
 function setTitle(){
 	dt = $.datepicker.formatDate(myDateFormat, appstate.date);
@@ -236,7 +243,7 @@ $(document).ready(function(){
       map: map,
       style: function(feature, resolution) {
     	// console.log('processing style for '+ feature.getId());
-        if (feature.getId() == detailedFeature.getId()){
+        if (detailedFeature && feature.getId() == detailedFeature.getId()){
         	return clickStyle;
         }
         return highlightStyle;
@@ -321,7 +328,10 @@ $(document).ready(function(){
   	  maxDate: lastdate,
   	   onSelect: function(dateText, inst) {
   		   appstate.date = $("#datepicker").datepicker("getDate");
-  		   remap(); 
+  		   remap();
+  		   if (appstate.date != lastdate){
+  			 $('#settoday').css('display', 'block');
+  		   }
   	   }
     });
 

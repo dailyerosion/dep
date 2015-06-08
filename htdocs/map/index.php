@@ -96,6 +96,7 @@ $t->content = <<<EOF
 		<div class="col-md-3">
 			<h4>Date:</h4>
 			<input type="text" name="date" id="datepicker" class="dp" />
+			<div style="display: none;" id="settoday"><a class="btn btn-default" role="button" href="javascript: setToday();"><i class="glyphicon glyphicon-chevron-left"></i> Back to Latest Date</a></div>
 		</div>
 		<div class="col-md-3" style="visibility: hidden;" id="dp2">
 			<h4>To Date:</h4>
