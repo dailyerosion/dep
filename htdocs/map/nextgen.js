@@ -152,23 +152,23 @@ $(document).ready(function(){
 			  } else if (val >= 5){
 				  c = 'rgba(255, 153, 0, 1)';
 			  } else if (val >= 3){
-				  c = 'rgba(255, 153, 0, 1)';
-			  } else if (val >= 2){
 				  c = 'rgba(255, 204, 0, 1)';
-			  } else if (val >= 1.5){
+			  } else if (val >= 2){
 				  c = 'rgba(255, 232, 0, 1)';
-			  } else if (val >= 1){
+			  } else if (val >= 1.5){
 				  c = 'rgba(255, 255, 0, 1)';
-			  } else if (val >= 0.75){
+			  } else if (val >= 1){
 				  c = 'rgba(204, 255, 0, 1)';
-			  } else if (val >= 0.5){
+			  } else if (val >= 0.75){
 				  c = 'rgba(51, 255, 0, 1)';
-			  } else if (val >= 0.25){
+			  } else if (val >= 0.5){
 				  c = 'rgba(102, 255, 153, 1)';
-			  } else if (val >= 0.1){
+			  } else if (val >= 0.25){
 				  c = 'rgba(24, 255, 255, 1)';
-			  } else if (val >= 0.05){
+			  } else if (val >= 0.1){
 				  c = 'rgba(0, 212, 255, 1)';
+			  } else if (val >= 0.05){
+				  c = 'rgba(0, 102, 255, 1)';
 			  } else if (val > 0.001){
 				  c = 'rgba(0, 0, 255, 1)';
 			  } else {
