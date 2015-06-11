@@ -1,11 +1,72 @@
 <?php 
 require '../config/settings.inc.php';
 require_once '../include/myview.php';
+$dbconn = pg_connect("dbname=idep host=iemdb user=nobody");
+$rs = pg_query($dbconn, "SELECT value from properties where key = 'last_date'");
+$row = pg_fetch_assoc($rs, 0);
+$last_date = strtotime($row['value']);
+
 
 $t = new MyView();
 
 $t->title = 'Iowa Daily Erosion Project';
 
+$d = date("Ymd", $last_date);
+$year = date("Y", $last_date);
+$month = date("m", $last_date);
+$day = date("d", $last_date);
+$ld = date("Y/m/d", $last_date);
+
+$t->jsextra = <<<EOF
+<script>
+function update(dt){
+	var tmp = $.datepicker.formatDate('yymmdd', dt);
+	window.location.hash = '#'+tmp;
+	loading('1', 'block');
+	loading('2', 'block');
+	loading('3', 'block');
+	loading('4', 'block');
+	$('#i1').attr('src', '/auto/'+tmp+'_'+tmp+'_0_qc_precip.png');
+	$('#i2').attr('src', '/auto/'+tmp+'_'+tmp+'_0_avg_runoff.png');
+	$('#i3').attr('src', '/auto/'+tmp+'_'+tmp+'_0_avg_loss.png');
+	$('#i4').attr('src', '/auto/'+tmp+'_'+tmp+'_0_avg_delivery.png');			
+}
+function loading(i, css){
+		$('#i'+i+'_refresh').css('display', css);
+}
+
+$().ready(function(){
+	$('#i1').on('load', function(){
+		loading('1', 'none');
+	});
+	$('#i2').on('load', function(){
+		loading('2', 'none');
+	});
+	$('#i3').on('load', function(){
+		loading('3', 'none');
+	});
+	$('#i4').on('load', function(){
+		loading('4', 'none');
+	});
+	var dp = $('#dp').datepicker({
+		minDate: new Date(2007, 1, 1),
+		maxDate: new Date({$year}, {$month}, {$day}),
+		onSelect: function(dateText, inst){
+			update($('#dp').datepicker('getDate'));
+		}
+	});
+	$('#dp').datepicker('setDate', new Date('{$ld}'));
+
+	var tokens = window.location.href.split('#');
+	if (tokens.length == 2){
+		dt = $.datepicker.parseDate('yymmdd', tokens[1]);
+		$('#dp').datepicker('setDate', dt);
+		update(dt);		
+	}
+
+});
+</script>
+EOF;
 $t->content = <<<EOF
 <div class="alert alert-success">This website is a work-in-progress of updated
 datasets and methodologies to produce daily estimates of soil displacement
@@ -14,6 +75,26 @@ for Iowa.  Eventually, this website will replace the output found on
 
 <p>Currently, about all there is to show is this <a href="/map/">Next-Gen Display</a>!  
 Please stay tuned for many new features to show up on this website.</p>
+
+<h2>Daily Erosion Model Summaries</h2>
+
+<form name="bah">
+<p><strong>Select Date to View:</strong><input type="text" id="dp" >
+</form>
+
+<style>
+.loading { background-image: url(images/wait24trans.gif); }
+</style>
+<div class="row">
+	<div class="col-md-6"><h3>Precipitation</h3><div id="i1_refresh" style="display:block;"><img src="/images/wait24trans.gif" />Loading...</div><img id="i1" src="/auto/{$d}_{$d}_0_qc_precip.png" class="img img-responsive" /></div>		
+	<div class="col-md-6"><h3>Runoff</h3><div id="i2_refresh" style="display:block;"><img src="/images/wait24trans.gif" />Loading...</div><img id="i2" src="/auto/{$d}_{$d}_0_avg_runoff.png" class="img img-responsive" /></div>		
+</div>
+
+<div class="row">
+	<div class="col-md-6"><h3>Detachment</h3><div id="i3_refresh" style="display:block;"><img src="/images/wait24trans.gif" />Loading...</div><img id="i3" src="/auto/{$d}_{$d}_0_avg_loss.png" class="img img-responsive" /></div>		
+	<div class="col-md-6"><h3>Delivery</h3><div id="i4_refresh" style="display:block;"><img src="/images/wait24trans.gif" />Loading...</div><img id="i4" src="/auto/{$d}_{$d}_0_avg_delivery.png" class="img img-responsive" /></div>		
+</div>
+
 EOF;
 
 $t->render('single.phtml');

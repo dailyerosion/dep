@@ -2,4 +2,4 @@ AddHandler cgi-script .py
 Options +ExecCGI
 
 RewriteEngine On
-RewriteRule ^map/([0-9]{4})_([01][0-9])_([0-3][0-9])_([0-9]+)_(.*).png$ map.py?year=$1&month=$2&day=$3&scenario=$4&v=$5
+RewriteRule ^([0-9]{4})([01][0-9])([0-3][0-9])_([0-9]{4})([01][0-9])([0-3][0-9])_([0-9]+)_(.*).png$ map.py?year=$1&month=$2&day=$3&year2=$4&month2=$5&day2=$6&scenario=$7&v=$8
