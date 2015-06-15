@@ -36,7 +36,6 @@ stage4 = np.zeros((YS+1, XS+1))
 
 # used for breakpoint logic
 ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
-PRINT_THRESHOLD = 0
 
 
 def load_asos(valid):
@@ -188,6 +187,7 @@ def qc_precip():
     # So what is our logic here.  We should care about aggregious differences
     # Lets make MRMS be within 33% of stage IV
     ratio = (mrms_total / 10.0) / stage4
+    print_threshold = 0
     for y in range(YS+1):
         for x in range(XS+1):
             if ratio[y, x] < 1.3:
@@ -200,11 +200,11 @@ def qc_precip():
             precip[:, y, x] = (precip[:, y, x] / ratio[y, x]).astype(np.uint8)
 
             # limit the amount of printout we do, not really useful anyway
-            if mrms_total[y, x] > PRINT_THRESHOLD:
+            if mrms_total[y, x] > print_threshold:
                 print(('QC y: %3i x: %3i stageIV: %5.1f MRMS: %5.1f New: %5.1f'
                        ) % (y, x, stage4[y, x], mrms_total[y, x] / 10.0,
                             np.sum(precip[:, y, x]) / 10.0))
-                PRINT_THRESHOLD = mrms_total[y, x]
+                print_threshold = mrms_total[y, x]
 
 
 def load_precip( valid ):
