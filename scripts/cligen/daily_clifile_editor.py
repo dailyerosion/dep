@@ -36,6 +36,8 @@ stage4 = np.zeros((YS+1, XS+1))
 
 # used for breakpoint logic
 ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
+PRINT_THRESHOLD = 0
+
 
 def load_asos(valid):
     """ Load temps and family """
@@ -179,27 +181,32 @@ def load_stage4(valid):
                                totals.flatten())
     stage4[:] = nn(xi, yi)
 
+
 def qc_precip():
     """ Do the quality control on the precip product """
     mrms_total = np.sum(precip, 0)
     # So what is our logic here.  We should care about aggregious differences
     # Lets make MRMS be within 33% of stage IV
-    ratio = (mrms_total /10.0) / stage4
+    ratio = (mrms_total / 10.0) / stage4
     for y in range(YS+1):
         for x in range(XS+1):
-            if ratio[y,x] < 1.3:
+            if ratio[y, x] < 1.3:
                 continue
             # Don't fuss over small differences, if mrms_total is less
             # than 10 mm (100 value)
-            if mrms_total[y,x] < 100:
+            if mrms_total[y, x] < 100:
                 continue
             # Pull the functional form down to stage4 total
-            precip[:,y,x] = (precip[:,y,x] / ratio[y,x]).astype(np.uint8)
+            precip[:, y, x] = (precip[:, y, x] / ratio[y, x]).astype(np.uint8)
 
-            print 'QC y: %3i x: %3i stageIV: %5.1f MRMS: %5.1f New: %5.1f' % (
-                    y, x, stage4[y,x], mrms_total[y,x] / 10.0,
-                                    np.sum(precip[:,y,x])/10.0)
-    
+            # limit the amount of printout we do, not really useful anyway
+            if mrms_total[y, x] > PRINT_THRESHOLD:
+                print(('QC y: %3i x: %3i stageIV: %5.1f MRMS: %5.1f New: %5.1f'
+                       ) % (y, x, stage4[y, x], mrms_total[y, x] / 10.0,
+                            np.sum(precip[:, y, x]) / 10.0))
+                PRINT_THRESHOLD = mrms_total[y, x]
+
+
 def load_precip( valid ):
     """ Load the 5 minute precipitation data into our ginormus grid """
     ts = 30 * 24  # 2 minute
