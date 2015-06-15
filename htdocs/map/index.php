@@ -62,6 +62,33 @@ var appstate = {
 EOF;
 
 $t->content = <<<EOF
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Search for Watershed by Name</h4>
+      </div>
+      <div class="modal-body" onkeypress="return event.keyCode != 13;">
+		<p>Enter some case-insensitive text to search for a watershed by name.</p>
+      <form name="huc12search">
+		<input type="text" name="q" id="huc12searchtext">
+		<button type="button" class="btn btn-default" id="huc12searchbtn">
+  <i class="glyphicon glyphicon-search"></i>
+</button>
+		</form>
+		<hr />
+		<div id="huc12searchres"></div>
+		
+	  </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <form>		
 	<div class="row">
 		<div class="col-md-6"><div id="maptitle"><h4>----</h4></div></div>
@@ -103,8 +130,13 @@ $t->content = <<<EOF
 			<input type="text" name="date2" id="datepicker2" class="dp" />
 		</div>
 		<div class="col-md-2">
+		<button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal">
+  <i class="glyphicon glyphicon-search"></i>
+</button>
+		<!--
 			<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() - 0.1);" value="-"/>
 			<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() + 0.1);" value="+"/>
+		-->
 			<input type="button" onclick="javascript: get_shapefile();" value="Get Shapefile"/>	
 		</div>
 	</div>

@@ -129,6 +129,46 @@ function make_iem_tms(title, layername, visible){
 		})
 	})
 }
+function setHUC12(huc12){
+	feature = vectorLayer.getSource().getFeatureById(huc12);
+	makeDetailedFeature(feature);
+	jQuery.noConflict();
+	$('#myModal').modal('hide');
+}
+
+function makeDetailedFeature(feature){
+	if (feature != detailedFeature){
+		if (detailedFeature){
+			detailedFeature.set('clicked', false);
+			featureOverlay.removeFeature(detailedFeature);
+		}
+		if (feature){
+			featureOverlay.addFeature(feature);
+		}
+		detailedFeature = feature;
+	}
+	updateDetails(feature.getId());
+}
+
+function doHUC12Search(){
+	$('#huc12searchres').html('<p><img src="/images/wait24trans.gif" /> Searching...</p>');
+	var txt = $('#huc12searchtext').val();
+	$.ajax({
+		method: 'GET',
+		url: '/geojson/hsearch.py',
+		data: {q: txt}
+	}).done(function(res){
+		var tbl = "<table class='table table-striped'><thead><tr><th>ID</th><th>Name</th></tr></thead>";
+		$.each(res.results, function(idx, result){
+			tbl += "<tr><td><a href=\"javascript: setHUC12('"+ result.huc_12 +"');\">"+ result.huc_12 +"</a></td><td>"+ result.name +"</td></tr>";
+		});
+		tbl += "</table>";
+		$('#huc12searchres').html(tbl);
+	}).fail(function(res){
+		$('#huc12searchres').html("<p>Search failed, sorry</p>");
+	});
+}
+
 
 $(document).ready(function(){
 
@@ -302,17 +342,7 @@ $(document).ready(function(){
             return feature;
         });
     	if (feature){
-    		if (feature != detailedFeature){
-    			if (detailedFeature){
-    				detailedFeature.set('clicked', false);
-    				featureOverlay.removeFeature(detailedFeature);
-    			}
-    			if (feature){
-    				featureOverlay.addFeature(feature);
-    			}
-    			detailedFeature = feature;
-    		}
-    		updateDetails(feature.getId());
+        	makeDetailedFeature(feature);
     	} else {
     		alert("No features found for where you clicked on the map.");
     	}
@@ -368,7 +398,18 @@ $(document).ready(function(){
     		remap();
     	}
     });
+    $('#huc12searchtext').on('keypress', function (event) {
+        if(event.which === 13){
+        	doHUC12Search();
+        }
+    });
         
+        
+    $('#huc12searchbtn').on('click', function(){
+    	doHUC12Search();
+    	
+    });
+    
     setTitle();
     // Make the map 6x4
     sz = map.getSize();
