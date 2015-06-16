@@ -31,7 +31,7 @@ low_temp = np.zeros((YS+1, XS+1))
 dewpoint = np.zeros((YS+1, XS+1))
 wind = np.zeros((YS+1, XS+1))
 solar = np.zeros((YS+1, XS+1))
-precip = np.zeros((30*24, YS+1, XS+1), np.uint8)
+precip = np.zeros((30*24, YS+1, XS+1))
 stage4 = np.zeros((YS+1, XS+1))
 
 # used for breakpoint logic
@@ -186,28 +186,28 @@ def qc_precip():
     mrms_total = np.sum(precip, 0)
     # So what is our logic here.  We should care about aggregious differences
     # Lets make MRMS be within 33% of stage IV
-    ratio = (mrms_total / 10.0) / stage4
+    ratio = mrms_total / stage4
     print_threshold = 0
     for y in range(YS+1):
         for x in range(XS+1):
             if ratio[y, x] < 1.3:
                 continue
             # Don't fuss over small differences, if mrms_total is less
-            # than 10 mm (100 value)
-            if mrms_total[y, x] < 100:
+            # than 10 mm
+            if mrms_total[y, x] < 10:
                 continue
             # Pull the functional form down to stage4 total
-            precip[:, y, x] = (precip[:, y, x] / ratio[y, x]).astype(np.uint8)
+            precip[:, y, x] = precip[:, y, x] / ratio[y, x]
 
             # limit the amount of printout we do, not really useful anyway
             if mrms_total[y, x] > print_threshold:
                 print(('QC y: %3i x: %3i stageIV: %5.1f MRMS: %5.1f New: %5.1f'
-                       ) % (y, x, stage4[y, x], mrms_total[y, x] / 10.0,
-                            np.sum(precip[:, y, x]) / 10.0))
+                       ) % (y, x, stage4[y, x], mrms_total[y, x],
+                            np.sum(precip[:, y, x])))
                 print_threshold = mrms_total[y, x]
 
 
-def load_precip( valid ):
+def load_precip(valid):
     """ Load the 5 minute precipitation data into our ginormus grid """
     ts = 30 * 24  # 2 minute
 
@@ -255,106 +255,110 @@ def load_precip( valid ):
             #    fig.savefig('test.png')
             #    sys.exit()
             # Turn 255 (missing) into zeros
-            precip[tidx,:,:] = np.where( data < 255, data, 0)
-            
+            precip[tidx, :, :] = np.where(data < 255, data / 10., 0)
+
         else:
             print 'daily_clifile_editor missing: %s' % (fn,)
-            
-        
+
+
         now += datetime.timedelta(minutes=2)
     return precip
 
-def compute_breakpoint( ar ):
-    """ Compute the breakpoint data based on this array of data! 
-    
+
+def compute_breakpoint(ar):
+    """ Compute the breakpoint data based on this array of data!
+
     Values are in 0.1mm increments!
-    
+
     """
-    total = np.sum( ar )
-    # Any total less than 10 (1mm) is not of concern, might as well be zero
-    if total < 10:
+    total = np.sum(ar)
+    # Any total less than (1mm) is not of concern, might as well be zero
+    if total < 0.1:
         return []
-    bp = ["00.00    0.00",]
+    bp = ["00.00    0.00", ]
     # in mm
     accum = 0
     lastaccum = 0
     lasti = 0
-    for i, intensity in enumerate( ar ):
+    for i, intensity in enumerate(ar):
         if intensity == 0:
             continue
-        accum += (float(intensity) / 10.)
+        accum += intensity
         lasti = i
-        if i == 0: # Can't have immediate accumulation
+        if i == 0:  # Can't have immediate accumulation
             continue
-        if (accum - lastaccum) > 10: # record every 10mm
+        if (accum - lastaccum) > 10:  # record every 10mm
             lastaccum = accum
             # 23.90       0.750
             ts = ZEROHOUR + datetime.timedelta(minutes=(i*2))
             bp.append("%02i.%02i  %6.2f" % (ts.hour, ts.minute / 60.0 * 100.,
-                                          accum))
+                                            accum))
     if accum != lastaccum:
-        ts = ZEROHOUR + datetime.timedelta(minutes=(max(lasti,1)*2))
+        ts = ZEROHOUR + datetime.timedelta(minutes=(max(lasti, 1)*2))
         bp.append("%02i.%02i  %6.2f" % (ts.hour, ts.minute / 60.0 * 100.,
-                                      accum))
+                                        accum))
     return bp
 
-def myjob( row ):
+
+def myjob(row):
     """ Thread job, yo """
-    [x, y] = row 
+    [x, y] = row
     lon = WEST + x * 0.01
     lat = SOUTH + y * 0.01
-    fn =  "/i/%s/cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (SCENARIO,
-                                                0 - lon,
-                                                lat,
-                                                0 - lon,
-                                                lat)
+    fn = "/i/%s/cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (SCENARIO,
+                                                        0 - lon,
+                                                        lat,
+                                                        0 - lon,
+                                                        lat)
     if not os.path.isfile(fn):
+        print fn
         return
-    
-    
+
     # Okay we have work to do
     data = open(fn, 'r').read()
-    pos = data.find( valid.strftime("%-d\t%-m\t%Y") )
+    pos = data.find(valid.strftime("%-d\t%-m\t%Y"))
     if pos == -1:
         print 'Date find failure for %s' % (fn,)
         return
-    
-    pos2 = data.find( 
-            (valid + datetime.timedelta(days=1)).strftime("%-d\t%-m\t%Y") )
+
+    pos2 = data[pos:].find(
+            (valid + datetime.timedelta(days=1)).strftime("%-d\t%-m\t%Y"))
     if pos2 == -1:
         print 'Date2 find failure for %s' % (fn,)
         return
-    
-    bpdata = compute_breakpoint( precip[:,y,x] )
-    
-    thisday = "%s\t%s\t%s\t%s\t%3.1f\t%3.1f\t%4.0f\t%4.1f\t%s\t%4.1f\n%s%s" % (                                                                     
-        valid.day, valid.month, valid.year, len(bpdata), high_temp[y,x], 
-        low_temp[y,x], solar[y,x], wind[y,x], 0, dewpoint[y,x], 
-        "\n".join(bpdata), "\n" if len(bpdata) > 0 else "" )
+
+    bpdata = compute_breakpoint(precip[:, y, x])
+
+    thisday = ("%s\t%s\t%s\t%s\t%3.1f\t%3.1f\t%4.0f\t%4.1f\t%s\t%4.1f\n%s%s"
+               ) % (valid.day, valid.month, valid.year, len(bpdata),
+                    high_temp[y, x], low_temp[y, x], solar[y, x],
+                    wind[y, x], 0, dewpoint[y, x], "\n".join(bpdata),
+                    "\n" if len(bpdata) > 0 else "")
 
     o = open(fn, 'w')
-    o.write( data[:pos] + thisday + data[pos2:])
+    o.write(data[:pos] + thisday + data[(pos+pos2):])
     o.close()
 
+
 def save_daily_precip():
-    """Save off the daily precip totals for usage later in computing huc_12""" 
-    data = np.sum(precip, 0) / 10.0
+    """Save off the daily precip totals for usage later in computing huc_12"""
+    data = np.sum(precip, 0)
     basedir = "/mnt/idep2/data/dailyprecip/"+str(valid.year)
     if not os.path.isdir(basedir):
         os.makedirs(basedir)
     np.save(valid.strftime(basedir+"/%Y%m%d.npy"), data)
-    
+
 
 def workflow():
     """ The workflow to get the weather data variables we want! """
-    
+
     # 1. Max Temp C
     # 2. Min Temp C
     # 4. wind mps
     # 6. Mean dewpoint C
-    load_asos( valid )
+    load_asos(valid)
     # 3. Radiation l/d
-    load_solar( valid )
+    load_solar(valid)
     # 5. wind direction (always zero)
     # 7. breakpoint precip mm
     load_stage4(valid)
@@ -365,38 +369,50 @@ def workflow():
     QUEUE = []
     for y in range(YS):
         for x in range(XS):
-            QUEUE.append( [x, y] )
+            QUEUE.append([x, y])
 
-    pool = Pool() # defaults to cpu-count
+    pool = Pool()  # defaults to cpu-count
     sz = len(QUEUE)
     sts = datetime.datetime.now()
-    for i,_ in enumerate(pool.imap_unordered(myjob, QUEUE),1):
+    for i, _ in enumerate(pool.imap_unordered(myjob, QUEUE), 1):
         if i > 0 and i % 10000 == 0:
             delta = datetime.datetime.now() - sts
             secs = delta.microseconds / 1000000. + delta.seconds
             rate = i / secs
             remaining = ((sz - i) / rate) / 3600.
             print ('%5.2fh Processed %6s/%6s [%.2f runs per sec] '
-                   +'remaining: %5.2fh') % (secs /3600., i, sz, rate,
-                                            remaining )
+                   'remaining: %5.2fh') % (secs / 3600., i, sz, rate,
+                                           remaining)
 
 
-    
 if __name__ == '__main__':
     # This is important to keep valid in global scope
     valid = datetime.date.today() - datetime.timedelta(days=1)
     if len(sys.argv) == 5:
-        valid = datetime.date( int(sys.argv[2]), int(sys.argv[3]),
-                               int(sys.argv[4]))
+        valid = datetime.date(int(sys.argv[2]), int(sys.argv[3]),
+                              int(sys.argv[4]))
 
     workflow()
-    
 
-class test(unittest.TestCase):        
-    
+
+class test(unittest.TestCase):
+
+    def test_speed(self):
+        """Test the speed of the processing"""
+        global SCENARIO, valid
+        SCENARIO = 0
+        valid = datetime.date(2014, 10, 10)
+        sts = datetime.datetime.now()
+        myjob([322, 322])
+        ets = datetime.datetime.now()
+        delta = (ets - sts).total_seconds()
+        print(("Processed 1 file in %.5f secs, %.0f files per sec"
+               ) % (delta, 1.0 / delta))
+        self.assertEqual(1, 0)
+
     def test_bp(self):
         """ issue #6 invalid time """
         data = np.zeros([30*24])
-        data[0] = 32
+        data[0] = 3.2
         bp = compute_breakpoint(data)
         self.assertEqual(bp[1], "00.03    3.20")
