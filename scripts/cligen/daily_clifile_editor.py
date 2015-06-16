@@ -311,7 +311,6 @@ def myjob(row):
                                                         0 - lon,
                                                         lat)
     if not os.path.isfile(fn):
-        print fn
         return
 
     # Okay we have work to do
