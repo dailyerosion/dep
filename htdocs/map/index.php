@@ -36,8 +36,27 @@ width: 149px;
 float: left;
      }
            #map {
-                height: 100%;
+		width: 100%;
             }
+#colorbar {
+	position: absolute;
+	left: 1em;
+	top: 7em;
+	background: rgba(0,0,0,0.8);
+	z-index: 3000;	
+}
+#maptitle {
+	position: absolute;
+	top: 0px;
+	left: 5em;
+	background: rgba(0,0,0,0.8);
+	color: #FFF;
+	font-weight: bold;
+	font-size: 1.2em;
+	padding-left: 20px;
+	padding-right: 20px;
+	z-index: 3000;
+}
         </style>
 EOF;
 $ddd = str_replace("-","/", $last_date);
@@ -91,13 +110,11 @@ $t->content = <<<EOF
 
 <form>		
 	<div class="row">
-		<div class="col-md-6"><div id="maptitle"><h4>----</h4></div></div>
+		<div class="col-md-6"></div>
 		<div class="col-md-6"><h4 class="pull-right">Select IDEP Variable to View:</h4></div>
 	</div>
 <div class="row">
-	<div class="col-md-6">
-		<img src="/images/map-ramp.png" class="img img-responsive" />
-	</div>
+	<div class="col-md-6"><h3>DEP Interactive Map</h3></div>
 	<div class="col-md-6">
 		<div id="radio" class="pull-right">
 		<input type="radio" id="precip-in2_opt" name="whichlayer" value="qc_precip" checked="checked"><label for="precip-in2_opt">Precipitation</label>
@@ -111,7 +128,10 @@ $t->content = <<<EOF
 </div>
 <div class="row">
 <div class="col-md-9">
-	<div id="map"></div>
+	<div id="map">
+		<div id="maptitle">The Map Title</div>
+		<canvas id="colorbar" width="75" height="300"></canvas>
+	</div>
     <div clas="row">
 		<div class="col-md-4">
 			<h4>Days to Display</h4>

@@ -9,6 +9,19 @@ var quickFeature;
 var detailedFeature;
 var featureOverlay;
 
+var levels = [0.001, 0.1, 0.5,  1.,  5., 7.];
+var colors = ['rgba(0, 0, 255, 1)',
+
+			  'rgba(0, 212, 255, 1)',
+
+			  'rgba(102, 255, 153, 1)',
+
+			  'rgba(204, 255, 0, 1)',
+
+			  'rgba(255, 232, 0, 1)',
+
+			  'rgba(255, 153, 0, 1)'];
+
 var vardesc = {
 	avg_runoff: 'Runoff is the average amount of water that left the hillslopes via above ground transport.',
 	avg_loss: 'Soil Detachment is the average amount of soil disturbed on the modelled hillslopes.',
@@ -40,8 +53,8 @@ function setToday(){
 function setTitle(){
 	dt = $.datepicker.formatDate(myDateFormat, appstate.date);
 	dtextra = (appstate.date2 === null) ? '': ' to '+$.datepicker.formatDate(myDateFormat, appstate.date2);
-	$('#maptitle').html("<h4><strong>"+ vartitle[appstate.ltype] +" ["+
-			varunits[appstate.ltype] +"] for "+ dt +" "+ dtextra +"</strong></h4>");
+	$('#maptitle').html(vartitle[appstate.ltype] +" ["+
+			varunits[appstate.ltype] +"] for "+ dt +" "+ dtextra);
 	$('#variable_desc').html(vardesc[appstate.ltype]);
 }
 
@@ -83,6 +96,9 @@ function get_tms_url(){
 	var uri = '/geojson/huc12.py?date='+$.datepicker.formatDate("yy-mm-dd", appstate.date);
 	if (appstate.date2 !== null){
 		uri = uri + "&date2="+ $.datepicker.formatDate("yy-mm-dd", appstate.date2);
+		levels = [0.001, 0.5, 1, 5, 10, 20];
+	} else{
+		levels = [0.001, 0.1, 0.5,  1.,  5., 7.];	
 	}
 	return uri;
 }
@@ -104,6 +120,7 @@ function remap(){
 			detailedFeature = vectorLayer.getSource().getFeatureById(detailedFeature.getId());
 			featureOverlay.addFeature(detailedFeature);
 		}
+		drawColorbar();
 	});
 	vectorLayer.setSource(newsource);
 	setTitle();
@@ -169,6 +186,40 @@ function doHUC12Search(){
 	});
 }
 
+function drawColorbar(){
+    var canvas = document.getElementById('colorbar');
+    var ctx = canvas.getContext('2d');
+    
+    canvas.height = colors.length * 20 + 30;
+    
+    // Clear out the canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.font = 'bold 12pt Calibri';
+    ctx.fillStyle = 'white';
+    var metrics = ctx.measureText('Legend');
+    ctx.fillText('Legend', (canvas.width / 2) - (metrics.width / 2), 14);
+
+    var pos = 20;
+    $.each(colors, function(idx, c){
+        ctx.beginPath();
+        ctx.rect(5, canvas.height - pos - 10, 20, 20);
+        ctx.fillStyle = c;
+        ctx.fill();
+
+        ctx.font = 'bold 12pt Calibri';
+        ctx.fillStyle = 'white';
+        var metrics = ctx.measureText(levels[idx]);
+        ctx.fillText(levels[idx], 45 - (metrics.width/2), canvas.height - (pos-20) -4);
+
+        pos = pos + 20;
+    });
+    
+    //context.lineWidth = 3;
+    //context.strokeStyle = 'white';
+    //context.stroke();	
+}
+
 
 $(document).ready(function(){
 
@@ -193,33 +244,13 @@ $(document).ready(function(){
 		  }),
 		  style: function(feature, resolution) {
 			  val = feature.get(appstate.ltype);
-			  var c;
-			  if (val >= 7){
-				  c = 'rgba(255, 102, 0, 1)';
-			  } else if (val >= 5){
-				  c = 'rgba(255, 153, 0, 1)';
-			  } else if (val >= 3){
-				  c = 'rgba(255, 204, 0, 1)';
-			  } else if (val >= 2){
-				  c = 'rgba(255, 232, 0, 1)';
-			  } else if (val >= 1.5){
-				  c = 'rgba(255, 255, 0, 1)';
-			  } else if (val >= 1){
-				  c = 'rgba(204, 255, 0, 1)';
-			  } else if (val >= 0.75){
-				  c = 'rgba(51, 255, 0, 1)';
-			  } else if (val >= 0.5){
-				  c = 'rgba(102, 255, 153, 1)';
-			  } else if (val >= 0.25){
-				  c = 'rgba(24, 255, 255, 1)';
-			  } else if (val >= 0.1){
-				  c = 'rgba(0, 212, 255, 1)';
-			  } else if (val >= 0.05){
-				  c = 'rgba(0, 102, 255, 1)';
-			  } else if (val > 0.001){
-				  c = 'rgba(0, 0, 255, 1)';
-			  } else {
-				  c = 'rgba(255, 255, 255, 0)';				  
+			  var c = 'rgba(255, 255, 255, 0)';
+			  for (var i=levels.length; i>=0; i--){
+			      if (val >= levels[i]){
+			    	 c = colors[i];
+			    	 break;
+			      }
+			      
 			  }
 			  style.getFill().setColor(c); 
 		    // style.getText().setText(resolution < 5000 ? feature.get('avg_loss') : '');
@@ -414,4 +445,5 @@ $(document).ready(function(){
     // Make the map 6x4
     sz = map.getSize();
     map.setSize([sz[0], sz[0] / 6. * 4.]);
+    drawColorbar();
 }); // End of document.ready()
