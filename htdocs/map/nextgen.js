@@ -2,6 +2,7 @@ var map;
 var vectorLayer;
 var iaextent;
 var scenario = 0;
+var maxvalue = 0;
 var MRMS_FLOOR = new Date("2013/08/20");
 var myDateFormat = 'M d, yy';
 var geojsonFormat = new ol.format.GeoJSON();
@@ -104,9 +105,13 @@ function get_tms_url(){
 }
 function rerender_vectors(){
 	//console.log("rerender_vectors() called");
+	// Reset max value
+	maxvalue = 0;
 	vectorLayer.changed();
 }
 function remap(){
+	// Reset max value
+	maxvalue = 0;
 	// console.log("remap() called"+ detailedFeature);
 	var newsource = new ol.source.Vector({
 		url: get_tms_url(),
@@ -187,10 +192,11 @@ function doHUC12Search(){
 }
 
 function drawColorbar(){
+	//console.log("drawColorbar called...");
     var canvas = document.getElementById('colorbar');
     var ctx = canvas.getContext('2d');
     
-    canvas.height = colors.length * 20 + 30;
+    canvas.height = colors.length * 20 + 50;
     
     // Clear out the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -200,6 +206,13 @@ function drawColorbar(){
     var metrics = ctx.measureText('Legend');
     ctx.fillText('Legend', (canvas.width / 2) - (metrics.width / 2), 14);
 
+    var txt = "Max: "+ maxvalue.toFixed(2);
+    ctx.font = 'bold 10pt Calibri';
+    ctx.fillStyle = 'yellow';
+    metrics = ctx.measureText(txt);
+    ctx.fillText(txt, (canvas.width / 2) - (metrics.width / 2), 32);
+
+    
     var pos = 20;
     $.each(colors, function(idx, c){
         ctx.beginPath();
@@ -209,15 +222,12 @@ function drawColorbar(){
 
         ctx.font = 'bold 12pt Calibri';
         ctx.fillStyle = 'white';
-        var metrics = ctx.measureText(levels[idx]);
+        metrics = ctx.measureText(levels[idx]);
         ctx.fillText(levels[idx], 45 - (metrics.width/2), canvas.height - (pos-20) -4);
 
         pos = pos + 20;
     });
-    
-    //context.lineWidth = 3;
-    //context.strokeStyle = 'white';
-    //context.stroke();	
+
 }
 
 
@@ -239,11 +249,16 @@ $(document).ready(function(){
 	vectorLayer = new ol.layer.Vector({
 		title : 'IDEPv2 Data Layer',
 		  source: new ol.source.Vector({
-		    url: get_tms_url(),
-		    format: geojsonFormat
+			  url: get_tms_url(),
+			  format: geojsonFormat
 		  }),
 		  style: function(feature, resolution) {
 			  val = feature.get(appstate.ltype);
+			  if (val > maxvalue){
+				  //console.log("Setting maxvalue to "+ val);
+				  maxvalue = val;
+				  drawColorbar();
+			  }
 			  var c = 'rgba(255, 255, 255, 0)';
 			  for (var i=levels.length; i>=0; i--){
 			      if (val >= levels[i]){
