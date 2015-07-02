@@ -1,3 +1,29 @@
+ 2 Jul 2015 -
+  Cruse, Gelder, James, Claudette, Karl
+  - Unsure of who exactly is coming next week, Brian will investigate
+  - Discussion about agenda items for the meeting, Karl will work on it
+  - Laflen will present some of his crop work at the meeting
+  - Found a room at the Brenton Center after 3022 Agronomy was commendeered
+  - We are working on a HUD proposal that seems well received
+  - daryl needs to make a powerpoint for the meeting, items include:
+    - precipitation changes
+    - timing of output
+    - website changes
+    - show summary results
+  - Kansas DEMs are not in good shape, but we hope that local watersheds are
+    consistent, so border issues will not impact us
+  - A bug was noticed with legend appearing too high on brian's PC (#17)
+  - Switching display from two dates back to one did not properly work (#18)
+  - Dynamic ramps would be nice, but need to figure out server side hinting
+  - Decrease map to two decimals shown (#19)
+  - Add a left/right carrot to the date widget for easy moving in time (#20)
+  - Add a calendar icon as well to the date widget (#20)
+  - Cull the null HUCs from the database, those on the border without runs made
+  - The above bug #18 likely causes issue with the map title widget
+  - Discussion on future funding opportunities
+  - Look into what WEPP watershed does and if I can run it from the command line
+  - Date issue above causes 1969 to appear in data widget
+
 20 May 2015 -
   Cruse(phone), Gelder, James, Tim, Claudette, Karl
   - ISU Big Data proposal was submitted and will hear back on Friday if we are
