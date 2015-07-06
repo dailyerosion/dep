@@ -233,7 +233,7 @@ function drawColorbar(){
 
 $(document).ready(function(){
 
-	appstate.date = lastdate;
+	appstate.date = new Date(lastdate.getTime());;
 	appstate.date2 = null;
 
 	var style = new ol.style.Style({
@@ -453,8 +453,28 @@ $(document).ready(function(){
         
     $('#huc12searchbtn').on('click', function(){
     	doHUC12Search();
-    	
     });
+    
+    $('#minus1d').on('click', function(){
+    	appstate.date.setDate(appstate.date.getDate() - 1);
+    	$("#datepicker").datepicker("setDate", appstate.date);
+    	remap();
+    	if (appstate.date < lastdate){
+    		$("#plus1d").prop("disabled", false);
+    	}
+    });
+
+    $('#plus1d').on('click', function(){
+    	appstate.date.setDate(appstate.date.getDate() + 1);
+    	if (appstate.date > lastdate){
+    		$("#plus1d").prop("disabled", true);
+    		appstate.date.setDate(appstate.date.getDate() - 1);
+    	} else{
+	    	$("#datepicker").datepicker("setDate", appstate.date);
+	    	remap();
+    	}
+    });
+
     
     setTitle();
     // Make the map 6x4

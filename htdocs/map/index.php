@@ -77,7 +77,7 @@ var appstate = {
 		ltype: 'qc_precip'
 };
         </script>
- <script src='nextgen.js?v=11'></script>
+ <script src='nextgen.js?v=12'></script>
 EOF;
 
 $t->content = <<<EOF
@@ -133,17 +133,21 @@ $t->content = <<<EOF
 		<canvas id="colorbar" width="75" height="300"></canvas>
 	</div>
     <div clas="row">
-		<div class="col-md-4">
+		<div class="col-md-3">
 			<h4>Days to Display</h4>
 			<div id="t" class="pull-left">
 			<input type="radio" id="single" name="t" value="single" checked="checked"><label for="single">Single</label>
 			<input type="radio" id="multi" name="t" value="multi"><label for="multi">Multi</label>
 			</div>
 		</div>
-		<div class="col-md-3">
+		<div class="col-md-4">
 			<h4>Date:</h4>
-			<input type="text" name="date" id="datepicker" class="dp" />
-			<div style="display: none;" id="settoday"><a class="btn btn-default" role="button" href="javascript: setToday();"><i class="glyphicon glyphicon-chevron-left"></i> Back to Latest Date</a></div>
+		<div class="input-group">
+			<span class="input-group-btn"><button id="minus1d" class="btn btn-default" type="button"><i class="glyphicon glyphicon-arrow-left"></i></button></span>
+		<input type="text" name="date" id="datepicker" class="form-control" style="font-weight: bolder;">
+			<span class="input-group-btn"><button id="plus1d" class="btn btn-default" type="button"><i class="glyphicon glyphicon-arrow-right"></i></button></span>
+		</div>
+		<div style="display: none;" id="settoday"><a class="btn btn-default" role="button" href="javascript: setToday();"><i class="glyphicon glyphicon-chevron-left"></i> Back to Latest Date</a></div>
 		</div>
 		<div class="col-md-3" style="visibility: hidden;" id="dp2">
 			<h4>To Date:</h4>
