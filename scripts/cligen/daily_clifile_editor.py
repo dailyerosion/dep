@@ -51,7 +51,7 @@ def load_asos(valid):
     yaxis = np.arange(SOUTH, NORTH, 0.01)
     xi, yi = np.meshgrid(xaxis, yaxis)
 
-    nt = NetworkTable(["IA_ASOS", "AWOS"])
+    nt = NetworkTable(["IA_ASOS", "AWOS", 'MN_ASOS', 'KS_ASOS'])
     pgconn = psycopg2.connect(database='asos', host='iemdb', user='nobody')
     cursor = pgconn.cursor()
 
@@ -237,7 +237,7 @@ def load_precip(valid):
 
     right =  int((EAST - -130.) * 100.)
     left = int((WEST - -130.) * 100.)
-    (myx, myy) = get_xy_from_lonlat(-91.44, 41.28)
+    # (myx, myy) = get_xy_from_lonlat(-91.44, 41.28)
     #samplex = int((-96.37 - -130.)*100.)
     #sampley = int((55. - 42.71)*100)
 
@@ -258,7 +258,7 @@ def load_precip(valid):
             imgdata = img.ReadAsArray()
             # sample out and then flip top to bottom!
             data = np.flipud(imgdata[top:bottom, left:right])
-            print now, data[myy, myx]
+            # print now, data[myy, myx]
             # print np.shape(imgdata), bottom, top, left, right
             # print now, imgdata[sampley, samplex]
             # if imgdata[sampley, samplex] > 0:
