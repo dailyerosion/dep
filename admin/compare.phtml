@@ -1,6 +1,6 @@
 <?php 
 require '../config/settings.inc.php';
-require '../autoload.php';
+require '../include/myview.php';
 
 $year = isset($_REQUEST["year"]) ? intval($_REQUEST["year"]) : 2014;
 $model_twp = isset($_REQUEST["model_twp"]) ? $_REQUEST["model_twp"] : "T90NR39W";
@@ -69,7 +69,7 @@ function p($val){
 }
 
 $table2 = <<<EOF
-<table class="wd-Table--striped wd-Table--hover wd-Table--bordered">
+<table class="table table-bordered table-condensed table-striped">
 <thead><tr><th rowspan="2">Year</th>
 <th>IDEP v1 (Township $model_twp)</th>
 <th colspan="3">IDEP v2 (HUC 12 $huc12)</th>
@@ -98,7 +98,7 @@ $table2 .= "</tbody></table>";
 
 
 $table = <<<EOF
-<table class="wd-Table--striped wd-Table--hover wd-Table--bordered">
+<table class="table table-bordered table-condensed table-striped">
 <thead><tr><th rowspan="2">Date</th>
 <th colspan="3">IDEP v1 (Township $model_twp)</th>
 <th colspan="3">IDEP v2 (HUC 12 $huc12)</th>
@@ -121,11 +121,8 @@ while (list($k,$v)=each($dates)){
 $table .= "</tbody></table>";
 
 
-$theme = new Sample\Theme('IDEP :: Comparison IDEPv1 vs IDEPv2');
-$theme->drawHeader();
-
-
-echo <<<EOF
+$t = new MyView();
+$t->content =  <<<EOF
 
 <h3>Slope Comparison</h3>
 
@@ -139,5 +136,5 @@ $table2
 $table
 EOF;
 
-$theme->drawFooter(); 
+$t->render('single.phtml');
 ?>
