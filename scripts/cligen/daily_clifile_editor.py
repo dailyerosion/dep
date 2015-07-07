@@ -197,7 +197,7 @@ def qc_precip():
     print_threshold = 0
     # (myx, myy) = get_xy_from_lonlat(-91.44, 41.28)
     # print myx, myy
-    for y in range(YS+1):
+    for y in range(YS):
         for x in range(XS+1):
             # if x == myx and y == myy:
             #    print precip[:, y, x]
