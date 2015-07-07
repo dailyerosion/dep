@@ -6,6 +6,19 @@ import json
 import memcache
 import cgi
 import datetime
+from jenks import jenks
+
+
+def myjenks(array):
+    """Create classification breaks for the array"""
+    a = list(set(jenks(array, 6)))
+    # Some failures happen when number of values > 0 is less than 6
+    a.sort()
+    if max(a) == 0:
+        return [0]
+    if a[0] == 0 and a[1] > 0.001:
+        a[0] = 0.001
+    return [float(_) for _ in a]
 
 
 def do(ts, ts2):
@@ -30,9 +43,12 @@ def do(ts, ts2):
         from results_by_huc12 WHERE
         """+dextra+""" and scenario = 0 GROUP by huc_12)
 
-        SELECT d.g, d.huc_12, o.avg_loss, o.qc_precip, o.avg_delivery,
-        o.avg_runoff from
-        data d LEFT JOIN obs o ON (d.huc_12 = o.huc_12)
+        SELECT d.g, d.huc_12,
+        coalesce(o.avg_loss, 0),
+        coalesce(o.qc_precip, 0),
+        coalesce(o.avg_delivery, 0),
+        coalesce(o.avg_runoff, 0)
+        from data d LEFT JOIN obs o ON (d.huc_12 = o.huc_12)
     """, args)
     res = {'type': 'FeatureCollection',
            'crs': {'type': 'EPSG',
@@ -40,17 +56,33 @@ def do(ts, ts2):
            'features': [],
            'generation_time': utcnow.strftime("%Y-%m-%dT%H:%M:%SZ"),
            'count': cursor.rowcount}
+    avg_loss = []
+    qc_precip = []
+    avg_delivery = []
+    avg_runoff = []
     for row in cursor:
+        avg_loss.append(row[2])
+        qc_precip.append(row[3])
+        avg_delivery.append(row[4])
+        avg_runoff.append(row[5])
         res['features'].append(dict(type="Feature",
                                     id=row[1],
                                     properties=dict(
-                                        avg_loss=row[2] or 0,
-                                        qc_precip=row[3] or 0,
-                                        avg_delivery=row[4] or 0,
-                                        avg_runoff=row[5] or 0),
+                                        avg_loss=row[2],
+                                        qc_precip=row[3],
+                                        avg_delivery=row[4],
+                                        avg_runoff=row[5]),
                                     geometry=json.loads(row[0])
                                     ))
-
+    res['features'].insert(0, dict(type="Feature",
+                                   id='jenks',
+                                   properties=dict(
+                                        avg_loss=myjenks(avg_loss),
+                                        qc_precip=myjenks(qc_precip),
+                                        avg_delivery=myjenks(avg_delivery),
+                                        avg_runoff=myjenks(avg_runoff)),
+                                   geometry=None
+                                   ))
     return json.dumps(res)
 
 

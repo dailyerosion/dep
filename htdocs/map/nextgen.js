@@ -2,7 +2,6 @@ var map;
 var vectorLayer;
 var iaextent;
 var scenario = 0;
-var maxvalue = 0;
 var MRMS_FLOOR = new Date("2013/08/20");
 var myDateFormat = 'M d, yy';
 var geojsonFormat = new ol.format.GeoJSON();
@@ -10,7 +9,15 @@ var quickFeature;
 var detailedFeature;
 var featureOverlay;
 
-var levels = [0.001, 0.1, 0.5,  1.,  5., 7.];
+var levels = [];
+var colors = {
+  'qc_precip': ['#ffffa6', '#9cf26d', '#76cc94', '#6399ba', '#5558a1', '#c34dee'],     
+  'avg_runoff': ['#ffffa6', '#9cf26d', '#76cc94', '#6399ba', '#5558a1', '#c34dee'],
+  'avg_loss': ['#cbe3bb', '#c4ff4d', '#ffff4d', '#ffc44d', '#ff4d4d', '#c34dee'],
+  'avg_delivery': ['#ffffd2', '#ffff4d', '#ffe0a5', '#eeb74d', '#ba7c57', '#96504d']
+};
+
+/*
 var colors = ['rgba(0, 0, 255, 1)',
 
 			  'rgba(0, 212, 255, 1)',
@@ -22,6 +29,7 @@ var colors = ['rgba(0, 0, 255, 1)',
 			  'rgba(255, 232, 0, 1)',
 
 			  'rgba(255, 153, 0, 1)'];
+*/
 
 var vardesc = {
 	avg_runoff: 'Runoff is the average amount of water that left the hillslopes via above ground transport.',
@@ -97,22 +105,17 @@ function get_tms_url(){
 	var uri = '/geojson/huc12.py?date='+$.datepicker.formatDate("yy-mm-dd", appstate.date);
 	if (appstate.date2 !== null){
 		uri = uri + "&date2="+ $.datepicker.formatDate("yy-mm-dd", appstate.date2);
-		levels = [0.001, 0.5, 1, 5, 10, 20];
-	} else{
-		levels = [0.001, 0.1, 0.5,  1.,  5., 7.];	
-	}
+	} 
 	return uri;
 }
 function rerender_vectors(){
+	levels = [];
 	//console.log("rerender_vectors() called");
-	// Reset max value
-	maxvalue = 0;
 	vectorLayer.changed();
 }
 function remap(){
-	// Reset max value
-	maxvalue = 0;
 	// console.log("remap() called"+ detailedFeature);
+	levels = [];
 	var newsource = new ol.source.Vector({
 		url: get_tms_url(),
 		format: geojsonFormat
@@ -196,7 +199,7 @@ function drawColorbar(){
     var canvas = document.getElementById('colorbar');
     var ctx = canvas.getContext('2d');
     
-    canvas.height = colors.length * 20 + 50;
+    canvas.height = colors[appstate.ltype].length * 20 + 50;
     
     // Clear out the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -205,25 +208,41 @@ function drawColorbar(){
     ctx.fillStyle = 'white';
     var metrics = ctx.measureText('Legend');
     ctx.fillText('Legend', (canvas.width / 2) - (metrics.width / 2), 14);
-
-    var txt = "Max: "+ maxvalue.toFixed(2);
-    ctx.font = 'bold 10pt Calibri';
-    ctx.fillStyle = 'yellow';
-    metrics = ctx.measureText(txt);
-    ctx.fillText(txt, (canvas.width / 2) - (metrics.width / 2), 32);
-
     
     var pos = 20;
-    $.each(colors, function(idx, c){
+    $.each(levels, function(idx, level){
+    	if (idx == (levels.length - 1)){
+    	    var txt = "Max: "+ level.toFixed(2);
+    	    ctx.font = 'bold 10pt Calibri';
+    	    ctx.fillStyle = 'yellow';
+    	    metrics = ctx.measureText(txt);
+    	    ctx.fillText(txt, (canvas.width / 2) - (metrics.width / 2), 32);
+    	
+    	    // All zeros
+    	    if (idx == 0){
+        	    var txt = "All Zeros";
+        	    ctx.font = 'bold 10pt Calibri';
+        	    ctx.fillStyle = 'white';
+        	    metrics = ctx.measureText(txt);
+        	    ctx.fillText(txt, (canvas.width / 2) - (metrics.width / 2), 50);
+    	    }
+    	    
+    		return;
+    	}
+    	
         ctx.beginPath();
         ctx.rect(5, canvas.height - pos - 10, 20, 20);
-        ctx.fillStyle = c;
+        ctx.fillStyle = colors[appstate.ltype][idx];
         ctx.fill();
 
         ctx.font = 'bold 12pt Calibri';
         ctx.fillStyle = 'white';
-        metrics = ctx.measureText(levels[idx]);
-        ctx.fillText(levels[idx], 45 - (metrics.width/2), canvas.height - (pos-20) -4);
+        var leveltxt = level.toFixed(2);
+        if (level == 0.001){
+        	leveltxt = 0.001;
+        }
+        metrics = ctx.measureText(leveltxt);
+        ctx.fillText(leveltxt, 45 - (metrics.width/2), canvas.height - (pos-20) -4);
 
         pos = pos + 20;
     });
@@ -241,8 +260,8 @@ $(document).ready(function(){
 		    color: 'rgba(255, 255, 255, 0)'
 		  }),
 		  stroke: new ol.style.Stroke({
-		    color: '#319FD3',
-		    width: 1
+		    color: '#000000', //'#319FD3',
+		    width: 0.5
 		  })
 		});
 
@@ -253,20 +272,20 @@ $(document).ready(function(){
 			  format: geojsonFormat
 		  }),
 		  style: function(feature, resolution) {
+			if (levels.length == 0){
+				levels = vectorLayer.getSource().getFeatureById('jenks').get(appstate.ltype);
+				drawColorbar();
+			}
+			
 			  val = feature.get(appstate.ltype);
-			  if (val > maxvalue){
-				  //console.log("Setting maxvalue to "+ val);
-				  maxvalue = val;
-				  drawColorbar();
-			  }
-			  var c = 'rgba(255, 255, 255, 0)';
-			  for (var i=levels.length; i>=0; i--){
+			  var c = '#FFFFFF';
+			  for (var i=(levels.length-2); i>=0; i--){
 			      if (val >= levels[i]){
-			    	 c = colors[i];
+			    	 c = colors[appstate.ltype][i];
 			    	 break;
 			      }
 			      
-			  }
+			  }			  
 			  style.getFill().setColor(c); 
 		    // style.getText().setText(resolution < 5000 ? feature.get('avg_loss') : '');
 		    return [style];
