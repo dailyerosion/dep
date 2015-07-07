@@ -378,8 +378,7 @@ def workflow():
     load_precip(valid)
     #qc_precip()
     save_daily_precip()
-    return
-    
+
     QUEUE = []
     for y in range(YS):
         for x in range(XS):
