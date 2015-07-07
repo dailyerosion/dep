@@ -26,13 +26,13 @@ EAST = -90.0
 WEST = -99.2
 YS = int((NORTH - SOUTH) * 100.)
 XS = int((EAST - WEST) * 100.)
-high_temp = np.zeros((YS+1, XS+1))
-low_temp = np.zeros((YS+1, XS+1))
-dewpoint = np.zeros((YS+1, XS+1))
-wind = np.zeros((YS+1, XS+1))
-solar = np.zeros((YS+1, XS+1))
-precip = np.zeros((30*24, YS+1, XS+1))
-stage4 = np.zeros((YS+1, XS+1))
+high_temp = np.zeros((YS, XS+1))
+low_temp = np.zeros((YS, XS+1))
+dewpoint = np.zeros((YS, XS+1))
+wind = np.zeros((YS, XS+1))
+solar = np.zeros((YS, XS+1))
+precip = np.zeros((30*24, YS, XS+1))
+stage4 = np.zeros((YS, XS+1))
 
 # used for breakpoint logic
 ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
@@ -195,12 +195,12 @@ def qc_precip():
     # Lets make MRMS be within 33% of stage IV
     ratio = mrms_total / stage4
     print_threshold = 0
-    (myx, myy) = get_xy_from_lonlat(-91.44, 41.28)
-    print myx, myy
+    # (myx, myy) = get_xy_from_lonlat(-91.44, 41.28)
+    # print myx, myy
     for y in range(YS+1):
         for x in range(XS+1):
-            if x == myx and y == myy:
-                print precip[:, y, x]
+            # if x == myx and y == myy:
+            #    print precip[:, y, x]
             if ratio[y, x] < 1.3:
                 continue
             # Don't fuss over small differences, if mrms_total is less
@@ -209,8 +209,8 @@ def qc_precip():
                 continue
             # Pull the functional form down to stage4 total
             precip[:, y, x] = precip[:, y, x] / ratio[y, x]
-            if x == myx and y == myy:
-                print precip[:, y, x]
+            # if x == myx and y == myy:
+            #    print precip[:, y, x]
 
             # limit the amount of printout we do, not really useful anyway
             if mrms_total[y, x] > print_threshold:
