@@ -41,7 +41,7 @@ float: left;
 #colorbar {
 	position: absolute;
 	left: 1em;
-	top: 7em;
+	top: 8em;
 	background: rgba(0,0,0,0.8);
 	z-index: 3000;	
 }
