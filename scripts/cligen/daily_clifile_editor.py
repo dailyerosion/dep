@@ -20,10 +20,10 @@ from multiprocessing import Pool
 import unittest
 
 SCENARIO = sys.argv[1]
-SOUTH = 40.28
-NORTH = 43.69
-EAST = -90.01
-WEST = -96.73
+SOUTH = 36.9
+NORTH = 44.9
+EAST = -90.0
+WEST = -99.2
 YS = int((NORTH - SOUTH) * 100.)
 XS = int((EAST - WEST) * 100.)
 high_temp = np.zeros((YS+1, XS+1))
@@ -36,6 +36,13 @@ stage4 = np.zeros((YS+1, XS+1))
 
 # used for breakpoint logic
 ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
+
+
+def get_xy_from_lonlat(lon, lat):
+    """Get the grid position"""
+    x = int((lon - WEST) * 100.)
+    y = int((lat - SOUTH) * 100.)
+    return [x, y]
 
 
 def load_asos(valid):
@@ -188,8 +195,12 @@ def qc_precip():
     # Lets make MRMS be within 33% of stage IV
     ratio = mrms_total / stage4
     print_threshold = 0
+    (myx, myy) = get_xy_from_lonlat(-91.44, 41.28)
+    print myx, myy
     for y in range(YS+1):
         for x in range(XS+1):
+            if x == myx and y == myy:
+                print precip[:, y, x]
             if ratio[y, x] < 1.3:
                 continue
             # Don't fuss over small differences, if mrms_total is less
@@ -198,6 +209,8 @@ def qc_precip():
                 continue
             # Pull the functional form down to stage4 total
             precip[:, y, x] = precip[:, y, x] / ratio[y, x]
+            if x == myx and y == myy:
+                print precip[:, y, x]
 
             # limit the amount of printout we do, not really useful anyway
             if mrms_total[y, x] > print_threshold:
@@ -224,7 +237,7 @@ def load_precip(valid):
 
     right =  int((EAST - -130.) * 100.)
     left = int((WEST - -130.) * 100.)
-    
+    (myx, myy) = get_xy_from_lonlat(-91.44, 41.28)
     #samplex = int((-96.37 - -130.)*100.)
     #sampley = int((55. - 42.71)*100)
 
@@ -244,10 +257,11 @@ def load_precip(valid):
             # units are 0.1mm
             imgdata = img.ReadAsArray()
             # sample out and then flip top to bottom!
-            data = np.flipud( imgdata[top:bottom,left:right] )
-            #print np.shape(imgdata), bottom, top, left, right
-            #print now, imgdata[sampley, samplex]
-            #if imgdata[sampley, samplex] > 0:
+            data = np.flipud(imgdata[top:bottom, left:right])
+            print now, data[myy, myx]
+            # print np.shape(imgdata), bottom, top, left, right
+            # print now, imgdata[sampley, samplex]
+            # if imgdata[sampley, samplex] > 0:
             #    import matplotlib.pyplot as plt
             #    (fig, ax) = plt.subplots(2,1)
             #    ax[0].imshow(imgdata[0:3000, :])
@@ -362,9 +376,10 @@ def workflow():
     # 7. breakpoint precip mm
     load_stage4(valid)
     load_precip(valid)
-    qc_precip()
+    #qc_precip()
     save_daily_precip()
-
+    return
+    
     QUEUE = []
     for y in range(YS):
         for x in range(XS):
@@ -402,7 +417,7 @@ class test(unittest.TestCase):
         SCENARIO = 0
         valid = datetime.date(2014, 10, 10)
         sts = datetime.datetime.now()
-        myjob([322, 322])
+        myjob(get_xy_from_lonlat(-91.44, 41.28))
         ets = datetime.datetime.now()
         delta = (ets - sts).total_seconds()
         print(("Processed 1 file in %.5f secs, %.0f files per sec"

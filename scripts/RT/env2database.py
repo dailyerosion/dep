@@ -61,8 +61,8 @@ def do(date, process_all):
 
         SELECT huc_12, ST_x(g), ST_y(g) from centers
         """)
-        SOUTH = 40.28
-        WEST = -96.73
+        SOUTH = 36.9
+        WEST = -99.2
         for row in icursor:
             y = int((row[2] - SOUTH) * 100.)
             x = int((row[1] - WEST) * 100.)
