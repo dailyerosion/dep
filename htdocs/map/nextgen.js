@@ -346,9 +346,9 @@ $(document).ready(function(){
       var info = document.getElementById('info');
       if (feature) {
     	  $('#info-huc12').html( feature.getId() );
-    	  $('#info-loss').html( feature.get('avg_loss').toFixed(3) + " T/a" );
+    	  $('#info-loss').html( feature.get('avg_loss').toFixed(2) + " T/a" );
     	  $('#info-runoff').html( feature.get('avg_runoff').toFixed(2) + " in" );
-    	  $('#info-delivery').html( feature.get('avg_delivery').toFixed(3) + " T/a" );
+    	  $('#info-delivery').html( feature.get('avg_delivery').toFixed(2) + " T/a" );
     	  $('#info-precip').html( feature.get('qc_precip').toFixed(2) + " in");
       } else {
           $('#info-huc12').html('&nbsp;');

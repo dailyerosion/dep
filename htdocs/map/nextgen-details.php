@@ -27,10 +27,9 @@ $hu12name = $row["hu_12_name"];
 
 $nicedate = date("d M Y", $date);
 echo <<<EOF
+<h4>Detailed Data for {$hu12name}</h4>
 <form name="changer" method="GET">
 <strong>HUC 12:</strong> <input type="text" value="$huc_12" name="huc_12" size="12"/>
-<br /><strong>Name:</strong> $hu12name
-<br /><strong>Date:</strong> $nicedate
 </form>
 EOF;
 /* Find the HRAP cell */
@@ -99,21 +98,22 @@ if (pg_num_rows($rs) == 0){
 */
 
 /* Fetch Results */
-echo "<br />--- IDEPv2 HUC 12 Summary ---";
+echo "<h4>{$nicedate} Summary</h4>";
 $rs = pg_prepare($dbconn, "RES", "select * from results_by_huc12 WHERE 
 		valid = $1 and huc_12 = $2 and scenario = $3");
 $rs = timeit($dbconn, "RES", Array(date("Y-m-d", $date), $huc_12, $scenario));
 if (pg_num_rows($rs) == 0){
-	echo "<br /><strong>No Erosion/Runoff</strong>";
+	$row = Array("qc_precip" => 0, 'avg_runoff' => 0,
+				'avg_loss' => 0, 'avg_delivery' => 0);
 } else{
 	$row = pg_fetch_assoc($rs, 0);
-	echo '<table class="table table-condensed table-bordered">';
-	echo "<tr><th>Precipitation</th><td>". sprintf("%.2f in", $row["qc_precip"] / 25.4) ."</td></tr>";
-	echo "<tr><th>Runoff</th><td>". sprintf("%.2f in", $row["avg_runoff"] / 25.4) ."</td></tr>";
-	echo "<tr><th>Detachment</th><td>". sprintf("%.3f T/A", $row["avg_loss"] * 4.463) ."</td></tr>";
-	echo "<tr><th>Delivery</th><td>". sprintf("%.3f T/A", $row["avg_delivery"] * 4.463) ."</td></tr>";
-    echo "</table>";
 }
+echo '<table class="table table-condensed table-bordered">';
+echo "<tr><th>Precipitation</th><td>". sprintf("%.2f in", $row["qc_precip"] / 25.4) ."</td></tr>";
+echo "<tr><th>Runoff</th><td>". sprintf("%.2f in", $row["avg_runoff"] / 25.4) ."</td></tr>";
+echo "<tr><th>Detachment</th><td>". sprintf("%.2f T/A", $row["avg_loss"] * 4.463) ."</td></tr>";
+echo "<tr><th>Delivery</th><td>". sprintf("%.2f T/A", $row["avg_delivery"] * 4.463) ."</td></tr>";
+echo "</table>";
 
 /* Get top events */
 $rs = pg_prepare($dbconn, "TRES", "select valid from results_by_huc12 WHERE
@@ -123,7 +123,7 @@ $rs = timeit($dbconn, "TRES", Array($huc_12, $scenario));
 if (pg_num_rows($rs) == 0){
 	echo "<br /><strong>Top events are missing!</strong>";
 } else{
-	echo "<br />--- Top 10 Events: ---<br />";
+	echo "<h4>Top 10 Events</h4>";
 	echo "<table class=\"table table-condensed table-striped table-bordered\">";
 	for ($i=0;$row=@pg_fetch_assoc($rs,$i);$i++){
 		$ts = strtotime($row["valid"]);
