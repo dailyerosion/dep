@@ -376,7 +376,7 @@ def workflow():
     # 7. breakpoint precip mm
     load_stage4(valid)
     load_precip(valid)
-    #qc_precip()
+    qc_precip()
     save_daily_precip()
 
     QUEUE = []
