@@ -29,7 +29,7 @@ def do(ts, ts2):
     dextra = "valid = %s"
     args = (ts,)
     if ts2 is not None:
-        dextra = "valid >= %s and valid < %s"
+        dextra = "valid >= %s and valid <= %s"
         args = (ts, ts2)
     cursor.execute("""WITH data as (
         SELECT ST_asGeoJson(ST_Transform(simple_geom, 4326), 4) as g,

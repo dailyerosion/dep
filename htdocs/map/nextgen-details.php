@@ -2,6 +2,7 @@
 date_default_timezone_set('America/Chicago');
 $huc_12 = isset($_REQUEST['huc12'])? $_REQUEST['huc12']: die();
 $date = isset($_REQUEST['date'])? strtotime($_REQUEST['date']): die();
+$date2 = isset($_REQUEST['date2'])? strtotime($_REQUEST['date2']): null;
 $scenario = isset($_REQUEST["scenario"]) ? intval($_REQUEST["scenario"]): 0;
 $year = date("Y", $date);
 
@@ -26,6 +27,9 @@ $row = pg_fetch_assoc($rs,0);
 $hu12name = $row["hu_12_name"];
 
 $nicedate = date("d M Y", $date);
+if ($date2 != null){
+	$nicedate = sprintf("%s to %s", date("d M Y", $date), date("d M Y", $date2));
+}
 echo <<<EOF
 <h4>Detailed Data for {$hu12name}</h4>
 <form name="changer" method="GET">
@@ -99,9 +103,13 @@ if (pg_num_rows($rs) == 0){
 
 /* Fetch Results */
 echo "<h4>{$nicedate} Summary</h4>";
-$rs = pg_prepare($dbconn, "RES", "select * from results_by_huc12 WHERE 
-		valid = $1 and huc_12 = $2 and scenario = $3");
-$rs = timeit($dbconn, "RES", Array(date("Y-m-d", $date), $huc_12, $scenario));
+$rs = pg_prepare($dbconn, "RES", "select sum(qc_precip) as qc_precip,
+		sum(avg_runoff) as avg_runoff, sum(avg_loss) as avg_loss,
+		sum(avg_delivery) as avg_delivery from results_by_huc12 WHERE 
+		valid >= $1 and valid <= $2 and huc_12 = $3 and scenario = $4");
+$rs = timeit($dbconn, "RES", Array(date("Y-m-d", $date),
+		date("Y-m-d", ($date2 == null) ? $date: $date2),
+		$huc_12, $scenario));
 if (pg_num_rows($rs) == 0){
 	$row = Array("qc_precip" => 0, 'avg_runoff' => 0,
 				'avg_loss' => 0, 'avg_delivery' => 0);
