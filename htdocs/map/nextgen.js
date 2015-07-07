@@ -263,6 +263,17 @@ $(document).ready(function(){
 		  fill: new ol.style.Fill({
 		    color: 'rgba(255, 255, 255, 0)'
 		  }),
+		  text: new ol.style.Text({
+			  font: '14px Calibri,sans-serif',
+			  stroke: new ol.style.Stroke({
+	              color: '#fff',
+	              width: 8
+	            }),
+			  fill: new ol.style.Fill({
+	              color: '#000',
+	              width: 3
+	            })
+		  }),
 		  stroke: new ol.style.Stroke({
 		    color: '#000000', //'#319FD3',
 		    width: 0.5
@@ -291,7 +302,8 @@ $(document).ready(function(){
 			      
 			  }			  
 			  style.getFill().setColor(c); 
-		    // style.getText().setText(resolution < 5000 ? feature.get('avg_loss') : '');
+			  style.getStroke().setColor((resolution < 1250) ? '#000000' : c);
+		      style.getText().setText(resolution < 160 ? val.toFixed(2) : '');
 		    return [style];
 		  }
 		});
@@ -327,8 +339,8 @@ $(document).ready(function(){
         ],
         view: new ol.View({
                 projection: 'EPSG:3857',
-                center: ol.proj.transform([-93.5, 42.1], 'EPSG:4326', 'EPSG:3857'),
-                zoom: 7
+                center: ol.proj.transform([-94.5, 40.1], 'EPSG:4326', 'EPSG:3857'),
+                zoom: 6
         })
     });
 
