@@ -139,6 +139,10 @@ function remap(){
 function setDate(year, month, date){
 	appstate.date = new Date(year+"/"+ month +"/"+ date);
 	$('#datepicker').datepicker("setDate", appstate.date);
+	// Called from top 10 listing, so disable the period
+	$('#single').prop('checked', true).button('refresh');
+	appstate.date2 = null;
+	$("#dp2").css('visibility', 'hidden');
 	remap();
 }
 function zoom_iowa(){
