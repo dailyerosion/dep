@@ -47,7 +47,7 @@ var varunits = {
 var vartitle = {
 	avg_runoff: 'Water Runoff',
 	avg_loss: 'Soil Detachment',
-	qc_precip: 'Daily Precipitation',
+	qc_precip: 'Total Precipitation',
 	avg_delivery: 'Soil Delivery'
 };
 
@@ -278,7 +278,7 @@ $(document).ready(function(){
 			}
 			
 			  val = feature.get(appstate.ltype);
-			  var c = '#FFFFFF';
+			  var c = 'rgba(255, 255, 255, 0)'; //hallow
 			  for (var i=(levels.length-2); i>=0; i--){
 			      if (val >= levels[i]){
 			    	 c = colors[appstate.ltype][i];
@@ -481,6 +481,9 @@ $(document).ready(function(){
     	if (appstate.date < lastdate){
     		$("#plus1d").prop("disabled", false);
     	}
+    	if (appstate.date != lastdate){
+  		    $('#settoday').css('display', 'block');
+  		}
     });
 
     $('#plus1d').on('click', function(){
