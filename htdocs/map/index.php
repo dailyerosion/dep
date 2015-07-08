@@ -109,13 +109,15 @@ $t->content = <<<EOF
 </div>
 
 <form>		
-	<div class="row">
-		<div class="col-md-6"></div>
-		<div class="col-md-6"><h4 class="pull-right">Select IDEP Variable to View:</h4></div>
-	</div>
 <div class="row">
-	<div class="col-md-6"><h3>DEP Interactive Map</h3></div>
 	<div class="col-md-6">
+		<h3>DEP Interactive Map</h3>
+		<button id="ia" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Iowa</button>
+		<button id="ks" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Kansas</button>
+		<button id="mn" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Minnesota</button>
+	</div>
+	<div class="col-md-6">
+		<h4 class="pull-right">Select IDEP Variable to View:</h4>
 		<div id="radio" class="pull-right">
 		<input type="radio" id="precip-in2_opt" name="whichlayer" value="qc_precip" checked="checked"><label for="precip-in2_opt">Precipitation</label>
 		<input type="radio" id="runoff2_opt" name="whichlayer" value="avg_runoff"><label for="runoff2_opt">Runoff</label>
@@ -157,11 +159,9 @@ $t->content = <<<EOF
 		<button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal">
   <i class="glyphicon glyphicon-search"></i>
 </button>
-		<!--
-			<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() - 0.1);" value="-"/>
-			<input type="button" onclick="javascript: tms.setOpacity(tms.getOpacity() + 0.1);" value="+"/>
-		-->
-			<input type="button" onclick="javascript: get_shapefile();" value="Get Shapefile"/>	
+		<button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() - 0.1);" class="btn btn-default" type="button"><i class="glyphicon glyphicon-minus"></i></button>
+		<button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() + 0.1);" class="btn btn-default" type="button"><i class="glyphicon glyphicon-plus"></i></button>
+		<button onclick="javascript: get_shapefile();" class="btn btn-default" type="button"><i class="glyphicon glyphicon-download"></i></button>
 		</div>
 	</div>
 </div>

@@ -513,6 +513,22 @@ $(document).ready(function(){
     	}
     });
 
+    $('#ia').on('click', function(){
+    	map.getView().setCenter(ol.proj.transform([-93.5, 42.07], 'EPSG:4326', 'EPSG:3857'));
+    	map.getView().setZoom(7);
+    	$(this).blur();
+    });
+    $('#mn').on('click', function(){
+    	map.getView().setCenter(ol.proj.transform([-94.31, 44.3], 'EPSG:4326', 'EPSG:3857'));
+    	map.getView().setZoom(7);
+    	$(this).blur();
+    });
+    $('#ks').on('click', function(){
+    	map.getView().setCenter(ol.proj.transform([-98.38, 38.48], 'EPSG:4326', 'EPSG:3857'));
+    	map.getView().setZoom(7);
+    	$(this).blur();
+    });
+    
     
     setTitle();
     // Make the map 6x4
