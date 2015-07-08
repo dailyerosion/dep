@@ -77,7 +77,6 @@ function readWindowHash(){
 	// careful, we have the # char here to deal with
 	if (tokens.length > 0 && tokens[0] != '#' && tokens[0] != '#NaNNaNNaN'){
 		dstr = tokens[0].substr(5,2) +"/"+ tokens[0].substr(7,2) +"/"+ tokens[0].substr(1,4);
-		console.log(dstr);
 		appstate.date = new Date(dstr);
 	}
 	if (tokens.length > 1 && tokens[1] != '' && tokens[1] != 'NaNNaNNaN'){
@@ -307,7 +306,7 @@ $(document).ready(function(){
 	try{
 		readWindowHash();
 	} catch(e){
-		console.log(e);
+		//console.log(e);
 	}
 	
 		
