@@ -8,6 +8,8 @@ var geojsonFormat = new ol.format.GeoJSON();
 var quickFeature;
 var detailedFeature;
 var featureOverlay;
+var defaultCenter = ol.proj.transform([-94.5, 40.1], 'EPSG:4326', 'EPSG:3857');
+var defaultZoom = 6;
 
 var levels = [];
 var colors = {
@@ -50,6 +52,47 @@ var vartitle = {
 	qc_precip: 'Total Precipitation',
 	avg_delivery: 'Soil Delivery'
 };
+
+// Sets the permalink stuff
+// date/date2/ltype/lon/lat/zoom
+function setWindowHash(){
+	var hash = "";
+	if (appstate.date && appstate.date != 'Invalid Date'){
+		hash += $.datepicker.formatDate("yymmdd", appstate.date);
+	}
+	hash += "/";
+	if (appstate.date2 && appstate.date2 != 'Invalid Date'){
+		hash += $.datepicker.formatDate("yymmdd", appstate.date2)
+	}
+	hash += "/"+ appstate.ltype+"/";
+	var center = map.getView().getCenter();
+	center = ol.proj.transform(center, 'EPSG:3857', 'EPSG:4326'),
+	hash += center[0].toFixed(2)+"/"+ center[1].toFixed(2) +"/"+ map.getView().getZoom();
+	window.location.hash = hash;
+}
+
+// Reads the hash and away we go!
+function readWindowHash(){
+	var tokens = window.location.hash.split("/");
+	// careful, we have the # char here to deal with
+	if (tokens.length > 0 && tokens[0] != '#' && tokens[0] != '#NaNNaNNaN'){
+		dstr = tokens[0].substr(5,2) +"/"+ tokens[0].substr(7,2) +"/"+ tokens[0].substr(1,4);
+		console.log(dstr);
+		appstate.date = new Date(dstr);
+	}
+	if (tokens.length > 1 && tokens[1] != '' && tokens[1] != 'NaNNaNNaN'){
+		dstr = tokens[1].substr(4,2) +"/"+ tokens[1].substr(6,2) +"/"+ tokens[1].substr(0,4);
+		appstate.date2 = new Date(dstr);
+	}
+	if (tokens.length > 2 && tokens[2] != ''){
+		appstate.ltype = tokens[2];
+	}
+	if (tokens.length > 5 && tokens[3] != '' && tokens[4] != '' && tokens[5] != ''){
+		defaultCenter = ol.proj.transform([parseFloat(tokens[3]), parseFloat(tokens[4])], 'EPSG:4326', 'EPSG:3857');
+		defaultZoom = parseFloat(tokens[5]);
+	}
+}
+
 
 // Sets the date back to today
 function setToday(){
@@ -112,6 +155,8 @@ function rerender_vectors(){
 	levels = [];
 	//console.log("rerender_vectors() called");
 	vectorLayer.changed();
+	setWindowHash();
+	setTitle();
 }
 function remap(){
 	// console.log("remap() called"+ detailedFeature);
@@ -135,6 +180,7 @@ function remap(){
 	if (detailedFeature){
 		updateDetails(detailedFeature.getId());
 	}
+	setWindowHash();
 }
 function setDate(year, month, date){
 	appstate.date = new Date(year+"/"+ month +"/"+ date);
@@ -258,7 +304,13 @@ $(document).ready(function(){
 
 	appstate.date = new Date(lastdate.getTime());;
 	appstate.date2 = null;
-
+	try{
+		readWindowHash();
+	} catch(e){
+		console.log(e);
+	}
+	
+		
 	var style = new ol.style.Style({
 		  fill: new ol.style.Fill({
 		    color: 'rgba(255, 255, 255, 0)'
@@ -339,8 +391,8 @@ $(document).ready(function(){
         ],
         view: new ol.View({
                 projection: 'EPSG:3857',
-                center: ol.proj.transform([-94.5, 40.1], 'EPSG:4326', 'EPSG:3857'),
-                zoom: 6
+                center: defaultCenter,
+                zoom: defaultZoom
         })
     });
 
@@ -406,6 +458,11 @@ $(document).ready(function(){
 
     };
 
+    // fired when the map is done being moved around
+    map.on('moveend', function(){
+    	//set the hash
+    	setWindowHash();
+    });
     // fired as the pointer is moved over the map
     map.on('pointermove', function(evt) {
       if (evt.dragging) {
@@ -446,7 +503,7 @@ $(document).ready(function(){
   	   }
     });
 
-    $("#datepicker").datepicker('setDate', lastdate);
+    $("#datepicker").datepicker('setDate', appstate.date);
 
     $("#datepicker2").datepicker({
     	disable: true,
@@ -459,13 +516,13 @@ $(document).ready(function(){
     	   }
       });
 
-      $("#datepicker2").datepicker('setDate', lastdate);
+      $("#datepicker2").datepicker('setDate', (appstate.date2)? appstate.date2: lastdate);
     
     $("#radio").buttonset();
     $( '#radio input[type=radio]').change(function(){
   	  	appstate.ltype = this.value;
     	rerender_vectors();
-    	setTitle();
+
     });
     $("#t").buttonset();
     $( '#t input[type=radio]').change(function(){
@@ -479,6 +536,10 @@ $(document).ready(function(){
     		remap();
     	}
     });
+    if (appstate.date2){
+    	$("#dp2").css('visibility', 'visible');	
+    }
+    
     $('#huc12searchtext').on('keypress', function (event) {
         if(event.which === 13){
         	doHUC12Search();
