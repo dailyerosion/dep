@@ -10,6 +10,7 @@ var detailedFeature;
 var featureOverlay;
 var defaultCenter = ol.proj.transform([-94.5, 40.1], 'EPSG:4326', 'EPSG:3857');
 var defaultZoom = 6;
+var popup;
 
 var levels = [];
 var colors = {
@@ -298,6 +299,79 @@ function drawColorbar(){
 
 }
 
+function popupFeatureInfo(evt){
+	
+	  var feature = map.forEachFeatureAtPixel(map.getEventPixel(evt.originalEvent), function(feature, layer) {
+        return feature;
+      });
+	
+	  var element = popup.getElement();
+	  if (feature){
+		  popup.setPosition(evt.coordinate);
+		  var h = '<table class="table table-condensed table-bordered">';
+		  h += '<tr><th>HUC12</th><td>'+feature.getId()+'</td></tr>';
+		  h += '<tr><th>Precipitation</th><td>'+ feature.get('qc_precip').toFixed(2) + ' in</td></tr>';
+		  h += '<tr><th>Runoff</th><td>'+ feature.get('avg_runoff').toFixed(2) + ' in</td></tr>';
+		  h += '<tr><th>Detachment</th><td>'+ feature.get('avg_loss').toFixed(2) + ' T/a</td></tr>';
+		  h += '<tr><th>Delivery</th><td>'+ feature.get('avg_delivery').toFixed(2) + ' T/a</td></tr>';
+		  h += '</table>';
+		  popover = $(element).popover({
+	    'placement': 'top',
+	    'animation': false,
+	    'html': true
+		  });
+		  popover.attr('data-content', h);
+		  $(element).popover('show');
+	  } else{
+		  $(element).popover('hide');  
+	  }
+	  
+	  // Keep only one selected
+      if (feature !== quickFeature) {
+        if (quickFeature) {
+          featureOverlay.removeFeature(quickFeature);
+        }
+        if (feature) {
+          featureOverlay.addFeature(feature);
+        }
+        quickFeature = feature;
+      }
+}
+
+function displayFeatureInfo(evt) {
+
+      var feature = map.forEachFeatureAtPixel(map.getEventPixel(evt.originalEvent), function(feature, layer) {
+        return feature;
+      });
+
+      var info = document.getElementById('info');
+      if (feature) {
+    	  $('#info-huc12').html( feature.getId() );
+    	  $('#info-loss').html( feature.get('avg_loss').toFixed(2) + " T/a" );
+    	  $('#info-runoff').html( feature.get('avg_runoff').toFixed(2) + " in" );
+    	  $('#info-delivery').html( feature.get('avg_delivery').toFixed(2) + " T/a" );
+    	  $('#info-precip').html( feature.get('qc_precip').toFixed(2) + " in");
+      } else {
+          $('#info-huc12').html('&nbsp;');
+          $('#info-loss').html('&nbsp;');
+          $('#info-runoff').html('&nbsp;');
+          $('#info-delivery').html('&nbsp;');
+          $('#info-precip').html('&nbsp;');
+      }
+
+      // Keep only one selected
+      if (feature !== quickFeature) {
+        if (quickFeature) {
+          featureOverlay.removeFeature(quickFeature);
+        }
+        if (feature) {
+          featureOverlay.addFeature(feature);
+        }
+        quickFeature = feature;
+      }
+
+};
+var featureDisplayFunc = displayFeatureInfo;
 
 $(document).ready(function(){
 
@@ -394,8 +468,14 @@ $(document).ready(function(){
                 zoom: defaultZoom
         })
     });
+    
+	 // Popup showing the position the user clicked
+	 popup = new ol.Overlay({
+	   element: document.getElementById('popup')
+	 });
+	 map.addOverlay(popup);
 
-    var highlightStyle = [new ol.style.Style({
+	 var highlightStyle = [new ol.style.Style({
             stroke: new ol.style.Stroke({
               color: '#f00',
               width: 1
@@ -423,39 +503,7 @@ $(document).ready(function(){
     });
 
 
-    var displayFeatureInfo = function(pixel) {
 
-      var feature = map.forEachFeatureAtPixel(pixel, function(feature, layer) {
-        return feature;
-      });
-
-      var info = document.getElementById('info');
-      if (feature) {
-    	  $('#info-huc12').html( feature.getId() );
-    	  $('#info-loss').html( feature.get('avg_loss').toFixed(2) + " T/a" );
-    	  $('#info-runoff').html( feature.get('avg_runoff').toFixed(2) + " in" );
-    	  $('#info-delivery').html( feature.get('avg_delivery').toFixed(2) + " T/a" );
-    	  $('#info-precip').html( feature.get('qc_precip').toFixed(2) + " in");
-      } else {
-          $('#info-huc12').html('&nbsp;');
-          $('#info-loss').html('&nbsp;');
-          $('#info-runoff').html('&nbsp;');
-          $('#info-delivery').html('&nbsp;');
-          $('#info-precip').html('&nbsp;');
-      }
-
-      // Keep only one selected
-      if (feature !== quickFeature) {
-        if (quickFeature) {
-          featureOverlay.removeFeature(quickFeature);
-        }
-        if (feature) {
-          featureOverlay.addFeature(feature);
-        }
-        quickFeature = feature;
-      }
-
-    };
 
     // fired when the map is done being moved around
     map.on('moveend', function(){
@@ -467,8 +515,7 @@ $(document).ready(function(){
       if (evt.dragging) {
         return;
       }
-      var pixel = map.getEventPixel(evt.originalEvent);
-      displayFeatureInfo(pixel);
+      featureDisplayFunc(evt);
     });
 
     // fired as somebody clicks on the map
@@ -535,6 +582,19 @@ $(document).ready(function(){
     		remap();
     	}
     });
+    $("#t2").buttonset();
+    $( '#t2 input[type=radio]').change(function(){
+    	if (this.value == 'side'){
+        	$("#featureside_div").css('display', 'block');
+        	featureDisplayFunc = displayFeatureInfo;
+        	var element = popup.getElement();
+        	$(element).popover('hide');
+    	} else {
+        	$("#featureside_div").css('display', 'none');
+        	featureDisplayFunc = popupFeatureInfo;
+    	}
+    });
+
     if (appstate.date2){
     	$("#dp2").css('visibility', 'visible');	
     }

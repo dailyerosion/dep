@@ -62,8 +62,6 @@ EOF;
 $ddd = str_replace("-","/", $last_date);
 $TMS_SERVER = TMS_SERVER;
 $t->jsextra = <<<EOF
- <script type="text/javascript" src="/vendor/jquery/1.11.3/jquery-1.11.3.min.js"></script>
- <script type="text/javascript" src="/vendor/jquery-ui/1.11.4/jquery-ui.min.js"></script>
  <script src='/vendor/openlayers/3.5.0/ol.js'></script>
  <script src='/vendor/openlayers/3.5.0/ol3-layerswitcher.js'></script>
         <script type="text/javascript">
@@ -166,6 +164,12 @@ $t->content = <<<EOF
 	</div>
 </div>
 <div id="detailsContainer" class="col-md-3">
+		<div id="t2">
+		<input type="radio" id="featureside" name="whichlayer" value="side" checked="checked"><label for="featureside">Side</label>
+		<input type="radio" id="featurepopup" name="whichlayer" value="popup"><label for="featurepopup">Popup</label>
+		</div>
+		
+		<div id="featureside_div">
 		<p><strong>Data for mouseover watershed</strong></p>
 		<table class="table table-condensed table-bordered">
 		<tr><th>HUC12</th><td><div id="info-huc12"></div></td></tr>
@@ -174,6 +178,7 @@ $t->content = <<<EOF
 		<tr><th>Detachment</th><td><div id="info-loss"></div></td></tr>
 		<tr><th>Delivery</th><td><div id="info-delivery"></div></td></tr>
 		</table>
+		</div>
 		<div id="clickDetails" class="well">
 		<div id="details_loading" class="hidden"><img src="/images/wait24trans.gif" /> Loading...</div>
 		<div id="details_details"></div>
@@ -181,7 +186,8 @@ $t->content = <<<EOF
 		</div>
 </div>
 </div>
-
+<div id="popup" title="Quickview Summary">
+		</div>
 </form>
 
 EOF;
