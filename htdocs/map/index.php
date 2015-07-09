@@ -165,8 +165,8 @@ $t->content = <<<EOF
 </div>
 <div id="detailsContainer" class="col-md-3">
 		<div id="t2">
-		<input type="radio" id="featureside" name="whichlayer" value="side" checked="checked"><label for="featureside">Side</label>
-		<input type="radio" id="featurepopup" name="whichlayer" value="popup"><label for="featurepopup">Popup</label>
+		<input type="radio" id="featureside" name="whichlayer2" value="side" checked="checked"><label for="featureside">Side</label>
+		<input type="radio" id="featurepopup" name="whichlayer2" value="popup"><label for="featurepopup">Popup</label>
 		</div>
 		
 		<div id="featureside_div">
