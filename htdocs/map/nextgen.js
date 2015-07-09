@@ -76,7 +76,7 @@ function setWindowHash(){
 function readWindowHash(){
 	var tokens = window.location.hash.split("/");
 	// careful, we have the # char here to deal with
-	if (tokens.length > 0 && tokens[0] != '#' && tokens[0] != '#NaNNaNNaN'){
+	if (tokens.length > 0 && tokens[0] != '' && tokens[0] != '#' && tokens[0] != '#NaNNaNNaN'){
 		dstr = tokens[0].substr(5,2) +"/"+ tokens[0].substr(7,2) +"/"+ tokens[0].substr(1,4);
 		appstate.date = new Date(dstr);
 	}
@@ -375,7 +375,7 @@ var featureDisplayFunc = displayFeatureInfo;
 
 $(document).ready(function(){
 
-	appstate.date = new Date(lastdate.getTime());;
+	appstate.date = new Date(lastdate.getTime());
 	appstate.date2 = null;
 	try{
 		readWindowHash();
