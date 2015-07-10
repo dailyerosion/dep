@@ -325,20 +325,20 @@ def myjob(row):
                                                         0 - lon,
                                                         lat)
     if not os.path.isfile(fn):
-        return
+        return False
 
     # Okay we have work to do
     data = open(fn, 'r').read()
     pos = data.find(valid.strftime("%-d\t%-m\t%Y"))
     if pos == -1:
         print 'Date find failure for %s' % (fn,)
-        return
+        return False
 
     pos2 = data[pos:].find(
             (valid + datetime.timedelta(days=1)).strftime("%-d\t%-m\t%Y"))
     if pos2 == -1:
         print 'Date2 find failure for %s' % (fn,)
-        return
+        return False
 
     bpdata = compute_breakpoint(precip[:, y, x])
 
@@ -351,6 +351,7 @@ def myjob(row):
     o = open(fn, 'w')
     o.write(data[:pos] + thisday + data[(pos+pos2):])
     o.close()
+    return True
 
 
 def save_daily_precip():
@@ -387,15 +388,19 @@ def workflow():
     pool = Pool()  # defaults to cpu-count
     sz = len(QUEUE)
     sts = datetime.datetime.now()
-    for i, _ in enumerate(pool.imap_unordered(myjob, QUEUE), 1):
-        if i > 0 and i % 10000 == 0:
+    success = 0
+    for i, res in enumerate(pool.imap_unordered(myjob, QUEUE), 1):
+        if res:
+            success += 1
+        if success > 0 and success % 20000 == 0:
             delta = datetime.datetime.now() - sts
             secs = delta.microseconds / 1000000. + delta.seconds
-            rate = i / secs
+            rate = success / secs
             remaining = ((sz - i) / rate) / 3600.
-            print ('%5.2fh Processed %6s/%6s [%.2f runs per sec] '
-                   'remaining: %5.2fh') % (secs / 3600., i, sz, rate,
+            print ('%5.2fh Processed %6s/%6s/%6s [%.2f /sec] '
+                   'remaining: %5.2fh') % (secs / 3600., success, i, sz, rate,
                                            remaining)
+    print('daily_clifile_editor edited %s files...' % (success,))
 
 
 if __name__ == '__main__':
