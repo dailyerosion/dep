@@ -11,8 +11,10 @@ import pytz
 import pygrib
 import sys
 import os
+import netCDF4
 import osgeo.gdal as gdal
 import psycopg2
+from pyiem import iemre
 from pyiem.network import Table as NetworkTable
 from scipy.interpolate import NearestNDInterpolator
 from pyiem.datatypes import temperature, speed
@@ -96,48 +98,27 @@ def load_asos(valid):
                                np.array(smps))
     wind[:] = nn(xi, yi)
 
-def get_isusm_solar(valid):
-    """ Retrieve the ISUSM solar radiation data """
-    nt = NetworkTable("ISUSM")
-    pgconn = psycopg2.connect(database='isuag', host='iemdb', user='nobody')
-    cursor = pgconn.cursor()
-    
-    cursor.execute("""SELECT station, slrmj_tot from sm_daily 
-              WHERE valid = %s and slrmj_tot is not null
-              """, (valid,))
-    lons = []
-    lats = []
-    vals = []
-    for row in cursor:
-        # convert mj to langleys
-        rad = row[1] * 23.9
-        # Crude bounds
-        if rad < 0.01 or rad > 800:
-            continue
-        lons.append( nt.sts[row[0]]['lon'] )
-        lats.append( nt.sts[row[0]]['lat'] )
-        vals.append( rad )
 
-    return lons, lats, vals
-
-def load_solar( valid ):
-    """ Grid out the solar radiation data! """
+def load_solar(valid):
+    """Use IEM Reanalysis RSDS gridded solar radiation"""
     xaxis = np.arange(WEST, EAST, 0.01)
     yaxis = np.arange(SOUTH, NORTH, 0.01)
     xi, yi = np.meshgrid(xaxis, yaxis)
-    
-    lons, lats, vals = get_isusm_solar(valid)
-    if len(lons) < 3:
-        print('Warning: load_solar() found only %s obs!' % (len(lons),))
-        lons, lats, vals = get_isusm_solar(valid - datetime.timedelta(days=1))
-        if len(lons) < 3:
-            print('Fatal: load_solar() found %s obs for yesterday!' % (
-                                                            len(lons),))
-            sys.exit()
-    
-    nn = NearestNDInterpolator((np.array(lons), np.array(lats)), 
-                               np.array(vals))
+
+    nc = netCDF4.Dataset("/mesonet/data/iemre/%s_mw_daily.nc" % (valid.year,),
+                         'r')
+    offset = iemre.daily_offset(valid)
+    # Storage is W m-2, we want langleys per day
+    data = nc.variables['rsds'][offset, :, :] * 86400. / 1000000. * 23.9
+    lats = nc.variables['lat'][:]
+    lons = nc.variables['lon'][:]
+    nc.close()
+    lons, lats = np.meshgrid(lons, lats)
+
+    nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
+                               np.ravel(data))
     solar[:] = nn(xi, yi)
+
 
 def load_stage4(valid):
     """ It sucks, but we need to load the stage IV data to give us something
