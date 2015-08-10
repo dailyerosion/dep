@@ -575,15 +575,17 @@ $(document).ready(function(){
 
     });
     $("#t").buttonset();
+    if (appstate.date2){
+    	$( '#t input[value=multi]').prop('checked', true).button('refresh');	
+    }
     $( '#t input[type=radio]').change(function(){
     	if (this.value == 'single'){
     		appstate.date2 = null;
         	$("#dp2").css('visibility', 'hidden');    		
-    		
+        	remap();
     	} else {
     		appstate.date2 = $("#datepicker2").datepicker("getDate");
         	$("#dp2").css('visibility', 'visible');
-    		remap();
     	}
     });
     $("#t2").buttonset();
