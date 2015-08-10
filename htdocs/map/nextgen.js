@@ -113,7 +113,11 @@ function setTitle(){
 // When user clicks the "Get Shapefile" Button
 function get_shapefile(){
 	dt = $.datepicker.formatDate("yy-mm-dd", appstate.date);
-	window.location.href = 'http://mesonet.agron.iastate.edu/cgi-bin/request/idep2.py?dt='+dt;
+	var uri = '/dl/shapefile.py?dt='+dt;
+	if (appstate.date2 !== null){
+		uri = uri + '&dt2='+ $.datepicker.formatDate("yy-mm-dd", appstate.date2);
+	}
+	window.location.href = uri;
 }
 
 function setType(t){
