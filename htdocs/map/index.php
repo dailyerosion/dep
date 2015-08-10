@@ -23,8 +23,8 @@ if (isset($_GET["huc_12"])){
 $t = new MyView();
 $t->title = "Map Interface";
 $t->headextra = <<<EOF
- <link type="text/css" href="/vendor/openlayers/3.5.0/ol.css" rel="stylesheet" />
- <link type="text/css" href="/vendor/openlayers/3.5.0/ol3-layerswitcher.css" rel="stylesheet" />
+ <link type="text/css" href="/vendor/openlayers/3.8.2/ol.css" rel="stylesheet" />
+ <link type="text/css" href="/vendor/openlayers/3.8.2/ol3-layerswitcher.css" rel="stylesheet" />
  <link type="text/css" href="/vendor/jquery-ui/1.11.4/jquery-ui.min.css" rel="stylesheet" />
  <link rel='stylesheet' href='/css/default/style.css' type='text/css'>
           <style type="text/css">
@@ -62,8 +62,8 @@ EOF;
 $ddd = str_replace("-","/", $last_date);
 $TMS_SERVER = TMS_SERVER;
 $t->jsextra = <<<EOF
- <script src='/vendor/openlayers/3.5.0/ol.js'></script>
- <script src='/vendor/openlayers/3.5.0/ol3-layerswitcher.js'></script>
+ <script src='/vendor/openlayers/3.8.2/ol.js'></script>
+ <script src='/vendor/openlayers/3.8.2/ol3-layerswitcher.js'></script>
         <script type="text/javascript">
 var tilecache = "{$TMS_SERVER}";
 var lastdate = new Date("{$ddd}");

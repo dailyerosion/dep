@@ -7,7 +7,8 @@ var myDateFormat = 'M d, yy';
 var geojsonFormat = new ol.format.GeoJSON();
 var quickFeature;
 var detailedFeature;
-var featureOverlay;
+var hoverOverlayLayer;
+var clickOverlayLayer;
 var defaultCenter = ol.proj.transform([-94.5, 40.1], 'EPSG:4326', 'EPSG:3857');
 var defaultZoom = 6;
 var popup;
@@ -173,9 +174,9 @@ function remap(){
 	// the mouseover does not encounter this old information
 	newsource.on('change', function(){
 		if (detailedFeature){
-			featureOverlay.removeFeature(detailedFeature);
+			clickOverlayLayer.getSource().removeFeature(detailedFeature);
 			detailedFeature = vectorLayer.getSource().getFeatureById(detailedFeature.getId());
-			featureOverlay.addFeature(detailedFeature);
+			clickOverlayLayer.getSource().addFeature(detailedFeature);
 		}
 		drawColorbar();
 	});
@@ -219,10 +220,10 @@ function makeDetailedFeature(feature){
 	if (feature != detailedFeature){
 		if (detailedFeature){
 			detailedFeature.set('clicked', false);
-			featureOverlay.removeFeature(detailedFeature);
+			clickOverlayLayer.getSource().removeFeature(detailedFeature);
 		}
 		if (feature){
-			featureOverlay.addFeature(feature);
+			clickOverlayLayer.getSource().addFeature(feature);
 		}
 		detailedFeature = feature;
 	}
@@ -333,10 +334,10 @@ function popupFeatureInfo(evt){
 	  // Keep only one selected
       if (feature !== quickFeature) {
         if (quickFeature) {
-          featureOverlay.removeFeature(quickFeature);
+        	hoverOverlayLayer.getSource().removeFeature(quickFeature);
         }
         if (feature) {
-          featureOverlay.addFeature(feature);
+        	hoverOverlayLayer.getSource().addFeature(feature);
         }
         quickFeature = feature;
       }
@@ -364,14 +365,16 @@ function displayFeatureInfo(evt) {
       }
 
       // Keep only one selected
+      if (feature){
       if (feature !== quickFeature) {
         if (quickFeature) {
-          featureOverlay.removeFeature(quickFeature);
+          hoverOverlayLayer.getSource().removeFeature(quickFeature);
         }
         if (feature) {
-          featureOverlay.addFeature(feature);
+          hoverOverlayLayer.getSource().addFeature(feature);
         }
         quickFeature = feature;
+      }
       }
 
 };
@@ -495,19 +498,25 @@ $(document).ready(function(){
           })
     })];
 
-    featureOverlay = new ol.FeatureOverlay({
-      map: map,
+    hoverOverlayLayer = new ol.layer.Vector({
+    	source: new ol.source.Vector({
+    	    features: new ol.Collection()
+      }),
       style: function(feature, resolution) {
-    	// console.log('processing style for '+ feature.getId());
-        if (detailedFeature && feature.getId() == detailedFeature.getId()){
-        	return clickStyle;
-        }
         return highlightStyle;
       }
     });
+    map.addLayer(hoverOverlayLayer);  // makes unmanaged
 
-
-
+    clickOverlayLayer = new ol.layer.Vector({
+    	source: new ol.source.Vector({
+    	    features: new ol.Collection()
+      }),
+      style: function(feature, resolution) {
+        	return clickStyle;
+      }
+    });
+    map.addLayer(clickOverlayLayer);  // makes unmanaged
 
     // fired when the map is done being moved around
     map.on('moveend', function(){
