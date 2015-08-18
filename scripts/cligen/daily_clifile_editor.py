@@ -114,8 +114,9 @@ def load_solar(valid):
     nc.close()
     lons, lats = np.meshgrid(lons, lats)
 
+    # Default to a value of 300 when this data is missing, for some reason
     nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
-                               np.ravel(data))
+                               np.ravel(np.where(data > 2000., 300, data)))
     solar[:] = nn(xi, yi)
 
 
