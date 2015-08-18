@@ -1,3 +1,32 @@
+18 Aug 2015 - DEP Update
+  Cruse, Gelder, Claudette, James, Tim, Karl
+  - BUG clicking on the homepage map did not work for Tim (#21)
+  - Add a refresher to check for updated 'last date' for map (#22)
+  - Karl leaves for his new job soon with IA Soybeans
+  - Discussion on the map and various proposals currently in the pipe
+  - Admin page color ramps are AWOL (#23)
+  - There is a million dollar grant in Minnesota dealing with DEP related
+    issues, discussion on approaches to it.
+  - Ye ole stability plots analyses comes back, need to do for a single
+    HUC12 and not all lumped together (daryl TODO)
+  - Tim thinks we need to randomly add samples and not sequentially do it
+  - Fix the HUC12 precip sampling to be polygon based and not agg runs (#24)
+  - There will be a 3 Sept seminar on DEP, daryl shall present / attend!
+  - Need to discuss with Jim and Dennis about the phosphoros issues
+  - Gelder showed a plot of yearly precip totals from DEPv2, erm, check this
+  - Gelder showed some calendar input related bugs (#25)
+
+ 9 Jul 2015 - DEPv2 Big Meeting
+  Cruse, Gelder, James, Tim, Karl, KS Folks, Online Folks, Laflen
+  - Issue of the number of OFEs and the sensitivity of such
+  - Are the slopes of each OFE simple? I am unsure as the raw files seem to
+    indicate not
+  - Report State Averages, report view averages
+  - Desire for Full Screen Display
+  - What did we do with the management codes for Kansas?
+  - make the state only modes
+  - Have a conference with Dennis and Jim on current capabilities
+  
  2 Jul 2015 -
   Cruse, Gelder, James, Claudette, Karl
   - Unsure of who exactly is coming next week, Brian will investigate
