@@ -57,13 +57,13 @@ def load_asos(valid):
     pgconn = psycopg2.connect(database='asos', host='iemdb', user='nobody')
     cursor = pgconn.cursor()
 
-    cursor.execute("""select station, 
-    avg(sknt), avg(dwpf), max(tmpf), min(tmpf) from alldata 
-    where valid BETWEEN '%s 00:00' and '%s 00:00' 
-    and station in %s GROUP by station
-              """ % (valid.strftime("%Y-%m-%d"),
-                (valid + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
-                str(tuple(nt.sts.keys()))))
+    cursor.execute("""select station,
+        avg(sknt), avg(dwpf), max(tmpf), min(tmpf) from alldata
+        where valid BETWEEN '%s 00:00' and '%s 00:00'
+        and station in %s GROUP by station
+        """ % (valid.strftime("%Y-%m-%d"),
+               (valid + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
+               str(tuple(nt.sts.keys()))))
     lons = []
     lats = []
     hic = []
@@ -71,8 +71,8 @@ def load_asos(valid):
     dwpc = []
     smps = []
     for row in cursor:
-        if (row[1] is None or row[2] is None or 
-            row[3] is None or row[4] is None):
+        if (row[1] is None or row[2] is None or
+                row[3] is None or row[4] is None):
             continue
         lons.append(nt.sts[row[0]]['lon'])
         lats.append(nt.sts[row[0]]['lat'])
@@ -81,20 +81,19 @@ def load_asos(valid):
         dwpc.append(temperature(row[2], 'F').value('C'))
         smps.append(speed(row[1], 'KT').value('MPS'))
 
-
-    nn = NearestNDInterpolator((np.array(lons), np.array(lats)), 
+    nn = NearestNDInterpolator((np.array(lons), np.array(lats)),
                                np.array(hic))
     high_temp[:] = nn(xi, yi)
 
-    nn = NearestNDInterpolator((np.array(lons), np.array(lats)), 
+    nn = NearestNDInterpolator((np.array(lons), np.array(lats)),
                                np.array(loc))
     low_temp[:] = nn(xi, yi)
 
-    nn = NearestNDInterpolator((np.array(lons), np.array(lats)), 
+    nn = NearestNDInterpolator((np.array(lons), np.array(lats)),
                                np.array(dwpc))
     dewpoint[:] = nn(xi, yi)
 
-    nn = NearestNDInterpolator((np.array(lons), np.array(lats)), 
+    nn = NearestNDInterpolator((np.array(lons), np.array(lats)),
                                np.array(smps))
     wind[:] = nn(xi, yi)
 
@@ -133,7 +132,7 @@ def load_stage4(valid):
     # clever hack for CST/CDT
     tomorrow = midnight + datetime.timedelta(hours=36)
     tomorrow = tomorrow.replace(hour=0)
-    
+
     lats = None
     lons = None
     totals = None
@@ -141,12 +140,12 @@ def load_stage4(valid):
     while now <= tomorrow:
         utc = now.astimezone(pytz.timezone("UTC"))
         gribfn = utc.strftime(("/mesonet/ARCHIVE/data/%Y/%m/%d/stage4/"
-                               +"ST4.%Y%m%d%H.01h.grib"))
+                               "ST4.%Y%m%d%H.01h.grib"))
         if not os.path.isfile(gribfn):
             print("%s is missing" % (gribfn,))
             now += datetime.timedelta(hours=1)
             continue
-        
+
         grbs = pygrib.open(gribfn)
         grb = grbs[1]
         if totals is None:
@@ -154,17 +153,17 @@ def load_stage4(valid):
             totals = grb['values'] + 0.001  # Always non-zero this way
         else:
             totals += grb['values']
-        
+
         now += datetime.timedelta(hours=1)
 
     if totals is None:
         print('No StageIV data found, aborting...')
         sys.exit()
-    
+
     xaxis = np.arange(WEST, EAST, 0.01)
     yaxis = np.arange(SOUTH, NORTH, 0.01)
     xi, yi = np.meshgrid(xaxis, yaxis)
-    nn = NearestNDInterpolator((lons.flatten(), lats.flatten()), 
+    nn = NearestNDInterpolator((lons.flatten(), lats.flatten()),
                                totals.flatten())
     stage4[:] = nn(xi, yi)
 
@@ -201,6 +200,63 @@ def qc_precip():
                 print_threshold = mrms_total[y, x]
 
 
+def load_precip_legacy(valid):
+    """ Compute a Legacy Precip product for dates prior to 1 Jan 2014"""
+    ts = 4 * 24  # 15 minute
+
+    midnight = datetime.datetime(valid.year, valid.month, valid.day, 12, 0)
+    midnight = midnight.replace(tzinfo=pytz.timezone("UTC"))
+    midnight = midnight.astimezone(pytz.timezone("America/Chicago"))
+    midnight = midnight.replace(hour=0, minute=0, second=0)
+    # clever hack for CST/CDT
+    tomorrow = midnight + datetime.timedelta(hours=36)
+    tomorrow = tomorrow.replace(hour=0)
+
+    top = int((50. - NORTH) * 100.)
+    bottom = int((50. - SOUTH) * 100.)
+
+    right = int((EAST - -126.) * 100.)
+    left = int((WEST - -126.) * 100.)
+
+    now = midnight
+    m15 = np.zeros((ts, YS, XS+1))
+    tidx = 0
+    # Load up the n0r data, every 15 minutes
+    while now < tomorrow:
+        utc = now.astimezone(pytz.timezone("UTC"))
+        fn = utc.strftime(("/mesonet/ARCHIVE/data/%Y/%m/%d/GIS/uscomp/"
+                           "n0r_%Y%m%d%H%M.png"))
+        if os.path.isfile(fn):
+            if tidx >= ts:
+                # Abort as we are in CST->CDT
+                break
+            img = gdal.Open(fn, 0)
+            imgdata = img.ReadAsArray()
+            data = np.flipud(imgdata[top:bottom, left:right])
+            m15[tidx, :, :] = np.where(data < 255, data ** 1.5, 0)
+
+        else:
+            print 'daily_clifile_editor missing: %s' % (fn,)
+
+        now += datetime.timedelta(minutes=15)
+        tidx += 1
+
+    for y in range(YS):
+        for x in range(XS + 1):
+            s4total = stage4[y, x]
+            # skip 1 mm precipitation
+            if s4total < 1:
+                continue
+            fifteen = m15[:, y, x]
+            # Smear the precip out over the first our
+            if np.sum(fifteen) < 10:
+                precip[0:30, y, x] = s4total / 30.
+                continue
+            weights = fifteen / np.sum(fifteen) / 7.5
+            for t in range(0, 60 * 24, 2):
+                precip[int(t/2), y, x] = weights[int(t/15)] * s4total
+
+
 def load_precip(valid):
     """ Load the 5 minute precipitation data into our ginormus grid """
     ts = 30 * 24  # 2 minute
@@ -214,19 +270,19 @@ def load_precip(valid):
     tomorrow = tomorrow.replace(hour=0)
 
     top = int((55. - NORTH) * 100.)
-    bottom = int((55. - SOUTH) * 100. )
+    bottom = int((55. - SOUTH) * 100.)
 
-    right =  int((EAST - -130.) * 100.)
+    right = int((EAST - -130.) * 100.)
     left = int((WEST - -130.) * 100.)
     # (myx, myy) = get_xy_from_lonlat(-91.44, 41.28)
-    #samplex = int((-96.37 - -130.)*100.)
-    #sampley = int((55. - 42.71)*100)
+    # samplex = int((-96.37 - -130.)*100.)
+    # sampley = int((55. - 42.71)*100)
 
     now = midnight
     while now < tomorrow:
         utc = now.astimezone(pytz.timezone("UTC"))
         fn = utc.strftime(("/mesonet/ARCHIVE/data/%Y/%m/%d/GIS/mrms/"
-                           +"a2m_%Y%m%d%H%M.png"))
+                           "a2m_%Y%m%d%H%M.png"))
         if os.path.isfile(fn):
             tidx = int((now - midnight).seconds / 120.)
             if tidx >= ts:
@@ -255,9 +311,7 @@ def load_precip(valid):
         else:
             print 'daily_clifile_editor missing: %s' % (fn,)
 
-
         now += datetime.timedelta(minutes=2)
-    return precip
 
 
 def compute_breakpoint(ar):
@@ -357,7 +411,10 @@ def workflow():
     # 5. wind direction (always zero)
     # 7. breakpoint precip mm
     load_stage4(valid)
-    load_precip(valid)
+    if valid.year >= 2014:
+        load_precip(valid)
+    else:
+        load_precip_legacy(valid)
     qc_precip()
     save_daily_precip()
 
