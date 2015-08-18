@@ -142,7 +142,7 @@ def main(argv):
     res = mc.get(mckey)
     sys.stdout.write("Content-type: image/png\n\n")
     hostname = os.environ.get("SERVER_NAME", "")
-    if not res or hostname == "idep.local":
+    if not res or hostname == "dailyerosion.local":
         # Lazy import to help speed things up
         res, do_cache = make_map(ts, ts2, scenario, v)
         sys.stderr.write("Setting cache: %s" % (mckey,))
