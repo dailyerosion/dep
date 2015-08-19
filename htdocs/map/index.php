@@ -28,7 +28,13 @@ $t->headextra = <<<EOF
  <link type="text/css" href="/vendor/jquery-ui/1.11.4/jquery-ui.min.css" rel="stylesheet" />
  <link rel='stylesheet' href='/css/default/style.css' type='text/css'>
           <style type="text/css">
-     .dp {
+.ui-datepicker-month{
+	color: #000 !important;
+}
+.ui-datepicker-year{
+	color: #000 !important;
+}
+		.dp {
      border: 0px;
 font-weight: bolder;
 font-size: 1.3em;
@@ -75,7 +81,7 @@ var appstate = {
 		ltype: 'qc_precip'
 };
         </script>
- <script src='nextgen.js?v=15'></script>
+ <script src='nextgen.js?v=16'></script>
 EOF;
 
 $t->content = <<<EOF
@@ -151,7 +157,9 @@ $t->content = <<<EOF
 		</div>
 		<div class="col-md-3" style="visibility: hidden;" id="dp2">
 			<h4>To Date:</h4>
-			<input type="text" name="date2" id="datepicker2" class="dp" />
+			<div class="input-group">
+			<input type="text" name="date2" id="datepicker2" class="form-control" style="font-weight: bolder;" />
+			</div>
 		</div>
 		<div class="col-md-2">
 		<button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal">

@@ -550,8 +550,10 @@ $(document).ready(function(){
     map.addControl(layerSwitcher);
     
     $("#datepicker").datepicker({
+    	changeMonth: true,
+    	changeYear: true,
   	  dateFormat: myDateFormat,
-  	  minDate: new Date(2007, 1, 1),
+  	  minDate: new Date(2007, 0, 1),
   	  maxDate: lastdate,
   	   onSelect: function(dateText, inst) {
   		   appstate.date = $("#datepicker").datepicker("getDate");
@@ -565,9 +567,11 @@ $(document).ready(function(){
     $("#datepicker").datepicker('setDate', appstate.date);
 
     $("#datepicker2").datepicker({
+    	changeMonth: true,
+    	changeYear: true,
     	disable: true,
     	  dateFormat: myDateFormat,
-    	  minDate: new Date(2007, 1, 1),
+    	  minDate: new Date(2007, 0, 1),
     	  maxDate: lastdate,
     	   onSelect: function(dateText, inst) {
     		   appstate.date2 = $("#datepicker2").datepicker("getDate");
