@@ -428,10 +428,11 @@ def workflow():
     sz = len(QUEUE)
     sts = datetime.datetime.now()
     success = 0
+    lsuccess = 0
     for i, res in enumerate(pool.imap_unordered(myjob, QUEUE), 1):
         if res:
             success += 1
-        if success > 0 and success % 20000 == 0:
+        if success > 0 and success % 20000 == 0 and lsuccess != success:
             delta = datetime.datetime.now() - sts
             secs = delta.microseconds / 1000000. + delta.seconds
             rate = success / secs
@@ -439,6 +440,7 @@ def workflow():
             print ('%5.2fh Processed %6s/%6s/%6s [%.2f /sec] '
                    'remaining: %5.2fh') % (secs / 3600., success, i, sz, rate,
                                            remaining)
+            lsuccess = success
     print('daily_clifile_editor edited %s files...' % (success,))
 
 
