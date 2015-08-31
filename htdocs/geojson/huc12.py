@@ -18,6 +18,12 @@ def myjenks(array):
         return [0]
     if a[0] == 0 and a[1] > 0.001:
         a[0] = 0.001
+    if a[1] < 0.01:
+        newa = [a[0]]
+        for _ in a[1:]:
+            if _ > 0.01:
+                newa.append(_)
+        a = newa
     return [float(_) for _ in a]
 
 
