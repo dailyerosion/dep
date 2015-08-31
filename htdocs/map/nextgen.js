@@ -552,16 +552,23 @@ $(document).ready(function(){
     $("#datepicker").datepicker({
     	changeMonth: true,
     	changeYear: true,
-  	  dateFormat: myDateFormat,
-  	  minDate: new Date(2007, 0, 1),
-  	  maxDate: lastdate,
-  	   onSelect: function(dateText, inst) {
-  		   appstate.date = $("#datepicker").datepicker("getDate");
-  		   remap();
-  		   if (appstate.date != lastdate){
-  			 $('#settoday').css('display', 'block');
-  		   }
-  	   }
+  	  	dateFormat: myDateFormat,
+  	  	minDate: new Date(2007, 0, 1),
+  	  	maxDate: lastdate,
+  	  	onSelect: function(dateText, inst) {
+  			appstate.date = $("#datepicker").datepicker("getDate");
+  			remap();
+  			if (appstate.date != lastdate){
+  				$('#settoday').css('display', 'block');
+  			}
+  	   	}
+    });
+    $("#datepicker").on('change', function(e){
+			appstate.date = $("#datepicker").datepicker("getDate");
+  			remap();
+  			if (appstate.date != lastdate){
+  				$('#settoday').css('display', 'block');
+  			}
     });
 
     $("#datepicker").datepicker('setDate', appstate.date);
@@ -570,16 +577,20 @@ $(document).ready(function(){
     	changeMonth: true,
     	changeYear: true,
     	disable: true,
-    	  dateFormat: myDateFormat,
-    	  minDate: new Date(2007, 0, 1),
-    	  maxDate: lastdate,
-    	   onSelect: function(dateText, inst) {
-    		   appstate.date2 = $("#datepicker2").datepicker("getDate");
-    		   remap(); 
-    	   }
-      });
+    	dateFormat: myDateFormat,
+    	minDate: new Date(2007, 0, 1),
+    	maxDate: lastdate,
+    	onSelect: function(dateText, inst) {
+    		appstate.date2 = $("#datepicker2").datepicker("getDate");
+    		remap(); 
+    	}
+    });
+    $("#datepicker2").on('change', function(e){
+		appstate.date2 = $("#datepicker2").datepicker("getDate");
+		remap(); 
+    });
 
-      $("#datepicker2").datepicker('setDate', (appstate.date2)? appstate.date2: lastdate);
+    $("#datepicker2").datepicker('setDate', (appstate.date2)? appstate.date2: lastdate);
     
     $("#radio").buttonset();
     $( '#radio input[type=radio]').change(function(){
