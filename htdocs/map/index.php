@@ -2,7 +2,7 @@
 require_once "../../config/settings.inc.php";
 require_once "../../include/myview.php";
 $dbconn = pg_connect("dbname=idep host=iemdb user=nobody");
-$rs = pg_query($dbconn, "SELECT value from properties where key = 'last_date'");
+$rs = pg_query($dbconn, "SELECT value from properties where key = 'last_date_0'");
 $row = pg_fetch_assoc($rs, 0);
 $last_date = $row['value'];
 

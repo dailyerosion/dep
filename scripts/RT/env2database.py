@@ -151,11 +151,12 @@ def do(date, process_all):
 
 def update_properties(date):
     """ Update database properties to let us know we ran this date! """
+    key = "last_date_%s" % (SCENARIO, )
     icursor.execute("""UPDATE properties SET value = %s
-    WHERE key = 'last_date'""", (date,))
+    WHERE key = %s""", (date, key))
     if icursor.rowcount == 0:
         icursor.execute("""INSERT into properties(key, value) VALUES
-        (%s, %s)""", ('last_date', date))
+        (%s, %s)""", (key, date))
 
 
 def main():

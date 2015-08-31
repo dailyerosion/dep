@@ -64,7 +64,9 @@ def make_map(ts, ts2, scenario, v):
                 caption='Daily Erosion Project')
 
     # Check that we have data for this date!
-    cursor.execute("""SELECT value from properties where key = 'last_date'""")
+    cursor.execute("""
+        SELECT value from properties where key = 'last_date_0'
+    """)
     lastts = datetime.datetime.strptime(cursor.fetchone()[0], '%Y-%m-%d')
     floor = datetime.date(2007, 1, 1)
     if ts > lastts.date() or ts2 > lastts.date() or ts < floor:
