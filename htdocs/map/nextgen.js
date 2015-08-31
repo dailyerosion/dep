@@ -2,7 +2,6 @@ var map;
 var vectorLayer;
 var iaextent;
 var scenario = 0;
-var MRMS_FLOOR = new Date("2013/08/20");
 var myDateFormat = 'M d, yy';
 var geojsonFormat = new ol.format.GeoJSON();
 var quickFeature;
@@ -54,17 +53,71 @@ var vartitle = {
 	qc_precip: 'Total Precipitation',
 	avg_delivery: 'Soil Delivery'
 };
+function formatDate(fmt, dt){
+	return $.datepicker.formatDate(fmt, dt)
+}
+
+function makeDate(year, month, day){
+	var s = month+"/"+day+"/"+year;
+	return (new Date(s));
+}
+
+// Check the server for updated run information
+function checkDates(){
+	// console.log("checkDates() called...");
+	$.ajax({
+		url: '/geojson/timedomain.py?scenario=0',
+		success: function(data){
+			if (data['last_date']){
+				// Avoid ISO -> Badness
+				var s = data['last_date'];
+				var newdate = makeDate(s.substr(0,4), s.substr(5,2),
+								s.substr(8,2))
+				if (newdate > appstate.lastdate){
+					appstate.lastdate = newdate;
+					$('#datepicker').datepicker("change",
+						{maxDate: formatDate(myDateFormat, newdate)});
+					$('#datepicker2').datepicker("change",
+							{maxDate: formatDate(myDateFormat, newdate)});
+					$('#newdate-thedate').html(formatDate(myDateFormat,
+														newdate));
+				    $( "#newdate-message" ).dialog({
+				        modal: true,
+				        buttons: [{
+				        	text: 'Show Data!',
+				        	icons: {
+				            	primary: "ui-icon-heart"
+				          	},
+				          	click: function() {
+				          		setDate(appstate.lastdate.getFullYear(),
+				          				appstate.lastdate.getMonth()+1,
+				          				appstate.lastdate.getDate());
+				                $( this ).dialog( "close" );
+				              }
+				        }, {
+				        	text: 'Ok',
+				          	click: function() {
+				                $( this ).dialog( "close" );
+				              }
+				        }]
+				      });
+				}				
+			}
+			
+		}
+	});
+}
 
 // Sets the permalink stuff
 // date/date2/ltype/lon/lat/zoom
 function setWindowHash(){
 	var hash = "";
 	if (appstate.date && appstate.date != 'Invalid Date'){
-		hash += $.datepicker.formatDate("yymmdd", appstate.date);
+		hash += formatDate("yymmdd", appstate.date);
 	}
 	hash += "/";
 	if (appstate.date2 && appstate.date2 != 'Invalid Date'){
-		hash += $.datepicker.formatDate("yymmdd", appstate.date2)
+		hash += formatDate("yymmdd", appstate.date2)
 	}
 	hash += "/"+ appstate.ltype+"/";
 	var center = map.getView().getCenter();
@@ -78,12 +131,12 @@ function readWindowHash(){
 	var tokens = window.location.hash.split("/");
 	// careful, we have the # char here to deal with
 	if (tokens.length > 0 && tokens[0] != '' && tokens[0] != '#' && tokens[0] != '#NaNNaNNaN'){
-		dstr = tokens[0].substr(5,2) +"/"+ tokens[0].substr(7,2) +"/"+ tokens[0].substr(1,4);
-		appstate.date = new Date(dstr);
+		appstate.date = makeDate(tokens[0].substr(1,4), tokens[0].substr(5,2),
+									tokens[0].substr(7,2));
 	}
 	if (tokens.length > 1 && tokens[1] != '' && tokens[1] != 'NaNNaNNaN'){
-		dstr = tokens[1].substr(4,2) +"/"+ tokens[1].substr(6,2) +"/"+ tokens[1].substr(0,4);
-		appstate.date2 = new Date(dstr);
+		appstate.date2 = makeDate(tokens[0].substr(1,4), tokens[0].substr(5,2),
+									tokens[0].substr(7,2));
 	}
 	if (tokens.length > 2 && tokens[2] != ''){
 		appstate.ltype = tokens[2];
@@ -94,18 +147,17 @@ function readWindowHash(){
 	}
 }
 
-
 // Sets the date back to today
 function setToday(){
-	appstate.date = lastdate;
-	$('#datepicker').datepicker("setDate", appstate.date);
-	remap();
+	setDate(appstate.lastdate.getFullYear(),
+		appstate.lastdate.getMonth()+1,
+		appstate.lastdate.getDate());
 	$('#settoday').css('display', 'none');
 }
 // Sets the title shown on the page for what is being viewed
 function setTitle(){
-	dt = $.datepicker.formatDate(myDateFormat, appstate.date);
-	dtextra = (appstate.date2 === null) ? '': ' to '+$.datepicker.formatDate(myDateFormat, appstate.date2);
+	dt = formatDate(myDateFormat, appstate.date);
+	dtextra = (appstate.date2 === null) ? '': ' to '+formatDate(myDateFormat, appstate.date2);
 	$('#maptitle').html(vartitle[appstate.ltype] +" ["+
 			varunits[appstate.ltype] +"] for "+ dt +" "+ dtextra);
 	$('#variable_desc').html(vardesc[appstate.ltype]);
@@ -113,10 +165,10 @@ function setTitle(){
 
 // When user clicks the "Get Shapefile" Button
 function get_shapefile(){
-	dt = $.datepicker.formatDate("yy-mm-dd", appstate.date);
+	dt = formatDate("yy-mm-dd", appstate.date);
 	var uri = '/dl/shapefile.py?dt='+dt;
 	if (appstate.date2 !== null){
-		uri = uri + '&dt2='+ $.datepicker.formatDate("yy-mm-dd", appstate.date2);
+		uri = uri + '&dt2='+ formatDate("yy-mm-dd", appstate.date2);
 	}
 	window.location.href = uri;
 }
@@ -137,8 +189,8 @@ function updateDetails(huc12){
 	$('#details_loading').css('display', 'block');
     $.get('nextgen-details.php', {
     	huc12: huc12,
-		date: $.datepicker.formatDate("yy-mm-dd", appstate.date),
-		date2: $.datepicker.formatDate("yy-mm-dd", appstate.date2)
+		date: formatDate("yy-mm-dd", appstate.date),
+		date2: formatDate("yy-mm-dd", appstate.date2)
 		},
 		function(data){
 			$('#details_details').css('display', 'block');
@@ -150,9 +202,9 @@ function updateDetails(huc12){
 
 function get_tms_url(){
 	// Generate the TMS URL given the current settings
-	var uri = '/geojson/huc12.py?date='+$.datepicker.formatDate("yy-mm-dd", appstate.date);
+	var uri = '/geojson/huc12.py?date='+formatDate("yy-mm-dd", appstate.date);
 	if (appstate.date2 !== null){
-		uri = uri + "&date2="+ $.datepicker.formatDate("yy-mm-dd", appstate.date2);
+		uri = uri + "&date2="+ formatDate("yy-mm-dd", appstate.date2);
 	} 
 	return uri;
 }
@@ -187,9 +239,10 @@ function remap(){
 	}
 	setWindowHash();
 }
-function setDate(year, month, date){
-	appstate.date = new Date(year+"/"+ month +"/"+ date);
-	$('#datepicker').datepicker("setDate", appstate.date);
+function setDate(year, month, day){
+	appstate.date = makeDate(year, month, day);
+	$('#datepicker').datepicker("setDate", formatDate(myDateFormat,
+													appstate.date));
 	// Called from top 10 listing, so disable the period
 	$('#single').prop('checked', true).button('refresh');
 	appstate.date2 = null;
@@ -381,15 +434,11 @@ function displayFeatureInfo(evt) {
 var featureDisplayFunc = displayFeatureInfo;
 
 $(document).ready(function(){
-
-	appstate.date = new Date(lastdate.getTime());
-	appstate.date2 = null;
 	try{
 		readWindowHash();
 	} catch(e){
 		//console.log(e);
 	}
-	
 		
 	var style = new ol.style.Style({
 		  fill: new ol.style.Fill({
@@ -554,24 +603,30 @@ $(document).ready(function(){
     	changeYear: true,
   	  	dateFormat: myDateFormat,
   	  	minDate: new Date(2007, 0, 1),
-  	  	maxDate: lastdate,
+  	  	maxDate: formatDate(myDateFormat, appstate.lastdate),
   	  	onSelect: function(dateText, inst) {
-  			appstate.date = $("#datepicker").datepicker("getDate");
+    		var dt = $("#datepicker").datepicker("getDate");
+  			appstate.date = makeDate(dt.getUTCFullYear(), dt.getUTCMonth()+1,
+  								dt.getUTCDate());
   			remap();
-  			if (appstate.date != lastdate){
+  			if (appstate.date != appstate.lastdate){
   				$('#settoday').css('display', 'block');
   			}
   	   	}
     });
     $("#datepicker").on('change', function(e){
-			appstate.date = $("#datepicker").datepicker("getDate");
+    		var dt = $("#datepicker").datepicker("getDate");
+			appstate.date = makeDate(dt.getUTCFullYear(), dt.getUTCMonth()+1,
+								dt.getUTCDate());
+			remap();
   			remap();
-  			if (appstate.date != lastdate){
+  			if (appstate.date < appstate.lastdate){
   				$('#settoday').css('display', 'block');
   			}
     });
-
-    $("#datepicker").datepicker('setDate', appstate.date);
+    // careful here, because of UTC dates
+    $("#datepicker").datepicker('setDate',
+    	formatDate(myDateFormat, appstate.date));
 
     $("#datepicker2").datepicker({
     	changeMonth: true,
@@ -579,18 +634,24 @@ $(document).ready(function(){
     	disable: true,
     	dateFormat: myDateFormat,
     	minDate: new Date(2007, 0, 1),
-    	maxDate: lastdate,
+    	maxDate: formatDate(myDateFormat, appstate.lastdate),
     	onSelect: function(dateText, inst) {
-    		appstate.date2 = $("#datepicker2").datepicker("getDate");
+			var dt = $("#datepicker2").datepicker("getDate");
+			appstate.date2 = makeDate(dt.getUTCFullYear(), dt.getUTCMonth()+1,
+							dt.getUTCDate());
     		remap(); 
     	}
     });
     $("#datepicker2").on('change', function(e){
-		appstate.date2 = $("#datepicker2").datepicker("getDate");
+		var dt = $("#datepicker2").datepicker("getDate");
+		appstate.date2 = makeDate(dt.getUTCFullYear(), dt.getUTCMonth()+1,
+							dt.getUTCDate());
 		remap(); 
     });
 
-    $("#datepicker2").datepicker('setDate', (appstate.date2)? appstate.date2: lastdate);
+    $("#datepicker2").datepicker('setDate', (appstate.date2) ?
+    		formatDate(myDateFormat, appstate.date2):
+    		formatDate(myDateFormat, appstate.lastdate));
     
     $("#radio").buttonset();
     $( '#radio input[type=radio]').change(function(){
@@ -608,7 +669,9 @@ $(document).ready(function(){
         	$("#dp2").css('visibility', 'hidden');    		
         	remap();
     	} else {
-    		appstate.date2 = $("#datepicker2").datepicker("getDate");
+    		var dt = $("#datepicker2").datepicker("getDate");
+    		appstate.date2 = makeDate(dt.getUTCFullYear(), dt.getUTCMonth()+1,
+    							dt.getUTCDate());
         	$("#dp2").css('visibility', 'visible');
     	}
     });
@@ -642,23 +705,25 @@ $(document).ready(function(){
     
     $('#minus1d').on('click', function(){
     	appstate.date.setDate(appstate.date.getDate() - 1);
-    	$("#datepicker").datepicker("setDate", appstate.date);
+    	$("#datepicker").datepicker("setDate",
+    		formatDate(myDateFormat, appstate.date));
     	remap();
-    	if (appstate.date < lastdate){
+    	if (appstate.date < appstate.lastdate){
     		$("#plus1d").prop("disabled", false);
     	}
-    	if (appstate.date != lastdate){
+    	if (appstate.date != appstate.lastdate){
   		    $('#settoday').css('display', 'block');
   		}
     });
 
     $('#plus1d').on('click', function(){
     	appstate.date.setDate(appstate.date.getDate() + 1);
-    	if (appstate.date > lastdate){
+    	if (appstate.date > appstate.lastdate){
     		$("#plus1d").prop("disabled", true);
     		appstate.date.setDate(appstate.date.getDate() - 1);
     	} else{
-	    	$("#datepicker").datepicker("setDate", appstate.date);
+	    	$("#datepicker").datepicker("setDate",
+	    		formatDate(myDateFormat, appstate.date));
 	    	remap();
     	}
     });
@@ -685,4 +750,8 @@ $(document).ready(function(){
     sz = map.getSize();
     map.setSize([sz[0], sz[0] / 6. * 4.]);
     drawColorbar();
+    
+    checkDates();
+    window.setInterval(checkDates, 600000);
+    
 }); // End of document.ready()

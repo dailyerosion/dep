@@ -65,27 +65,35 @@ float: left;
 }
         </style>
 EOF;
-$ddd = str_replace("-","/", $last_date);
 $TMS_SERVER = TMS_SERVER;
+$ddd = str_replace("-","/", $last_date);
 $t->jsextra = <<<EOF
  <script src='/vendor/openlayers/3.8.2/ol.js'></script>
  <script src='/vendor/openlayers/3.8.2/ol3-layerswitcher.js'></script>
         <script type="text/javascript">
 var tilecache = "{$TMS_SERVER}";
-var lastdate = new Date("{$ddd}");
 var appstate = {
-		lat: {$lat},
-		lon: {$lon},
-		date: null,
-		date2: null,
-		ltype: 'qc_precip'
+	lastdate: new Date("{$ddd}"),
+	lat: {$lat},
+	lon: {$lon},
+	date: new Date("{$ddd}"),
+	date2: null,
+	ltype: 'qc_precip'
 };
         </script>
  <script src='nextgen.js?v=16'></script>
 EOF;
 
 $t->content = <<<EOF
-<!-- Modal -->
+<!-- Modals -->
+<div id="newdate-message" title="Updated data available" style="display: none;">
+  <p>
+    <span class="ui-icon ui-icon-circle-check" style="float:left; margin:0 7px 50px 0;"></span>
+    The realtime processing has finished and new data is available for date:
+	<span id="newdate-thedate"></span>.
+  </p>
+</div>
+		
 <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">

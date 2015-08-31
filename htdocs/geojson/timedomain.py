@@ -22,7 +22,7 @@ def get_time(scenario):
     WHERE key = %s""", (key,))
     if cursor.rowcount == 1:
         row = cursor.fetchone()
-        d['first_date'] = datetime.date(2000, 1, 1).strftime(ISO)
+        d['first_date'] = datetime.date(2007, 1, 1).strftime(ISO)
         d['last_date'] = datetime.datetime.strptime(
                             row[0], '%Y-%m-%d').strftime(ISO)
 
