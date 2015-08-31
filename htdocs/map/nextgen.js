@@ -140,6 +140,7 @@ function readWindowHash(){
 	}
 	if (tokens.length > 2 && tokens[2] != ''){
 		appstate.ltype = tokens[2];
+		$( '#radio input[value='+tokens[2]+']').prop('checked', true).button('refresh')
 	}
 	if (tokens.length > 5 && tokens[3] != '' && tokens[4] != '' && tokens[5] != ''){
 		defaultCenter = ol.proj.transform([parseFloat(tokens[3]), parseFloat(tokens[4])], 'EPSG:4326', 'EPSG:3857');

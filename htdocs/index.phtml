@@ -26,9 +26,13 @@ function update(dt){
 	loading('2', 'block');
 	loading('3', 'block');
 	loading('4', 'block');
+	$('#i1_a').attr('href', '/map/#'+tmp+'//qc_precip');
 	$('#i1').attr('src', '/auto/'+tmp+'_'+tmp+'_0_qc_precip.png');
+	$('#i2_a').attr('href', '/map/#'+tmp+'//avg_runoff');
 	$('#i2').attr('src', '/auto/'+tmp+'_'+tmp+'_0_avg_runoff.png');
+	$('#i3_a').attr('href', '/map/#'+tmp+'//avg_loss');
 	$('#i3').attr('src', '/auto/'+tmp+'_'+tmp+'_0_avg_loss.png');
+	$('#i4_a').attr('href', '/map/#'+tmp+'//avg_delivery');
 	$('#i4').attr('src', '/auto/'+tmp+'_'+tmp+'_0_avg_delivery.png');			
 }
 function loading(i, css){
@@ -86,13 +90,39 @@ Please stay tuned for many new features to show up on this website.</p>
 .loading { background-image: url(images/wait24trans.gif); }
 </style>
 <div class="row">
-	<div class="col-md-6"><h3>Precipitation</h3><div id="i1_refresh" style="display:block;"><img src="/images/wait24trans.gif" />Loading...</div><img id="i1" src="/auto/{$d}_{$d}_0_qc_precip.png" class="img img-responsive" /></div>		
-	<div class="col-md-6"><h3>Runoff</h3><div id="i2_refresh" style="display:block;"><img src="/images/wait24trans.gif" />Loading...</div><img id="i2" src="/auto/{$d}_{$d}_0_avg_runoff.png" class="img img-responsive" /></div>		
+	<div class="col-md-6">
+	<h3>Precipitation</h3>
+	<div id="i1_refresh" style="display:block;">
+	<img src="/images/wait24trans.gif" />Loading...</div>
+	<a href="/map/#{$d}//qc_precip" id="i1_a">
+	<img id="i1" src="/auto/{$d}_{$d}_0_qc_precip.png" class="img img-responsive" />
+	</a>
+	</div>		
+	<div class="col-md-6"><h3>Runoff</h3>
+	<div id="i2_refresh" style="display:block;">
+	<img src="/images/wait24trans.gif" />Loading...</div>
+	<a href="/map/#{$d}//avg_runoff" id="i2_a">
+	<img id="i2" src="/auto/{$d}_{$d}_0_avg_runoff.png" class="img img-responsive" /></div>		
+	</a>
 </div>
 
 <div class="row">
-	<div class="col-md-6"><h3>Detachment</h3><div id="i3_refresh" style="display:block;"><img src="/images/wait24trans.gif" />Loading...</div><img id="i3" src="/auto/{$d}_{$d}_0_avg_loss.png" class="img img-responsive" /></div>		
-	<div class="col-md-6"><h3>Delivery</h3><div id="i4_refresh" style="display:block;"><img src="/images/wait24trans.gif" />Loading...</div><img id="i4" src="/auto/{$d}_{$d}_0_avg_delivery.png" class="img img-responsive" /></div>		
+	<div class="col-md-6">
+	<h3>Detachment</h3>
+	<div id="i3_refresh" style="display:block;">
+	<img src="/images/wait24trans.gif" />Loading...</div>
+	<a href="/map/#{$d}//avg_loss" id="i3_a">
+	<img id="i3" src="/auto/{$d}_{$d}_0_avg_loss.png" class="img img-responsive" />
+	</a>
+	</div>		
+	<div class="col-md-6">
+	<h3>Delivery</h3>
+	<div id="i4_refresh" style="display:block;">
+	<img src="/images/wait24trans.gif" />Loading...</div>
+	<a href="/map/#{$d}//avg_delivery" id="i4_a">
+	<img id="i4" src="/auto/{$d}_{$d}_0_avg_delivery.png" class="img img-responsive" />
+	</a>
+	</div>		
 </div>
 
 EOF;
