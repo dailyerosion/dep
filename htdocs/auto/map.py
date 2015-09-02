@@ -59,8 +59,9 @@ def make_map(ts, ts2, scenario, v):
     if ts != ts2:
         title = "for period between %s and %s" % (ts.strftime("%-d %b %Y"),
                                                   ts2.strftime("%-d %b %Y"))
-    m = MapPlot(axisbg='#EEEEEE', nologo=True,
-                title='IDEPv2 %s by HUC12 %s' % (V2NAME[v], title),
+    m = MapPlot(axisbg='#EEEEEE', nologo=True, sector='custom',
+                south=38.2, north=44.9, west=-97.7, east=-89.1,
+                title='DEP %s by HUC12 %s' % (V2NAME[v], title),
                 caption='Daily Erosion Project')
 
     # Check that we have data for this date!
