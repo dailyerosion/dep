@@ -207,5 +207,5 @@ $t->content = <<<EOF
 </form>
 
 EOF;
-$t->render('single.phtml');
+$t->render('single-fluid.phtml');
 ?>
