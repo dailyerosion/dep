@@ -7,7 +7,7 @@ $t = new MyView();
 $t->title = 'Project Disclaimer';
 
 $t->content = <<<EOF
-<h3>IDEP Disclaimer</h3>
+<h3>DEP Disclaimer</h3>
 
 <p>This website provides <strong>modelled</strong> estimates of sheet and rill
 	soil erosion.  The values presented are not observations.  This information

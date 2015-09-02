@@ -1,17 +1,12 @@
 <?php 
-$title = array_key_exists('title', $this->vars)? 'IDEP :: '. $this->title : 'Iowa Daily Erosion Project';
+$title = array_key_exists('title', $this->vars)? 'DEP :: '. $this->title : 'Daily Erosion Project';
 $refresh = array_key_exists('refresh', $this->vars)? $this->refresh : '';
 $headextra = array_key_exists('headextra', $this->vars)? $this->headextra : '';
-if (array_key_exists('iemss', $this->vars)){
-  $headextra .= <<<EOF
-<link rel="stylesheet" href="/assets/openlayers/3.0.0/css/ol.css" type="text/css">
-EOF;
-}
 $bodyextra = array_key_exists('bodyextra', $this->vars)? ' '. $this->bodyextra : '';
 $twimage = array_key_exists('twitter_image', $this->vars) ? 
 				$this->twitter_image : 'http://mesonet.agron.iastate.edu/images/logo_small.png';
 $twdescription = array_key_exists('twitter_description', $this->vars) ? 
-				$this->twitter_description : 'Iowa Environmental Mesonet of Iowa State University';
+				$this->twitter_description : 'Daily Erosion Project of Iowa State University';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -40,7 +35,7 @@ $twdescription = array_key_exists('twitter_description', $this->vars) ?
 	<meta name="twitter:image:src" content="<?php echo $twimage; ?>">
 	<meta name="twitter:title" content="<?php echo $title; ?>">
 	<meta name="twitter:description" content="<?php echo $twdescription; ?>">
-	<meta name="twitter:url" content="http://idep.agron.iastate.edu">
+	<meta name="twitter:url" content="http://dailyerosion.org">
 	<meta name="twitter:creator" content="@akrherz">
 	<meta name="twitter:image:width" content="85">
 	<meta name="twitter:image:height" content="65">

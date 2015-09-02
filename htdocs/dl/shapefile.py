@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Called from IDEPv2 map application
+Called from DEP map application
 """
 import cgi
 import datetime

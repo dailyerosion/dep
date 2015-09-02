@@ -129,7 +129,7 @@ $t->content = <<<EOF
 		<button id="mn" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Minnesota</button>
 	</div>
 	<div class="col-md-6">
-		<h4 class="pull-right">Select IDEP Variable to View:</h4>
+		<h4 class="pull-right">Select DEP Variable to View:</h4>
 		<div id="radio" class="pull-right">
 		<input type="radio" id="precip-in2_opt" name="whichlayer" value="qc_precip" checked="checked"><label for="precip-in2_opt">Precipitation</label>
 		<input type="radio" id="runoff2_opt" name="whichlayer" value="avg_runoff"><label for="runoff2_opt">Runoff</label>

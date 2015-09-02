@@ -463,7 +463,7 @@ $(document).ready(function(){
 		});
 
 	vectorLayer = new ol.layer.Vector({
-		title : 'IDEPv2 Data Layer',
+		title : 'DEP Data Layer',
 		  source: new ol.source.Vector({
 			  url: get_tms_url(),
 			  format: geojsonFormat
