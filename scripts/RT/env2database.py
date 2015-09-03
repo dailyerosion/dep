@@ -86,7 +86,7 @@ def do(date, process_all):
                 for line in open(fn):
                     tokens = line.strip().split()
                     if (len(tokens) < 5 or tokens[0] in ['day', '---'] or
-                            line.find('******') > -1):
+                            line.find('******') > -1 or line.find('NaN') > -1):
                         continue
                     ts = datetime.date(2006 + int(tokens[2]),
                                        int(tokens[1]), int(tokens[0]))
