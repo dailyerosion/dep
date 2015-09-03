@@ -386,6 +386,12 @@ function doHUC12Search(){
 	});
 }
 
+function changeMapHeight(delta){
+	var sz = map.getSize();
+	map.setSize([sz[0], sz[1] + (sz[1] * delta)]);
+}
+
+
 function drawColorbar(){
 	//console.log("drawColorbar called...");
     var canvas = document.getElementById('colorbar');

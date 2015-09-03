@@ -201,6 +201,8 @@ $t->content = <<<EOF
 		<button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() - 0.1);" class="btn btn-default" type="button"><i class="glyphicon glyphicon-minus"></i></button>
 		<button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() + 0.1);" class="btn btn-default" type="button"><i class="glyphicon glyphicon-plus"></i></button>
 		<button onclick="javascript: get_shapefile();" class="btn btn-default" type="button"><i class="glyphicon glyphicon-download"></i></button>
+		<button onclick="javascript: changeMapHeight(-0.1);" class="btn btn-default" type="button"><i class="glyphicon glyphicon-arrow-up"></i></button>
+		<button onclick="javascript: changeMapHeight(0.1);" class="btn btn-default" type="button"><i class="glyphicon glyphicon-arrow-down"></i></button>
 		</div>
 	</div>
 </div>
