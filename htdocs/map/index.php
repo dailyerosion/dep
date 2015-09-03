@@ -127,6 +127,8 @@ $t->content = <<<EOF
 		<button id="ia" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Iowa</button>
 		<button id="ks" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Kansas</button>
 		<button id="mn" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Minnesota</button>
+		<br clear="all" />
+		<strong>Status:</strong> <span id="status">Idle</span>
 	</div>
 	<div class="col-md-6">
 		<h4 class="pull-right">Select DEP Variable to View:</h4>

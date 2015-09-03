@@ -11,6 +11,7 @@ var clickOverlayLayer;
 var defaultCenter = ol.proj.transform([-94.5, 40.1], 'EPSG:4326', 'EPSG:3857');
 var defaultZoom = 6;
 var popup;
+var IDLE = "Idle";
 
 var levels = [];
 var colors = {
@@ -61,13 +62,21 @@ function makeDate(year, month, day){
 	var s = month+"/"+day+"/"+year;
 	return (new Date(s));
 }
+// Update the status box on the page with the given text
+function setStatus(text){
+	$('#status').html(text);
+}
 
 // Check the server for updated run information
 function checkDates(){
-	// console.log("checkDates() called...");
+	setStatus("Checking for new data.");
 	$.ajax({
 		url: '/geojson/timedomain.py?scenario=0',
+		fail: function(jqXHR, textStatus){
+			setStatus("New data check failed "+ textStatus);
+		},
 		success: function(data){
+			setStatus(IDLE);
 			if (data['last_date']){
 				// Avoid ISO -> Badness
 				var s = data['last_date'];
@@ -201,7 +210,7 @@ function updateDetails(huc12){
 
 }
 
-function get_tms_url(){
+function getGeoJSONURL(){
 	// Generate the TMS URL given the current settings
 	var uri = '/geojson/huc12.py?date='+formatDate("yy-mm-dd", appstate.date);
 	if (appstate.date2 !== null){
@@ -216,11 +225,17 @@ function rerender_vectors(){
 	setWindowHash();
 	setTitle();
 }
+
 function remap(){
 	// console.log("remap() called"+ detailedFeature);
+	if (appstate.date2 != null && appstate.date2 <= appstate.date){
+		setStatus("Please ensure that 'To Date' is later than 'Date'");
+		return;
+	}
+	setStatus("Fetching new data to display...");
 	levels = [];
 	var newsource = new ol.source.Vector({
-		url: get_tms_url(),
+		url: getGeoJSONURL(),
 		format: geojsonFormat
 	});
 	// We should replace the detailed feature with new information, so that
@@ -232,6 +247,7 @@ function remap(){
 			clickOverlayLayer.getSource().addFeature(detailedFeature);
 		}
 		drawColorbar();
+		setStatus(IDLE);
 	});
 	vectorLayer.setSource(newsource);
 	setTitle();
@@ -438,6 +454,7 @@ $(document).ready(function(){
 	try{
 		readWindowHash();
 	} catch(e){
+		setStatus("An error occurred reading the hash link...");
 		//console.log(e);
 	}
 		
@@ -465,7 +482,7 @@ $(document).ready(function(){
 	vectorLayer = new ol.layer.Vector({
 		title : 'DEP Data Layer',
 		  source: new ol.source.Vector({
-			  url: get_tms_url(),
+			  url: getGeoJSONURL(),
 			  format: geojsonFormat
 		  }),
 		  style: function(feature, resolution) {
@@ -620,7 +637,6 @@ $(document).ready(function(){
 			appstate.date = makeDate(dt.getUTCFullYear(), dt.getUTCMonth()+1,
 								dt.getUTCDate());
 			remap();
-  			remap();
   			if (appstate.date < appstate.lastdate){
   				$('#settoday').css('display', 'block');
   			}
