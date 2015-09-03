@@ -316,7 +316,6 @@ function make_iem_tms(title, layername, visible){
 function setHUC12(huc12){
 	feature = vectorLayer.getSource().getFeatureById(huc12);
 	makeDetailedFeature(feature);
-	jQuery.noConflict();
 	$('#myModal').modal('hide');
 }
 
