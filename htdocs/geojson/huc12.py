@@ -9,10 +9,11 @@ import datetime
 from jenks import jenks
 
 
-def myjenks(array):
+def myjenks(array, label):
     """Create classification breaks for the array"""
     a = list(set(jenks(array, 6)))
     # Some failures happen when number of values > 0 is less than 6
+    # sys.stderr.write(label + str(a))
     a.sort()
     if max(a) == 0:
         return [0]
@@ -22,7 +23,7 @@ def myjenks(array):
             if _ > 0.01:
                 newa.append(_)
         a = newa
-    # sys.stderr.write(str(a))
+    # sys.stderr.write(label + str(a))
     if max(a) == 0 or len(a) < 2:
         return [0]
     if a[0] == 0 and a[1] > 0.001:
@@ -86,10 +87,14 @@ def do(ts, ts2):
     res['features'].insert(0, dict(type="Feature",
                                    id='jenks',
                                    properties=dict(
-                                        avg_loss=myjenks(avg_loss),
-                                        qc_precip=myjenks(qc_precip),
-                                        avg_delivery=myjenks(avg_delivery),
-                                        avg_runoff=myjenks(avg_runoff)),
+                                        avg_loss=myjenks(avg_loss,
+                                                         'avg_loss'),
+                                        qc_precip=myjenks(qc_precip,
+                                                          'qc_precip'),
+                                        avg_delivery=myjenks(avg_delivery,
+                                                             'avg_delivery'),
+                                        avg_runoff=myjenks(avg_runoff,
+                                                           'avg_runoff')),
                                    geometry=None
                                    ))
     return json.dumps(res)
