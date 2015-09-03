@@ -28,6 +28,10 @@ $t->headextra = <<<EOF
  <link type="text/css" href="/vendor/jquery-ui/1.11.4/jquery-ui.min.css" rel="stylesheet" />
  <link rel='stylesheet' href='/css/default/style.css' type='text/css'>
           <style type="text/css">
+.modal .modal-body {
+    max-height: 420px;
+    overflow-y: auto;
+}
 .ui-datepicker-month{
 	color: #000 !important;
 }
@@ -49,7 +53,7 @@ float: left;
 	left: 1em;
 	top: 8em;
 	background: rgba(0,0,0,0.8);
-	z-index: 3000;	
+	z-index: 1000;	
 }
 #maptitle {
 	position: absolute;
@@ -61,7 +65,7 @@ float: left;
 	font-size: 1.2em;
 	padding-left: 20px;
 	padding-right: 20px;
-	z-index: 3000;
+	z-index: 1000;
 }
         </style>
 EOF;
@@ -93,6 +97,25 @@ $t->content = <<<EOF
 	<span id="newdate-thedate"></span>.
   </p>
 </div>
+
+<div class="modal fade" id="eventsModal" tabindex="-1" role="dialog" aria-labelledby="eventsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="eventsModalLabel">Listing of Daily Events</h4>
+      </div>
+      <div class="modal-body" onkeypress="return event.keyCode != 13;">
+		<div id="eventsres"></div>
+		
+	  </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+		
 		
 <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">

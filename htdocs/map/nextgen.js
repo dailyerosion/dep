@@ -260,6 +260,28 @@ function remap(){
 	}
 	setWindowHash();
 }
+function setYearInterval(syear){
+	$('#eventsModal').modal('hide');
+	
+	appstate.date = makeDate(syear, 1, 1);
+	appstate.date2 = makeDate(syear, 12, 31);
+	$('#datepicker').datepicker("setDate", formatDate(myDateFormat,
+	appstate.date));
+	$('#datepicker2').datepicker("setDate", formatDate(myDateFormat,
+	appstate.date2));
+	$('#multi').prop('checked', true).button('refresh');
+	remap();
+	$("#dp2").css('visibility', 'visible');
+}
+
+function setDateFromString(s){
+	$('#eventsModal').modal('hide');
+	var dt = (new Date(s));
+	setDate(formatDate('yy', dt),
+		formatDate('mm', dt),
+		formatDate('dd', dt));
+}
+
 function setDate(year, month, day){
 	appstate.date = makeDate(year, month, day);
 	$('#datepicker').datepicker("setDate", formatDate(myDateFormat,
@@ -302,6 +324,34 @@ function makeDetailedFeature(feature){
 		detailedFeature = feature;
 	}
 	updateDetails(feature.getId());
+}
+
+// View daily or yearly output for a HUC12
+function viewEvents(huc12, mode){
+	function pprint(val, mode){
+		if (val == null) return "0";
+		return val.toFixed(2);
+	}
+	var lbl = ((mode == 'daily') ? 'Daily events': 'Yearly summary');
+	$('#eventsModalLabel').html(lbl + " for " + huc12);
+	$('#eventsres').html('<p><img src="/images/wait24trans.gif" /> Loading...</p>');
+	$.ajax({
+		method: 'GET',
+		url: '/geojson/huc12_events.py',
+		data: {huc12: huc12, mode: mode}
+	}).done(function(res){
+		var myfunc = ((mode == 'yearly')? 'setYearInterval(': 'setDateFromString(');
+		var tbl = "<table class='table table-striped'><thead><tr><th>Date</th><th>Precipitation [inch]</th><th>Runoff [inch]</th><th>Detachment [t/a]</th><th>Delivery [t/a]</th></tr></thead>";
+		$.each(res.results, function(idx, result){
+			var dt = ((mode == 'daily')? result.date: result.date.substring(6,10));
+			tbl += "<tr><td><a href=\"javascript: "+ myfunc +"'"+ dt +"');\">"+ dt +"</a></td><td>"+ pprint(result.qc_precip) +"</td><td>"+ pprint(result.avg_runoff) +"</td><td>"+ pprint(result.avg_loss) +"</td><td>"+ pprint(result.avg_delivery) +"</td></tr>";
+		});
+		tbl += "</table>";
+		$('#eventsres').html(tbl);
+	}).fail(function(res){
+		$('#eventsres').html("<p>Something failed, sorry</p>");
+	});
+	
 }
 
 function doHUC12Search(){

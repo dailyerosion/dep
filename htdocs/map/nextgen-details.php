@@ -33,7 +33,10 @@ if ($date2 != null){
 echo <<<EOF
 <h4>Detailed Data for {$hu12name}</h4>
 <form name="changer" method="GET">
-<strong>HUC 12:</strong> <input type="text" value="$huc_12" name="huc_12" size="12"/>
+<strong>HUC 12:</strong>
+<input type="text" value="$huc_12" name="huc_12" size="12"/>
+<button onclick="javascript: viewEvents('{$huc_12}', 'daily');" class="btn btn-sm" type="button" data-toggle="modal" data-target="#eventsModal"><i class="glyphicon glyphicon-th-list"></i> Daily</button>
+<button onclick="javascript: viewEvents('{$huc_12}', 'yearly');" class="btn btn-sm" type="button" data-toggle="modal" data-target="#eventsModal"><i class="glyphicon glyphicon-th-list"></i> Yearly</button>
 </form>
 EOF;
 /* Find the HRAP cell */
