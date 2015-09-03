@@ -104,8 +104,11 @@ def load_solar(valid):
     yaxis = np.arange(SOUTH, NORTH, 0.01)
     xi, yi = np.meshgrid(xaxis, yaxis)
 
-    nc = netCDF4.Dataset("/mesonet/data/iemre/%s_mw_daily.nc" % (valid.year,),
-                         'r')
+    fn = "/mesonet/data/iemre/%s_mw_daily.nc" % (valid.year,)
+    if not os.path.isfile(fn):
+        print("Missing %s for load_solar, aborting" % (fn,))
+        sys.exit()
+    nc = netCDF4.Dataset(fn, 'r')
     offset = iemre.daily_offset(valid)
     # Storage is W m-2, we want langleys per day
     data = nc.variables['rsds'][offset, :, :] * 86400. / 1000000. * 23.9
@@ -151,15 +154,16 @@ def load_stage4(valid):
         grb = grbs[1]
         if totals is None:
             lats, lons = grb.latlons()
-            totals = grb['values'] + 0.001  # Always non-zero this way
-        else:
-            totals += grb['values']
-
+            totals = np.zeros(np.shape(lats))
+        # Don't take any values over 10 inches, this is bad data
+        totals += np.where(grb['values'] < 250, grb['values'], 0)
         now += datetime.timedelta(hours=1)
 
     if totals is None:
         print('No StageIV data found, aborting...')
         sys.exit()
+    # set a small non-zero number to keep things non-zero
+    totals = np.where(totals > 0.001, totals, 0.001)
 
     xaxis = np.arange(WEST, EAST, 0.01)
     yaxis = np.arange(SOUTH, NORTH, 0.01)
@@ -167,6 +171,14 @@ def load_stage4(valid):
     nn = NearestNDInterpolator((lons.flatten(), lats.flatten()),
                                totals.flatten())
     stage4[:] = nn(xi, yi)
+    # print np.max(stage4)
+    # import matplotlib.pyplot as plt
+    # (fig, ax) = plt.subplots(2, 1)
+    # im = ax[0].imshow(stage4)
+    # fig.colorbar(im)
+    # im = ax[1].imshow(totals)
+    # fig.colorbar(im)
+    # fig.savefig('test.png')
 
 
 def qc_precip():
@@ -235,7 +247,6 @@ def load_precip_legacy(valid):
             imgdata = img.ReadAsArray()
             data = np.flipud(imgdata[top:bottom, left:right])
             m15[tidx, :, :] = np.where(data < 255, data ** 1.5, 0)
-
         else:
             print 'daily_clifile_editor missing: %s' % (fn,)
 
