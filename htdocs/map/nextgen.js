@@ -139,7 +139,8 @@ function setWindowHash(){
 function readWindowHash(){
 	var tokens = window.location.hash.split("/");
 	// careful, we have the # char here to deal with
-	if (tokens.length > 0 && tokens[0] != '' && tokens[0] != '#' && tokens[0] != '#NaNNaNNaN'){
+	if (tokens.length > 0 && tokens[0] != '' &&
+		tokens[0] != '#' && tokens[0] != '#NaNNaNNaN'){
 		appstate.date = makeDate(tokens[0].substr(1,4), tokens[0].substr(5,2),
 									tokens[0].substr(7,2));
 	}
@@ -149,9 +150,10 @@ function readWindowHash(){
 	}
 	if (tokens.length > 2 && tokens[2] != ''){
 		appstate.ltype = tokens[2];
-		$( '#radio input[value='+tokens[2]+']').prop('checked', true).button('refresh')
+		$( '#radio input[value='+tokens[2]+']').prop('checked', true);
 	}
-	if (tokens.length > 5 && tokens[3] != '' && tokens[4] != '' && tokens[5] != ''){
+	if (tokens.length > 5 && tokens[3] != '' && tokens[4] != '' &&
+		tokens[5] != ''){
 		defaultCenter = ol.proj.transform([parseFloat(tokens[3]), parseFloat(tokens[4])], 'EPSG:4326', 'EPSG:3857');
 		defaultZoom = parseFloat(tokens[5]);
 	}
