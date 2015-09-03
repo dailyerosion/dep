@@ -22,9 +22,11 @@ def myjenks(array):
             if _ > 0.01:
                 newa.append(_)
         a = newa
+    # sys.stderr.write(str(a))
+    if max(a) == 0 or len(a) < 2:
+        return [0]
     if a[0] == 0 and a[1] > 0.001:
         a[0] = 0.001
-    # sys.stderr.write(str(a))
     return [float(_) for _ in a]
 
 
