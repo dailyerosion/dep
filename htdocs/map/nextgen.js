@@ -354,7 +354,7 @@ function viewEvents(huc12, mode){
 		data: {huc12: huc12, mode: mode}
 	}).done(function(res){
 		var myfunc = ((mode == 'yearly')? 'setYearInterval(': 'setDateFromString(');
-		var tbl = "<table class='table table-striped'><thead><tr><th>Date</th><th>Precipitation [inch]</th><th>Runoff [inch]</th><th>Detachment [t/a]</th><th>Delivery [t/a]</th></tr></thead>";
+		var tbl = "<table class='table table-striped header-fixed'><thead><tr><th>Date</th><th>Precip [inch]</th><th>Runoff [inch]</th><th>Detach [t/a]</th><th>Delivery [t/a]</th></tr></thead>";
 		$.each(res.results, function(idx, result){
 			var dt = ((mode == 'daily')? result.date: result.date.substring(6,10));
 			tbl += "<tr><td><a href=\"javascript: "+ myfunc +"'"+ dt +"');\">"+ dt +"</a></td><td>"+ pprint(result.qc_precip) +"</td><td>"+ pprint(result.avg_runoff) +"</td><td>"+ pprint(result.avg_loss) +"</td><td>"+ pprint(result.avg_delivery) +"</td></tr>";
