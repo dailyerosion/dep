@@ -15,7 +15,6 @@ import netCDF4
 import osgeo.gdal as gdal
 import psycopg2
 from pyiem import iemre
-from pyiem.network import Table as NetworkTable
 from scipy.interpolate import NearestNDInterpolator
 from pyiem.datatypes import temperature, speed
 from multiprocessing import Pool
@@ -53,17 +52,18 @@ def load_asos(valid):
     yaxis = np.arange(SOUTH, NORTH, 0.01)
     xi, yi = np.meshgrid(xaxis, yaxis)
 
-    nt = NetworkTable(["IA_ASOS", "AWOS", 'MN_ASOS', 'KS_ASOS'])
-    pgconn = psycopg2.connect(database='asos', host='iemdb', user='nobody')
+    pgconn = psycopg2.connect(database='iem', host='iemdb', user='nobody')
     cursor = pgconn.cursor()
 
-    cursor.execute("""select station,
-        avg(sknt), avg(dwpf), max(tmpf), min(tmpf) from alldata
-        where valid BETWEEN '%s 00:00' and '%s 00:00'
-        and station in %s GROUP by station
-        """ % (valid.strftime("%Y-%m-%d"),
-               (valid + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
-               str(tuple(nt.sts.keys()))))
+    cursor.execute("""
+        select t.id, ST_x(t.geom), ST_y(t.geom),
+        max_tmpf, min_tmpf, max_dwpf, min_dwpf, avg_sknt
+        from summary s JOIN stations t on (s.iemid = t.iemid)
+        where day = '%s' and
+        t.network in ('IA_ASOS', 'AWOS', 'MN_ASOS', 'KS_ASOS')
+        and avg_sknt >= 0 and max_tmpf > -99 and min_tmpf < 99 and
+        max_dwpf > -99 and min_dwpf < 99
+        """ % (valid.strftime("%Y-%m-%d"),))
     lons = []
     lats = []
     hic = []
@@ -71,15 +71,12 @@ def load_asos(valid):
     dwpc = []
     smps = []
     for row in cursor:
-        if (row[1] is None or row[2] is None or
-                row[3] is None or row[4] is None):
-            continue
-        lons.append(nt.sts[row[0]]['lon'])
-        lats.append(nt.sts[row[0]]['lat'])
+        lons.append(row[1])
+        lats.append(row[2])
         hic.append(temperature(row[3], 'F').value('C'))
         loc.append(temperature(row[4], 'F').value('C'))
-        dwpc.append(temperature(row[2], 'F').value('C'))
-        smps.append(speed(row[1], 'KT').value('MPS'))
+        dwpc.append(temperature((row[5] + row[6])/2., 'F').value('C'))
+        smps.append(speed(row[7], 'KT').value('MPS'))
 
     nn = NearestNDInterpolator((np.array(lons), np.array(lats)),
                                np.array(hic))
