@@ -6,6 +6,7 @@ var myDateFormat = 'M d, yy';
 var geojsonFormat = new ol.format.GeoJSON();
 var quickFeature;
 var detailedFeature;
+var detailedFeatureIn;
 var hoverOverlayLayer;
 var clickOverlayLayer;
 var defaultCenter = ol.proj.transform([-94.5, 40.1], 'EPSG:4326', 'EPSG:3857');
@@ -131,7 +132,10 @@ function setWindowHash(){
 	hash += "/"+ appstate.ltype+"/";
 	var center = map.getView().getCenter();
 	center = ol.proj.transform(center, 'EPSG:3857', 'EPSG:4326'),
-	hash += center[0].toFixed(2)+"/"+ center[1].toFixed(2) +"/"+ map.getView().getZoom();
+	hash += center[0].toFixed(2)+"/"+ center[1].toFixed(2) +"/"+ map.getView().getZoom()+"/";
+	if (detailedFeature){
+		hash += detailedFeature.getId();
+	}
 	window.location.hash = hash;
 }
 
@@ -157,6 +161,10 @@ function readWindowHash(){
 		defaultCenter = ol.proj.transform([parseFloat(tokens[3]), parseFloat(tokens[4])], 'EPSG:4326', 'EPSG:3857');
 		defaultZoom = parseFloat(tokens[5]);
 	}
+	if (tokens.length > 6 && tokens[6].length == 12){
+		detailedFeatureIn = tokens[6];
+	}
+	
 }
 
 // Sets the date back to today
@@ -313,6 +321,10 @@ function setHUC12(huc12){
 }
 
 function makeDetailedFeature(feature){
+	if (feature == null){
+		return;
+	}
+
 	if (feature != detailedFeature){
 		if (detailedFeature){
 			detailedFeature.set('clicked', false);
@@ -324,6 +336,7 @@ function makeDetailedFeature(feature){
 		detailedFeature = feature;
 	}
 	updateDetails(feature.getId());
+	setWindowHash();
 }
 
 // View daily or yearly output for a HUC12
@@ -533,12 +546,20 @@ $(document).ready(function(){
 		  })
 		});
 
+	var vs = new ol.source.Vector({
+		  url: getGeoJSONURL(),
+		  format: geojsonFormat
+	});
+	vs.on('change', function(){
+		if (detailedFeatureIn){
+			makeDetailedFeature(this.getFeatureById(detailedFeatureIn));
+			detailedFeatureIn = null;
+		}
+		
+	});
 	vectorLayer = new ol.layer.Vector({
 		title : 'DEP Data Layer',
-		  source: new ol.source.Vector({
-			  url: getGeoJSONURL(),
-			  format: geojsonFormat
-		  }),
+		  source: vs,
 		  style: function(feature, resolution) {
 			if (levels.length == 0){
 				levels = vectorLayer.getSource().getFeatureById('jenks').get(appstate.ltype);
