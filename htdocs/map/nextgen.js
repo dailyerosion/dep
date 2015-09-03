@@ -9,7 +9,7 @@ var detailedFeature;
 var detailedFeatureIn;
 var hoverOverlayLayer;
 var clickOverlayLayer;
-var defaultCenter = ol.proj.transform([-94.5, 40.1], 'EPSG:4326', 'EPSG:3857');
+var defaultCenter = ol.proj.transform([-94.5, 42.1], 'EPSG:4326', 'EPSG:3857');
 var defaultZoom = 6;
 var popup;
 var IDLE = "Idle";
