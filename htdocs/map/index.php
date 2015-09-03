@@ -198,7 +198,7 @@ $t->content = <<<EOF
 		</table>
 		</div>
 		<div id="clickDetails" class="well">
-		<div id="details_loading" class="hidden"><img src="/images/wait24trans.gif" /> Loading...</div>
+		<div id="details_loading" style="display: none;"><img src="/images/wait24trans.gif" /> Loading...</div>
 		<div id="details_details"></div>
 		<div id="details_hidden">Click on a watershed to load detailed data</div>
 		</div>

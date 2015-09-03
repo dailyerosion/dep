@@ -197,6 +197,7 @@ function updateDetails(huc12){
 	$('#details_hidden').css('display', 'none');
 	$('#details_details').css('display', 'none');
 	$('#details_loading').css('display', 'block');
+	setStatus("Loading detailed information for HUC12: "+ huc12);
     $.get('nextgen-details.php', {
     	huc12: huc12,
 		date: formatDate("yy-mm-dd", appstate.date),
@@ -206,6 +207,7 @@ function updateDetails(huc12){
 			$('#details_details').css('display', 'block');
 			$('#details_loading').css('display', 'none');
 			$('#details_details').html(data);
+			setStatus(IDLE);
 	});
 
 }
