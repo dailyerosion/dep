@@ -149,8 +149,8 @@ function readWindowHash(){
 									tokens[0].substr(7,2));
 	}
 	if (tokens.length > 1 && tokens[1] != '' && tokens[1] != 'NaNNaNNaN'){
-		appstate.date2 = makeDate(tokens[0].substr(1,4), tokens[0].substr(5,2),
-									tokens[0].substr(7,2));
+		appstate.date2 = makeDate(tokens[1].substr(0,4), tokens[1].substr(4,2),
+									tokens[1].substr(6,2));
 	}
 	if (tokens.length > 2 && tokens[2] != ''){
 		appstate.ltype = tokens[2];
