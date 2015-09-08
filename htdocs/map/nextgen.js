@@ -344,7 +344,11 @@ function viewEvents(huc12, mode){
 		if (val == null) return "0";
 		return val.toFixed(2);
 	}
-	var lbl = ((mode == 'daily') ? 'Daily events': 'Yearly summary');
+	function pprint2(val, mode){
+		if (mode == 'daily') return "";
+		return " ("+val+")";
+	}
+	var lbl = ((mode == 'daily') ? 'Daily events': 'Yearly summary (# daily events)');
 	$('#eventsModalLabel').html(lbl + " for " + huc12);
 	$('#eventsres').html('<p><img src="/images/wait24trans.gif" /> Loading...</p>');
 	$.ajax({
@@ -356,7 +360,7 @@ function viewEvents(huc12, mode){
 		var tbl = "<table class='table table-striped header-fixed'><thead><tr><th>Date</th><th>Precip [inch]</th><th>Runoff [inch]</th><th>Detach [t/a]</th><th>Delivery [t/a]</th></tr></thead>";
 		$.each(res.results, function(idx, result){
 			var dt = ((mode == 'daily')? result.date: result.date.substring(6,10));
-			tbl += "<tr><td><a href=\"javascript: "+ myfunc +"'"+ dt +"');\">"+ dt +"</a></td><td>"+ pprint(result.qc_precip) +"</td><td>"+ pprint(result.avg_runoff) +"</td><td>"+ pprint(result.avg_loss) +"</td><td>"+ pprint(result.avg_delivery) +"</td></tr>";
+			tbl += "<tr><td><a href=\"javascript: "+ myfunc +"'"+ dt +"');\">"+ dt +"</a></td><td>"+ pprint(result.qc_precip) + pprint2(result.qc_precip_events, mode) +"</td><td>"+ pprint(result.avg_runoff) + pprint2(result.avg_runoff_events, mode) +"</td><td>"+ pprint(result.avg_loss) + pprint2(result.avg_loss_events, mode)+"</td><td>"+ pprint(result.avg_delivery) + pprint2(result.avg_delivery_events, mode) +"</td></tr>";
 		});
 		tbl += "</table>";
 		$('#eventsres').html(tbl);
