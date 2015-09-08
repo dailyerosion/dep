@@ -363,6 +363,11 @@ function viewEvents(huc12, mode){
 			tbl += "<tr><td><a href=\"javascript: "+ myfunc +"'"+ dt +"');\">"+ dt +"</a></td><td>"+ pprint(result.qc_precip) + pprint2(result.qc_precip_events, mode) +"</td><td>"+ pprint(result.avg_runoff) + pprint2(result.avg_runoff_events, mode) +"</td><td>"+ pprint(result.avg_loss) + pprint2(result.avg_loss_events, mode)+"</td><td>"+ pprint(result.avg_delivery) + pprint2(result.avg_delivery_events, mode) +"</td></tr>";
 		});
 		tbl += "</table>";
+		if (mode == 'yearly'){
+			tbl += "<h4>Monthly Average Detachment</h4>";
+			tbl += "<p><img src=\"/auto/huc12_bymonth.py?huc12="+huc12+"\" class=\"img img-responsive\" /></p>";
+		}
+		
 		$('#eventsres').html(tbl);
 	}).fail(function(res){
 		$('#eventsres').html("<p>Something failed, sorry</p>");
