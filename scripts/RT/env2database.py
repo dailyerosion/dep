@@ -1,3 +1,18 @@
+"""My purpose in life is to harvest the WEPP env (erosion output) files
+
+The arguments to call me require the SCENARIO to be provided, but you can
+also do any of the following:
+
+    # default to yesterday
+    python env2database.py 0
+    # reprocess all of 2015
+    python env2database.py 0 2015
+    # reprocess all of Feb 2015
+    python env2database.py 0 2015 02
+    # reprocess 21 Feb 2015
+    python env2database.py 0 2015 02 21
+
+"""
 import pandas as pd
 import os
 import datetime
@@ -148,13 +163,15 @@ def save_results(df, dates):
             WHERE valid = %s and scenario = %s
             """, (date, SCENARIO))
         if icursor.rowcount > 0:
-            print("DELETED %s rows for date %s" % (icursor.rowcount,
-                                                   date))
+            print("DELETED %4i rows for date %s" % (icursor.rowcount,
+                                                    date))
         inserts = 0
         skipped = 0
         for _, row in df[df.date == date].iterrows():
-            if (row.qc_precip < 1 or row.avg_loss < 0.01 or
-                    row.avg_delivery < 0.01 or row.avg_runoff < 1):
+            # We don't care about the output when the follow conditions
+            # are not meet
+            if (row.qc_precip < 0.254 and row.avg_loss < 0.01 and
+                    row.avg_delivery < 0.01 and row.avg_runoff < 1):
                 skipped += 1
                 continue
             inserts += 1
@@ -166,18 +183,18 @@ def save_results(df, dates):
             min_delivery, avg_delivery, max_delivery,
             qc_precip) VALUES
             (%s, %s, %s,
-            %s, %s, %s,
-            %s, %s, %s,
-            %s, %s, %s,
-            %s, %s, %s,
+            coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
+            coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
+            coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
+            coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
             %s)""", (row.huc12, date, SCENARIO,
                      row.min_precip, row.avg_precip, row.max_precip,
                      row.min_loss, row.avg_loss, row.max_loss,
                      row.min_runoff, row.avg_runoff, row.max_runoff,
                      row.min_delivery, row.avg_delivery, row.max_delivery,
                      row.qc_precip))
-        print("ENTERED %s rows for date %s, skipped %s" % (inserts, date,
-                                                           skipped))
+        print("ENTERED %4i rows for date %s, skipped %4i" % (inserts, date,
+                                                             skipped))
     icursor.close()
     pgconn.commit()
 
@@ -203,12 +220,14 @@ if __name__ == '__main__':
     SCENARIO = sys.argv[1]
     lengths = load_lengths()
     dates = determine_dates(sys.argv)
-    pool = multiprocessing.Pool()
-    huc12s = find_huc12s()[:201]
+    huc12s = find_huc12s()
     precip = load_precip(dates, huc12s)
+
+    # Begin the processing work now!
     result = []
     sz = len(huc12s)
     tm = datetime.datetime.now()
+    pool = multiprocessing.Pool()
     for i, (df, huc12, slopes) in enumerate(
                                     pool.imap_unordered(do_huc12, huc12s), 1):
         if df is None:
@@ -227,6 +246,7 @@ if __name__ == '__main__':
             print(("  %s %4i/%4i %.2f huc12/s"
                    ) % (tm.strftime("%H:%M:%S%p"), i, sz, 100. / secs))
     df = pd.DataFrame(result)
+    df.fillna(0)
     save_results(df, dates)
     update_metadata(dates)
 
