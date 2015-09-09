@@ -35,7 +35,7 @@ def find_huc12s():
 def readfile(fn):
     df = pd.read_table(fn,
                        skiprows=3, index_col=False, delim_whitespace=True,
-                       header=None,
+                       header=None, na_values=['*******', '******'],
                        names=['day', 'month', 'year', 'precip', 'runoff',
                               'ir_det', 'av_det', 'mx_det', 'point',
                               'av_dep', 'max_dep', 'point2', 'sed_del',
