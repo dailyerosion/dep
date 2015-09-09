@@ -246,7 +246,8 @@ if __name__ == '__main__':
             print(("  %s %4i/%4i %.2f huc12/s"
                    ) % (tm.strftime("%H:%M:%S%p"), i, sz, 100. / secs))
     df = pd.DataFrame(result)
-    df.fillna(0)
+    # Replace any NaN values with zeros
+    df.fillna(0, inplace=True)
     save_results(df, dates)
     update_metadata(dates)
 
