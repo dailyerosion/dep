@@ -24,12 +24,19 @@ def load_precip(date):
 def do(valid):
     """Do Something"""
     precip = load_precip(valid)
+    clevs = np.arange(0, 0.25, 0.05)
+    clevs = np.append(clevs, np.arange(0.25, 3., 0.25))
+    clevs = np.append(clevs, np.arange(3., 10.0, 1))
+    clevs[0] = 0.01
 
-    m = MapPlot(sector='midwest', axisbg='white')
+    m = MapPlot(sector='iowa', axisbg='white',
+                title='24 Jun 2015 DEP Quality Controlled Precip Totals')
     (lats, lons) = np.meshgrid(YS, XS)
     print np.shape(precip), np.shape(lons), np.shape(lats)
-    m.pcolormesh(lons, lats, np.transpose(precip), np.arange(20))
-    m.postprocess(view=True)
+    m.pcolormesh(lons, lats, np.transpose(precip) / 25.4, clevs,
+                 units='inch')
+    m.drawcounties()
+    m.postprocess(filename='qc.png')
 
 
 def main(argv):
