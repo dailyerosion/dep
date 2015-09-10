@@ -19,7 +19,7 @@ for d in glob.glob("*"):
         newdata = False
         for i, line in enumerate(data):
             if i == 4:
-                line = line.replace("1997", "2007").replace(" 17 ", " 7 ")
+                line = line.replace("1997", "2007").replace(" 17 ", " 9 ")
             if not newdata and line.find("1\t1\t2007") == 0:
                 newdata = True
             if i < 15 or newdata:
