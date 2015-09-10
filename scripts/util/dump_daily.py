@@ -28,7 +28,7 @@ print 'HUC12,DATE,DETACH,RUNOFF,LOSS,PRECIP'
 for huc12 in huc12s:
     cursor.execute("""SELECT valid, coalesce(avg_loss,0),
     coalesce(avg_runoff,0), coalesce(avg_delivery,0),
-    coalesce(qc_precip, avg_precip) from results_by_huc12 where valid < '2015-05-15'
+    coalesce(qc_precip, avg_precip) from results_by_huc12 where valid < '2015-05-27' and scenario = 0
     and huc_12 = %s ORDER by valid ASC""", (huc12, ))
     for row in cursor:
         print "%s,%s,%s,%s,%s,%s" % (huc12, row[0], row[1], row[2], row[3],
