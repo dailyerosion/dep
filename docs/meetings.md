@@ -1,3 +1,15 @@
+ 3 Sep 2015 - Stats meeting with Opsmer
+  Cruse, Gelder, James, Tim
+  - Emphasize that our estimates are daily at the HUC12 level, so that is
+    what we need to evaluate
+  - Look at the confidence interval when increasing the sample size, he
+    suggested a simple variance devided by n^2
+  - When adding sequential samples, it is best to random pick
+  - We should present website users with some range of values instead of just
+    a single value to give some confidence into our estimates
+  - TODO: Should produce a map of samples per HUC12
+  - TODO: Produce a map of where the yearly zeros are happening
+
 18 Aug 2015 - DEP Update
   Cruse, Gelder, Claudette, James, Tim, Karl
   - BUG clicking on the homepage map did not work for Tim (#21)
