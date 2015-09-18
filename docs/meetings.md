@@ -1,3 +1,20 @@
+17 Sep 2015 - Phosphorus Call
+  Cruse, Gelder, Tim, Dennis, Jim, Mario
+  - Having one flowpath per subcatchment is insufficient for WEPP watershed,
+    will need to have many more and each subcatchment is likely one watershed
+  - Discussion on if terraces are important for this project work.  Yes.
+  - Jim noted that the input data structures (files) are complex to wepp
+    watershed, daryl needs to email for the code.
+  - Mario's work was only on P bound to sediment and not soluable
+  - But there is a way to estimate this value if you make some assumptions
+    about concentrations
+  - Could use average soil test per county to provide these estimates for each
+    soil used
+  - Mario's code is on the postprocessing end of the WEPP watershed output
+  - Q asked to Jim+Dennis: Does WEPP include all events of either runoff or
+    erosion, A: Yes
+  - Q: Does WEPP have a way to predict where gulleys start, A: No
+
  3 Sep 2015 - Stats meeting with Opsmer
   Cruse, Gelder, James, Tim
   - Emphasize that our estimates are daily at the HUC12 level, so that is
