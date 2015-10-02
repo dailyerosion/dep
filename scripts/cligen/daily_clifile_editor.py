@@ -13,10 +13,9 @@ import sys
 import os
 import netCDF4
 import osgeo.gdal as gdal
-import psycopg2
 from pyiem import iemre
 from scipy.interpolate import NearestNDInterpolator
-from pyiem.datatypes import temperature, speed
+from pyiem.datatypes import temperature
 from multiprocessing import Pool
 import unittest
 
@@ -46,56 +45,7 @@ def get_xy_from_lonlat(lon, lat):
     return [x, y]
 
 
-def load_asos(valid):
-    """ Load temps and family """
-    xaxis = np.arange(WEST, EAST, 0.01)
-    yaxis = np.arange(SOUTH, NORTH, 0.01)
-    xi, yi = np.meshgrid(xaxis, yaxis)
-
-    pgconn = psycopg2.connect(database='iem', host='iemdb', user='nobody')
-    cursor = pgconn.cursor()
-
-    cursor.execute("""
-        select t.id, ST_x(t.geom), ST_y(t.geom),
-        max_tmpf, min_tmpf, max_dwpf, min_dwpf, avg_sknt
-        from summary s JOIN stations t on (s.iemid = t.iemid)
-        where day = '%s' and
-        t.network in ('IA_ASOS', 'AWOS', 'MN_ASOS', 'KS_ASOS')
-        and avg_sknt >= 0 and max_tmpf > -99 and min_tmpf < 99 and
-        max_dwpf > -99 and min_dwpf < 99
-        """ % (valid.strftime("%Y-%m-%d"),))
-    lons = []
-    lats = []
-    hic = []
-    loc = []
-    dwpc = []
-    smps = []
-    for row in cursor:
-        lons.append(row[1])
-        lats.append(row[2])
-        hic.append(temperature(row[3], 'F').value('C'))
-        loc.append(temperature(row[4], 'F').value('C'))
-        dwpc.append(temperature((row[5] + row[6])/2., 'F').value('C'))
-        smps.append(speed(row[7], 'KT').value('MPS'))
-
-    nn = NearestNDInterpolator((np.array(lons), np.array(lats)),
-                               np.array(hic))
-    high_temp[:] = nn(xi, yi)
-
-    nn = NearestNDInterpolator((np.array(lons), np.array(lats)),
-                               np.array(loc))
-    low_temp[:] = nn(xi, yi)
-
-    nn = NearestNDInterpolator((np.array(lons), np.array(lats)),
-                               np.array(dwpc))
-    dewpoint[:] = nn(xi, yi)
-
-    nn = NearestNDInterpolator((np.array(lons), np.array(lats)),
-                               np.array(smps))
-    wind[:] = nn(xi, yi)
-
-
-def load_solar(valid):
+def load_iemre(valid):
     """Use IEM Reanalysis RSDS gridded solar radiation"""
     xaxis = np.arange(WEST, EAST, 0.01)
     yaxis = np.arange(SOUTH, NORTH, 0.01)
@@ -107,17 +57,38 @@ def load_solar(valid):
         sys.exit()
     nc = netCDF4.Dataset(fn, 'r')
     offset = iemre.daily_offset(valid)
-    # Storage is W m-2, we want langleys per day
-    data = nc.variables['rsds'][offset, :, :] * 86400. / 1000000. * 23.9
     lats = nc.variables['lat'][:]
     lons = nc.variables['lon'][:]
-    nc.close()
     lons, lats = np.meshgrid(lons, lats)
 
+    # Storage is W m-2, we want langleys per day
+    data = nc.variables['rsds'][offset, :, :] * 86400. / 1000000. * 23.9
     # Default to a value of 300 when this data is missing, for some reason
     nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
                                np.ravel(np.where(data > 2000., 300, data)))
     solar[:] = nn(xi, yi)
+
+    data = temperature(nc.variables['high_tmpk'][offset, :, :], 'K').value('C')
+    nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
+                               np.ravel(data))
+    high_temp[:] = nn(xi, yi)
+
+    data = temperature(nc.variables['low_tmpk'][offset, :, :], 'K').value('C')
+    nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
+                               np.ravel(data))
+    low_temp[:] = nn(xi, yi)
+
+    data = temperature(nc.variables['avg_dwpk'][offset, :, :], 'K').value('C')
+    nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
+                               np.ravel(data))
+    dewpoint[:] = nn(xi, yi)
+
+    data = nc.variables['avg_dwpk'][offset, :, :]
+    nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
+                               np.ravel(data))
+    wind[:] = nn(xi, yi)
+
+    nc.close()
 
 
 def load_stage4(valid):
@@ -412,11 +383,10 @@ def workflow():
 
     # 1. Max Temp C
     # 2. Min Temp C
+    # 3. Radiation l/d
     # 4. wind mps
     # 6. Mean dewpoint C
-    load_asos(valid)
-    # 3. Radiation l/d
-    load_solar(valid)
+    load_iemre(valid)
     # 5. wind direction (always zero)
     # 7. breakpoint precip mm
     load_stage4(valid)
