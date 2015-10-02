@@ -83,7 +83,7 @@ def load_iemre(valid):
                                np.ravel(data))
     dewpoint[:] = nn(xi, yi)
 
-    data = nc.variables['avg_dwpk'][offset, :, :]
+    data = nc.variables['wind_speed'][offset, :, :]
     nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
                                np.ravel(data))
     wind[:] = nn(xi, yi)
