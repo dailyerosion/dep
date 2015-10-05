@@ -9,6 +9,7 @@ import cStringIO
 import psycopg2
 from shapely.wkb import loads
 import numpy as np
+from jenks import jenks
 
 V2NAME = {
     'avg_loss': 'Detachment',
@@ -27,6 +28,28 @@ V2UNITS = {
     'avg_delivery': 'tons/acre',
     'avg_runoff': 'inches',
     }
+
+
+def myjenks(array, label):
+    """Create classification breaks for the array"""
+    a = list(set(jenks(array, 6)))
+    # Some failures happen when number of values > 0 is less than 6
+    # sys.stderr.write(label + str(a))
+    a.sort()
+    if max(a) == 0:
+        return [0]
+    if a[1] < 0.01:
+        newa = [a[0]]
+        for _ in a[1:]:
+            if _ > 0.01:
+                newa.append(_)
+        a = newa
+    # sys.stderr.write(label + str(a))
+    if max(a) == 0 or len(a) < 2:
+        return [0]
+    if a[0] == 0 and a[1] > 0.001:
+        a[0] = 0.001
+    return [float(_) for _ in a]
 
 
 def make_map(ts, ts2, scenario, v):
@@ -101,23 +124,16 @@ def make_map(ts, ts2, scenario, v):
     if np.max(data) < 0.01:
         bins = [0.01, 0.02, 0.03, 0.04, 0.05]
     else:
-        bins = np.percentile(data[np.nonzero(data)], [20, 40, 60, 80, 100])
-        bins = np.concatenate(([np.min(np.where(data > 0, data, 999)), ],
-                               bins))
-        if bins[0] < 0.01:
-            bins[0] = 0.01
-        # Push up the last bin slightly, so that data included in ramp
-        bins[-1] = bins[-1] + 0.01
-        if bins[1] < 0.01:
-            bins = np.linspace(bins[0], bins[-1], 6)
-        bins = np.around(bins.astype('f'), 2)
+        bins = myjenks(data, 'bah')
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
     for val, patch in zip(data, patches):
         c = cmap(norm([val, ]))[0]
         patch.set_facecolor(c)
 
     m.ax.add_collection(PatchCollection(patches, match_original=True))
-    m.draw_colorbar(bins, cmap, norm, units=V2UNITS[v])
+    lbl = [round(_, 2) for _ in bins]
+    m.draw_colorbar(bins, cmap, norm, units=V2UNITS[v],
+                    clevlabels=lbl)
     ram = cStringIO.StringIO()
     plt.savefig(ram, format='png', dpi=100)
     ram.seek(0)
