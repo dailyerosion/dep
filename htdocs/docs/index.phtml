@@ -1,0 +1,21 @@
+<?php 
+require '../../config/settings.inc.php';
+require_once '../../include/myview.php';
+
+$t = new MyView();
+$t->title = "Daily Erosion Documentation";
+$t->thispage = "docs-main";
+$t->content = <<<EOF
+<ol class="breadcrumb">
+		<li><a href="/">IDEP Homepage</a></li>
+		<li class="active">Documentation</li>
+</ol>
+
+		<h2>Daily Erosion Project Documentation</h2>
+		
+<p><a href="climate.phtml">WEPP Climate Files</a></p>
+		
+EOF;
+
+$t->render('single.phtml');
+?>
