@@ -12,6 +12,12 @@ $t->content = <<<EOF
 
 <h3>Climate File Documentation</h3>
 
+<h4>Dew Point</h4>
+		
+<p>WEPP climate files want daily averaged dew point.  This value is provided
+		by the <a href="http://mesonet.agron.iastate.edu/iemre/">IEM Daily ReAnalysis</a>
+		. It is derived by a gridded analysis of surface observation data.</p>
+		
 <h4>Precipitation</h4>
 
 <p>Of course, precipitation is vital to erosion modeling.  One of the unique
@@ -32,6 +38,16 @@ $t->content = <<<EOF
 		
 </div>
     	
+<p>The MRMS product provides intensity estimates on a 2 minute timestep.  The
+prospect of directly including these 2 minute interval data within the WEPP
+climate file would inflate the filesize and runtime.  So an algorithm is used
+to collapse down the 2 minute interval data into periods that retain
+accumulations of 10+ mm.  The result is a WEPP climate file with fewer break
+points, but still have the peak intensities captured.  Any day without at
+least 1 mm accumulation is set to zero.  If the day accumulation was less than
+10 mm, the breakpoints used are simply the start and end timestamp of the
+precipitation event.</p>
+		
 <h4>Solar Radiation</h4>
 
 <p>The amount of energy received by the Earth's surface from the sun is the
@@ -56,8 +72,15 @@ previous day's estimates are "good enough".</p>
 <p>WEPP requires the daily high and low temperature.  In general and with
 Iowa's flat terrain, these values are very smooth over the state.  An 
 approximate 24 km analysis of <a href="http://mesonet.agron.iastate.edu/">Iowa Mesonet</a>
-		observations provides these variables to WEPP.</p>
+observations provides these variables to WEPP.</p>
 
+<h4>Wind</h4>
+		
+	<p>WEPP wants the daily average wind speed and direction.  For our purposes,
+		the wind direction is unused so is always set to north (0 degrees). The
+		averaged wind speed is provided by the
+		<a href="http://mesonet.agron.iastate.edu/iemre/">IEM Daily ReAnalysis</a>.</p>
+		
 EOF;
 
 $t->render('single.phtml');
