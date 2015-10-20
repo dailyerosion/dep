@@ -1,3 +1,15 @@
+19 Oct 2015 - DEP Update
+  Cruse, Gelder, Tim, James
+  - Tim noted that some subcatchments have more than 10 hillslopes contained
+    within.  TODO: daryl check on this
+  - TODO: something looks wrong with the output for 24 Jun 2011
+  - Two of the 30 convergence test HUC12s had only a handful of subcatchments
+  - Discussion on usage of Confidence Interval for showing convergence
+  - Tim noted about a 33% coverage of daily data when erosion happened, which
+    is about what daryl has noticed as well, I think
+  - Discussion about paper progression and how to present the convergence work
+  - Mario may be coming to visit us in Jan/Feb timeframe
+
 17 Sep 2015 - Phosphorus Call
   Cruse, Gelder, Tim, Dennis, Jim, Mario
   - Having one flowpath per subcatchment is insufficient for WEPP watershed,
