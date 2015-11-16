@@ -1,0 +1,22 @@
+#!/bin/sh
+# uppercase any filenames with lowercase chars
+# usage: tolower *
+#        tolower *.FOR
+#        tolower *.INC
+#
+# Argument is the files to move to all lower case names.
+#
+# 
+for file in $*
+ do
+  if [ -f $file ]
+   then
+      ucfile=`echo $file | tr [:upper:] [:lower:]`
+      if [ $file != $ucfile ]
+        then
+           mv -i $file $ucfile
+        fi
+   fi
+ done
+
+
