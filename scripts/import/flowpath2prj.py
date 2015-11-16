@@ -227,6 +227,11 @@ def do_flowpath(huc_12, fid, fpath):
 
     # Iterate over the rows and figure out the slopes and distance fracs
     slpdata = ""
+    if rows[0]['length'] != 0:
+        print(('WARNING: HUC12:%s FPATH:%s had missing soil at top of slope'
+               ) % (huc_12, fpath))
+        slpdata = " 0.000,0.00001"
+        res['slope_points'] = len(rows) + 1
     prevsoil = None
     lsoilstart = 0
     soils = []
@@ -343,8 +348,10 @@ RunOptions {
 
 def main():
     """ Go main go """
-    cursor.execute("""SELECT fpath, fid, huc_12 from flowpaths
-    WHERE scenario = %s and fpath != 0""", (SCENARIO,))
+    cursor.execute("""
+        SELECT fpath, fid, huc_12 from flowpaths
+        WHERE scenario = %s and fpath != 0
+    """, (SCENARIO,))
     cnt = cursor.rowcount
     for i, row in enumerate(cursor):
         if i % 1000 == 0:
