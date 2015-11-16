@@ -8,6 +8,7 @@ $last_date = $row['value'];
 
 $lat = 42.22;
 $lon = -95.489;
+$OL = "3.11.1";
 if (isset($_GET["huc_12"])){
 	$huc12 = substr($_GET["huc_12"],0,12);
 	$rs = pg_query($dbconn, "with d as "
@@ -23,8 +24,8 @@ if (isset($_GET["huc_12"])){
 $t = new MyView();
 $t->title = "Map Interface";
 $t->headextra = <<<EOF
- <link type="text/css" href="/vendor/openlayers/3.8.2/ol.css" rel="stylesheet" />
- <link type="text/css" href="/vendor/openlayers/3.8.2/ol3-layerswitcher.css" rel="stylesheet" />
+ <link type="text/css" href="/vendor/openlayers/{$OL}/ol.css" rel="stylesheet" />
+ <link type="text/css" href="/vendor/openlayers/{$OL}/ol3-layerswitcher.css" rel="stylesheet" />
  <link type="text/css" href="/vendor/jquery-ui/1.11.4/jquery-ui.min.css" rel="stylesheet" />
  <link rel='stylesheet' href='/css/default/style.css' type='text/css'>
           <style type="text/css">
@@ -103,8 +104,8 @@ EOF;
 $TMS_SERVER = TMS_SERVER;
 $ddd = str_replace("-","/", $last_date);
 $t->jsextra = <<<EOF
- <script src='/vendor/openlayers/3.8.2/ol.js'></script>
- <script src='/vendor/openlayers/3.8.2/ol3-layerswitcher.js'></script>
+ <script src='/vendor/openlayers/{$OL}/ol.js'></script>
+ <script src='/vendor/openlayers/{$OL}/ol3-layerswitcher.js'></script>
         <script type="text/javascript">
 var tilecache = "{$TMS_SERVER}";
 var appstate = {
