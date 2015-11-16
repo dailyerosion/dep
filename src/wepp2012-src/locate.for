@@ -47,7 +47,7 @@ c     convert depth from cm to mm
       tmpvr1 = vardp *1000
       
 c
-d     minimum depth is 10mm
+c     minimum depth is 10mm
       if (tmpvr1 .lt. 10.) then
            layerN = 1
            flyern = 1
