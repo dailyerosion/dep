@@ -180,6 +180,10 @@ def qc_precip():
                             np.sum(precip[:, y, x])))
                 print_threshold = mrms_total[y, x]
 
+    # basedir = "/mnt/idep2/data/dailyprecip/2015"
+    # np.save(valid.strftime(basedir+"/%Y%m%d_ratio.npy"), ratio)
+    # np.save(valid.strftime(basedir+"/%Y%m%d_mrms_total.npy"), mrms_total)
+
 
 def load_precip_legacy(valid):
     """ Compute a Legacy Precip product for dates prior to 1 Jan 2014"""
@@ -254,9 +258,12 @@ def load_precip(valid):
 
     right = int((EAST - -130.) * 100.)
     left = int((WEST - -130.) * 100.)
-    # (myx, myy) = get_xy_from_lonlat(-91.44, 41.28)
+    # (myx, myy) = get_xy_from_lonlat(-93.6, 41.99)
     # samplex = int((-96.37 - -130.)*100.)
     # sampley = int((55. - 42.71)*100)
+
+    # Oopsy we discovered a problem
+    a2m_divisor = 10. if (valid < datetime.date(2015, 12, 13)) else 50.
 
     now = midnight
     while now < tomorrow:
@@ -286,7 +293,7 @@ def load_precip(valid):
             #    fig.savefig('test.png')
             #    sys.exit()
             # Turn 255 (missing) into zeros
-            precip[tidx, :, :] = np.where(data < 255, data / 10., 0)
+            precip[tidx, :, :] = np.where(data < 255, data / a2m_divisor, 0)
 
         else:
             print 'daily_clifile_editor missing: %s' % (fn,)
@@ -376,6 +383,8 @@ def save_daily_precip():
     if not os.path.isdir(basedir):
         os.makedirs(basedir)
     np.save(valid.strftime(basedir+"/%Y%m%d.npy"), data)
+    # save Stage IV as well, for later hand wringing
+    # np.save(valid.strftime(basedir+"/%Y%m%d_stageIV.npy"), stage4)
 
 
 def workflow():
