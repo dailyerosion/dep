@@ -263,7 +263,7 @@ def load_precip(valid):
     # sampley = int((55. - 42.71)*100)
 
     # Oopsy we discovered a problem
-    a2m_divisor = 10. if (valid < datetime.date(2015, 12, 13)) else 50.
+    a2m_divisor = 10. if (valid < datetime.date(2015, 1, 1)) else 50.
 
     now = midnight
     while now < tomorrow:
