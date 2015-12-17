@@ -1,3 +1,17 @@
+ 3 Dec 2015 - DEP Update
+  Cruse, Gelder, Tim, James, Claudette
+  - Union of Concerned Scientists has an interest in us running a scenario
+    - They have a 4 year rotation to implement on the Des Moines lobe.
+  - Tim is curious about EPIC and WEPP together, but I am unsure of coupling
+  - UI Sediment folks has a new postdoc we can collaborate with
+  - There's a NSF proposal being worked on with some folks from Engineering
+  - Mario is coming 18 Jan till end of Feb
+  - Further discussion on potential funding from Minnesota and logistics there
+    - They have a wind erosion requirement
+  - Reviewed Tim's significance testing and it appeared to check out
+  - Claudette gave a processing update and things are moving along
+  - James lead a DEM discussion and his happiness with recent usage of 2m data
+  
 19 Oct 2015 - DEP Update
   Cruse, Gelder, Tim, James
   - Tim noted that some subcatchments have more than 10 hillslopes contained
