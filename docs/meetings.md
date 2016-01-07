@@ -1,3 +1,26 @@
+ 7 Jan 2016 - DEP Update
+  Cruse, Gelder, Time, Claudette
+  - The paperwork for the Minnesota DEP work is progressing through sponsored
+    programs.  The start date is set for April 1
+  - David James is going to transition to 2m DEMs for Iowa
+  - Tim may be going to EGU in March to present DEP, abstract is due 13th
+  - Mario arrives here on the 14th
+  - Cruse suggested that there may be a soil erosion symposium here during the
+    end of Feb
+  - The Feds have been inquiring about our work, which is good
+  - UCS project went through and need to start work on it soon, they want
+    county level estimates, which should not be a problem
+  - Discussion of potentially moving DEP to the Iowa Water Center, which gives
+    it a housing and potential hard funding
+  - Still hoping to do some collaboration with Iowa Flood Center and their
+    modelling
+  - Should hear back soon about the HUD project funding
+  - Elevation processing work continues for Kansas with a timeline of mid
+    Feb for completion and hopeful DEP integration by mid Feb
+  - Tim did some work on R + APSIM + WEPP integration and maybe there are some
+    paths forward there.
+  - [TODO] still have some bad data somewhere for a HUC12 west of DSM
+
  3 Dec 2015 - DEP Update
   Cruse, Gelder, Tim, James, Claudette
   - Union of Concerned Scientists has an interest in us running a scenario
