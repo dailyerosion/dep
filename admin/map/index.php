@@ -1,7 +1,7 @@
 <?php 
 require_once "../../config/settings.inc.php";
 $dbconn = pg_connect("dbname=idep host=iemdb user=nobody");
-$rs = pg_query($dbconn, "SELECT value from properties where key = 'last_date'");
+$rs = pg_query($dbconn, "SELECT value from properties where key = 'last_date_0'");
 $row = pg_fetch_assoc($rs, 0);
 $last_date = $row['value'];
 $OL = "3.11.1";
