@@ -4,7 +4,7 @@ $dbconn = pg_connect("dbname=idep host=iemdb user=nobody");
 $rs = pg_query($dbconn, "SELECT value from properties where key = 'last_date'");
 $row = pg_fetch_assoc($rs, 0);
 $last_date = $row['value'];
-
+$OL = "3.11.1";
 $lat = 42.22;
 $lon = -95.489;
 if (isset($_GET["huc_12"])){
@@ -23,13 +23,13 @@ if (isset($_GET["huc_12"])){
 <html>
 <head>
  <title>Daily Erosion Project:: Map Interface</title>
- <link type="text/css" href="http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/css/ol.css" rel="stylesheet" />
- <link type="text/css" href="http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/css/ol3-layerswitcher.css" rel="stylesheet" />
+ <link type="text/css" href="/vendor/openlayers/3.11.1/ol.css" rel="stylesheet" />
+ <link type="text/css" href="/vendor/openlayers/3.11.1/ol3-layerswitcher.css" rel="stylesheet" />
  <link type="text/css" href="/css/ui-lightness/jquery-ui-1.8.22.custom.css" rel="stylesheet" />
  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
  <script type="text/javascript" src="/js/jquery-ui-1.8.22.custom.min.js"></script>
- <script src='http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/build/ol.js'></script>
- <script src='http://mesonet.agron.iastate.edu/assets/openlayers/3.1.1/build/ol3-layerswitcher.js'></script>
+ <script src='/vendor/openlayers/3.11.1/ol.js'></script>
+ <script src='/vendor/openlayers/3.11.1/ol3-layerswitcher.js'></script>
  <link rel='stylesheet' 
   href='/css/default/style.css' type='text/css'>
           <style type="text/css">
