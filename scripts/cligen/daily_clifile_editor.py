@@ -228,10 +228,8 @@ def load_precip_legacy(valid):
         now += datetime.timedelta(minutes=5)
         tidx += 1
 
-#    for y in range(YS):
-#        for x in range(XS + 1):
-    for y in [649, ]:
-        for x in [688, ]:
+    for y in range(YS):
+        for x in range(XS + 1):
             s4total = stage4[y, x]
             # skip 1 mm precipitation
             if s4total < 1:
