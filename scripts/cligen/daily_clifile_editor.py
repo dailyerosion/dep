@@ -187,7 +187,7 @@ def qc_precip():
 
 def load_precip_legacy(valid):
     """ Compute a Legacy Precip product for dates prior to 1 Jan 2014"""
-    ts = 4 * 24  # 15 minute
+    ts = 12 * 24  # 5 minute
 
     midnight = datetime.datetime(valid.year, valid.month, valid.day, 12, 0)
     midnight = midnight.replace(tzinfo=pytz.timezone("UTC"))
@@ -204,7 +204,7 @@ def load_precip_legacy(valid):
     left = int((WEST - -126.) * 100.)
 
     now = midnight
-    m15 = np.zeros((ts, YS, XS+1))
+    m5 = np.zeros((ts, YS, XS+1))
     tidx = 0
     # Load up the n0r data, every 15 minutes
     while now < tomorrow:
@@ -217,28 +217,33 @@ def load_precip_legacy(valid):
                 break
             img = gdal.Open(fn, 0)
             imgdata = img.ReadAsArray()
-            data = np.flipud(imgdata[top:bottom, left:right])
-            m15[tidx, :, :] = np.where(data < 255, data ** 1.5, 0)
+            # Convert the image data to dbz
+            dbz = (np.flipud(imgdata[top:bottom, left:right]) - 7.) * 5
+            m5[tidx, :, :] = np.where(dbz < 255,
+                                      ((10. ** (dbz/10.)) / 200.) ** 0.625,
+                                      0)
         else:
-            print 'daily_clifile_editor missing: %s' % (fn,)
+            print('daily_clifile_editor missing: %s' % (fn,))
 
-        now += datetime.timedelta(minutes=15)
+        now += datetime.timedelta(minutes=5)
         tidx += 1
 
-    for y in range(YS):
-        for x in range(XS + 1):
+#    for y in range(YS):
+#        for x in range(XS + 1):
+    for y in [649, ]:
+        for x in [688, ]:
             s4total = stage4[y, x]
             # skip 1 mm precipitation
             if s4total < 1:
                 continue
-            fifteen = m15[:, y, x]
-            # Smear the precip out over the first our
-            if np.sum(fifteen) < 10:
+            five = m5[:, y, x]
+            # TODO unsure of this... Smear the precip out over the first our
+            if np.sum(five) < 10:
                 precip[0:30, y, x] = s4total / 30.
                 continue
-            weights = fifteen / np.sum(fifteen) / 7.5
+            weights = five / np.sum(five) / 2.5
             for t in range(0, 60 * 24, 2):
-                precip[int(t/2), y, x] = weights[int(t/15)] * s4total
+                precip[int(t/2), y, x] = weights[int(t/5)] * s4total
 
 
 def load_precip(valid):
