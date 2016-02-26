@@ -1,3 +1,23 @@
+14 Feb 2016 - Erosion Symposium
+  Dennis Flanagan - WEPP Update
+  - A new release is coming later this year (Fall 2016)
+  - He had a student work on pulling in some SWAT routines into WEPP?
+  - Something known as LMOD database for management is being looked at/used
+  Seth RUSLE2
+  - impressive capabilities and gullies
+  - Talked about empherical rainfall erosivitity
+  Henrique
+  - They have a photogrametry system for doing LIDAR like work
+  - Need to carefully adjust for the height of the user carrying the backpack
+  Tom
+  - Talked about measuring stream bank erosion
+  Tom Bruan
+  - Showed his Soil Calculator, uses 9 m DEM, requires 45 cells for
+    concentrated flow
+  - They present 3 alternatives when calculating to show differences
+  - express erosion in units of inches per year (good)
+  - visual charts of erosion within fields on that 9m grid
+
  7 Jan 2016 - DEP Update
   Cruse, Gelder, Time, Claudette
   - The paperwork for the Minnesota DEP work is progressing through sponsored
