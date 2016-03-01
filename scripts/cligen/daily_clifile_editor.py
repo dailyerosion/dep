@@ -304,17 +304,22 @@ def load_precip(valid):
         now += datetime.timedelta(minutes=2)
 
 
+def bpstr(ts, accum):
+    """Make a string representation of this breakpoint and accumulation"""
+    return "%02i.%02i  %6.2f" % (ts.hour, ts.minute / 60.0 * 100.,
+                                 accum)
+
+
 def compute_breakpoint(ar):
     """ Compute the breakpoint data based on this array of data!
 
     Values are in 0.1mm increments!
-
     """
     total = np.sum(ar)
     # Any total less than (1mm) is not of concern, might as well be zero
     if total < 0.1:
         return []
-    bp = ["00.00    0.00", ]
+    bp = None
     # in mm
     accum = 0
     lastaccum = 0
@@ -322,18 +327,26 @@ def compute_breakpoint(ar):
     for i, intensity in enumerate(ar):
         if intensity == 0:
             continue
+        # Need to initialize the breakpoint data
+        if bp is None:
+            ts = ZEROHOUR + datetime.timedelta(minutes=(i*2))
+            bp = [bpstr(ts, 0), ]
         accum += intensity
         lasti = i
-        if i == 0:  # Can't have immediate accumulation
-            continue
         if (accum - lastaccum) > 10:  # record every 10mm
             lastaccum = accum
-            # 23.90       0.750
-            ts = ZEROHOUR + datetime.timedelta(minutes=(i*2))
-            bp.append("%02i.%02i  %6.2f" % (ts.hour, ts.minute / 60.0 * 100.,
-                                            accum))
+            if (i + 1) == len(ar):
+                ts = ZEROHOUR.replace(hour=23, minute=59)
+            else:
+                ts = ZEROHOUR + datetime.timedelta(minutes=((i+1)*2))
+            bp.append(bpstr(ts, accum))
     if accum != lastaccum:
-        ts = ZEROHOUR + datetime.timedelta(minutes=(max(lasti, 1)*2))
+        # print("accum: %.5f lastaccum: %.5f lasti: %s" % (accum, lastaccum,
+        #                                                 lasti))
+        if (lasti + 1) == len(ar):
+            ts = ZEROHOUR.replace(hour=23, minute=59)
+        else:
+            ts = ZEROHOUR + datetime.timedelta(minutes=((lasti + 1)*2))
         bp.append("%02i.%02i  %6.2f" % (ts.hour, ts.minute / 60.0 * 100.,
                                         accum))
     return bp
@@ -457,11 +470,38 @@ class test(unittest.TestCase):
         delta = (ets - sts).total_seconds()
         print(("Processed 1 file in %.5f secs, %.0f files per sec"
                ) % (delta, 1.0 / delta))
-        self.assertEqual(1, 0)
+        self.assertTrue(1 == 0)
 
     def test_bp(self):
         """ issue #6 invalid time """
         data = np.zeros([30*24])
         data[0] = 3.2
         bp = compute_breakpoint(data)
+        self.assertEqual(bp[0], "00.00    0.00")
         self.assertEqual(bp[1], "00.03    3.20")
+        data[0] = 0
+        data[24*30 - 1] = 9.99
+        bp = compute_breakpoint(data)
+        self.assertEqual(bp[0], "23.96    0.00")
+        self.assertEqual(bp[1], "23.98    9.99")
+
+        data[24*30 - 1] = 10.99
+        bp = compute_breakpoint(data)
+        self.assertEqual(bp[0], "23.96    0.00")
+        self.assertEqual(bp[1], "23.98   10.99")
+
+        # Do some random futzing
+        for _ in range(1000):
+            data = np.random.randint(20, size=(30*24,))
+            bp = compute_breakpoint(data)
+            lastts = -1
+            lastaccum = -1
+            for b in bp:
+                tokens = b.split()
+                if float(tokens[0]) <= lastts or float(tokens[1]) <= lastaccum:
+                    print data
+                    print bp
+                    self.assertTrue(1 == 0)
+                lastts = float(tokens[0])
+                lastaccum = float(tokens[1])
+                self.assertTrue(True)
