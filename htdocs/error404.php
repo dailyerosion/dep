@@ -7,5 +7,5 @@
 </html>
 <?php
 $ref = isset($_SERVER["HTTP_REFERER"]) ? $_SERVER["HTTP_REFERER"] : 'none';
-error_log("404 weather.im:". $_SERVER["REQUEST_URI"]. ' referer: '. $ref);
+error_log("404 idep:". $_SERVER["REQUEST_URI"]. ' referer: '. $ref);
 ?>
