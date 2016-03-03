@@ -346,12 +346,22 @@ RunOptions {
     out.close()
 
 
-def main():
+def main(argv):
     """ Go main go """
-    cursor.execute("""
-        SELECT fpath, fid, huc_12 from flowpaths
-        WHERE scenario = %s and fpath != 0
-    """, (SCENARIO,))
+    if len(argv) == 4:
+        print("Running for single flowpath HUC_12: %s FPATH: %s" % (argv[2],
+                                                                    argv[3]))
+        cursor.execute("""
+            SELECT fpath, fid, huc_12 from flowpaths
+            WHERE scenario = %s and huc_12 = %s and fpath = %s
+        """, (SCENARIO, argv[2], int(argv[3])))
+        if cursor.rowcount != 1:
+            print("Error: dbquery found %s rows" % (cursor.rowcount,))
+    else:
+        cursor.execute("""
+            SELECT fpath, fid, huc_12 from flowpaths
+            WHERE scenario = %s and fpath != 0
+        """, (SCENARIO,))
     cnt = cursor.rowcount
     for i, row in enumerate(cursor):
         if i % 1000 == 0:
@@ -364,7 +374,7 @@ def main():
 
 if __name__ == '__main__':
     # SLP = open('maxslope.txt', 'w')
-    main()
+    main(sys.argv)
     cursor3.close()
     PGCONN.commit()
     for fn in MISSED_SOILS:
