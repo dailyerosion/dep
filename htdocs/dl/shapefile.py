@@ -28,10 +28,10 @@ def do(dt, dt2):
         huc_12
         from ia_huc12), obs as (
         SELECT huc_12,
-            sum(coalesce(avg_loss, 0)) * 4.463 as avg_loss,
-            sum(coalesce(avg_delivery, 0)) * 4.463 as avg_delivery,
-            sum(coalesce(qc_precip, 0)) / 25.4 as qc_precip,
-            sum(coalesce(avg_runoff, 0)) / 25.4 as avg_runoff
+            sum(coalesce(avg_loss, 0)) as avg_loss,
+            sum(coalesce(avg_delivery, 0)) as avg_delivery,
+            sum(coalesce(qc_precip, 0)) as qc_precip,
+            sum(coalesce(avg_runoff, 0)) as avg_runoff
         from results_by_huc12 WHERE
         """+dextra+""" and scenario = 0 GROUP by huc_12)
 
