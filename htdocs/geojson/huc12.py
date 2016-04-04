@@ -44,7 +44,7 @@ def do(ts, ts2):
     cursor.execute("""WITH data as (
         SELECT ST_asGeoJson(ST_Transform(simple_geom, 4326), 4) as g,
         huc_12
-        from ia_huc12), obs as (
+        from huc12 WHERE scenario = 0), obs as (
         SELECT huc_12,
             sum(coalesce(avg_loss, 0)) * 4.463 as avg_loss,
             sum(coalesce(avg_delivery, 0)) * 4.463 as avg_delivery,

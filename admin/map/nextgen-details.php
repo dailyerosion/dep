@@ -28,8 +28,9 @@ $row = pg_fetch_assoc($rs,0);
 $model_twp = $row["model_twp"];
 
 /* Find the HUC12 this location is in */
-$rs = pg_prepare($dbconn, "SELECT", "SELECT huc_12, hu_12_name from ia_huc12 WHERE 
-		ST_Within(ST_GeomFromText($1, 4326), ST_Transform(geom,4326))");
+$rs = pg_prepare($dbconn, "SELECT", "SELECT huc_12, hu_12_name from huc12 WHERE 
+		ST_Within(ST_GeomFromText($1, 4326), ST_Transform(geom,4326))
+		and scenario = 0");
 $rs = timeit($dbconn, "SELECT", Array('POINT('.$lon .' '. $lat .')'));
 if (pg_num_rows($rs) != 1){
 	echo "ERROR: No township found!";

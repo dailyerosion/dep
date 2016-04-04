@@ -118,11 +118,11 @@ def load_precip(dates, huc12s):
     icursor.execute("""
         WITH centers as (
          SELECT huc_12, ST_Transform(ST_Centroid(geom),4326) as g
-         from ia_huc12
+         from huc12 WHERE scenario = %s
         )
 
         SELECT huc_12, ST_x(g), ST_y(g) from centers
-    """)
+    """, (SCENARIO, ))
     SOUTH = 36.9
     WEST = -99.2
     for row in icursor:

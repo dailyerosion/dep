@@ -26,7 +26,7 @@ def do(dt, dt2):
     cursor.execute("""WITH data as (
         SELECT ST_AsText(geom) as g,
         huc_12
-        from ia_huc12), obs as (
+        from huc12 WHERE scenario = 0), obs as (
         SELECT huc_12,
             sum(coalesce(avg_loss, 0)) as avg_loss,
             sum(coalesce(avg_delivery, 0)) as avg_delivery,

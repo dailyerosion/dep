@@ -24,10 +24,11 @@ def do(sts, ets):
                      'sum(avg_delivery) as delivery, '
                      'sum(avg_loss) as loss, '
                      'sum(avg_runoff) as runoff from results_by_huc12 r '
-                     'JOIN ia_huc12 i on (i.huc_12 = r.huc_12) where '
+                     'JOIN huc12 i on (i.huc_12 = r.huc_12) where '
                      'valid between \'%s\' and \'%s\' '
                      'and avg_delivery >= 0 and avg_delivery < 1000 '
-                     'and scenario = 0 GROUP by r.huc_12, i.geom" '
+                     'and r.scenario = 0 and i.scenario = 0 '
+                     'GROUP by r.huc_12, i.geom" '
                      '') % (sts.strftime("%Y%m%d"),
                             ets.strftime("%Y%m%d"),
                             sts.strftime("%Y-%m-%d"),

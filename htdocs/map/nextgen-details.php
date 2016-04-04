@@ -16,9 +16,9 @@ function timeit($db, $name, $sql){
 }
 
 /* Find the HUC12 this location is in */
-$rs = pg_prepare($dbconn, "SELECT", "SELECT hu_12_name from ia_huc12 WHERE 
-		huc_12 = $1");
-$rs = timeit($dbconn, "SELECT", Array($huc_12));
+$rs = pg_prepare($dbconn, "SELECT", "SELECT hu_12_name from huc12 WHERE 
+		huc_12 = $1 and scenario = $2");
+$rs = timeit($dbconn, "SELECT", Array($huc_12, $scenario));
 if (pg_num_rows($rs) != 1){
 	echo "ERROR: No township found!";
 	die();

@@ -10,8 +10,8 @@ def search(q):
     pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
     cursor = pgconn.cursor()
     d = dict(results=[])
-    cursor.execute("""SELECT huc_12, hu_12_name from ia_huc12
-    WHERE hu_12_name ~* %s LIMIT 10""", (q,))
+    cursor.execute("""SELECT huc_12, hu_12_name from huc12
+    WHERE hu_12_name ~* %s and scenario = 0 LIMIT 10""", (q,))
     for row in cursor:
         d['results'].append(dict(huc_12=row[0], name=row[1]))
 

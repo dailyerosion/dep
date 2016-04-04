@@ -32,7 +32,8 @@ cursor.execute("""
   )
 
  SELECT ST_Transform(geom, 4326), d.huc_12, d.count from 
- ia_huc12 h JOIN data d on (d.huc_12 = h.huc_12) ORDER by count DESC
+ huc12 h JOIN data d on (d.huc_12 = h.huc_12) WHERE h.scenario = 0
+ ORDER by count DESC
 
 """)
 

@@ -12,8 +12,9 @@ $OL = "3.15.0";
 if (isset($_GET["huc_12"])){
 	$huc12 = substr($_GET["huc_12"],0,12);
 	$rs = pg_query($dbconn, "with d as "
-		."(select ST_transform(st_centroid(geom),4326) as g from ia_huc12 "
-		."where huc_12 = '$huc12') select st_x(d.g), st_y(d.g) from d");
+		."(select ST_transform(st_centroid(geom),4326) as g from huc12 "
+		."where huc_12 = '$huc12' and scenario = 0) "
+		."select st_x(d.g), st_y(d.g) from d");
 	if (pg_num_rows($rs) == 1){
 		$row = pg_fetch_assoc($rs,0);
 		$lat = $row["st_y"];

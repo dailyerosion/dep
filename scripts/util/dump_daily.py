@@ -18,7 +18,7 @@ for county in counties:
     # Find HUC12s
     geom = cursor2.fetchone()[0]
 
-    cursor.execute("""SELECT huc_12 from ia_huc12 where
+    cursor.execute("""SELECT huc_12 from huc12 where scenario = 0 and
     ST_Overlaps(ST_Transform(geom, 4326), ST_SetSRID(ST_GeomFromEWKT(%s),4326))""", (geom,))
     for row in cursor:
         if row[0] not in huc12s:

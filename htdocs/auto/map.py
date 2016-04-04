@@ -107,9 +107,10 @@ def make_map(ts, ts2, scenario, v):
       GROUP by huc_12)
 
     SELECT ST_Transform(simple_geom, 4326), coalesce(d.d, 0)
-    from ia_huc12 i LEFT JOIN data d
-    ON (i.huc_12 = d.huc_12)""", (scenario, ts.strftime("%Y-%m-%d"),
-                                  ts2.strftime("%Y-%m-%d")))
+    from huc12 i LEFT JOIN data d
+    ON (i.huc_12 = d.huc_12) WHERE i.scenario = %s
+    """, (scenario, ts.strftime("%Y-%m-%d"),
+          ts2.strftime("%Y-%m-%d"), scenario))
     patches = []
     data = []
     for row in cursor:
