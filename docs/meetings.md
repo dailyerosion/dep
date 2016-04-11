@@ -1,3 +1,16 @@
+ 7 Apr 2016 - DEP Update
+  Gelder, Claudette, and Tim
+  - Gelder mentioned some wild goose chase he is currently on with zonal
+    stats in ArcGIS 10.4
+  - Tim's EGU talk is in two weeks and he may need some things perpared for it
+  - Need to settle on the UCS desired management scenario to run in the state
+  - We may be expanding to the western edge of the Lake Erie basin
+  - Also doing more of the Red River basin in ND
+  - We'll have two visiting scientists coming soon
+  - tongue in cheek suggestion that maybe we start doing some modelling in
+    China
+  - We'll likely be using some of Jeff Strock's data for validation
+
 14 Feb 2016 - Erosion Symposium
   Dennis Flanagan - WEPP Update
   - A new release is coming later this year (Fall 2016)
