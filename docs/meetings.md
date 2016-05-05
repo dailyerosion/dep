@@ -1,3 +1,21 @@
+ 5 May 2016 - DEP Update
+  Gelder, Crse, Claudette, Tim, James
+  - They did a hack to get alfalfa growing immediately after terminating oats
+    by allowing for emergence after 1 GDD of heat!
+  - For the UCS scenario, we don't want all rotations synced such that the
+    entire state is corn at once
+  - turns out that I can give somebody a ride back to Ames on Friday
+  - Discussion of the soil enrichment ratio and some clay value that is hard
+    coded in the model.
+  - There are 6-8 new student hires coming on to help with the work
+  - Kansas is progressing and ACPF is as well in a number of locations
+  - [ ] remind James about the soils data he last sent and if he needs to do
+    the decimal precision issue yet
+  - Discussion of the status of the 2m DEM and hopes to do sensitivity with it
+  - Discussion of Missouri and Wisconsin LiDaR status and if we just want DEMs
+  - James sent out a map last week that I did not get about status of ACPF
+  - [ ] I need to send Cruse a map of 2015 output
+
  7 Apr 2016 - DEP Update
   Gelder, Claudette, and Tim
   - Gelder mentioned some wild goose chase he is currently on with zonal
