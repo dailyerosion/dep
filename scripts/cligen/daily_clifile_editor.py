@@ -45,8 +45,22 @@ def get_xy_from_lonlat(lon, lat):
     return [x, y]
 
 
+def iemre_bounds_check(name, val, lower, upper):
+    """Make sure our data is within bounds, if not, exit!"""
+    minval = np.nanmin(val)
+    maxval = np.nanmax(val)
+    if np.ma.is_masked(minval) or minval < lower or maxval > upper:
+        print(("FATAL: iemre failure %s %.3f to %.3f [%.3f to %.3f]"
+               ) % (name, minval, maxval, lower, upper))
+        sys.exit()
+    return val
+
+
 def load_iemre(valid):
-    """Use IEM Reanalysis RSDS gridded solar radiation"""
+    """Use IEM Reanalysis for non-precip data
+
+    24km product is smoothed down to the 0.01 degree grid
+    """
     xaxis = np.arange(WEST, EAST, 0.01)
     yaxis = np.arange(SOUTH, NORTH, 0.01)
     xi, yi = np.meshgrid(xaxis, yaxis)
@@ -65,28 +79,28 @@ def load_iemre(valid):
     data = nc.variables['rsds'][offset, :, :] * 86400. / 1000000. * 23.9
     # Default to a value of 300 when this data is missing, for some reason
     nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
-                               np.ravel(np.where(data > 2000., 300, data)))
-    solar[:] = nn(xi, yi)
+                               np.ravel(data))
+    solar[:] = iemre_bounds_check('rsds', nn(xi, yi), 0, 1000)
 
     data = temperature(nc.variables['high_tmpk'][offset, :, :], 'K').value('C')
     nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
                                np.ravel(data))
-    high_temp[:] = nn(xi, yi)
+    high_temp[:] = iemre_bounds_check('high_tmpk', nn(xi, yi), -60, 60)
 
     data = temperature(nc.variables['low_tmpk'][offset, :, :], 'K').value('C')
     nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
                                np.ravel(data))
-    low_temp[:] = nn(xi, yi)
+    low_temp[:] = iemre_bounds_check('low_tmpk', nn(xi, yi), -60, 60)
 
     data = temperature(nc.variables['avg_dwpk'][offset, :, :], 'K').value('C')
     nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
                                np.ravel(data))
-    dewpoint[:] = nn(xi, yi)
+    dewpoint[:] = iemre_bounds_check('avg_dwpk', nn(xi, yi), -60, 60)
 
     data = nc.variables['wind_speed'][offset, :, :]
     nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
                                np.ravel(data))
-    wind[:] = nn(xi, yi)
+    wind[:] = iemre_bounds_check('wind_speed', nn(xi, yi), 0, 30)
 
     nc.close()
 
