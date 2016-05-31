@@ -122,7 +122,7 @@ def make_map(ts, ts2, scenario, v):
         patches.append(p)
         data.append(row[1])
     data = np.array(data) * V2MULTI[v]
-    if np.max(data) < 0.01:
+    if np.max(data) < 0.05:
         bins = [0.01, 0.02, 0.03, 0.04, 0.05]
     else:
         bins = myjenks(data, 'bah')
