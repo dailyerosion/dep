@@ -46,8 +46,6 @@ def do_rotation(code, cfactor):
     if not os.path.isdir(dirname):
         os.makedirs(dirname)
     fn = "%s/%s-%s.rot" % (dirname, code, cfactor)
-    if os.path.isfile(fn):
-        return
 
     data = {}
     data['date'] = datetime.datetime.now()
@@ -62,8 +60,8 @@ def do_rotation(code, cfactor):
     data['year6'] = read_file(code[5], cfactor, 6)  # 2012
     data['year7'] = read_file(code[6], cfactor, 7)  # 2013
     data['year8'] = read_file(code[7], cfactor, 8)  # 2014
-    data['year9'] = read_file(code[0], cfactor, 9)  # 2015 <<-- repeated
-    data['year10'] = read_file(code[1], cfactor, 9)  # 2016 <<-- repeated
+    data['year9'] = read_file(code[8], cfactor, 9)  # 2015
+    data['year10'] = read_file(code[9], cfactor, 10)  # 2016
 
     o = open(fn, 'w')
     o.write("""#
@@ -94,8 +92,9 @@ Operations {
 """ % data)
     o.close()
 
-if __name__ == '__main__':
-    # Go Main Go
+
+def main():
+    """Do Something"""
     cursor.execute("""SELECT distinct
         lu2007 || lu2008 || lu2009 || lu2010 || lu2011 || lu2012 || lu2013
         || lu2014 || lu2015 || lu2016
@@ -103,5 +102,8 @@ if __name__ == '__main__':
     for row in cursor:
         if row[0] is None:
             continue
-        for i in (1, 25):
+        for i in (1, 25):  # loop over c-factors
             do_rotation(row[0], i)
+
+if __name__ == '__main__':
+    main()
