@@ -26,23 +26,23 @@ Operations {
 4  15  3  1 Tillage	OpCropDef.DIOFFFIN	{0.152400, 2}
 4  20  3  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
 4  21  3  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
-4  21  3  1 Plant-Annual	CropDef.Cor_0965	 {0.762000}
-10  15  3  1 Harvest-Annual	CropDef.Cor_0965	{}
+4  21  3  1 Plant-Annual	CropDef.Cor_0966	 {0.762000}
+10  15  3  1 Harvest-Annual	CropDef.Cor_0966	{}
 10  20  3  1 Tillage	OpCropDef.CHIS0006	{0.203200, 1}
 5  1  4  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
 5  2  4  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
-5  2  4  1 Plant-Annual	CropDef.Soy_2192	 {0.762000}
-10  15  4  1 Harvest-Annual	CropDef.Soy_2192	{}
+5  2  4  1 Plant-Annual	CropDef.Soy_2193	 {0.762000}
+10  15  4  1 Harvest-Annual	CropDef.Soy_2193	{}
 4  15  5  1 Tillage	OpCropDef.DIOFFFIN	{0.152400, 2}
 4  20  5  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
 4  21  5  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
-4  21  5  1 Plant-Annual	CropDef.Cor_0965	 {0.762000}
-10  15  5  1 Harvest-Annual	CropDef.Cor_0965	{}
+4  21  5  1 Plant-Annual	CropDef.Cor_0966	 {0.762000}
+10  15  5  1 Harvest-Annual	CropDef.Cor_0966	{}
 10  20  5  1 Tillage	OpCropDef.CHIS0006	{0.203200, 1}
 5  1  6  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
 5  2  6  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
-5  2  6  1 Plant-Annual	CropDef.Soy_2192	 {0.762000}
-10  15  6  1 Harvest-Annual	CropDef.Soy_2192	{}
+5  2  6  1 Plant-Annual	CropDef.Soy_2193	 {0.762000}
+10  15  6  1 Harvest-Annual	CropDef.Soy_2193	{}
 3  20  7  1 Tillage	OpCropDef.CRNTFRRI	{0.050800, 2}
 3  20  7  1 Plant-Annual	CropDef.Oat_2966	 {0.203200}
 7  2  7  1 Harvest-Annual	CropDef.Oat_2966	{}
@@ -57,13 +57,13 @@ Operations {
 4  15  9  1 Tillage	OpCropDef.DIOFFFIN	{0.152400, 2}
 4  20  9  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
 4  21  9  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
-4  21  9  1 Plant-Annual	CropDef.Cor_0965	 {0.762000}
-10  15  9  1 Harvest-Annual	CropDef.Cor_0965	{}
+4  21  9  1 Plant-Annual	CropDef.Cor_0966	 {0.762000}
+10  15  9  1 Harvest-Annual	CropDef.Cor_0966	{}
 10  20  9  1 Tillage	OpCropDef.CHIS0006	{0.203200, 1}
 5  1  10  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
 5  2  10  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
-5  2  10  1 Plant-Annual	CropDef.Soy_2192	 {0.762000}
-10  15  10  1 Harvest-Annual	CropDef.Soy_2192	{}
+5  2  10  1 Plant-Annual	CropDef.Soy_2193	 {0.762000}
+10  15  10  1 Harvest-Annual	CropDef.Soy_2193	{}
 3  20  11  1 Tillage	OpCropDef.CRNTFRRI	{0.050800, 2}
 3  20  11  1 Plant-Annual	CropDef.Oat_2966	 {0.203200}
 7  2  11  1 Harvest-Annual	CropDef.Oat_2966	{}
