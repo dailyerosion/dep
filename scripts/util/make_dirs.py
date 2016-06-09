@@ -10,6 +10,7 @@ cursor = PGCONN.cursor()
 
 PREFIXES = 'env  man  prj  run  slp  sol  wb error ofe'.split()
 
+
 def do(huc12):
     """ Directory creator! """
     for prefix in PREFIXES:
@@ -22,4 +23,4 @@ if __name__ == '__main__':
     cursor.execute("""SELECT distinct huc_12 from flowpaths
     WHERE scenario = %s""", (SCENARIO,))
     for row in cursor:
-        do( row[0] )
+        do(row[0])
