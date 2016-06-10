@@ -1,5 +1,31 @@
+ 9 Jun 2016 - DEP Update
+  Gelder, Cruse, Tim, James
+  - Discussion of the current UCS scenario issues and I learned about having
+    a crop file and growth parameter file
+  - The 'Alfalfa2' is a plant parameter file
+  - What to do about the DEPv2 issue with planting dates.  We'll hard code
+    5 day offsets north to south for now.
+  - [x] send Gelder a listing of maximum number of OFEs we have
+  - UCS also has a three year rotation that we need to mess with
+  - Claudette and James are headed to ESRI San Diego this year, she has
+    a poster on the project there
+  - [ ] transfer some of the draft paper to the website
+  - [ ] should make a video of how to use the interactive map
+  - James emphasized the need to get Wisconsion fields done
+  - It takes about 1.5 months for the LiDaR processing in Iowa
+  - Discussion of removing the current HUC geodatabase structure into something
+    more CONUS based
+  - [ ] engage Alexi on the Kansas DEP portal
+  - Thanos has a routing component that could get our hillslopes to the nearest
+    channel, will contact
+  - Potential for a new CAP project with Wisconsin
+  - Interest from Nebraska on ACPF and collaboration
+  - There was a Land o Lakes meeting
+  - Sarah has some tools to check out with bioreactors and saturated buffers
+  - HUD project money should get going in July
+
  5 May 2016 - DEP Update
-  Gelder, Crse, Claudette, Tim, James
+  Gelder, Cruse, Claudette, Tim, James
   - They did a hack to get alfalfa growing immediately after terminating oats
     by allowing for emergence after 1 GDD of heat!
   - For the UCS scenario, we don't want all rotations synced such that the
