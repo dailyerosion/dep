@@ -1,0 +1,78 @@
+#
+# WEPP rotation saved on: Thu Jun 02 11:06:34 PM 2016
+#
+# Created with WEPPWIN verion: Sep 17 2012 
+#
+Version = 98.7
+Name = oats-alf,alfalfa, corn, soybean (conv till) x3
+Description {
+}
+Color = 128 128 255
+LandUse = 1
+InitialConditions = IniCropDef.Alf_8188 {0.000000, 0}
+
+Operations {
+3  20  1  1 Tillage	OpCropDef.CRNTFRRI	{0.050800, 2}
+3  20  1  1 Plant-Annual	CropDef.Oat_2966	 {0.203200}
+7  2  1  1 Harvest-Annual	CropDef.Oat_2966	{}
+7  3  1  1 Tillage	OpCropDef.CRNTFRRI	{0.050800, 2}
+7  3  1  1 Plant-Perennial	CropDef.Alf_5069	 {0.000000,0}
+9  1  1  1 Cut-Perennial	CropDef.Alf_5069	{}
+6  1  2  1 Cut-Perennial	CropDef.Alf_5069	{}
+7  15  2  1 Cut-Perennial	CropDef.Alf_5069	{}
+9  1  2  1 Cut-Perennial	CropDef.Alf_5069	{}
+10  31  2  1 Kill-Perennial	CropDef.Alf_5069	{}
+11  1  2  1 Tillage	OpCropDef.MOPL	{0.152400, 1}
+4  15  3  1 Tillage	OpCropDef.DIOFFFIN	{0.152400, 2}
+4  20  3  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
+4  21  3  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
+4  21  3  1 Plant-Annual	CropDef.Cor_0967	 {0.762000}
+10  15  3  1 Harvest-Annual	CropDef.Cor_0967	{}
+10  20  3  1 Tillage	OpCropDef.CHIS0006	{0.203200, 1}
+5  1  4  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
+5  2  4  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
+5  2  4  1 Plant-Annual	CropDef.Soy_2194	 {0.762000}
+10  15  4  1 Harvest-Annual	CropDef.Soy_2194	{}
+4  15  5  1 Tillage	OpCropDef.DIOFFFIN	{0.152400, 2}
+4  20  5  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
+4  21  5  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
+4  21  5  1 Plant-Annual	CropDef.Cor_0967	 {0.762000}
+10  15  5  1 Harvest-Annual	CropDef.Cor_0967	{}
+10  20  5  1 Tillage	OpCropDef.CHIS0006	{0.203200, 1}
+5  1  6  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
+5  2  6  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
+5  2  6  1 Plant-Annual	CropDef.Soy_2194	 {0.762000}
+10  15  6  1 Harvest-Annual	CropDef.Soy_2194	{}
+3  20  7  1 Tillage	OpCropDef.CRNTFRRI	{0.050800, 2}
+3  20  7  1 Plant-Annual	CropDef.Oat_2966	 {0.203200}
+7  2  7  1 Harvest-Annual	CropDef.Oat_2966	{}
+7  3  7  1 Tillage	OpCropDef.CRNTFRRI	{0.050800, 2}
+7  3  7  1 Plant-Perennial	CropDef.Alf_5069	 {0.000000,0}
+9  1  7  1 Cut-Perennial	CropDef.Alf_5069	{}
+6  1  8  1 Cut-Perennial	CropDef.Alf_5069	{}
+7  15  8  1 Cut-Perennial	CropDef.Alf_5069	{}
+9  1  8  1 Cut-Perennial	CropDef.Alf_5069	{}
+10  31  8  1 Kill-Perennial	CropDef.Alf_5069	{}
+11  1  8  1 Tillage	OpCropDef.MOPL	{0.152400, 1}
+4  15  9  1 Tillage	OpCropDef.DIOFFFIN	{0.152400, 2}
+4  20  9  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
+4  21  9  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
+4  21  9  1 Plant-Annual	CropDef.Cor_0967	 {0.762000}
+10  15  9  1 Harvest-Annual	CropDef.Cor_0967	{}
+10  20  9  1 Tillage	OpCropDef.CHIS0006	{0.203200, 1}
+5  1  10  1 Tillage	OpCropDef.FIEL0001	{0.050800, 2}
+5  2  10  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
+5  2  10  1 Plant-Annual	CropDef.Soy_2194	 {0.762000}
+10  15  10  1 Harvest-Annual	CropDef.Soy_2194	{}
+3  20  11  1 Tillage	OpCropDef.CRNTFRRI	{0.050800, 2}
+3  20  11  1 Plant-Annual	CropDef.Oat_2966	 {0.203200}
+7  2  11  1 Harvest-Annual	CropDef.Oat_2966	{}
+7  3  11  1 Tillage	OpCropDef.CRNTFRRI	{0.050800, 2}
+7  3  11  1 Plant-Perennial	CropDef.Alf_5069	 {0.000000,0}
+9  1  11  1 Cut-Perennial	CropDef.Alf_5069	{}
+6  1  12  1 Cut-Perennial	CropDef.Alf_5069	{}
+7  15  12  1 Cut-Perennial	CropDef.Alf_5069	{}
+9  1  12  1 Cut-Perennial	CropDef.Alf_5069	{}
+10  31  12  1 Kill-Perennial	CropDef.Alf_5069	{}
+11  1  12  1 Tillage	OpCropDef.MOPL	{0.152400, 1}
+}
