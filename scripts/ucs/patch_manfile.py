@@ -92,8 +92,11 @@ for huc8 in glob.glob("*"):
             manfn = "/i/7/man/%s/%s/%s.man" % (huc8, huc4, prjfn[:-4])
             data = open(manfn).read()
             # Replace bug with Alfalfa
-            data = data.replace("   184 # perennial plant date --- 7 /3",
-                                "   0 # perennial plant date --- 0 /0")
+            data = data.replace(
+                ("   184 # perennial plant date --- 7 /3\n"
+                 "   304 # perennial stop growth date --- 10/31"),
+                ("   0 # perennial plant date --- 0 /0\n"
+                 "   304 # perennial stop growth date --- 10/31"))
             pos1 = data.find("# Initial Conditions Section  #")
             pos2 = data.find("# Surface Effects Section  #")
             newinit = """# Initial Conditions Section  #
