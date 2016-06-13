@@ -1,0 +1,17 @@
+2004.1    2
+1
+Aft_6492  0
+Initial Conditions after corn was chisel plowed in fall
+After corn and chisel plow
+B.K. Gelder for Davis et al rotation
+corn, soy, oats-alfalfa, alfalfa
+Cor_0965
+1  #landuse
+1.10000 0.30000 250 80 0.10000 0.30000
+1 # mang annual
+50.00000 0.05000 0.30000 0.05000 0.00000
+1  # rtyp - temporary
+0.00000 0.00000 0.10000 0.20000 0.00000
+0.50000 0.20000
+
+
