@@ -7,9 +7,12 @@
   P - Pasture           P1          P25    IniCropDef.gra_3425
   C - Corn              C1          C25    IniCropDef.Default
   R - Other crops       R1          R25    IniCropDef.Aft_12889
-  T - ?
-  U - ?
-  X - ?
+  T - Water
+  U - Developed
+  X - Unclassified
+  I - Idle
+  L - Double Crop
+  W - Wheat
 """
 
 import psycopg2
