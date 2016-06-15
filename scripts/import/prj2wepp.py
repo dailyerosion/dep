@@ -5,6 +5,7 @@ import os
 import sys
 import glob
 import shutil
+from tqdm import tqdm
 
 SCENARIO = sys.argv[1]
 PROJDIR = "/home/akrherz/projects/idep/prj2wepp"
@@ -17,9 +18,7 @@ def main():
     os.chdir(BASEDIR)
     huc8s = glob.glob("*")
     # huc8s = ['10290101', ]
-    sz = len(huc8s)
-    for i, huc8 in enumerate(huc8s):
-        print "%04i/%04i %s" % (i+1, sz, huc8)
+    for huc8 in tqdm(huc8s):
         os.chdir(huc8)
         for huc4 in glob.glob("*"):
             huc12 = "%s%s" % (huc8, huc4)
