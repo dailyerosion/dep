@@ -238,7 +238,8 @@ if __name__ == '__main__':
     result = []
     pool = multiprocessing.Pool()
     for (df, huc12, slopes) in tqdm(pool.imap_unordered(do_huc12, huc12s),
-                                    total=len(huc12s)):
+                                    total=len(huc12s),
+                                    disable=(not sys.stdout.isatty())):
         if df is None:
             print("ERROR: huc12 %s returned 0 data" % (huc12,))
             continue
