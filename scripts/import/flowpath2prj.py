@@ -3,6 +3,7 @@ import psycopg2.extras
 import copy
 import sys
 import os
+from tqdm import tqdm
 import datetime
 from math import atan2, degrees, pi
 
@@ -19,10 +20,10 @@ for row in cursor:
     surgo2file[row[0]] = row[1]
 
 
-def get_rotation(code, maxmanagement):
+def get_rotation(zone, code, maxmanagement):
     """ Convert complex things into a simple WEPP management for now """
-    fn = "IDEP2/%s/%s/%s-%s.rot" % (code[:2], code[2:4], code,
-                                    "1" if maxmanagement == 1 else "25")
+    fn = "IDEP2/%s/%s/%s/%s-%s.rot" % (zone, code[:2], code[2:4], code,
+                                       "1" if maxmanagement == 1 else "25")
     return fn
 
 
@@ -128,7 +129,7 @@ def delete_flowpath(fid):
         print 'Whoa, delete_flowpath failed for %s' % (fid,)
 
 
-def do_flowpath(huc_12, fid, fpath):
+def do_flowpath(zone, huc_12, fid, fpath):
     """ Process a given flowpathid """
     # slope = compute_slope(fid)
     # I need bad soilfiles so that the length can be computed
@@ -271,7 +272,7 @@ def do_flowpath(huc_12, fid, fpath):
             continue
         if prevman is None or prevman != row['lstring']:
             if prevman is not None:
-                mans.append(get_rotation(prevman, maxmanagement))
+                mans.append(get_rotation(zone, prevman, maxmanagement))
                 manlengths.append(row['length'] - lmanstart)
             prevman = row['lstring']
             lmanstart = row['length']
@@ -279,7 +280,7 @@ def do_flowpath(huc_12, fid, fpath):
     if prevman is None:
         print '%s,%s has no managements, skipping' % (huc_12, fpath)
         return
-    mans.append(get_rotation(prevman, maxmanagement))
+    mans.append(get_rotation(zone, prevman, maxmanagement))
     manlengths.append(res['length'] - lmanstart)
     res['manbreaks'] = len(manlengths) - 1
     res['managements'] = ""
@@ -359,16 +360,21 @@ def main(argv):
             print("Error: dbquery found %s rows" % (cursor.rowcount,))
     else:
         cursor.execute("""
-            SELECT fpath, fid, huc_12 from flowpaths
+            SELECT ST_ymax(ST_Transform(geom, 4326)) as lat,
+            fpath, fid, huc_12 from flowpaths
             WHERE scenario = %s and fpath != 0
         """, (SCENARIO,))
-    cnt = cursor.rowcount
-    for i, row in enumerate(cursor):
-        if i % 1000 == 0:
-            print '%06i/%06i' % (i, cnt)
+    for row in tqdm(cursor, total=cursor.rowcount):
         # SLP.write("%s,%.6f\n" % (row['fid'], compute_slope(row['fid'])))
         # continue
-        data = do_flowpath(row['huc_12'], row['fid'], row['fpath'])
+        zone = "KS_NORTH"
+        if row['lat'] >= 42.5:
+            zone = "IA_NORTH"
+        elif row['lat'] >= 41.5:
+            zone = "IA_CENTRAL"
+        elif row['lat'] >= 40.5:
+            zone = "IA_SOUTH"
+        data = do_flowpath(zone, row['huc_12'], row['fid'], row['fpath'])
         if data is not None:
             write_prj(data)
 
