@@ -11,6 +11,8 @@ also do any of the following:
     python env2database.py 0 2015 02
     # reprocess 21 Feb 2015
     python env2database.py 0 2015 02 21
+    # reprocess it all
+    python env2database.py 0 all
 
 """
 import pandas as pd
@@ -66,8 +68,12 @@ def determine_dates(argv):
         res.append(today - datetime.timedelta(days=1))
     elif len(argv) == 3:
         # Option 2, we are running for an entire year, gulp
-        now = datetime.date(int(argv[2]), 1, 1)
-        ets = datetime.date(int(argv[2]) + 1, 1, 1)
+        if argv[2] == 'all':
+            now = datetime.date(2007, 1, 1)
+            ets = datetime.date.today()
+        else:
+            now = datetime.date(int(argv[2]), 1, 1)
+            ets = datetime.date(int(argv[2]) + 1, 1, 1)
         while now < ets:
             if now >= today:
                 break
