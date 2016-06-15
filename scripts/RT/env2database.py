@@ -23,6 +23,7 @@ import sys
 import unittest
 import numpy as np
 import psycopg2
+from tqdm import tqdm
 
 
 def find_huc12s():
@@ -34,7 +35,7 @@ def find_huc12s():
     return res
 
 
-def readfile(fn):
+def readfile(huc12, fn):
     df = pd.read_table(fn,
                        skiprows=3, index_col=False, delim_whitespace=True,
                        header=None, na_values=['*******', '******'],
@@ -42,14 +43,16 @@ def readfile(fn):
                               'ir_det', 'av_det', 'mx_det', 'point',
                               'av_dep', 'max_dep', 'point2', 'sed_del',
                               'er'])
-    df['hsid'] = int(fn.split("/")[-1].split(".")[0].split("_")[1])
+    key = "%s_%s" % (huc12,
+                     int(fn.split("/")[-1].split(".")[0].split("_")[1]))
+    df['delivery'] = df['sed_del'] / lengths[key]
     return df
 
 
 def do_huc12(huc12):
     """Process a huc12's worth of WEPP output files"""
     basedir = "/i/%s/env/%s/%s" % (SCENARIO, huc12[:8], huc12[8:])
-    frames = [readfile(basedir+"/"+f) for f in os.listdir(basedir)]
+    frames = [readfile(huc12, basedir+"/"+f) for f in os.listdir(basedir)]
     if len(frames) == 0:
         return None, huc12, 0
     df = pd.concat(frames)
@@ -223,6 +226,8 @@ def update_metadata(dates):
 
 if __name__ == '__main__':
     # We are ready to do stuff!
+    # We need to keep stuff in the global namespace to keep multiprocessing
+    # happy, at least I think that is the reason we do this
     SCENARIO = sys.argv[1]
     lengths = load_lengths()
     dates = determine_dates(sys.argv)
@@ -231,26 +236,16 @@ if __name__ == '__main__':
 
     # Begin the processing work now!
     result = []
-    sz = len(huc12s)
-    tm = datetime.datetime.now()
     pool = multiprocessing.Pool()
-    for i, (df, huc12, slopes) in enumerate(
-                                    pool.imap_unordered(do_huc12, huc12s), 1):
+    for (df, huc12, slopes) in tqdm(pool.imap_unordered(do_huc12, huc12s),
+                                    total=len(huc12s)):
         if df is None:
             print("ERROR: huc12 %s returned 0 data" % (huc12,))
             continue
         for date in dates:
-            df2 = df[df.date == date].copy()
-            df2['length'] = df2['hsid'].apply(
-                lambda s: lengths['%s_%s' % (huc12, s)])
-            df2['delivery'] = df2['sed_del'] / df2['length']
             qc_precip = precip[date][huc12]
-            result.append(compute_res(df2, date, huc12, slopes, qc_precip))
-        if i > 0 and i % 100 == 0:
-            secs = (datetime.datetime.now() - tm).total_seconds()
-            tm = datetime.datetime.now()
-            print(("  %s %4i/%4i %.2f huc12/s"
-                   ) % (tm.strftime("%H:%M:%S%p"), i, sz, 100. / secs))
+            result.append(compute_res(df[df.date == date], date, huc12, slopes,
+                                      qc_precip))
     df = pd.DataFrame(result)
     # Replace any NaN values with zeros
     df.fillna(0, inplace=True)
