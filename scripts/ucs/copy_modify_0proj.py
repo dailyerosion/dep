@@ -27,7 +27,7 @@ def main():
                     region = 'northern'
                 elif lat > 41.6:
                     region = 'central'
-                rotfn = "IDEP2/UCS/%s_%s.rot.tmp" % (region, ROTS[i % 4])
+                rotfn = "IDEP2/UCS/%s_%s.rot" % (region, ROTS[i % 4])
                 pos1 = old.find("Management {")
                 pos2 = old.find("RunOptions {")
                 o = open(newfn, 'w')
