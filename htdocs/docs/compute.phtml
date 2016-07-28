@@ -1,0 +1,52 @@
+<?php 
+require '../../config/settings.inc.php';
+require_once '../../include/myview.php';
+
+$t = new MyView();
+$t->title = "Computation Documentation";
+$t->content = <<<EOF
+<ol class="breadcrumb">
+		<li><a href="/">IDEP Homepage</a></li>
+		<li><a href="/docs/">Documentation</a></li>
+		<li class="active">Computation Details</li>
+</ol>
+
+<h3>Daily DEP Computation Details</h3>
+
+<p>As of July 2016, the DEP makes over 200,000 WEPP model runs each day.  The
+		WEPP model itself is a single threaded job, but thankfully only takes
+		a second to run for the 10+ years we are simulating.  Even at a one
+		second execution time, having 200k runs means that we have to implement
+		some sort of parralel execution to have all the runs complete within
+		a day (only ~100k seconds in a day!).</p>
+
+<p>DEP's goal is to have daily output from yesterday available by approximately
+		6 AM of today.  This represents a maximum time window of about six
+		hours to accomplish the following tasks:
+<br /><ul>
+		<li>Update input climate files with yesterday's data</li>
+		<li>Run the WEPP model 200k times</li>
+		<li>Process the WEPP output files and create summaries within the
+		database</li>
+	</ul></p>
+		
+<p>As of this writing, the DEP processing is done on a Dell PowerEdge R820
+		with 4 physical processors (48 threads), 256 GB of memory, and
+		two mirrored 1 TB SSD drives.  These assets permit the DEP execution
+		to complete by about 5 AM each morning.  Ironically, the most
+		computationally "expensive" component of this processing is the
+		input-output associated with the numerous ASCII files used by the
+		WEPP model.  The SSD drives allow these small operations to complete
+		with limited latency.</p>
+
+<p>The parallelization happens with a python code that launches multiple instances
+		of WEPP at the same time.  This python code uses the standard library
+		<a href="https://docs.python.org/2/library/multiprocessing.html">multiprocessing</a>
+		to <a href="https://github.com/akrherz/idep/blob/master/scripts/RT/proctor.py">proctor the runs</a>.
+		Again, the SDD drives really make this possible as the multiple jobs are
+		not stuck in iowait.</p>
+		
+EOF;
+
+$t->render('single.phtml');
+?>
