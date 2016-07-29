@@ -138,7 +138,10 @@ def load_stage4(valid):
             lats, lons = grb.latlons()
             totals = np.zeros(np.shape(lats))
         # Don't take any values over 10 inches, this is bad data
-        totals += np.where(grb['values'] < 250, grb['values'], 0)
+        values = np.where(grb['values'] < 250, grb['values'], 0)
+        # Cap any values over 4 inches to 4 inches
+        values = np.where(values > 100, 100, values)
+        totals += values
         now += datetime.timedelta(hours=1)
 
     if totals is None:
