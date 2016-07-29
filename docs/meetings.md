@@ -1,3 +1,18 @@
+ 7 Jul 2016 - DEP Update
+  Sharma, Cruse, James, Tim, Brian, Claudette
+  - Sharma was introduced and will be doing some work with Bradley Miller
+  - Liebman has a small plot on Marsden farm with some data to discuss
+  - Told the current painful story of elevated biomass with the current
+    updated crop params files
+  - [x] decided to go back to older version of plants database to get back
+    to more realistic values
+  - Need to run UCS's 3 year rotation as well
+  - MO and NE are basically done for ACPF
+  - Should have WI done for ACPF by the end of July
+  - [ ] reminded again that daryl needs to contact KS about website portal
+  - Need to submit a cost estimate of doing the eastern 1/3 of NE
+  - [ ] email brian about google analytics on the website / stats
+
  9 Jun 2016 - DEP Update
   Gelder, Cruse, Tim, James
   - Discussion of the current UCS scenario issues and I learned about having
