@@ -327,14 +327,23 @@ def bpstr(ts, accum):
                                  accum)
 
 
-def compute_breakpoint(ar):
+def compute_breakpoint(ar, accumThreshold=2., intensityThreshold=1.):
     """ Compute the breakpoint data based on this array of data!
 
-    Values are in 0.1mm increments!
+    To prevent massive ASCII text files, we do some simplification to the
+    precipitation dataset.  We want to retain the significant rates though.
+
+    Args:
+      ar (array-like): precipitation accumulations every 2 minutes...
+      accumThreshold (float): ammount of accumulation before writing bp
+      intensityThreshold (float): ammount of intensity before writing bp
+
+    Returns:
+        list(str) of breakpoint precipitation
     """
     total = np.sum(ar)
-    # Any total less than (1mm) is not of concern, might as well be zero
-    if total < 0.1:
+    # Any total less than (0.01in) is not of concern, might as well be zero
+    if total < 0.254:
         return []
     bp = None
     # in mm
@@ -350,7 +359,8 @@ def compute_breakpoint(ar):
             bp = [bpstr(ts, 0), ]
         accum += intensity
         lasti = i
-        if (accum - lastaccum) > 10:  # record every 10mm
+        if ((accum - lastaccum) > accumThreshold or
+                intensity > intensityThreshold):
             lastaccum = accum
             if (i + 1) == len(ar):
                 ts = ZEROHOUR.replace(hour=23, minute=59)

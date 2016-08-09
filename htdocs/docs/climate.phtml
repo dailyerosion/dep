@@ -13,6 +13,8 @@ $t->content = <<<EOF
 
 <h3>Climate File Documentation</h3>
 
+<a href="#bpsense">Breakpoint Sensitivity Test</a>
+		
 <h4>Dew Point</h4>
 		
 <p>WEPP climate files want daily averaged dew point.  This value is provided
@@ -42,11 +44,14 @@ $t->content = <<<EOF
 <p>The MRMS product provides intensity estimates on a 2 minute timestep.  The
 prospect of directly including these 2 minute interval data within the WEPP
 climate file would inflate the filesize and runtime.  So an algorithm is used
-to collapse down the 2 minute interval data into periods that retain
-accumulations of 10+ mm.  The result is a WEPP climate file with fewer break
+to collapse down the 2 minute interval data into periods that mostly
+retain the largest rates.  This algorithm writes breakpoints whenever
+the instantaneous 2 minute accumulatio is over 1 mm and/or the accumulated
+precipitation since the last breakpoint is 2 mm.
+The result is a WEPP climate file with fewer break
 points, but still have the peak intensities captured.  Any day without at
-least 1 mm accumulation is set to zero.  If the day accumulation was less than
-10 mm, the breakpoints used are simply the start and end timestamp of the
+least 0.254 mm accumulation is set to zero.  If the day accumulation was less than
+2 mm, the breakpoints used are simply the start and end timestamp of the
 precipitation event.</p>
 		
 <h4>Solar Radiation</h4>
@@ -81,6 +86,43 @@ observations provides these variables to WEPP.</p>
 		the wind direction is unused so is always set to north (0 degrees). The
 		averaged wind speed is provided by the
 		<a href="http://mesonet.agron.iastate.edu/iemre/">IEM Daily ReAnalysis</a>.</p>
+
+<a name="bpsense"></a>
+<h4>Sensitivity Test to Changing Breakpoint Calculation</h4>
+
+		<p>The initial choice of a 10 mm precipitation accumulation prior to
+		writing a breakpoint file was a bit arbitrary.  A sensitivity test was
+		done to investigate two options available for the breakpoint calculation
+		code:<br />
+		<ul>
+		 <li>Accumulation Threshold</li>
+		 <li>Intensity Threshold</li>
+		</ul></p>
+		
+		<p>These two parameters were varied from 1 to 20 mm, with each combination
+		producing a WEPP run for comparison.  This comparison was made for
+		11 June 2015 at longitude 94.86W and 40.84N.  Each plot shown below
+		is normalized to the maximum value found in the plot.  This allows
+		for simple relative comparison to the amount of change that existed
+		with the parameter change.</p>
+		
+		<p>This figure displays the number of breakpoints computed.</p>
+		<img src="/images/points_experiment.png" class="img img-responsive">
+
+		<p>This figure displays the WEPP computed amount of soil displacement.</p>
+		<img src="/images/loss_experiment.png" class="img img-responsive">
+		
+		<p>This figure displays the resulting largest precipitation rate
+		based on the break points generated.</p>
+		<img src="/images/maxrate_experiment.png" class="img img-responsive">
+		
+		<p>This figure displays the WEPP computed delivery.</p>
+		<img src="/images/delivery_experiment.png" class="img img-responsive">
+		
+		<p>This figure displays the WEPP computed runoff.  Interestingly, it
+		appears that runoff is not sensitive to the intensities found in
+		the climate file.</p>
+		<img src="/images/runoff_experiment.png" class="img img-responsive">
 		
 EOF;
 

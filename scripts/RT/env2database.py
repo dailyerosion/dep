@@ -24,6 +24,7 @@ import unittest
 import numpy as np
 import psycopg2
 from tqdm import tqdm
+from pyiem import dep as dep_utils
 
 
 def find_huc12s():
@@ -36,13 +37,7 @@ def find_huc12s():
 
 
 def readfile(huc12, fn):
-    df = pd.read_table(fn,
-                       skiprows=3, index_col=False, delim_whitespace=True,
-                       header=None, na_values=['*******', '******'],
-                       names=['day', 'month', 'year', 'precip', 'runoff',
-                              'ir_det', 'av_det', 'mx_det', 'point',
-                              'av_dep', 'max_dep', 'point2', 'sed_del',
-                              'er'])
+    df = dep_utils.read_env(fn)
     key = "%s_%s" % (huc12,
                      int(fn.split("/")[-1].split(".")[0].split("_")[1]))
     df['delivery'] = df['sed_del'] / lengths[key]
@@ -56,9 +51,6 @@ def do_huc12(huc12):
     if len(frames) == 0:
         return None, huc12, 0
     df = pd.concat(frames)
-    df['year'] += 2006
-    df['date'] = df[['year', 'month', 'day']].apply(
-        lambda sx: datetime.date(*[int(s) for s in sx]), axis=1)
     return df, huc12, len(frames)
 
 
