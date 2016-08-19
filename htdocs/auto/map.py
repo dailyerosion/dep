@@ -30,9 +30,9 @@ V2UNITS = {
     }
 
 
-def myjenks(array, label):
+def myjenks(array, label, sz=6):
     """Create classification breaks for the array"""
-    a = list(set(jenks(array, 6)))
+    a = list(set(jenks(array, sz)))
     # Some failures happen when number of values > 0 is less than 6
     # sys.stderr.write(label + str(a))
     a.sort()
@@ -83,6 +83,7 @@ def make_map(ts, ts2, scenario, v):
         title = "for period between %s and %s" % (ts.strftime("%-d %b %Y"),
                                                   ts2.strftime("%-d %b %Y"))
     m = MapPlot(axisbg='#EEEEEE', nologo=True, sector='custom',
+                projection='aea',
                 south=38.2, north=44.9, west=-97.7, east=-89.1,
                 title='DEP %s by HUC12 %s' % (V2NAME[v], title),
                 caption='Daily Erosion Project')
@@ -125,7 +126,7 @@ def make_map(ts, ts2, scenario, v):
     if np.max(data) < 0.05:
         bins = [0.01, 0.02, 0.03, 0.04, 0.05]
     else:
-        bins = myjenks(data, 'bah')
+        bins = myjenks(data, 'bah', len(c))
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
     for val, patch in zip(data, patches):
         c = cmap(norm([val, ]))[0]
