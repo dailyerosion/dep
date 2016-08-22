@@ -1,3 +1,20 @@
+ 4 Aug 2016 - HUD Project Discussion
+  Todey, Cruse, Gelder
+  - scope of this project work is very general
+  - discussion on if we should use generalized scenarios vs explicit downscaled
+    data, like from ARRM
+  - Gelder will have some management changes for consideration as well
+  - Looking at a 30+50 year time period
+  - Discussion with Todey about which climate change signals are the strongest
+    at the moment and can be easily implemented within the climate files
+  - management changes: NT, NT+covercrops, NT+bufferstrips
+  - Focusing on Iowa and low income water sheds
+  - Runoff is most important in this case
+  - side discussion on additional project
+   - Collaboration with Miller on which fields are most problematic
+   - The need for field scale presentation, how will this work out?
+   - contour strips
+ 
  7 Jul 2016 - DEP Update
   Sharma, Cruse, James, Tim, Brian, Claudette
   - Sharma was introduced and will be doing some work with Bradley Miller
