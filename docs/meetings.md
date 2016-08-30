@@ -1,3 +1,26 @@
+25 Aug 2016 - DEP Update
+  Claudette, Cruse, Gelder, Time, Kara, Bradley, Daniel
+  - Wisconsin ACPF is about done!
+  - there is a current struggle with a zonal stats bug in ArcGIS 10.4
+  - Some money to do 8 more counties in Nebraska has arrived
+  - For UCS, do we replace the grass/pasture rotations?
+    1) Don't do it
+    2) generate another scenario with no-till, instead of plowing
+  - [ ] daryl needs to generate that comparison map of UCS vs baseline to show
+    where changes are happening
+  - Could DEPv1 be updated to use the new crops for comparison?  (lets not)
+  - Discussion on HUD Project funded work
+   - uptopia of hill tops 
+   - distopia of hill tops without top soil
+  - "1 ton of top soil holds 93 gallons of water"
+  - 99% of Kansas Hillslopes are done, please send start points to daryl to 
+   get climatefiles updated
+  - Discussion of work done by Lakota Kurst(sp)
+  - Discussion on status of Miller Creek proposal
+  - Tim may have located a tillage and management dataset we can use for
+    validation
+  - Discussion of the new CAP proposal
+
  4 Aug 2016 - HUD Project Discussion
   Todey, Cruse, Gelder
   - scope of this project work is very general
