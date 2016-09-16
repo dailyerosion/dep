@@ -9,12 +9,12 @@ Description {
 }
 Color = 128 128 255
 LandUse = 1
-InitialConditions = IniCropDef.Aft_0154 {0.000000, 0}
+InitialConditions = IniCropDef.Alf_8188 {0.000000, 0}
 
 Operations {
 5  2  1  1 Tillage	OpCropDef.PLNTRC	{0.050800, 2}
-5  2  1  1 Plant-Annual	CropDef.Soy_2192	 {0.762000}
-10  15  1  1 Harvest-Annual	CropDef.Soy_2192	{}
+5  2  1  1 Plant-Annual	CropDef.soybean2	 {0.762000}
+10  15  1  1 Harvest-Annual	CropDef.soybean2	{}
 3  20  2  1 Tillage	OpCropDef.CRNTFRRI	{0.050800, 2}
 3  20  2  1 Plant-Annual	CropDef.Oat_2966	 {0.203200}
 7  2  2  1 Harvest-Annual	CropDef.Oat_2966	{}
@@ -23,11 +23,11 @@ Operations {
 9  1  2  1 Cut-Perennial	CropDef.Alf_5069	{}
 10  31  2  1 Kill-Perennial	CropDef.Alf_5069	{}
 4  21  3  1 Tillage	OpCropDef.PLNTRC	{0.050800, 2}
-4  21  3  1 Plant-Annual	CropDef.Cor_0965	 {0.762000}
-10  15  3  1 Harvest-Annual	CropDef.Cor_0965	{}
+4  21  3  1 Plant-Annual	CropDef.Corn	 {0.762000}
+10  15  3  1 Harvest-Annual	CropDef.Corn	{}
 5  2  4  1 Tillage	OpCropDef.PLNTRC	{0.050800, 2}
-5  2  4  1 Plant-Annual	CropDef.Soy_2192	 {0.762000}
-10  15  4  1 Harvest-Annual	CropDef.Soy_2192	{}
+5  2  4  1 Plant-Annual	CropDef.soybean2	 {0.762000}
+10  15  4  1 Harvest-Annual	CropDef.soybean2	{}
 3  20  5  1 Tillage	OpCropDef.CRNTFRRI	{0.050800, 2}
 3  20  5  1 Plant-Annual	CropDef.Oat_2966	 {0.203200}
 7  2  5  1 Harvest-Annual	CropDef.Oat_2966	{}
@@ -36,11 +36,11 @@ Operations {
 9  1  5  1 Cut-Perennial	CropDef.Alf_5069	{}
 10  31  5  1 Kill-Perennial	CropDef.Alf_5069	{}
 4  21  6  1 Tillage	OpCropDef.PLNTRC	{0.050800, 2}
-4  21  6  1 Plant-Annual	CropDef.Cor_0965	 {0.762000}
-10  15  6  1 Harvest-Annual	CropDef.Cor_0965	{}
+4  21  6  1 Plant-Annual	CropDef.Corn	 {0.762000}
+10  15  6  1 Harvest-Annual	CropDef.Corn	{}
 5  2  7  1 Tillage	OpCropDef.PLNTRC	{0.050800, 2}
-5  2  7  1 Plant-Annual	CropDef.Soy_2192	 {0.762000}
-10  15  7  1 Harvest-Annual	CropDef.Soy_2192	{}
+5  2  7  1 Plant-Annual	CropDef.soybean2	 {0.762000}
+10  15  7  1 Harvest-Annual	CropDef.soybean2	{}
 3  20  8  1 Tillage	OpCropDef.CRNTFRRI	{0.050800, 2}
 3  20  8  1 Plant-Annual	CropDef.Oat_2966	 {0.203200}
 7  2  8  1 Harvest-Annual	CropDef.Oat_2966	{}
@@ -49,6 +49,6 @@ Operations {
 9  1  8  1 Cut-Perennial	CropDef.Alf_5069	{}
 10  31  8  1 Kill-Perennial	CropDef.Alf_5069	{}
 4  21  9  1 Tillage	OpCropDef.PLNTRC	{0.050800, 2}
-4  21  9  1 Plant-Annual	CropDef.Cor_0965	 {0.762000}
-10  15  9  1 Harvest-Annual	CropDef.Cor_0965	{}
+4  21  9  1 Plant-Annual	CropDef.Corn	 {0.762000}
+10  15  9  1 Harvest-Annual	CropDef.Corn	{}
 }
