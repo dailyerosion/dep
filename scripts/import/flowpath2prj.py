@@ -202,8 +202,8 @@ def do_flowpath(zone, huc_12, fid, fpath):
     clifile = "cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (0 - x, y,
                                                        0 - x, y)
     # These scenarios use one climate file
-    if SCENARIO in [5, ]:
-        res['clifile'] = "/i/%s/cli/all.cli" % (SCENARIO, )
+    if SCENARIO in [5, 0]:
+        res['clifile'] = "/i/%s/cli/096x043/096.44x043.28.cli" % (SCENARIO, )
     else:
         res['clifile'] = "/i/%s/%s" % (SCENARIO, clifile)
 

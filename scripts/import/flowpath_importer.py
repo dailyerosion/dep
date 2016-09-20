@@ -57,7 +57,7 @@ def process(fn, df):
     huc8 = huc12[:-4]
     prefix = 'g4'
     flowpaths = Series(df['%s%s' % (prefix, huc8)]).unique()
-    flowpaths.sort()
+    flowpaths.sort_values()
     for flowpath in flowpaths:
         df2 = df[df['%s%s' % (prefix, huc8)] == flowpath]
         df2 = df2.sort('%sLen%s' % (prefix, huc8[:5]), ascending=True)
@@ -70,9 +70,9 @@ def process(fn, df):
         for segid, row in enumerate(df2.iterrows()):
             row = df2.irow(segid)
             if (segid+1) == sz:  # Last row!
-                row2 = df2.irow(segid-1)
+                row2 = df2.iloc[segid-1]
             else:
-                row2 = df2.irow(segid+1)
+                row2 = df2.iloc[segid+1]
             dy = row['ep3m%s' % (huc8[:6],)] - row2['ep3m%s' % (huc8[:6],)]
             dx = (row2['%sLen%s' % (prefix, huc8[:5])] -
                   row['%sLen%s' % (prefix, huc8[:5])])
