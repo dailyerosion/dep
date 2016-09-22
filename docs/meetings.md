@@ -1,3 +1,28 @@
+22 Sep 2016 - DEP Planning
+  Claudette, Chen, Gelder, Sharma, Cruse, Bates, Tim, Miller, James, Mario
+  - Bates and Miller will be helping us with project management and reporting
+  - ACPF work has gotten started in MN
+  - Some counties have been found to have missing CLU data, it is unclear why
+    that is and will require some more digging
+  - Discussion of Dr Chen's work and his input data needs for China
+  - NE China has lots of soybeans that are ridge till up the hill slope
+  - Some counties in Wisconsin have missing LIDAR coverage
+  - For KS, the area around Fort Riley will be a hole in DEP
+  - Gelder believes that hard drives with MN LIDAR are now in the mail
+  - Dr Sharma presented some of her work on water holding capacity
+  - Discussion of getting some final data out for the UCS report and the no
+    cost extension with that work
+  - [ ] should have a DEP version with everything as no-till
+  - Need to have a write up with the tillage classification that Gelder did
+  - Miller Creek work was not funded.
+  - NE project got funded for 8 more counties there
+  - Discussion about what will be done with irrigation
+  - Discussion of DEP project management needs and to keep accounting straight
+  - A handout for me to complete with deliverables and what not
+  - E-Val, a Theresa Nelson toolbox project?
+  - Wisconsin PTM project
+  - multi-state phosophoros efforts
+
 25 Aug 2016 - DEP Update
   Claudette, Cruse, Gelder, Time, Kara, Bradley, Daniel
   - Wisconsin ACPF is about done!
