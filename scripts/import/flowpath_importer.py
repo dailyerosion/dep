@@ -1,4 +1,4 @@
-'''
+"""
 We need to process the DBF files Brian provides, please!
 
 smpl102802010406.dbf
@@ -10,8 +10,7 @@ smpl102802010406.dbf
   fpLen10280    flow path length in cm
   GenLU10280    land use code
   gSSURGO       soils code
-
-'''
+"""
 
 import dbflib
 import glob
@@ -57,10 +56,10 @@ def process(fn, df):
     huc8 = huc12[:-4]
     prefix = 'g4'
     flowpaths = Series(df['%s%s' % (prefix, huc8)]).unique()
-    flowpaths.sort_values()
+    flowpaths.sort()
     for flowpath in flowpaths:
         df2 = df[df['%s%s' % (prefix, huc8)] == flowpath]
-        df2 = df2.sort('%sLen%s' % (prefix, huc8[:5]), ascending=True)
+        df2 = df2.sort_values('%sLen%s' % (prefix, huc8[:5]), ascending=True)
         fid = get_flowpath(huc12, flowpath)
         cursor.execute("""DELETE from flowpath_points WHERE flowpath = %s
             and scenario = %s""",
@@ -68,7 +67,7 @@ def process(fn, df):
         lstring = []
         sz = len(df2.index)
         for segid, row in enumerate(df2.iterrows()):
-            row = df2.irow(segid)
+            row = df2.iloc[segid]
             if (segid+1) == sz:  # Last row!
                 row2 = df2.iloc[segid-1]
             else:
@@ -92,11 +91,15 @@ def process(fn, df):
                 %s, %s, %s, %s, 'SRID=26915;POINT(%s %s)',
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """
+            # OK, be careful here.  the landuse codes start in 2008 as there
+            # is no national coverage in 2007.  So for 2007, we will repeat
+            # the value for 2009.
+            # no 2016 data, so repeat 2014 value
             args = (fid, segid, row['ep3m%s' % (huc8[:6],)]/100.,
                     row['%sLen%s' % (prefix, huc8[:5])]/100.,
                     row['gSSURGO'], row['Management'], slope, row['X'],
-                    row['Y'], lu[0], lu[1], lu[2],
-                    lu[3], lu[4], lu[5], lu[6], lu[7], lu[0], lu[1],
+                    row['Y'], lu[1], lu[0], lu[1], lu[2],
+                    lu[3], lu[4], lu[5], lu[6], lu[7], lu[6],
                     SCENARIO)
             cursor.execute(sql, args)
 
