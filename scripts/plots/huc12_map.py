@@ -10,23 +10,36 @@ DBCONN = psycopg2.connect(database='idep', host='iemdb', user='nobody')
 cursor = DBCONN.cursor()
 
 
+threshold = 2
 m = MapPlot(sector='iowa', axisbg='white', nologo=True,
             subtitle='1 Jan 2013 thru 27 September 2016',
-            title='DEP Calendar Days with HUC12 Precip >= 2 inches')
+            title=('DEP Two Days with HUC12 Precip Total >= %s inches'
+                   ) % (threshold,))
 
 cursor.execute("""
  WITH data as (
-    select huc_12, count(*) as val from results_by_huc12 where scenario = 0
-    and qc_precip > (25.4 * 2) and valid > '2013-01-01'
+    select huc_12, qc_precip,
+      qc_precip +
+      lag(qc_precip) OVER (PARTITION by huc_12 ORDER by valid ASC) as p1,
+      qc_precip +
+      lead(qc_precip) OVER (PARTITION by huc_12 ORDER by valid ASC) as p2,
+      valid,
+      lag(valid) OVER (PARTITION by huc_12 ORDER by valid ASC) as lag_valid,
+      lead(valid) OVER (PARTITION by huc_12 ORDER by valid ASC) as lead_valid
+    from results_by_huc12 where scenario = 0
+    and valid > '2013-01-01'
+), agg as (
+    SELECT huc_12, count(*) as val
+    from data where p1 > (%s * 25.4) and p2 < (%s * 25.4)
     GROUP by huc_12
 )
 
- SELECT ST_Transform(simple_geom, 4326), data.val
- from huc12 i JOIN data on (data.huc_12 = i.huc_12) ORDER by val DESC
+ SELECT ST_Transform(simple_geom, 4326), d.val
+ from huc12 i JOIN agg d on (d.huc_12 = i.huc_12) ORDER by val DESC
 
-""")
+""", (threshold, threshold))
 
-bins = np.arange(0, 19, 3)
+bins = np.arange(0, 29, 4)
 cmap = nwsprecip()
 cmap.set_under('white')
 cmap.set_over('black')
