@@ -32,7 +32,7 @@ def two(year):
         icursor.execute("""
             select huc_12 from huc12
             where ST_Contains(geom,
-            ST_Transform(ST_SetSRID(ST_Point(%s, %s), 4326), 26915))
+            ST_Transform(ST_SetSRID(ST_Point(%s, %s), 4326), 5070))
             and scenario = 0
         """, (lon, lat))
         if icursor.rowcount == 0:

@@ -72,7 +72,7 @@ def do(dt, dt2):
     del(shp)
     del(dbf)
 
-    shutil.copyfile("/mesonet/www/apps/iemwebsite/data/gis/meta/26915.prj",
+    shutil.copyfile("/mesonet/www/apps/iemwebsite/data/gis/meta/5070.prj",
                     fn+".prj")
     z = zipfile.ZipFile(fn+".zip", 'w', zipfile.ZIP_DEFLATED)
     suffixes = ['shp', 'shx', 'dbf', 'prj']

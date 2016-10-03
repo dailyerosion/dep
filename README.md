@@ -1,6 +1,9 @@
 idep
 ====
 
+Our work is transitioning to use the projection EPSG:5070 for all GIS work, this
+is the USGS CONUS Albers. 
+
 Things to show
  - June 11, 2008 144.12 T/A !
 

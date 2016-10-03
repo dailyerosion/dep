@@ -4,8 +4,10 @@ We need to process the DBF files Brian provides, please!
 smpl102802010406.dbf
 
   fp10280201
-  X             26915
-  Y             26915
+  X             5070
+  Y             5070
+  POINT_X       4326
+  POINT_Y       4326
   ec3m102802    elevation in cm
   fpLen10280    flow path length in cm
   GenLU10280    land use code
@@ -58,6 +60,9 @@ def process(fn, df):
     flowpaths = Series(df['%s%s' % (prefix, huc8)]).unique()
     flowpaths.sort()
     for flowpath in flowpaths:
+        # never do flowpath zero!
+        if flowpath == 0:
+            continue
         df2 = df[df['%s%s' % (prefix, huc8)] == flowpath]
         df2 = df2.sort_values('%sLen%s' % (prefix, huc8[:5]), ascending=True)
         fid = get_flowpath(huc12, flowpath)
@@ -88,7 +93,7 @@ def process(fn, df):
                 lu2007, lu2008, lu2009, lu2010, lu2011, lu2012, lu2013,
                 lu2014, lu2015, lu2016, scenario)
                 values(%s, %s , %s,
-                %s, %s, %s, %s, 'SRID=26915;POINT(%s %s)',
+                %s, %s, %s, %s, 'SRID=5070;POINT(%s %s)',
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """
             # OK, be careful here.  the landuse codes start in 2008 as there
@@ -106,7 +111,7 @@ def process(fn, df):
             lstring.append("%s %s" % (row['X'], row['Y']))
 
         if len(lstring) > 1:
-            sql = """UPDATE flowpaths SET geom = 'SRID=26915;LINESTRING(%s)'
+            sql = """UPDATE flowpaths SET geom = 'SRID=5070;LINESTRING(%s)'
                 WHERE fid = %s and scenario = %s""" % (",".join(lstring), fid,
                                                        SCENARIO)
             cursor.execute(sql)
