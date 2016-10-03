@@ -20,16 +20,16 @@ nt = {10: '(no-till)', 11: '(no-till)'}
 threshold = 2
 m = MapPlot(sector='iowa', axisbg='white', nologo=True,
             subtitle='1 Jan 2008 thru 31 Dec 2015',
-            title=('UCS %s Year %s Scenario Percent Erosion Loss Change from Baseline'
+            title=('UCS %s Year %s Scenario Change in Soil Delivery from Baseline'
                    ) % (titles2[scenario], nt.get(scenario, '')))
 
 cursor.execute("""
 with baseline as (
-    SELECT huc_12, sum(avg_loss) * 4.463 as loss from results_by_huc12
+    SELECT huc_12, sum(avg_delivery) * 4.463 as loss from results_by_huc12
     where valid between '2008-01-01' and '2016-01-01' and
     scenario = 0 GROUP by huc_12),
 scenario as (
-    SELECT huc_12, sum(avg_loss) * 4.463 as loss from results_by_huc12
+    SELECT huc_12, sum(avg_delivery) * 4.463 as loss from results_by_huc12
     where valid between '2008-01-01' and '2016-01-01' and
     scenario = %s GROUP by huc_12),
 agg as (
@@ -37,13 +37,13 @@ agg as (
     baseline b LEFT JOIN scenario s on (b.huc_12 = s.huc_12))
 
  SELECT ST_Transform(simple_geom, 4326),
- (scenario_loss  - baseline_loss) / baseline_loss * 100. as val
+ (scenario_loss  - baseline_loss) / 8.0 as val
  from huc12 i JOIN agg d on (d.huc_12 = i.huc_12) ORDER by val DESC
 
 """, (scenario, ))
 
 # bins = np.arange(0, 101, 10)
-bins = [-100, -75, -50, -25, 0, 25, 50, 75, 100]
+bins = [-25, -10, -5, -2, 0, 2, 5, 10, 25]
 cmap = plt.get_cmap("BrBG_r")  # nwsprecip()
 cmap.set_under('white')
 cmap.set_over('black')
@@ -62,7 +62,7 @@ for row in cursor:
     patches.append(p)
 
 m.ax.add_collection(PatchCollection(patches, match_original=True))
-m.draw_colorbar(bins, cmap, norm, units='%')
+m.draw_colorbar(bins, cmap, norm, units='T/a')
 
 m.drawcounties()
 m.postprocess(filename='test.png')
