@@ -84,7 +84,7 @@ def make_map(ts, ts2, scenario, v):
                                                   ts2.strftime("%-d %b %Y"))
     m = MapPlot(axisbg='#EEEEEE', nologo=True, sector='custom',
                 projection='aea',
-                south=38.2, north=44.9, west=-97.7, east=-89.1,
+                south=37.4, north=44.9, west=-99.2, east=-89.1,
                 title='DEP %s by HUC12 %s' % (V2NAME[v], title),
                 caption='Daily Erosion Project')
 
