@@ -1,3 +1,21 @@
+20 Oct 2016 - DEP Planning
+  Claudette, Miller, Bates, Cruse, Gelder, Chen
+  - Discussion about our usage of trello to track projects within DEP
+  - The HUD project will have some initially interesting timelines and require
+    quarterly reporting
+  - Hanna noted that daryl could request a waiver to get PI status
+  - ACPF in WI is now done
+  - discussion again about what to do about missing data in two counties in MN
+  - Gelder noted the fun that is cross state HUC12s and merging DEMs
+  - [ ] at some point, daryl needs to provide county level estimates
+  - UCS draft report was delivered and there will be a followup call
+  - A new tillage map by Gelder is eventually coming
+  - The Baker council presentation went well
+  - Maybe planning a trip to Iowa City on 3 November to meet with IFC
+  - [ ] seed the memcache maps on the homepage, to avoid lame spinners
+  - [ ] still need to fix the loading spinners for cached images, sigh
+  - Discussion of China work, the need to model gullies is very important
+
 22 Sep 2016 - DEP Planning
   Claudette, Chen, Gelder, Sharma, Cruse, Bates, Tim, Miller, James, Mario
   - Bates and Miller will be helping us with project management and reporting
