@@ -2,5 +2,5 @@
 date_default_timezone_set('America/Chicago');
 
 // Hostname providing Tile Map Service
-define("TMS_SERVER", "http://mesonet.agron.iastate.edu");
+define("TMS_SERVER", "https://mesonet.agron.iastate.edu");
 ?>
