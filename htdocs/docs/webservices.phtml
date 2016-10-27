@@ -19,8 +19,10 @@ $t->content = <<<EOF
 		<a href="/map/">map interface</a> found on this website.  You can use
 		this service as well and here is the documentation for it:</p>
 
+<p>The web server provides data on HTTPS-Only and sets the proper CORS header
+		to allow cross site requests.</p>
 <p>
-<code>http://dailyerosion.org/geojson/huc12.py?</code>
+<code>https://dailyerosion.org/geojson/huc12.py?</code>
 
 		<br />HTTP GET options:<br />
 		<ul>
@@ -41,15 +43,15 @@ $t->content = <<<EOF
 	<h4>Examples</h4>
 		
 		<p>Return all HUC12 results for 5 June 2016<br />
-		<code>http://dailyerosion.org/geojson/huc12.py?date=2016-06-05</code>
+		<code>https://dailyerosion.org/geojson/huc12.py?date=2016-06-05</code>
 	</p>
 
 		<p>Return Minnesota HUC12 results for 5 June 2016<br />
-		<code>http://dailyerosion.org/geojson/huc12.py?date=2016-06-05&amp;domain=MN</code>
+		<code>https://dailyerosion.org/geojson/huc12.py?date=2016-06-05&amp;domain=MN</code>
 	</p>
 		
 		<p>Return Kansas HUC12 totals for all of 2016<br />
-		<code>http://dailyerosion.org/geojson/huc12.py?date=2016-01-01&amp;domain=KS&amp;date2=2016-12-31</code>
+		<code>https://dailyerosion.org/geojson/huc12.py?date=2016-01-01&amp;domain=KS&amp;date2=2016-12-31</code>
 	</p>
 		
 EOF;
