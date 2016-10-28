@@ -21,6 +21,7 @@ $t->content = <<<EOF
 
 <p>The web server provides data on HTTPS-Only and sets the proper CORS header
 		to allow cross site requests.</p>
+
 <p>
 <code>https://dailyerosion.org/geojson/huc12.py?</code>
 
@@ -53,6 +54,21 @@ $t->content = <<<EOF
 		<p>Return Kansas HUC12 totals for all of 2016<br />
 		<code>https://dailyerosion.org/geojson/huc12.py?date=2016-01-01&amp;domain=KS&amp;date2=2016-12-31</code>
 	</p>
+
+<h3>GeoJSON Attributes:</h3>
+
+<p><code>avg_loss</code>: Average sheet and rill soil detachment.  This is not
+		necessarily soil delivered to the bottom of the modelled hillslope.
+		[tons per acre]</p>
+<p><code>avg_delivery</code>: Average sheet and rill soil delivery to the
+		bottom of the hillslope.
+		[tons per acre]</p>
+<p><code>qc_precip</code>: HUC12 averaged precipitation for the CST/CDT local
+		day.
+		[inches]</p>
+<p><code>avg_runoff</code>: HUC12 averaged runoff.  The depth of water delivered
+		to the bottom of the modelled hillslope.
+		[inches]</p>
 		
 EOF;
 
