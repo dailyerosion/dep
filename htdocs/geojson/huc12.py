@@ -87,19 +87,10 @@ def do(ts, ts2, domain):
                                         avg_runoff=row[5]),
                                     geometry=json.loads(row[0])
                                     ))
-    res['features'].insert(0, dict(type="Feature",
-                                   id='jenks',
-                                   properties=dict(
-                                        avg_loss=myjenks(avg_loss,
-                                                         'avg_loss'),
-                                        qc_precip=myjenks(qc_precip,
-                                                          'qc_precip'),
-                                        avg_delivery=myjenks(avg_delivery,
-                                                             'avg_delivery'),
-                                        avg_runoff=myjenks(avg_runoff,
-                                                           'avg_runoff')),
-                                   geometry=None
-                                   ))
+    res['jenks'] = dict(avg_loss=myjenks(avg_loss, 'avg_loss'),
+                        qc_precip=myjenks(qc_precip, 'qc_precip'),
+                        avg_delivery=myjenks(avg_delivery, 'avg_delivery'),
+                        avg_runoff=myjenks(avg_runoff, 'avg_runoff'))
     return json.dumps(res)
 
 

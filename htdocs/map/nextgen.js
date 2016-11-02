@@ -239,33 +239,38 @@ function rerender_vectors(){
 }
 
 function remap(){
-	// console.log("remap() called"+ detailedFeature);
+	//console.log("remap() called"+ detailedFeature);
 	if (appstate.date2 != null && appstate.date2 <= appstate.date){
 		setStatus("Please ensure that 'To Date' is later than 'Date'");
 		return;
 	}
 	setStatus("Fetching new data to display...");
-	levels = [];
-	var newsource = new ol.source.Vector({
+	$.ajax({
 		url: getGeoJSONURL(),
-		format: geojsonFormat
-	});
-	// We should replace the detailed feature with new information, so that
-	// the mouseover does not encounter this old information
-	newsource.on('change', function(){
-		if (detailedFeature){
-			clickOverlayLayer.getSource().removeFeature(detailedFeature);
-			detailedFeature = vectorLayer.getSource().getFeatureById(detailedFeature.getId());
-			clickOverlayLayer.getSource().addFeature(detailedFeature);
+		dataType: 'json',
+		success: function(json){
+			// clear out old content
+			vectorLayer.getSource().clear();
+
+			levels = json.jenks[appstate.ltype];
+			drawColorbar();
+			
+			vectorLayer.getSource().addFeatures(
+					new ol.format.GeoJSON().readFeatures(json, {
+                            featureProjection: ol.proj.get('EPSG:3857')
+                    })
+			);
+			if (detailedFeature){
+				clickOverlayLayer.getSource().removeFeature(detailedFeature);
+				detailedFeature = vectorLayer.getSource().getFeatureById(detailedFeature.getId());
+				clickOverlayLayer.getSource().addFeature(detailedFeature);
+				updateDetails(detailedFeature.getId());
+			}
+			drawColorbar();
+			setStatus(IDLE);
 		}
-		drawColorbar();
-		setStatus(IDLE);
 	});
-	vectorLayer.setSource(newsource);
 	setTitle();
-	if (detailedFeature){
-		updateDetails(detailedFeature.getId());
-	}
 	setWindowHash();
 }
 function setYearInterval(syear){
@@ -560,25 +565,13 @@ $(document).ready(function(){
 		  })
 		});
 
-	var vs = new ol.source.Vector({
-		  url: getGeoJSONURL(),
-		  format: geojsonFormat
-	});
-	vs.on('change', function(){
-		if (detailedFeatureIn){
-			makeDetailedFeature(this.getFeatureById(detailedFeatureIn));
-			detailedFeatureIn = null;
-		}
-		
-	});
 	vectorLayer = new ol.layer.Vector({
 		title : 'DEP Data Layer',
-		  source: vs,
+		source: new ol.source.Vector({
+            format: new ol.format.GeoJSON(),
+            projection : ol.proj.get('EPSG:4326')
+		}),
 		  style: function(feature, resolution) {
-			if (levels.length == 0){
-				levels = vectorLayer.getSource().getFeatureById('jenks').get(appstate.ltype);
-				drawColorbar();
-			}
 			
 			  val = feature.get(appstate.ltype);
 			  var c = 'rgba(255, 255, 255, 0)'; //hallow
@@ -626,7 +619,7 @@ $(document).ready(function(){
         	make_iem_tms('HUC 8', 'iahuc8-900913', false)
         ],
         view: new ol.View({
-                projection: 'EPSG:3857',
+                projection: ol.proj.get('EPSG:3857'),
                 center: defaultCenter,
                 zoom: defaultZoom
         })
@@ -851,7 +844,7 @@ $(document).ready(function(){
     });
     
     
-    setTitle();
+    remap();
     // Make the map 6x4
     sz = map.getSize();
     map.setSize([sz[0], sz[0] / 6. * 4.]);
