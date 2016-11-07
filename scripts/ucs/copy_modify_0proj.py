@@ -1,11 +1,18 @@
-"""Copy and modify the scenario 0 prj files"""
+"""Copy and modify the scenario 0 prj files
+
+7 -> 4 year rotation
+9 -> 3 year rotation
+"""
 import glob
 import os
 import re
 
-CLIFILE = re.compile("File = \"/i/7/cli/...x.../...\...x(...\...)\.cli")
+SCENARIO = 11
+CLIFILE = re.compile(("File = \"/i/%s/cli/...x.../...\...x(...\...)\.cli"
+                      ) % (SCENARIO,))
 LENGTH = re.compile("Length = (\d+\.\d+)")
-ROTS = ['AACS', 'ACSA', 'CSAA', 'SAAC']
+# ROTS = ['CSOA', 'OACS', 'SOAC']
+ROTS = ['CSO', 'OCS', 'SOC']
 
 
 def main():
@@ -17,8 +24,8 @@ def main():
         for huc4 in glob.glob("*"):
             os.chdir(huc4)
             for fn in glob.glob("*.prj"):
-                newfn = "/i/7/prj/%s/%s/%s" % (huc8, huc4, fn)
-                old = open(fn).read().replace("/i/0/", "/i/7/")
+                newfn = "/i/%s/prj/%s/%s/%s" % (SCENARIO, huc8, huc4, fn)
+                old = open(fn).read().replace("/i/0/", "/i/%s/" % (SCENARIO,))
                 l = LENGTH.findall(old)
                 res = CLIFILE.findall(old)
                 lat = float(res[0])
@@ -27,7 +34,9 @@ def main():
                     region = 'northern'
                 elif lat > 41.6:
                     region = 'central'
-                rotfn = "IDEP2/UCS/%s_%s.rot" % (region, ROTS[i % 4])
+                # using the legacy crops, not region specific
+                rotfn = "IDEP2/UCS/%s_%s.rot" % ("oldcrop2",
+                                                 ROTS[i % len(ROTS)])
                 pos1 = old.find("Management {")
                 pos2 = old.find("RunOptions {")
                 o = open(newfn, 'w')
