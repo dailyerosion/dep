@@ -11,8 +11,9 @@
   U - Developed
   X - Unclassified
   I - Idle
-  L - Double Crop
+  L - Double Crop  (started previous year)
   W - Wheat
+  N - ???  *see 27 Sep 2016 email from dave, it is unused, so treat as I*
 """
 
 import psycopg2
@@ -30,14 +31,10 @@ if len(sys.argv) == 2:
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor()
 
-INITIAL_COND = {'B': 'IniCropDef.Default',
-                'F': 'IniCropDef.Tre_2239',
+# Note that the default used below is
+INITIAL_COND_DEFAULT = 'IniCropDef.Default'
+INITIAL_COND = {'F': 'IniCropDef.Tre_2239',
                 'P': 'IniCropDef.gra_3425',
-                'G': None,
-                'C': 'IniCropDef.Default',
-                'T': 'IniCropDef.Default',
-                'U': 'IniCropDef.Default',
-                'X': 'IniCropDef.Default',
                 'R': 'IniCropDef.Aft_12889',
                 }
 SOYBEAN_PLANT = {
@@ -86,13 +83,13 @@ def read_file(zone, code, cfactor, year):
         pdate = d.strftime("%m    %d")
         pdatem5 = (d - datetime.timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (d - datetime.timedelta(days=10)).strftime("%m    %d")
-        plant = CORN[zone]
+        plant = "CropDef.Corn"  # CORN[zone]
     elif code == 'B':
         d = SOYBEAN_PLANT[zone]
         pdate = d.strftime("%m    %d")
         pdatem5 = (d - datetime.timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (d - datetime.timedelta(days=10)).strftime("%m    %d")
-        plant = SOYBEAN[zone]
+        plant = "CropDef.soybean2"  # SOYBEAN[zone]
     return data % {'yr': year, 'pdate': pdate, 'pdatem5': pdatem5,
                    'pdatem10': pdatem10, 'plant': plant}
 
@@ -106,12 +103,11 @@ def do_rotation(zone, code, cfactor):
     fn = "%s/%s-%s.rot" % (dirname, code, cfactor)
     if not OVERWRITE and os.path.isfile(fn):
         return
-
     data = {}
     data['date'] = datetime.datetime.now()
     data['code'] = code
     data['name'] = "%s-%s" % (code, cfactor)
-    data['initcond'] = INITIAL_COND[code[0]]
+    data['initcond'] = INITIAL_COND.get(code[0], INITIAL_COND_DEFAULT)
     data['year1'] = read_file(zone, code[0], cfactor, 1)  # 2007
     data['year2'] = read_file(zone, code[1], cfactor, 2)  # 2008
     data['year3'] = read_file(zone, code[2], cfactor, 3)  # 2009
@@ -122,6 +118,7 @@ def do_rotation(zone, code, cfactor):
     data['year8'] = read_file(zone, code[7], cfactor, 8)  # 2014
     data['year9'] = read_file(zone, code[8], cfactor, 9)  # 2015
     data['year10'] = read_file(zone, code[9], cfactor, 10)  # 2016
+    data['year11'] = read_file(zone, code[10], cfactor, 11)  # 2017
 
     o = open(fn, 'w')
     o.write("""#
@@ -148,6 +145,7 @@ Operations {
 %(year8)s
 %(year9)s
 %(year10)s
+%(year11)s
 }
 """ % data)
     o.close()
@@ -162,7 +160,7 @@ def main():
 
     SELECT np.lat,
         lu2007 || lu2008 || lu2009 || lu2010 || lu2011 || lu2012 || lu2013
-        || lu2014 || lu2015 || lu2016
+        || lu2014 || lu2015 || lu2016 || lu2017
         from flowpath_points p, np WHERE p.flowpath = np.fid and
         scenario = %s""", (SCENARIO, SCENARIO))
     for row in tqdm(cursor, total=cursor.rowcount):
