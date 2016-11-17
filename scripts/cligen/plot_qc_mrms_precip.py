@@ -7,10 +7,7 @@ import datetime
 import numpy as np
 import os
 import matplotlib.cm as cm
-SOUTH = 36.9
-NORTH = 44.9
-EAST = -90.0
-WEST = -99.2
+from pyiem.dep import SOUTH, NORTH, EAST, WEST
 YS = np.arange(SOUTH, NORTH, 0.01)
 XS = np.arange(WEST, EAST, 0.01)
 

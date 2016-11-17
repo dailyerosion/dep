@@ -124,11 +124,9 @@ def load_precip(dates, huc12s):
 
         SELECT huc_12, ST_x(g), ST_y(g) from centers
     """, (SCENARIO, ))
-    SOUTH = 36.9
-    WEST = -99.2
     for row in icursor:
-        y = int((row[2] - SOUTH) * 100.)
-        x = int((row[1] - WEST) * 100.)
+        y = int((row[2] - dep_utils.SOUTH) * 100.)
+        x = int((row[1] - dep_utils.WEST) * 100.)
         huc12_centroids[row[0]] = [y, x]
     res = {}
     for date in dates:

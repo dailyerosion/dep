@@ -17,22 +17,19 @@ from pyiem import iemre
 from scipy.interpolate import NearestNDInterpolator
 from pyiem.datatypes import temperature
 from multiprocessing import Pool
+from pyiem.dep import SOUTH, NORTH, EAST, WEST
 import unittest
 
 SCENARIO = sys.argv[1]
-SOUTH = 36.9
-NORTH = 44.9
-EAST = -90.0
-WEST = -99.2
 YS = int((NORTH - SOUTH) * 100.)
 XS = int((EAST - WEST) * 100.)
-high_temp = np.zeros((YS, XS+1))
-low_temp = np.zeros((YS, XS+1))
-dewpoint = np.zeros((YS, XS+1))
-wind = np.zeros((YS, XS+1))
-solar = np.zeros((YS, XS+1))
-precip = np.zeros((30*24, YS, XS+1))
-stage4 = np.zeros((YS, XS+1))
+high_temp = np.zeros((YS, XS), np.float16)
+low_temp = np.zeros((YS, XS), np.float16)
+dewpoint = np.zeros((YS, XS), np.float16)
+wind = np.zeros((YS, XS), np.float16)
+solar = np.zeros((YS, XS), np.float16)
+precip = np.zeros((30*24, YS, XS), np.float16)
+stage4 = np.zeros((YS, XS), np.float16)
 
 # used for breakpoint logic
 ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
@@ -176,7 +173,7 @@ def qc_precip():
     # (myx, myy) = get_xy_from_lonlat(-91.44, 41.28)
     # print myx, myy
     for y in range(YS):
-        for x in range(XS+1):
+        for x in range(XS):
             # if x == myx and y == myy:
             #    print precip[:, y, x]
             if ratio[y, x] < 1.3:
@@ -221,7 +218,7 @@ def load_precip_legacy(valid):
     left = int((WEST - -126.) * 100.)
 
     now = midnight
-    m5 = np.zeros((ts, YS, XS+1))
+    m5 = np.zeros((ts, YS, XS), np.float16)
     tidx = 0
     # Load up the n0r data, every 15 minutes
     while now < tomorrow:
@@ -246,7 +243,7 @@ def load_precip_legacy(valid):
         tidx += 1
 
     for y in range(YS):
-        for x in range(XS + 1):
+        for x in range(XS):
             s4total = stage4[y, x]
             # skip 1 mm precipitation
             if s4total < 1:
