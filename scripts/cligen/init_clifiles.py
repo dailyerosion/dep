@@ -12,11 +12,12 @@ import shutil
 SRC = "/i/0/cli/095x038/095.17x038.13.cli"
 SCENARIO = 0
 
+WANTS = ['.00', '.25', '.50', '.75']
 created = 0
 for lon in np.arange(WEST, EAST, 0.05):
     for lat in np.arange(SOUTH, NORTH, 0.05):
-        if (("%.2f" % (lon,)).endswith(".25") and
-                ("%.2f" % (lat,)).endswith(".25")):
+        if (("%.2f" % (lon,))[-3:] in WANTS and
+                ("%.2f" % (lat,))[-3:] in WANTS):
             mydir = "/i/%s/cli/%03.0fx%03.0f" % (SCENARIO, 0 - lon, lat)
             if not os.path.isdir(mydir):
                 os.makedirs(mydir)
