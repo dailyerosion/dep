@@ -1,3 +1,20 @@
+17 Nov 2016 - DEP Planning
+  James, Gelder, Cruse, Miller, MMiller, Bates
+  - Dave has 750 watersheds in WI now done
+  - [x] need to complete the climate file generalized expansion to allow for
+    easier hot starting newly expanded DEP areas
+  - No updated on the missing data for two counties in MN
+  - MN updates won't happen until after the Erie Basin work is done
+  - [x] http://northcentralwater.org/acpf/, email this to Tim M
+  - Discussion about sending the KS processed LIDAR data to the GIS Lab
+  - The HUD paper is coming along
+  - We need to get the grid order work done for the paper
+  - flowpaths for this work will be the same, daryl just has some processing
+    to do
+  - We shall do grid order 1 thru 6, production is four
+  - Discussion about doing dynamic flowpaths, daryl shutters
+  - Need to complete some work on stacked practices for the Nutrient Center
+
 20 Oct 2016 - DEP Planning
   Claudette, Miller, Bates, Cruse, Gelder, Chen
   - Discussion about our usage of trello to track projects within DEP
