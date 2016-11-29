@@ -18,3 +18,5 @@ ALTER TABLE huc12
  
 DROP TABLE ia_huc8;
 DROP TABLE hillslopes;
+
+ALTER TABLE huc12 add ugc char(6);
