@@ -2,4 +2,4 @@ PATH=$PATH:/home/mesonet/bin
 # 
 # crontab entry for the IDEP realtime work
 # Wait till 53 after so that the stage IV file for 11PM is in
-53 00 * * * cd /mesonet/www/apps/idep/scripts; sh MASTER.sh
+53 00 * * * cd /opt/dep/scripts; sh MASTER.sh
