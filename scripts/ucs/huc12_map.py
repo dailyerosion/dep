@@ -1,4 +1,4 @@
-from pyiem.plot import MapPlot, nwsprecip
+from pyiem.plot import MapPlot
 from shapely.wkb import loads
 import psycopg2
 import sys
@@ -20,7 +20,8 @@ nt = {10: '(no-till)', 11: '(no-till)'}
 threshold = 2
 m = MapPlot(sector='iowa', axisbg='white', nologo=True,
             subtitle='1 Jan 2008 thru 31 Dec 2015',
-            title=('UCS %s Year %s Scenario Change in Soil Delivery from Baseline'
+            title=('UCS %s Year %s Scenario Change in Soil Delivery '
+                   'from Baseline'
                    ) % (titles2[scenario], nt.get(scenario, '')))
 
 cursor.execute("""
@@ -37,15 +38,16 @@ agg as (
     baseline b LEFT JOIN scenario s on (b.huc_12 = s.huc_12))
 
  SELECT ST_Transform(simple_geom, 4326),
- (scenario_loss  - baseline_loss) / 8.0 as val
- from huc12 i JOIN agg d on (d.huc_12 = i.huc_12) ORDER by val DESC
+ (scenario_loss  - baseline_loss) / 8.0 as val, i.huc_12
+ from huc12 i JOIN agg d on (d.huc_12 = i.huc_12)
+ WHERE i.states ~* 'IA' ORDER by val DESC
 
 """, (scenario, ))
 
 # bins = np.arange(0, 101, 10)
 bins = [-25, -10, -5, -2, 0, 2, 5, 10, 25]
-cmap = plt.get_cmap("BrBG_r")  # nwsprecip()
-cmap.set_under('white')
+cmap = plt.get_cmap("BrBG_r")
+cmap.set_under('purple')
 cmap.set_over('black')
 norm = mpcolors.BoundaryNorm(bins, cmap.N)
 patches = []
@@ -56,7 +58,6 @@ for row in cursor:
     a = np.asarray(polygon.exterior)
     x, y = m.map(a[:, 0], a[:, 1])
     a = zip(x, y)
-    # c = cmap( norm([float(row[1]),]) )[0]
     c = cmap(norm([float(row[1]), ]))[0]
     p = Polygon(a, fc=c, ec='None', zorder=2, lw=.1)
     patches.append(p)
