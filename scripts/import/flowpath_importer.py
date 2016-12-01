@@ -18,12 +18,12 @@ import dbflib
 import glob
 import os
 import pandas as pd
-from pandas import Series
 import psycopg2
-import datetime
 import sys
+from tqdm import tqdm
 
 SCENARIO = int(sys.argv[1])
+TRUNC_GRIDORDER_AT = int(sys.argv[3])
 
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor()
@@ -43,7 +43,7 @@ def get_flowpath(huc12, fpath):
 
 
 def get_data(fn):
-    ''' Load a DBF file into a pandas DF '''
+    """Load a DBF file into a pandas DF"""
     rows = []
     dbf = dbflib.open(fn)
     for i in range(dbf.record_count()):
@@ -53,33 +53,36 @@ def get_data(fn):
 
 
 def process(fn, df):
-    '''Process a given filename into the database '''
-    huc12 = fn[4:-4]
+    """Process a given filename into the database"""
+    huc12 = fn[-16:-4]
     huc8 = huc12[:-4]
-    prefix = 'g4'
-    flowpaths = Series(df['%s%s' % (prefix, huc8)]).unique()
-    flowpaths.sort()
-    for flowpath in flowpaths:
+    # Find unique flowpaths in this HUC12 DBF File
+    for flowpath, df in df.groupby('fp%s' % (huc8, )):
         # never do flowpath zero!
         if flowpath == 0:
             continue
-        df2 = df[df['%s%s' % (prefix, huc8)] == flowpath]
-        df2 = df2.sort_values('%sLen%s' % (prefix, huc8[:5]), ascending=True)
+        # Sort along the length column, which orders the points from top
+        # to bottom
+        df = df.sort_values('fpLen%s' % (huc8[:5], ), ascending=True)
+        # Get or create the flowpathid from the database
         fid = get_flowpath(huc12, flowpath)
+        # Remove any previous data for this flowpath
         cursor.execute("""DELETE from flowpath_points WHERE flowpath = %s
             and scenario = %s""",
                        (fid, SCENARIO))
         lstring = []
-        sz = len(df2.index)
-        for segid, row in enumerate(df2.iterrows()):
-            row = df2.iloc[segid]
+        sz = len(df.index)
+        for segid, (_, row) in enumerate(df.iterrows()):
             if (segid+1) == sz:  # Last row!
-                row2 = df2.iloc[segid-1]
+                row2 = df.iloc[segid-1]
             else:
-                row2 = df2.iloc[segid+1]
+                row2 = df.iloc[segid+1]
             dy = row['ep3m%s' % (huc8[:6],)] - row2['ep3m%s' % (huc8[:6],)]
-            dx = (row2['%sLen%s' % (prefix, huc8[:5])] -
-                  row['%sLen%s' % (prefix, huc8[:5])])
+            dx = (row2['fpLen%s' % (huc8[:5], )] -
+                  row['fpLen%s' % (huc8[:5], )])
+            gridorder = row['gord_%s' % (huc8[:5], )]
+            if gridorder > TRUNC_GRIDORDER_AT:
+                continue
             if dx == 0:
                 slope = 0
             else:
@@ -91,21 +94,21 @@ def process(fn, df):
             sql = """INSERT into flowpath_points(flowpath, segid,
                 elevation, length,  surgo, management, slope, geom,
                 lu2007, lu2008, lu2009, lu2010, lu2011, lu2012, lu2013,
-                lu2014, lu2015, lu2016, scenario)
-                values(%s, %s , %s,
+                lu2014, lu2015, lu2016, lu2017, scenario, gridorder)
+                values(%s, %s, %s,
                 %s, %s, %s, %s, 'SRID=5070;POINT(%s %s)',
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
             # OK, be careful here.  the landuse codes start in 2008 as there
             # is no national coverage in 2007.  So for 2007, we will repeat
             # the value for 2009.
             # no 2016 data, so repeat 2014 value
             args = (fid, segid, row['ep3m%s' % (huc8[:6],)]/100.,
-                    row['%sLen%s' % (prefix, huc8[:5])]/100.,
+                    row['fpLen%s' % (huc8[:5],)]/100.,
                     row['gSSURGO'], row['Management'], slope, row['X'],
                     row['Y'], lu[1], lu[0], lu[1], lu[2],
-                    lu[3], lu[4], lu[5], lu[6], lu[7], lu[6],
-                    SCENARIO)
+                    lu[3], lu[4], lu[5], lu[6], lu[7], lu[6], lu[7],
+                    SCENARIO, gridorder)
             cursor.execute(sql, args)
 
             lstring.append("%s %s" % (row['X'], row['Y']))
@@ -116,8 +119,8 @@ def process(fn, df):
                                                        SCENARIO)
             cursor.execute(sql)
         else:
-            print(('---> ERROR: %s flowpath %s < 2 points, deleting'
-                   ) % (fn, flowpath))
+            # print(('---> ERROR: %s flowpath %s < 2 points, deleting'
+            #        ) % (fn, flowpath))
             cursor.execute("""DELETE from flowpath_points
                 where flowpath = %s and scenario = %s""", (fid, SCENARIO))
             cursor.execute("""DELETE from flowpaths where fid = %s
@@ -128,17 +131,14 @@ def main():
     """ Lets go main go """
     os.chdir("../../data/%s" % (sys.argv[2],))
     fns = glob.glob("*.dbf")
-    total = len(fns)
-    for i, fn in enumerate(fns):
-        sts = datetime.datetime.now()
+    i = 0
+    for fn in tqdm(fns):
         if i > 0 and i % 100 == 0:
             PGCONN.commit()
             cursor = PGCONN.cursor()
         df = get_data(fn)
         process(fn, df)
-        ets = datetime.datetime.now()
-        secs = (ets - sts).microseconds / 100000. + (ets - sts).seconds
-        print '%4i/%4i %7.3fs %s' % (i+1, total, secs, fn)
+        i += 1
 
     # cursor.close()
     PGCONN.commit()
