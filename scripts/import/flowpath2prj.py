@@ -137,7 +137,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
     slope, management, 'MWDEP_'||surgo||'.SOL' as soilfile,
     lu2007 || lu2008 || lu2009 ||
     lu2010 || lu2011 || lu2012 || lu2013 || lu2014 || lu2015 ||
-    lu2016 as lstring,
+    lu2016 || lu2017 as lstring,
     round(ST_X(ST_Transform(geom,4326))::numeric,2) as x,
     round(ST_Y(ST_Transform(geom,4326))::numeric,2) as y from
     flowpath_points f
@@ -325,7 +325,8 @@ Profile {
     }
 }
 Climate {
-   File = "%(clifile)s"
+   # Unused anyway, so just fake it
+   File = "/i/0/cli/096x040/096.01x039.88.cli"
 }
 Soil {
    Breaks = %(soilbreaks)s

@@ -22,6 +22,8 @@ import psycopg2
 import sys
 from tqdm import tqdm
 
+print("BE CAREFUL!  The dbf files may not be 5070, but 26915")
+
 SCENARIO = int(sys.argv[1])
 TRUNC_GRIDORDER_AT = int(sys.argv[3])
 

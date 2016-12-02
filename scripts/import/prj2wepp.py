@@ -8,7 +8,7 @@ import shutil
 from tqdm import tqdm
 
 SCENARIO = sys.argv[1]
-PROJDIR = "/home/akrherz/projects/idep/prj2wepp"
+PROJDIR = "/opt/dep/prj2wepp"
 EXE = "%s/prj2wepp" % (PROJDIR,)
 WEPP = "%s/wepp" % (PROJDIR,)
 BASEDIR = "/i/%s/prj" % (SCENARIO,)
