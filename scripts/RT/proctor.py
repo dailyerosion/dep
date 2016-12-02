@@ -83,8 +83,8 @@ class wepprun(object):
         o.write("1\n")      # abbreviated annual output
         o.write("No\n")     # initial conditions output
         o.write("/dev/null\n")   # soil loss output file
-        o.write("Yes\n")        # Do water balance output
-        o.write("%s\n" % (self.get_wb_fn(),))   # water balance output file
+        o.write("No\n")        # Do water balance output
+        # o.write("%s\n" % (self.get_wb_fn(),))   # water balance output file
         o.write("No\n")     # crop output
         o.write("No\n")     # soil output
         o.write("No\n")     # distance and sed output
