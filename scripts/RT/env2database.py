@@ -222,9 +222,10 @@ if __name__ == '__main__':
     lengths = load_lengths()
     dates = determine_dates(sys.argv)
     huc12s = find_huc12s()
-    if SCENARIO > 0:
-        print("WARNING: qc_precip will be zero in the database")
+    if SCENARIO == 0:
         precip = load_precip(dates, huc12s)
+    else:
+        print("WARNING: qc_precip will be zero in the database")
 
     # Begin the processing work now!
     result = []
