@@ -222,7 +222,9 @@ if __name__ == '__main__':
     lengths = load_lengths()
     dates = determine_dates(sys.argv)
     huc12s = find_huc12s()
-    precip = load_precip(dates, huc12s)
+    if SCENARIO > 0:
+        print("WARNING: qc_precip will be zero in the database")
+        precip = load_precip(dates, huc12s)
 
     # Begin the processing work now!
     result = []
@@ -234,7 +236,7 @@ if __name__ == '__main__':
             print("ERROR: huc12 %s returned 0 data" % (huc12,))
             continue
         for date in dates:
-            qc_precip = precip[date][huc12]
+            qc_precip = 0 if SCENARIO > 0 else precip[date][huc12]
             result.append(compute_res(df[df.date == date], date, huc12, slopes,
                                       qc_precip))
     df = pd.DataFrame(result)
