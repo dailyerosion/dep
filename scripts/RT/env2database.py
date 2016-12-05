@@ -213,7 +213,8 @@ def update_metadata(dates):
     key = 'last_date_%s'""" % (SCENARIO, ))
     if icursor.rowcount == 0:
         icursor.execute("""INSERT into properties(key, value)
-        ('last_date_%s', '%s')""" % (SCENARIO, maxdate.strftime("%Y-%m-%d")))
+        values ('last_date_%s', '%s')
+        """ % (SCENARIO, maxdate.strftime("%Y-%m-%d")))
     icursor.execute("""UPDATE properties
     SET value = '%s' WHERE key = 'last_date_%s' and value < '%s'
     """ % (maxdate.strftime("%Y-%m-%d"), SCENARIO,
