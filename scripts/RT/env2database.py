@@ -37,21 +37,15 @@ def find_huc12s():
 
 
 def readfile(huc12, fn):
-    df = dep_utils.read_env(fn)
+    try:
+        df = dep_utils.read_env(fn)
+    except Exception as exp:
+        print("\nABORT: Attempting to read: %s resulted in: %s\n" % (fn, exp))
+        return None
     key = "%s_%s" % (huc12,
                      int(fn.split("/")[-1].split(".")[0].split("_")[1]))
     df['delivery'] = df['sed_del'] / lengths[key]
     return df
-
-
-def do_huc12(huc12):
-    """Process a huc12's worth of WEPP output files"""
-    basedir = "/i/%s/env/%s/%s" % (SCENARIO, huc12[:8], huc12[8:])
-    frames = [readfile(huc12, basedir+"/"+f) for f in os.listdir(basedir)]
-    if len(frames) == 0:
-        return None, huc12, 0
-    df = pd.concat(frames)
-    return df, huc12, len(frames)
 
 
 def determine_dates(argv):
@@ -132,6 +126,11 @@ def load_precip(dates, huc12s):
     for date in dates:
         res[date] = {}
         fn = date.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.npy")
+        if not os.path.isfile(fn):
+            print("Missing precip: %s" % (fn,))
+            for huc12 in huc12s:
+                res[date][huc12] = 0
+            continue
         precip = np.load(fn)
         for huc12 in huc12s:
             y, x = huc12_centroids[huc12]
@@ -152,8 +151,8 @@ def load_lengths():
     return lengths
 
 
-def save_results(df, dates):
-    """Save our output to the database"""
+def delete_data():
+    """Remove any entries for the dates"""
     pgconn = psycopg2.connect(database='idep', host='iemdb')
     icursor = pgconn.cursor()
     for date in dates:
@@ -164,8 +163,17 @@ def save_results(df, dates):
         if icursor.rowcount > 0:
             print("DELETED %4i rows for date %s" % (icursor.rowcount,
                                                     date))
-        inserts = 0
-        skipped = 0
+    icursor.close()
+    pgconn.commit()
+
+
+def save_results(df):
+    """Save our output to the database"""
+    pgconn = psycopg2.connect(database='idep', host='iemdb')
+    icursor = pgconn.cursor()
+    inserts = 0
+    skipped = 0
+    for date in dates:
         for _, row in df[df.date == date].iterrows():
             # We don't care about the output when the follow conditions
             # are not meet
@@ -192,10 +200,9 @@ def save_results(df, dates):
                      row.min_runoff, row.avg_runoff, row.max_runoff,
                      row.min_delivery, row.avg_delivery, row.max_delivery,
                      row.qc_precip))
-        print("ENTERED %4i rows for date %s, skipped %4i" % (inserts, date,
-                                                             skipped))
     icursor.close()
     pgconn.commit()
+    return inserts, skipped
 
 
 def update_metadata(dates):
@@ -214,13 +221,39 @@ def update_metadata(dates):
     icursor.close()
     pgconn.commit()
 
+
+def do_huc12(huc12):
+    """Process a huc12's worth of WEPP output files"""
+    basedir = "/i/%s/env/%s/%s" % (SCENARIO, huc12[:8], huc12[8:])
+    frames = [readfile(huc12, basedir+"/"+f) for f in os.listdir(basedir)]
+    if len(frames) == 0 or any([f is None for f in frames]):
+        return huc12, None, None
+    # Push all dataframes into one
+    df = pd.concat(frames)
+    df.fillna(0, inplace=True)
+    hillslopes = len(frames)
+    rows = []
+    for date in dates:
+        qc_precip = 0 if SCENARIO > 0 else precip[date][huc12]
+        df2 = df[df.date == date]
+        # Do computation
+        rows.append(
+            compute_res(df2, date, huc12, hillslopes, qc_precip))
+    # save results
+    df = pd.DataFrame(rows)
+    inserts, skipped = save_results(df)
+
+    return huc12, inserts, skipped
+
 if __name__ == '__main__':
     # We are ready to do stuff!
     # We need to keep stuff in the global namespace to keep multiprocessing
     # happy, at least I think that is the reason we do this
-    SCENARIO = sys.argv[1]
+    SCENARIO = int(sys.argv[1])
     lengths = load_lengths()
+    global dates  # unsure why this is needed to make pydev happy
     dates = determine_dates(sys.argv)
+    delete_data()
     huc12s = find_huc12s()
     if SCENARIO == 0:
         precip = load_precip(dates, huc12s)
@@ -228,22 +261,19 @@ if __name__ == '__main__':
         print("WARNING: qc_precip will be zero in the database")
 
     # Begin the processing work now!
-    result = []
     pool = multiprocessing.Pool()
-    for (df, huc12, slopes) in tqdm(pool.imap_unordered(do_huc12, huc12s),
-                                    total=len(huc12s),
-                                    disable=(not sys.stdout.isatty())):
-        if df is None:
+    totalinserts = 0
+    totalskipped = 0
+    for huc12, inserts, skipped in tqdm(pool.imap_unordered(do_huc12, huc12s),
+                                        total=len(huc12s),
+                                        disable=(not sys.stdout.isatty())):
+        if inserts is None:
             print("ERROR: huc12 %s returned 0 data" % (huc12,))
             continue
-        for date in dates:
-            qc_precip = 0 if SCENARIO > 0 else precip[date][huc12]
-            result.append(compute_res(df[df.date == date], date, huc12, slopes,
-                                      qc_precip))
-    df = pd.DataFrame(result)
-    # Replace any NaN values with zeros
-    df.fillna(0, inplace=True)
-    save_results(df, dates)
+        totalinserts += inserts
+        totalskipped += skipped
+    print("env2database.py inserts: %s skips: %s" % (totalinserts,
+                                                     totalskipped))
     update_metadata(dates)
 
 
