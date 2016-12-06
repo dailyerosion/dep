@@ -15,9 +15,9 @@ def find_huc12s():
     pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
     cursor = pgconn.cursor()
     cursor.execute("""
-        SELECT huc_12 from huc12 WHERE scenario = %s
+        SELECT huc_12 from huc12 WHERE scenario = 0
         and states ~* 'IA'
-        """, (SCENARIO,))
+        """)
     res = []
     for row in cursor:
         res.append(row[0])
@@ -25,7 +25,10 @@ def find_huc12s():
 
 
 def readfile(huc12, fn):
-    df = dep_utils.read_env(fn)
+    try:
+        df = dep_utils.read_env(fn)
+    except:
+        return None
     key = "%s_%s" % (huc12,
                      int(fn.split("/")[-1].split(".")[0].split("_")[1]))
     df['delivery'] = df['sed_del'] / lengths[key]
@@ -40,7 +43,7 @@ def do_huc12(huc12):
     if not os.path.isdir(basedir):
         return None, huc12, 0
     frames = [readfile(huc12, basedir+"/"+f) for f in os.listdir(basedir)]
-    if len(frames) == 0:
+    if len(frames) == 0 or any([f is None for f in frames]):
         return None, huc12, 0
     df = pd.concat(frames)
     return df, huc12, len(frames)

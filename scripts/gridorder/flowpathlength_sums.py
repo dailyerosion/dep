@@ -1,0 +1,11 @@
+import pandas as pd
+import sys
+
+GRIDORDER = sys.argv[1]
+
+df = pd.read_csv('flowpaths%s.csv' % (GRIDORDER,))
+
+print("%% Flowpaths > 22.1: %.3f" % (len(df[df['length'] >= 22.1].index) /
+                                     float(len(df.index)) * 100.,))
+print("Delivery: %.3f" % (df[df['length'] >= 22.1]['delivery'].mean(),))
+print("Detachment: %.3f" % (df[df['length'] >= 22.1]['avg_det'].mean(),))
