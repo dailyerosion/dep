@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import sys
+import psycopg2
+from pandas.io.sql import read_sql
 
 
 def old():
@@ -27,6 +29,10 @@ def old():
 
 
 def main():
+    pgconn = psycopg2.connect(database='wepp', host='iemdb', user='nobody')
+    dfv1 = read_sql("""
+    SELECT id,  len * 0.3048 as length from nri
+    """, pgconn, index_col='id')
     (fig, ax) = plt.subplots(1, 1)
     ax.grid(True)
     for gridorder in range(1, 7):
@@ -34,6 +40,9 @@ def main():
         ax.hist(df['length'], bins=100, range=[0, 400],
                 label='G%s' % (gridorder,), cumulative=True,
                 histtype='step', normed=True)
+    ax.hist(dfv1['length'], bins=100, range=[0, 400],
+            label='IDEPv1', cumulative=True,
+            histtype='step', normed=True, lw=3)
 
     ax.set_xlim(0, 400)
     ax.legend(loc=4)
