@@ -1,3 +1,18 @@
+ 8 Dec 2016 - DEP Planning
+  Claudette, Gelder, Miller, Bates, Cruse
+  - HUD money is in place with an account number setup, 11 Oct start date
+  - Currently down to 5 ACPF students, hope to go back to 9
+  - Still working on postdoc and how that will work out
+  - 5 more ACPF counties to go in MN
+  - Still working through HUC12 issues for those crossing state borders
+  - Gelder showed a map of flowpath counts per HUC12, I should make this too
+  - Western Lake Erie region is next for ACPF once done with MN
+  - [ ] daryl email UCS folks to see if we have delivered everything
+  - Discussion about putting Tim's stability analysis into the current
+    manuscript that is due soon
+  - [ ] need to add some sort of characteristic slope plots to Gridorder sum
+  - Miller will attend a meeting soon on HUD planning, will know more then
+
 17 Nov 2016 - DEP Planning
   James, Gelder, Cruse, Miller, MMiller, Bates
   - Dave has 750 watersheds in WI now done
