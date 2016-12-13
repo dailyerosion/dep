@@ -18,6 +18,7 @@ def main():
     os.chdir(BASEDIR)
     huc8s = glob.glob("*")
     # huc8s = ['10290101', ]
+    errors = 0
     for huc8 in tqdm(huc8s):
         os.chdir(huc8)
         for huc4 in glob.glob("*"):
@@ -37,7 +38,11 @@ def main():
                 if not os.path.isfile('test.man'):
                     print(('---> ERROR generating output for %s\n%s\n%s\n%s'
                            ) % (huc12, cmd, proc.stderr.read(), stdout))
-                    sys.exit()
+                    errors += 1
+                    if errors > 10:
+                        sys.exit()
+                    os.chdir("%s/%s/%s" % (BASEDIR, huc8, huc4))
+                    continue
                 # This generates .cli, .man, .run, .slp, .sol
                 # We need the .man , .slp , .sol from this process
                 for suffix in ['man', 'slp', 'sol']:
