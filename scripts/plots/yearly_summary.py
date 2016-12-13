@@ -63,7 +63,7 @@ if ts != ts2:
     title = "for period between %s and %s" % (ts.strftime("%-d %b %Y"),
                                               ts2.strftime("%-d %b %Y"))
 m = MapPlot(axisbg='#EEEEEE', nologo=True, sector='iowa',
-            title='DEP %s by HUC12 %s' % (V2NAME[v], title),
+            title='DEP %s by HUC12 2008-2015 Yearly Average' % (V2NAME[v],),
             caption='Daily Erosion Project')
 
 # Check that we have data for this date!
@@ -74,15 +74,17 @@ lastts = datetime.datetime.strptime(cursor.fetchone()[0], '%Y-%m-%d')
 floor = datetime.date(2007, 1, 1)
 cursor.execute("""
 WITH data as (
-  SELECT huc_12, sum("""+v+""")  as d from results_by_huc12
-  WHERE scenario = %s and valid between %s and %s
-  GROUP by huc_12)
+  SELECT huc_12, extract(year from valid) as yr,
+  sum("""+v+""")  as d from results_by_huc12
+  WHERE scenario = %s and valid > '2008-01-01' and valid < '2016-01-01'
+  GROUP by huc_12, yr),
+agg as (
+ SELECT huc_12, avg(d) as d2 from data GROUP by huc_12)
 
-SELECT ST_Transform(simple_geom, 4326), coalesce(d.d, 0)
-from huc12 i LEFT JOIN data d
+SELECT ST_Transform(simple_geom, 4326), coalesce(d.d2, 0)
+from huc12 i LEFT JOIN agg d
 ON (i.huc_12 = d.huc_12) WHERE i.scenario = %s and i.states ~* 'IA'
-""", (scenario, ts.strftime("%Y-%m-%d"),
-      ts2.strftime("%Y-%m-%d"), scenario))
+""", (scenario, scenario))
 patches = []
 data = []
 for row in cursor:
