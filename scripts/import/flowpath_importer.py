@@ -25,7 +25,8 @@ from tqdm import tqdm
 print("BE CAREFUL!  The dbf files may not be 5070, but 26915")
 
 SCENARIO = int(sys.argv[1])
-TRUNC_GRIDORDER_AT = int(sys.argv[3])
+PREFIX = 'g4'
+# TRUNC_GRIDORDER_AT = int(sys.argv[3])
 
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor()
@@ -59,13 +60,13 @@ def process(fn, df):
     huc12 = fn[-16:-4]
     huc8 = huc12[:-4]
     # Find unique flowpaths in this HUC12 DBF File
-    for flowpath, df in df.groupby('fp%s' % (huc8, )):
+    for flowpath, df in df.groupby('%s%s' % (PREFIX, huc8)):
         # never do flowpath zero!
         if flowpath == 0:
             continue
         # Sort along the length column, which orders the points from top
         # to bottom
-        df = df.sort_values('fpLen%s' % (huc8[:5], ), ascending=True)
+        df = df.sort_values('%sLen%s' % (PREFIX, huc8[:5]), ascending=True)
         # Get or create the flowpathid from the database
         fid = get_flowpath(huc12, flowpath)
         # Remove any previous data for this flowpath
@@ -80,11 +81,12 @@ def process(fn, df):
             else:
                 row2 = df.iloc[segid+1]
             dy = row['ep3m%s' % (huc8[:6],)] - row2['ep3m%s' % (huc8[:6],)]
-            dx = (row2['fpLen%s' % (huc8[:5], )] -
-                  row['fpLen%s' % (huc8[:5], )])
-            gridorder = row['gord_%s' % (huc8[:5], )]
-            if gridorder > TRUNC_GRIDORDER_AT:
-                continue
+            dx = (row2['%sLen%s' % (PREFIX, huc8[:5])] -
+                  row['%sLen%s' % (PREFIX, huc8[:5])])
+            gridorder = 4
+            # gridorder = row['gord_%s' % (huc8[:5], )]
+            # if gridorder > TRUNC_GRIDORDER_AT:
+            #    continue
             if dx == 0:
                 slope = 0
             else:
@@ -106,7 +108,7 @@ def process(fn, df):
             # the value for 2009.
             # no 2016 data, so repeat 2014 value
             args = (fid, segid, row['ep3m%s' % (huc8[:6],)]/100.,
-                    row['fpLen%s' % (huc8[:5],)]/100.,
+                    row['%sLen%s' % (PREFIX, huc8[:5])]/100.,
                     row['gSSURGO'], row['Management'], slope, row['X'],
                     row['Y'], lu[1], lu[0], lu[1], lu[2],
                     lu[3], lu[4], lu[5], lu[6], lu[7], lu[6], lu[7],
