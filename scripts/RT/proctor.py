@@ -12,6 +12,9 @@ SCENARIO = sys.argv[1]
 # don't need trailing /
 IDEPHOME = "/i/%s" % (SCENARIO, )
 YEARS = datetime.date.today().year - 2006
+# need to regenerate run files on 2 January
+FORCE_RUNFILE_REGEN = (datetime.date.today().month == 1 and
+                       datetime.date.today().day == 2)
 
 
 class wepprun(object):
@@ -109,7 +112,7 @@ class wepprun(object):
     def run(self):
         ''' Actually run wepp for this event '''
         runfile = self.get_runfile_fn()
-        if not os.path.isfile(runfile):
+        if FORCE_RUNFILE_REGEN or not os.path.isfile(runfile):
             self.make_runfile()
         p = subprocess.Popen(["wepp", ],
                              stderr=subprocess.PIPE,
