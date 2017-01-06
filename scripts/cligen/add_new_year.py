@@ -20,7 +20,8 @@ def do(fn, year):
     pos2 = data.find("1\t1\t%s" % (analog + 1,))
     out = open("/tmp/%s" % (fn,), 'w')
     extra = "\n" if data[-1] != "\n" else ''
-    out.write(data + extra + data[pos:pos2].replace(str(analog), str(year)))
+    out.write(data + extra + data[pos:pos2].replace(str(analog), str(year)) +
+              extra)
     out.close()
     subprocess.call("mv /tmp/%s %s" % (fn, fn), shell=True)
 
