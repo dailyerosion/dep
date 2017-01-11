@@ -25,6 +25,11 @@ import numpy as np
 import psycopg2
 from tqdm import tqdm
 from pyiem import dep as dep_utils
+import geopandas as gpd
+from rasterstats import zonal_stats
+from affine import Affine
+
+PRECIP_AFF = Affine(0.01, 0., dep_utils.WEST, 0., -0.01, dep_utils.NORTH)
 
 
 def find_huc12s():
@@ -106,35 +111,42 @@ def compute_res(df, date, huc12, slopes, qc_precip):
 
 
 def load_precip(dates, huc12s):
-    """Load up the precip please """
-    idep = psycopg2.connect(database='idep', host='iemdb')
-    icursor = idep.cursor()
-    huc12_centroids = {}
-    icursor.execute("""
-        WITH centers as (
-         SELECT huc_12, ST_Transform(ST_Centroid(geom),4326) as g
-         from huc12 WHERE scenario = %s
-        )
+    """Compute the HUC12 spatially averaged precip
 
-        SELECT huc_12, ST_x(g), ST_y(g) from centers
-    """, (SCENARIO, ))
-    for row in icursor:
-        y = int((row[2] - dep_utils.SOUTH) * 100.)
-        x = int((row[1] - dep_utils.WEST) * 100.)
-        huc12_centroids[row[0]] = [y, x]
+    This provides the `qc_precip` value stored in the database for each HUC12,
+    so that we have complete precipitation accounting as the other database
+    table fields are based on WEPP output, which does not report all precip
+    events.
+
+    Args:
+      dates (list): the dates we need precip data for
+
+    Returns:
+      dict of [date][huc12]
+    """
+    # 1. Build GeoPandas DataFrame of HUC12s of interest
+    idep = psycopg2.connect(database='idep', host='iemdb')
+    huc12df = gpd.GeoDataFrame.from_postgis("""
+        SELECT huc_12, ST_Transform(simple_geom, 4326) as geo
+        from huc12 WHERE scenario = 0
+    """, idep, index_col='huc_12', geom_col='geo')
+    # 2. Loop over dates
     res = {}
     for date in dates:
         res[date] = {}
         fn = date.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.npy")
         if not os.path.isfile(fn):
             print("Missing precip: %s" % (fn,))
-            for huc12 in huc12s:
+            for huc12 in huc12df.index.values:
                 res[date][huc12] = 0
             continue
-        precip = np.load(fn)
-        for huc12 in huc12s:
-            y, x = huc12_centroids[huc12]
-            res[date][huc12] = precip[y, x]
+        precip = np.flipud(np.load(fn))
+        zs = zonal_stats(huc12df['geo'], precip, affine=PRECIP_AFF, nodata=0,
+                         all_touched=True)
+        i = 0
+        for huc12, _ in huc12df.itertuples():
+            res[date][huc12] = zs[i]['mean']
+            i += 1
     return res
 
 
