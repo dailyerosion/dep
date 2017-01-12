@@ -119,7 +119,7 @@ var appstate = {
 	ltype: 'qc_precip'
 };
         </script>
- <script src='nextgen.js?v=17'></script>
+ <script src='nextgen.js?v=18'></script>
 EOF;
 
 $t->content = <<<EOF

@@ -14,7 +14,12 @@ var defaultZoom = 6;
 var popup;
 var IDLE = "Idle";
 
-var levels = [];
+var levels = {
+	'qc_precip': [],
+	'avg_runoff': [],
+	'avg_loss': [],
+	'avg_delivery': []
+};
 var colors = {
   'qc_precip': ['#ffffa6', '#9cf26d', '#76cc94', '#6399ba', '#5558a1', '#c34dee'],     
   'avg_runoff': ['#ffffa6', '#9cf26d', '#76cc94', '#6399ba', '#5558a1', '#c34dee'],
@@ -231,8 +236,7 @@ function getGeoJSONURL(){
 	return uri;
 }
 function rerender_vectors(){
-	levels = [];
-	//console.log("rerender_vectors() called");
+	drawColorbar();
 	vectorLayer.changed();
 	setWindowHash();
 	setTitle();
@@ -252,7 +256,7 @@ function remap(){
 			// clear out old content
 			vectorLayer.getSource().clear();
 
-			levels = json.jenks[appstate.ltype];
+			levels = json.jenks;
 			drawColorbar();
 			
 			vectorLayer.getSource().addFeatures(
@@ -421,8 +425,8 @@ function drawColorbar(){
     ctx.fillText('Legend', (canvas.width / 2) - (metrics.width / 2), 14);
     
     var pos = 20;
-    $.each(levels, function(idx, level){
-    	if (idx == (levels.length - 1)){
+    $.each(levels[appstate.ltype], function(idx, level){
+    	if (idx == (levels[appstate.ltype].length - 1)){
     	    var txt = "Max: "+ level.toFixed(2);
     	    ctx.font = 'bold 10pt Calibri';
     	    ctx.fillStyle = 'yellow';
@@ -572,11 +576,10 @@ $(document).ready(function(){
             projection : ol.proj.get('EPSG:4326')
 		}),
 		  style: function(feature, resolution) {
-			
 			  val = feature.get(appstate.ltype);
 			  var c = 'rgba(255, 255, 255, 0)'; //hallow
-			  for (var i=(levels.length-2); i>=0; i--){
-			      if (val >= levels[i]){
+			  for (var i=(levels[appstate.ltype].length-2); i>=0; i--){
+			      if (val >= levels[appstate.ltype][i]){
 			    	 c = colors[appstate.ltype][i];
 			    	 break;
 			      }
@@ -753,10 +756,10 @@ $(document).ready(function(){
     		formatDate(myDateFormat, appstate.lastdate));
     
     $("#radio").buttonset();
-    $( '#radio input[type=radio]').change(function(){
-  	  	appstate.ltype = this.value;
+    $("#radio input[type=radio]").change(function(){
+    	//console.log("cb on radio this.value=" + this.value);
+    	appstate.ltype = this.value;
     	rerender_vectors();
-
     });
     $("#t").buttonset();
     if (appstate.date2){
