@@ -616,10 +616,10 @@ $(document).ready(function(){
         	}),
         	make_iem_tms('Iowa 100m Hillshade', 'iahshd-900913', false),
         	vectorLayer,
-        	make_iem_tms('Iowa Counties', 'iac-900913', false),
+        	make_iem_tms('US Counties', 'c-900913', false),
         	make_iem_tms('US States', 's-900913', true),
         	make_iem_tms('Hydrology', 'iahydrology-900913', false),
-        	make_iem_tms('HUC 8', 'iahuc8-900913', false)
+        	make_iem_tms('HUC 8', 'huc8-900913', false)
         ],
         view: new ol.View({
                 projection: ol.proj.get('EPSG:3857'),
