@@ -12,13 +12,18 @@ import pygrib
 import sys
 import os
 import netCDF4
-import osgeo.gdal as gdal
 from pyiem import iemre
 from scipy.interpolate import NearestNDInterpolator
 from pyiem.datatypes import temperature
 from multiprocessing import Pool
 from pyiem.dep import SOUTH, NORTH, EAST, WEST
 import unittest
+import logging
+from PIL import Image
+
+logging.basicConfig(format='%(asctime)-15s %(message)s')
+LOG = logging.getLogger()
+LOG.setLevel(logging.INFO)
 
 SCENARIO = sys.argv[1]
 YS = int((NORTH - SOUTH) * 100.)
@@ -201,6 +206,7 @@ def qc_precip():
 
 def load_precip_legacy(valid):
     """ Compute a Legacy Precip product for dates prior to 1 Jan 2014"""
+    LOG.debug("load_precip_legacy() called...")
     ts = 12 * 24  # 5 minute
 
     midnight = datetime.datetime(valid.year, valid.month, valid.day, 12, 0)
@@ -220,7 +226,7 @@ def load_precip_legacy(valid):
     now = midnight
     m5 = np.zeros((ts, YS, XS), np.float16)
     tidx = 0
-    # Load up the n0r data, every 15 minutes
+    # Load up the n0r data, every 5 minutes
     while now < tomorrow:
         utc = now.astimezone(pytz.timezone("UTC"))
         fn = utc.strftime(("/mesonet/ARCHIVE/data/%Y/%m/%d/GIS/uscomp/"
@@ -229,10 +235,10 @@ def load_precip_legacy(valid):
             if tidx >= ts:
                 # Abort as we are in CST->CDT
                 break
-            img = gdal.Open(fn, 0)
-            imgdata = img.ReadAsArray()
+            img = Image.open(fn)
+            imgdata = np.array(img)
             # Convert the image data to dbz
-            dbz = (np.flipud(imgdata[top:bottom, left:right]) - 7.) * 5
+            dbz = (np.flipud(imgdata[top:bottom, left:right]) - 7.) * 5.
             m5[tidx, :, :] = np.where(dbz < 255,
                                       ((10. ** (dbz/10.)) / 200.) ** 0.625,
                                       0)
@@ -241,21 +247,31 @@ def load_precip_legacy(valid):
 
         now += datetime.timedelta(minutes=5)
         tidx += 1
+    LOG.debug("load_precip_legacy() finished loading N0R Composites")
 
-    for y in range(YS):
-        for x in range(XS):
-            s4total = stage4[y, x]
-            # skip 1 mm precipitation
-            if s4total < 1:
-                continue
-            five = m5[:, y, x]
-            # TODO unsure of this... Smear the precip out over the first our
-            if np.sum(five) < 10:
-                precip[0:30, y, x] = s4total / 30.
-                continue
-            weights = five / np.sum(five) / 2.5
-            for t in range(0, 60 * 24, 2):
-                precip[int(t/2), y, x] = weights[int(t/5)] * s4total
+    m5total = np.sum(m5, 0)
+
+    minute2 = np.arange(0, 60 * 24, 2)
+    minute5 = np.arange(0, 60 * 24, 5)
+
+    def _compute(y, x):
+        s4total = stage4[y, x]
+        if s4total < 1:
+            return
+        five = m5total[y, x]
+        # TODO unsure of this... Smear the precip out over the first hour
+        if five < 10:
+            precip[0:30, y, x] = s4total / 30.
+            return
+        # Interpolate weights to a 2 minute interval grid
+        # we divide by 2.5 to downscale the 5 minute values to 2 minute
+        weights = np.interp(minute2, minute5, m5[:, y, x] / five / 2.5)
+        # Now apply the weights to the s4total
+        precip[:, y, x] = weights * s4total
+
+    [_compute(y, x) for y in range(YS) for x in range(XS)]
+
+    LOG.debug("load_precip_legacy() finished precip calculation")
 
 
 def load_precip(valid):
@@ -292,11 +308,11 @@ def load_precip(valid):
             if tidx >= ts:
                 # Abort as we are in CST->CDT
                 return precip
-            img = gdal.Open(fn, 0)
+            img = Image.open(fn)
             # --------------------------------------------------
             # OK, once and for all, 0,0 is the upper left!
             # units are 0.1mm
-            imgdata = img.ReadAsArray()
+            imgdata = np.array(img)
             # sample out and then flip top to bottom!
             data = np.flipud(imgdata[top:bottom, left:right])
             # print now, data[myy, myx]
