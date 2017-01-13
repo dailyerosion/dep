@@ -1,3 +1,20 @@
+12 Jan 2017 - DEP Planning
+  Claudette, Gelder, Miller, Bates, Cruse, Tim, Chen, Soloman
+  - Solomon Worlds joined us as a part of an internship he is doing here
+  - Discussion of the HUD project and the 8 watersheds (7 HUC8s) involved
+  - HUD project start date is 10 Oct 2016
+  - Going with 6 month time reporting as so many projects make monthly time
+    reporting and budgeting nearly impossible
+  - Hanna had a discussion of the perceived workflow and how she could better
+    help and document time needs of it.
+  - MN + IN ACPF work should be done next week
+  - The continues to be added in NE have been finalized and work will be done
+  - Gelder presented a map of flowpath counts by HUC12, there are some low
+    counts out there that need looked into.
+  - The manuscript in progress needs submission by the end of the month
+  - Chen will present an update on China work next month
+  - Have a poster for the soil health conference in Feb
+
  8 Dec 2016 - DEP Planning
   Claudette, Gelder, Miller, Bates, Cruse
   - HUD money is in place with an account number setup, 11 Oct start date
