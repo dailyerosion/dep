@@ -29,6 +29,11 @@ def main():
                 # is used
                 os.chdir(PROJDIR)
                 fullfn = "/i/%s/prj/%s/%s/%s" % (SCENARIO, huc8, huc4, pfile)
+                # A shortcircuit
+                # if os.path.isfile(("/i/%s/man/%s/%s/%s.man"
+                #                   ) % (SCENARIO, huc8, huc4, pfile[:-4])):
+                #    os.chdir("%s/%s/%s" % (BASEDIR, huc8, huc4))
+                #    continue
                 cmd = "%s %s test %s no" % (EXE, fullfn, WEPP)
                 proc = subprocess.Popen(cmd,
                                         shell=True, stderr=subprocess.PIPE,
