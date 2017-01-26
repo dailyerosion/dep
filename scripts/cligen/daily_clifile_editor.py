@@ -432,7 +432,7 @@ def myjob(row):
     return True
 
 
-def save_daily_precip():
+def save_daily_precip(valid):
     """Save off the daily precip totals for usage later in computing huc_12"""
     data = np.sum(precip, 0)
     basedir = "/mnt/idep2/data/dailyprecip/"+str(valid.year)
@@ -441,6 +441,21 @@ def save_daily_precip():
     np.save(valid.strftime(basedir+"/%Y%m%d.npy"), data)
     # save Stage IV as well, for later hand wringing
     # np.save(valid.strftime(basedir+"/%Y%m%d_stageIV.npy"), stage4)
+
+
+def precip_workflow(valid):
+    """Drive the precipitation workflow
+
+    Args:
+      valid (date): The date that we care about
+    """
+    load_stage4(valid)
+    if valid.year >= 2014:
+        load_precip(valid)
+    else:
+        load_precip_legacy(valid)
+    qc_precip()
+    save_daily_precip(valid)
 
 
 def workflow():
@@ -454,13 +469,7 @@ def workflow():
     load_iemre(valid)
     # 5. wind direction (always zero)
     # 7. breakpoint precip mm
-    load_stage4(valid)
-    if valid.year >= 2014:
-        load_precip(valid)
-    else:
-        load_precip_legacy(valid)
-    qc_precip()
-    save_daily_precip()
+    precip_workflow(valid)
 
     QUEUE = []
     for y in range(YS):
