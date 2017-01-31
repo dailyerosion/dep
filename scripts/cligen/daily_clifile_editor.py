@@ -449,6 +449,8 @@ def precip_workflow(valid):
     Args:
       valid (date): The date that we care about
     """
+    # zero out precip in the case of rerunning this code segment
+    precip[:] = 0
     load_stage4(valid)
     if valid.year >= 2014:
         load_precip(valid)
