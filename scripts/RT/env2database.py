@@ -132,7 +132,7 @@ def load_precip(dates, huc12s):
     """, idep, index_col='huc_12', geom_col='geo')
     # 2. Loop over dates
     res = {}
-    for date in dates:
+    for date in tqdm(dates, disable=(not sys.stdout.isatty())):
         res[date] = {}
         fn = date.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.npy")
         if not os.path.isfile(fn):
