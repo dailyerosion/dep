@@ -299,11 +299,14 @@ def load_precip(valid):
     a2m_divisor = 10. if (valid < datetime.date(2015, 1, 1)) else 50.
 
     now = midnight
+    # Require at least 75% data coverage, if not, we will abort back to legacy
+    quorum = 720 * 0.75
     while now < tomorrow:
         utc = now.astimezone(pytz.timezone("UTC"))
         fn = utc.strftime(("/mesonet/ARCHIVE/data/%Y/%m/%d/GIS/mrms/"
                            "a2m_%Y%m%d%H%M.png"))
         if os.path.isfile(fn):
+            quorum -= 1
             tidx = int((now - midnight).seconds / 120.)
             if tidx >= ts:
                 # Abort as we are in CST->CDT
@@ -332,6 +335,11 @@ def load_precip(valid):
             print 'daily_clifile_editor missing: %s' % (fn,)
 
         now += datetime.timedelta(minutes=2)
+    if quorum > 0:
+        print(("WARNING: Failed quorum with MRMS a2m %.1f, loading legacy"
+               ) % (quorum,))
+        precip[:] = 0
+        load_precip_legacy(valid)
 
 
 def bpstr(ts, accum):
