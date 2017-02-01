@@ -158,50 +158,35 @@ def load_stage4(valid):
     nn = NearestNDInterpolator((lons.flatten(), lats.flatten()),
                                totals.flatten())
     stage4[:] = nn(xi, yi)
-    # print np.max(stage4)
-    # import matplotlib.pyplot as plt
-    # (fig, ax) = plt.subplots(2, 1)
-    # im = ax[0].imshow(stage4)
-    # fig.colorbar(im)
-    # im = ax[1].imshow(totals)
-    # fig.colorbar(im)
-    # fig.savefig('test.png')
+    # write_grid(valid, stage4, 'stage4')
 
 
-def qc_precip():
-    """ Do the quality control on the precip product """
-    mrms_total = np.sum(precip, 0)
-    # So what is our logic here.  We should care about aggregious differences
-    # Lets make MRMS be within 33% of stage IV
-    ratio = mrms_total / stage4
+def qc_precip(valid):
+    """Make some adjustments to the `precip` grid
+
+    Not very sophisticated here, if the hires precip grid is within 33% of
+    Stage IV, then we consider it good.  If not, then we apply a multiplier to
+    bring it to near the stage IV value.
+    """
+    hires_total = np.sum(precip, 0)
+    # write_grid(valid, hires_total, 'inqcprecip')
+    ratio = hires_total / stage4
     print_threshold = 0
-    # (myx, myy) = get_xy_from_lonlat(-91.44, 41.28)
-    # print myx, myy
     for y in range(YS):
         for x in range(XS):
-            # if x == myx and y == myy:
-            #    print precip[:, y, x]
-            if ratio[y, x] < 1.3:
+            if ratio[y, x] > 0.67 and ratio[y, x] < 1.33:
                 continue
-            # Don't fuss over small differences, if mrms_total is less
-            # than 10 mm
-            if mrms_total[y, x] < 10:
-                continue
-            # Pull the functional form down to stage4 total
+            # Pull the functional form up/down to stage4 total
             precip[:, y, x] = precip[:, y, x] / ratio[y, x]
-            # if x == myx and y == myy:
-            #    print precip[:, y, x]
-
             # limit the amount of printout we do, not really useful anyway
-            if mrms_total[y, x] > print_threshold:
-                print(('QC y: %3i x: %3i stageIV: %5.1f MRMS: %5.1f New: %5.1f'
-                       ) % (y, x, stage4[y, x], mrms_total[y, x],
+            if hires_total[y, x] > print_threshold:
+                print(('QC y: %3i x: %3i stageIV: %5.1f '
+                       'HIRES: %5.1f New: %5.1f'
+                       ) % (y, x, stage4[y, x], hires_total[y, x],
                             np.sum(precip[:, y, x])))
-                print_threshold = mrms_total[y, x]
+                print_threshold = hires_total[y, x]
 
-    # basedir = "/mnt/idep2/data/dailyprecip/2015"
-    # np.save(valid.strftime(basedir+"/%Y%m%d_ratio.npy"), ratio)
-    # np.save(valid.strftime(basedir+"/%Y%m%d_mrms_total.npy"), mrms_total)
+    # write_grid(valid, np.sum(precip, 0), 'outqcprecip')
 
 
 def load_precip_legacy(valid):
@@ -440,15 +425,12 @@ def myjob(row):
     return True
 
 
-def save_daily_precip(valid):
+def write_grid(valid, grid, fnadd=''):
     """Save off the daily precip totals for usage later in computing huc_12"""
-    data = np.sum(precip, 0)
     basedir = "/mnt/idep2/data/dailyprecip/"+str(valid.year)
     if not os.path.isdir(basedir):
         os.makedirs(basedir)
-    np.save(valid.strftime(basedir+"/%Y%m%d.npy"), data)
-    # save Stage IV as well, for later hand wringing
-    # np.save(valid.strftime(basedir+"/%Y%m%d_stageIV.npy"), stage4)
+    np.save(valid.strftime(basedir+"/%Y%m%d"+fnadd+".npy"), grid)
 
 
 def precip_workflow(valid):
@@ -465,8 +447,8 @@ def precip_workflow(valid):
         load_precip(valid)
     else:
         load_precip_legacy(valid)
-    qc_precip()
-    save_daily_precip(valid)
+    qc_precip(valid)
+    write_grid(valid, np.sum(precip, 0))
 
 
 def workflow():
