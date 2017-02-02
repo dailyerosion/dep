@@ -185,7 +185,7 @@ def qc_precip(valid):
                        ) % (y, x, stage4[y, x], hires_total[y, x],
                             np.sum(precip[:, y, x])))
                 print_threshold = hires_total[y, x]
-
+    precip[np.isnan(precip)] = 0.
     # write_grid(valid, np.sum(precip, 0), 'outqcprecip')
 
 
