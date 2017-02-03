@@ -43,15 +43,27 @@ $().ready(function(){
 	$('#i1').on('load', function(){
 		loading('1', 'none');
 	});
+	if ($('#i1').get(0).complete) {
+		loading('1', 'none');
+	}
 	$('#i2').on('load', function(){
 		loading('2', 'none');
 	});
+	if ($('#i2').get(0).complete) {
+		loading('2', 'none');
+	}
 	$('#i3').on('load', function(){
 		loading('3', 'none');
 	});
+	if ($('#i3').get(0).complete) {
+		loading('3', 'none');
+	}
 	$('#i4').on('load', function(){
 		loading('4', 'none');
 	});
+	if ($('#i4').get(0).complete) {
+		loading('4', 'none');
+	}
 	var dp = $('#dp').datepicker({
 		minDate: new Date(2007, 1, 1),
 		maxDate: new Date({$year}, {$month}, {$day}),
