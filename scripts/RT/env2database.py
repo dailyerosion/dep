@@ -165,55 +165,53 @@ def load_lengths():
     return lengths
 
 
-def delete_data():
-    """Remove any entries for the dates"""
+def delete_previous_entries(huc12):
+    """Remove whatever previous data we have for this huc12 and dates"""
     pgconn = psycopg2.connect(database='idep', host='iemdb')
     icursor = pgconn.cursor()
-    for date in dates:
-        icursor.execute("""
-            DELETE from results_by_huc12
-            WHERE valid = %s and scenario = %s
-            """, (date, SCENARIO))
-        if icursor.rowcount > 0:
-            print("DELETED %4i rows for date %s" % (icursor.rowcount,
-                                                    date))
+    icursor.execute("""
+        DELETE from results_by_huc12 WHERE
+        valid in %s and scenario = %s and huc_12 = %s
+    """, (tuple(dates), SCENARIO, huc12))
+
+    deleted = icursor.rowcount
     icursor.close()
-    pgconn.commit()
+    pgconn.close()
+    return deleted
 
 
-def save_results(df):
+def save_results(huc12, df):
     """Save our output to the database"""
     pgconn = psycopg2.connect(database='idep', host='iemdb')
     icursor = pgconn.cursor()
     inserts = 0
-    skipped = 0
-    for date in dates:
-        for _, row in df[df.date == date].iterrows():
-            # We don't care about the output when the follow conditions
-            # are not meet
-            if (row.qc_precip < 0.254 and row.avg_loss < 0.01 and
-                    row.avg_delivery < 0.01 and row.avg_runoff < 1):
-                skipped += 1
-                continue
-            inserts += 1
-            icursor.execute("""INSERT into results_by_huc12
-            (huc_12, valid, scenario,
-            min_precip, avg_precip, max_precip,
-            min_loss, avg_loss, max_loss,
-            min_runoff, avg_runoff, max_runoff,
-            min_delivery, avg_delivery, max_delivery,
-            qc_precip) VALUES
-            (%s, %s, %s,
-            coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
-            coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
-            coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
-            coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
-            %s)""", (row.huc12, date, SCENARIO,
-                     row.min_precip, row.avg_precip, row.max_precip,
-                     row.min_loss, row.avg_loss, row.max_loss,
-                     row.min_runoff, row.avg_runoff, row.max_runoff,
-                     row.min_delivery, row.avg_delivery, row.max_delivery,
-                     row.qc_precip))
+    skipped = len(dates) - len(df.index)
+    for _, row in df.iterrows():
+        # We don't care about the output when the follow conditions
+        # are not meet
+        if (row.qc_precip < 0.254 and row.avg_loss < 0.01 and
+                row.avg_delivery < 0.01 and row.avg_runoff < 1):
+            skipped += 1
+            continue
+        inserts += 1
+        icursor.execute("""INSERT into results_by_huc12
+        (huc_12, valid, scenario,
+        min_precip, avg_precip, max_precip,
+        min_loss, avg_loss, max_loss,
+        min_runoff, avg_runoff, max_runoff,
+        min_delivery, avg_delivery, max_delivery,
+        qc_precip) VALUES
+        (%s, %s, %s,
+        coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
+        coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
+        coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
+        coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
+        %s)""", (row.huc12, row['date'], SCENARIO,
+                 row.min_precip, row.avg_precip, row.max_precip,
+                 row.min_loss, row.avg_loss, row.max_loss,
+                 row.min_runoff, row.avg_runoff, row.max_runoff,
+                 row.min_delivery, row.avg_delivery, row.max_delivery,
+                 row.qc_precip))
     icursor.close()
     pgconn.commit()
     return inserts, skipped
@@ -242,23 +240,29 @@ def do_huc12(huc12):
     basedir = "/i/%s/env/%s/%s" % (SCENARIO, huc12[:8], huc12[8:])
     frames = [readfile(huc12, basedir+"/"+f) for f in os.listdir(basedir)]
     if len(frames) == 0 or any([f is None for f in frames]):
-        return huc12, None, None
+        return huc12, None, None, None
     # Push all dataframes into one
     df = pd.concat(frames)
     df.fillna(0, inplace=True)
     hillslopes = len(frames)
     rows = []
+    deleted = delete_previous_entries(huc12)
     for date in dates:
-        qc_precip = 0 if SCENARIO > 0 else precip[date][huc12]
         df2 = df[df.date == date]
+        # We have no data, any previous entries were deleted above already
+        qc_precip = 0 if SCENARIO > 0 else precip[date][huc12]
+        if len(df2.index) == 0 and qc_precip == 0:
+            continue
         # Do computation
         rows.append(
             compute_res(df2, date, huc12, hillslopes, qc_precip))
+    if len(rows) == 0:
+        return huc12, 0, len(dates), deleted
     # save results
     df = pd.DataFrame(rows)
-    inserts, skipped = save_results(df)
+    inserts, skipped = save_results(huc12, df)
 
-    return huc12, inserts, skipped
+    return huc12, inserts, skipped, deleted
 
 if __name__ == '__main__':
     # We are ready to do stuff!
@@ -268,7 +272,6 @@ if __name__ == '__main__':
     lengths = load_lengths()
     global dates  # unsure why this is needed to make pydev happy
     dates = determine_dates(sys.argv)
-    delete_data()
     huc12s = find_huc12s()
     if SCENARIO == 0:
         precip = load_precip(dates, huc12s)
@@ -279,16 +282,17 @@ if __name__ == '__main__':
     pool = multiprocessing.Pool()
     totalinserts = 0
     totalskipped = 0
-    for huc12, inserts, skipped in tqdm(pool.imap_unordered(do_huc12, huc12s),
-                                        total=len(huc12s),
-                                        disable=(not sys.stdout.isatty())):
+    for huc12, inserts, skipped, deleted in tqdm(
+            pool.imap_unordered(do_huc12, huc12s), total=len(huc12s),
+            disable=(not sys.stdout.isatty())):
         if inserts is None:
             print("ERROR: huc12 %s returned 0 data" % (huc12,))
             continue
         totalinserts += inserts
         totalskipped += skipped
-    print("env2database.py inserts: %s skips: %s" % (totalinserts,
-                                                     totalskipped))
+    print("env2database.py inserts: %s skips: %s deleted: %s" % (totalinserts,
+                                                                 totalskipped,
+                                                                 deleted))
     update_metadata(dates)
 
 
