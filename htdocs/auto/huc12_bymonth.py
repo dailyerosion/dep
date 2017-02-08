@@ -8,8 +8,6 @@ import numpy as np
 import calendar
 
 
-
-
 def make_plot(huc12, scenario):
     """Make the map"""
     import matplotlib
@@ -37,7 +35,7 @@ def make_plot(huc12, scenario):
         data.append(row[1])
         confidence.append(row[2] / (row[3]**2))
     months = np.array(months)
-    (fig, ax) = plt.subplots(1, 1)
+    (_, ax) = plt.subplots(1, 1)
     bars = ax.bar(months - 0.4, data, color='tan', yerr=confidence)
     ax.grid(True)
     ax.set_ylabel("Soil Detachment (t/a)")
