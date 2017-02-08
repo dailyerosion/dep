@@ -1,3 +1,12 @@
+ 2 Feb 2017 - DEP Planning
+  Benning, Chen, Yu, Cruse, James, Claudette, Miller, Bates, Tim, Gelder
+  - The NCRWN and UCS projects are now closed
+  - Will be finishing up the rest of Minnesota and the funding looks good for
+    that work, in maybe three months time
+  - After current work, maybe it is then onto Ohio
+  - Dr Chen provided some details on China
+  - [x] check out www.weather.com.cn to see what they have for precip, Nope
+
 12 Jan 2017 - DEP Planning
   Claudette, Gelder, Miller, Bates, Cruse, Tim, Chen, Soloman
   - Solomon Worlds joined us as a part of an internship he is doing here
