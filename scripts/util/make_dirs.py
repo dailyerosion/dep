@@ -4,6 +4,7 @@ import os
 import sys
 
 SCENARIO = sys.argv[1]
+BASELINESCENARIO = 0 if len(sys.argv) == 3 else SCENARIO
 
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor()
@@ -21,6 +22,6 @@ def do(huc12):
 if __name__ == '__main__':
     # Go Main Go
     cursor.execute("""SELECT distinct huc_12 from flowpaths
-    WHERE scenario = %s""", (SCENARIO,))
+    WHERE scenario = %s""", (BASELINESCENARIO,))
     for row in cursor:
         do(row[0])
