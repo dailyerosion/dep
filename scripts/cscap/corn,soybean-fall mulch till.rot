@@ -1,0 +1,35 @@
+#
+# WEPP rotation saved on: Wed Feb 22 03:31:21 PM 2017
+#
+# Created with WEPPWIN verion: Sep 17 2012 
+#
+Version = 98.7
+Name = corn,soybean - mulch till cover crop
+Description {
+}
+Color = 0 255 0
+LandUse = 1
+InitialConditions = IniCropDef.Default {0.000000, 0}
+
+Operations {
+5  6  1  1 Tillage	OpCropDef.CHISSTSP	{0.203200, 1}
+5  8  1  1 Tillage	OpCropDef.FIEL0001	{0.101600, 2}
+5  10  1  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
+5  10  1  1 Plant-Annual	CropDef.Corn	 {0.762000}
+10  15  1  1 Harvest-Annual	CropDef.Corn	{}
+10  16  1  1 Tillage	OpCropDef.CRNTFRRI	{0.050000, 2}
+10  16  1  1 Plant-Perennial	CropDef.Alf_2097	 {0.190500,0}
+5  4  2  1 Kill-Perennial	CropDef.Alf_2097	{}
+5  4  2  1 Tillage	OpCropDef.CHISSTSP	{0.203200, 1}
+5  6  2  1 Tillage	OpCropDef.TAND0002	{0.101600, 2}
+5  8  2  1 Tillage	OpCropDef.FIEL0001	{0.101600, 2}
+5  10  2  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
+5  10  2  1 Plant-Annual	CropDef.soybean2	 {0.762000}
+10  15  2  1 Harvest-Annual	CropDef.soybean2	{}
+10  16  2  1 Tillage	OpCropDef.CRNTFRRI	{0.050000, 2}
+10  16  2  1 Plant-Perennial	CropDef.Alf_2097	 {0.762000,0}
+5  6  3  1 Kill-Perennial	CropDef.Alf_2097	{}
+5  6  3  1 Tillage	OpCropDef.ANHYDROS	{0.101600, 2}
+5  6  3  1 Tillage	OpCropDef.CHISSTSP	{0.203200, 1}
+5  8  3  1 Tillage	OpCropDef.FIEL0001	{0.101600, 2}
+}

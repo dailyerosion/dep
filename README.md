@@ -13,6 +13,7 @@ So in review…the mean NRI slope length for all samples in V1 is 60.8m – 95%
 To be conservative, I would start at 311m as a flowpath length threshold,
 then change to 198m to see how they matchup to the NRI results.
 
+- 27 Feb 2017: Note to self, I skipped scenario 17! reuse later :(
 
 
 Iowa Daily Erosion Project (version 2)
