@@ -18,13 +18,13 @@ TILLAGE = {
 
 PLANT = {
     'corn': '1 Plant-Annual        CropDef.Corn     {0.762000}',
-    'cover': '1 Plant-Perennial    CropDef.Alf_2097         {0.190500,0}',
+    'cover': '1 Plant-Perennial    CropDef.Alf_5069         {0.190500,0}',
     'soy': '1 Plant-Annual        CropDef.soybean2         {0.762000}',
     }
 
 HARVEST = {
     'corn': '1 Harvest-Annual     CropDef.Corn    {}',
-    'cover': '1 Kill-Perennial       CropDef.Alf_2097        {}',
+    'cover': '1 Kill-Perennial       CropDef.Alf_5069        {}',
     'soy': '1 Harvest-Annual     CropDef.soybean2        {}',
     }
 BLOCKS = {'TILLAGE': TILLAGE, 'PLANT': PLANT, 'HARVEST': HARVEST}
