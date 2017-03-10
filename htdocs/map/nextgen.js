@@ -845,6 +845,11 @@ $(document).ready(function(){
     	map.getView().setZoom(7);
     	$(this).blur();
     });
+    $('#ne').on('click', function(){
+    	map.getView().setCenter(ol.proj.transform([-96.01, 40.55], 'EPSG:4326', 'EPSG:3857'));
+    	map.getView().setZoom(8);
+    	$(this).blur();
+    });
     
     
     remap();

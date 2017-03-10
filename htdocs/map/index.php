@@ -184,6 +184,7 @@ $t->content = <<<EOF
 		<button id="ia" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Iowa</button>
 		<button id="ks" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Kansas</button>
 		<button id="mn" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Minnesota</button>
+		<button id="ne" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Nebraska</button>
 		<br clear="all" />
 		<strong>Status:</strong> <span id="status">Idle</span>
 	</div>
