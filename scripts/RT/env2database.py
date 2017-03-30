@@ -176,6 +176,7 @@ def delete_previous_entries(huc12):
 
     deleted = icursor.rowcount
     icursor.close()
+    pgconn.commit()
     pgconn.close()
     return deleted
 
@@ -263,6 +264,7 @@ def do_huc12(huc12):
     inserts, skipped = save_results(huc12, df)
 
     return huc12, inserts, skipped, deleted
+
 
 if __name__ == '__main__':
     # We are ready to do stuff!
