@@ -116,7 +116,7 @@ def do_huc12(huc12):
     df = pd.concat(frames)
     df2 = df[df.date == date].mean()
 
-    return huc12, df2['ep'] + df2['es'] + df2['er'], df2['q']
+    return huc12, df2['ep'] + df2['es'] + df2['er'], df2['runoff']
 
 
 if __name__ == '__main__':
