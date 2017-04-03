@@ -4,7 +4,6 @@ import os
 import datetime
 import multiprocessing
 import sys
-import unittest
 import numpy as np
 import psycopg2
 from tqdm import tqdm
@@ -133,11 +132,14 @@ if __name__ == '__main__':
     totalinserts = 0
     totalskipped = 0
     o = open("%s_wb.csv" % (date.strftime("%Y%m%d"),), 'w')
-    o.write("HUC12,PRECIP_MM,ET_MM,RUNOFF_MM\n")
+    o.write("HUC12,VALID,PRECIP_MM,ET_MM,RUNOFF_MM\n")
+    stamp = date.strftime("%Y-%m-%d")
     for huc12, et, runoff in tqdm(
             pool.imap_unordered(do_huc12, huc12s), total=len(huc12s),
             disable=(not sys.stdout.isatty())):
         if et is not None:
-            o.write("%s,%.2f,%.2f,%.2f\n" % (huc12, precip[date][huc12],
-                    et, runoff))
+            if not np.isnan(et):
+                o.write("%s,%s,%.2f,%.2f,%.2f\n" % (huc12, stamp,
+                                                    precip[date][huc12],
+                                                    et, runoff))
     o.close()
