@@ -4,9 +4,10 @@ import psycopg2
 import sys
 import os
 
+
 def do_delete(huc12, fpath, scenario):
     """Delete a flowpath from the database and on disk
-    
+
     Args:
       huc12 (str): The HUC12 that contains the flowpath
       fpath (str): The flowpath within that HUC12 that needs removal
@@ -14,8 +15,8 @@ def do_delete(huc12, fpath, scenario):
     """
     pgconn = psycopg2.connect(database='idep', host='iemdb')
     cursor = pgconn.cursor()
-    
-    #Find the FID
+
+    # Find the FID
     cursor.execute("""SELECT fid from flowpaths WHERE huc_12 = %s and
     fpath = %s and scenario = %s""", (huc12, fpath, scenario))
     if cursor.rowcount == 0:
@@ -29,7 +30,7 @@ def do_delete(huc12, fpath, scenario):
     # Delete flowpath
     cursor.execute("""DELETE from flowpaths where fid = %s
     and scenario = %s""", (fid, scenario))
-    
+
     # Remove some files
     for prefix in ['env', 'error', 'man', 'prj', 'run', 'slp', 'sol', 'wb']:
         fn = "/i/%s/%s/%s/%s/%s_%s.%s" % (scenario, prefix, huc12[:8],
@@ -39,9 +40,10 @@ def do_delete(huc12, fpath, scenario):
             os.unlink(fn)
         else:
             print("MISSING %s" % (fn,))
-    
+
     cursor.close()
     pgconn.commit()
+
 
 def main():
     """Go Main Go"""
@@ -49,6 +51,7 @@ def main():
     fpath = sys.argv[2]
     scenario = sys.argv[3]
     do_delete(huc12, fpath, scenario)
+
 
 if __name__ == '__main__':
     main()
