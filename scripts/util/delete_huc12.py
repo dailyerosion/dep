@@ -37,6 +37,7 @@ def do_delete(huc12, scenario):
         files = glob.glob("*.*")
         for fn in files:
             os.unlink(fn)
+        os.rmdir(dirname)
         print("Removed %s files from %s" % (len(files), dirname))
 
     cursor.close()
