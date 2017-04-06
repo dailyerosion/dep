@@ -1,3 +1,17 @@
+ 2 Apr 2017 - DEP Planning
+  Chen, Yu, Cruse, Bates, Gelder
+  - Claudette's employment situation should be cleared up shortly
+  - Discussion of sending the water balance data to UofIowa for validation work
+  - [ ] requested addition of a CSCAP scenario with continuous corn + cover
+  - [ ] look into what daryl plotted for cover time series and see if there
+    are other variables to plot, Gelder says there are 3 partitioned values
+  - [ ] review how we are handling harvest for cover crops
+  - MN is coming along nicely and will be redoing SE Minnesota
+  - DEM is ad-hoc and processing it has been a pain in MN
+  - KS will be reprocessed soon as well
+  - discussion of the project that was submitted to CCG
+  - [x] email about what the difference between 5070 and 5071 EPSG
+ 
  2 Feb 2017 - DEP Planning
   Benning, Chen, Yu, Cruse, James, Claudette, Miller, Bates, Tim, Gelder
   - The NCRWN and UCS projects are now closed
