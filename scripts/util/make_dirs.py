@@ -4,7 +4,7 @@ import os
 import sys
 
 SCENARIO = sys.argv[1]
-BASELINESCENARIO = 0 if len(sys.argv) == 3 else SCENARIO
+BASELINESCENARIO = 0 if len(sys.argv) == 2 else sys.argv[2]
 
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
 cursor = PGCONN.cursor()
@@ -18,6 +18,7 @@ def do(huc12):
         d = "/i/%s/%s/%s/%s" % (SCENARIO, prefix, huc12[:8], huc12[8:])
         if not os.path.isdir(d):
             os.makedirs(d)
+
 
 if __name__ == '__main__':
     # Go Main Go
