@@ -109,6 +109,21 @@ SCENARIOS = {
           (10, 16, 'TILLAGE', 'drill'),
           (10, 16, 'PLANT', 'cover'),
           (5, 4, 'HARVEST', 'cover')]],
+    # continuous corn, cover, no-till
+    24: [[(5, 10, 'TILLAGE', 'ntplant'),
+          (5, 10, 'PLANT', 'corn'),
+          (10, 15, 'HARVEST', 'corn'),
+          (10, 16, 'TILLAGE', 'drill'),
+          (10, 16, 'PLANT', 'cover'),
+          (5, 4, 'HARVEST', 'cover'),
+          (5, 6, 'TILLAGE', 'anhydros')],
+         [(5, 10, 'TILLAGE', 'ntplant'),
+          (5, 10, 'PLANT', 'corn'),
+          (10, 15, 'HARVEST', 'corn'),
+          (10, 16, 'TILLAGE', 'drill'),
+          (10, 16, 'PLANT', 'cover'),
+          (5, 4, 'HARVEST', 'cover'),
+          (5, 6, 'TILLAGE', 'anhydros')]],
     }
 # Filenames
 FILENAMES = {18: 'CC_NC_NT.rot',
@@ -116,7 +131,8 @@ FILENAMES = {18: 'CC_NC_NT.rot',
              20: 'CS_NC_CT.rot',
              21: 'CS_NC_PL.rot',
              22: 'CS_NC_NT.rot',
-             23: 'CS_CC_NT.rot'}
+             23: 'CS_CC_NT.rot',
+             24: 'CC_CC_NT.rot'}
 
 
 def do(scenario, filename, phase):

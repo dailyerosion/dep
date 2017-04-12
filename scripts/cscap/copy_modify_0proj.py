@@ -13,7 +13,8 @@ FILENAMES = {18: 'CC_NC_NT.rot',
              20: 'CS_NC_CT.rot',
              21: 'CS_NC_PL.rot',
              22: 'CS_NC_NT.rot',
-             23: 'CS_CC_NT.rot'}
+             23: 'CS_CC_NT.rot',
+             24: 'CC_CC_NT.rot'}
 
 
 def main():
@@ -27,7 +28,7 @@ def main():
             for fn in glob.glob("*.prj"):
                 newfn = "/i/%s/prj/%s/%s/%s" % (SCENARIO, huc8, huc4, fn)
                 old = open(fn).read().replace("/i/0/", "/i/%s/" % (SCENARIO,))
-                l = LENGTH.findall(old)
+                thelength = LENGTH.findall(old)
                 # using the legacy crops, not region specific
                 rotfn = "IDEP2/CSCAP/%s_%s" % (i % 2 + 1,
                                                FILENAMES[SCENARIO])
@@ -43,12 +44,13 @@ def main():
     }
 
 }
-""" % (rotfn, l[0], rotfn))
+""" % (rotfn, thelength[0], rotfn))
                 o.write(old[pos2:])
                 o.close()
                 i += 1
             os.chdir("..")
         os.chdir("..")
+
 
 if __name__ == '__main__':
     main()
