@@ -1,11 +1,43 @@
+"""
+Utility to plot some residue values from WEPP crop output
+"""
+from __future__ import print_function
 import datetime
 import pandas as pd
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 
+COLS = ['canopy_height_m',
+        'canopy_cover_%',
+        'LAI',
+        'cover_rill_%',
+        'cover_inter_%',
+        'live_biomass_type',
+        'live_biomass',
+        'standing_residue_mass',
+        'flat_residue_mass1_type',
+        'flat_residue_mass1',
+        'flat_residue_mass2_type',
+        'flat_residue_mass2',
+        'flat_residue_mass3_type',
+        'flat_residue_mass3',
+        'barried_residue_mass1',
+        'barried_residue_mass2',
+        'barried_residue_mass3',
+        'deadroot_residue_mass1_type',
+        'deadroot_residue_mass1',
+        'deadroot_residue_mass2_type',
+        'deadroot_residue_mass2',
+        'deadroot_residue_mass3_type',
+        'deadroot_residue_mass3',
+        'average_temp_c',
+        ]
 
-def myread(fn):
+
+def myread(filename):
+    """Read my file,  please"""
     rows = []
-    for i, line in enumerate(open(fn)):
+    for i, line in enumerate(open(filename)):
         if i < 13:
             continue
         tokens = line.strip().split()
@@ -13,20 +45,37 @@ def myread(fn):
             continue
         date = datetime.date(int(tokens[2]), 1, 1)
         date = date + datetime.timedelta(days=(int(tokens[1])-1))
-        rows.append(dict(date=date, rill=float(tokens[6]),
-                         inter=float(tokens[7])))
+        mydict = dict(date=date)
+        for i in range(3, 3 + len(COLS)):
+            mydict[COLS[i - 3]] = float(tokens[i])
+        rows.append(mydict)
 
     return pd.DataFrame(rows)
 
-df22 = myread('22_102400120405_9.crop')
-df23 = myread('23_102400120405_9.crop')
 
-(fig, ax) = plt.subplots(1, 1, figsize=(8, 6))
-ax.plot(df22['date'], df22['inter'], label="CS No Cover NoTill")
-ax.plot(df23['date'], df23['inter'], label='CS Cover NoTill')
-ax.grid(True)
-ax.set_ylabel('Residue Cover')
-ax.legend(ncol=2)
-ax.set_title("CSCAP Scenario Comparison for HUC12: 102400120405 HS: 9")
+def main():
+    """Go Main Go"""
+    df22 = myread('18_102400120405_9.crop')
+    # df23 = myread('23_102400120405_9.crop')
+    df24 = myread('24_102400120405_9.crop')
 
-fig.savefig('test.png')
+    for plotvar in COLS:
+        print("Processing %s" % (plotvar, ))
+        (fig, axes) = plt.subplots(1, 1, figsize=(12, 6))
+        axes.plot(df22['date'], df22[plotvar], label="CC No Cover NoTill")
+        # axes.plot(df23['date'], df23['inter'], label='CS Cover NoTill')
+        axes.plot(df24['date'], df24[plotvar], label='CC Cover NoTill')
+        axes.grid(True)
+        axes.set_ylabel(plotvar)
+        axes.legend(ncol=2)
+        axes.set_title(("CSCAP Scenario Comparison for HUC12: "
+                        "102400120405 HS: 9"
+                        "\n'%s' Plotted") % (plotvar, ))
+        axes.xaxis.set_major_locator(mdates.YearLocator(1))
+
+        fig.savefig('%s.png' % (plotvar,))
+        plt.close()
+
+
+if __name__ == '__main__':
+    main()
