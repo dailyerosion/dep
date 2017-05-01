@@ -1,3 +1,10 @@
+28 Apr 2017 - DEP Grid Order Discussion
+  Chen, Yu, Cruse, Gelder, James
+  - [ ] The Grid Order 4 data for 2014-2016 does not logically match others
+  - Gelder is going to send me some contributing area data
+  - "Rill erosion is driven by tillage"
+  - [ ] Produce a map of where the inflection points in delivery are happening
+
  2 Apr 2017 - DEP Planning
   Chen, Yu, Cruse, Bates, Gelder
   - Claudette's employment situation should be cleared up shortly
