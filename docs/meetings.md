@@ -1,3 +1,17 @@
+12 May 2017 - DEP Planning
+  Chen, Yu, Gelder, Cruse, Bates, James, Miller, Claudette
+  - There is a data request sent to Dr Cruse for 80 hillslopes, needs to forward
+  - Soil delivery numbers needed by MLRA for the 4yr rotation used in UCS
+  - Issue of excluding pasture rotations in these students.  daryl does not
+    have visibility into the `isag` field that James and Gelder has.  Can do
+    some simple assumptions about seeing rotations of P appear more than once
+  - No need for the sequential conversion work that was done in UCS for this
+  - Dave would perfer completed HUC12s and not completed counties
+  - DEP elevation will go to a 2m dataset
+  - Gonna have a county based estimate of tillage to use as a fall-back when
+    the remotely sensed work does not work
+  - [ ] James wants to see precip intensity plots
+
 28 Apr 2017 - DEP Grid Order Discussion
   Chen, Yu, Cruse, Gelder, James
   - [ ] The Grid Order 4 data for 2014-2016 does not logically match others
