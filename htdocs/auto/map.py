@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 """Mapping Interface"""
-import memcache
 import sys
 import cgi
 import datetime
 import os
 import cStringIO
+
+import memcache
 import psycopg2
 from shapely.wkb import loads
 import numpy as np
@@ -56,11 +57,12 @@ def make_map(ts, ts2, scenario, v):
     """Make the map"""
     import matplotlib
     matplotlib.use('agg')
-    from pyiem.plot import MapPlot
+    from pyiem.plot.geoplot import MapPlot
     import matplotlib.pyplot as plt
     from matplotlib.patches import Polygon
     from matplotlib.collections import PatchCollection
     import matplotlib.colors as mpcolors
+    import cartopy.crs as ccrs
 
     # suggested for runoff and precip
     if v in ['qc_precip', 'avg_runoff']:
@@ -83,8 +85,7 @@ def make_map(ts, ts2, scenario, v):
         title = "for period between %s and %s" % (ts.strftime("%-d %b %Y"),
                                                   ts2.strftime("%-d %b %Y"))
     m = MapPlot(axisbg='#EEEEEE', nologo=True, sector='custom',
-                projection='aea',
-                south=37.4, north=44.9, west=-99.2, east=-89.1,
+                south=36.8, north=45.0, west=-99.2, east=-88.9,
                 title='DEP %s by HUC12 %s' % (V2NAME[v], title),
                 caption='Daily Erosion Project')
 
@@ -117,9 +118,9 @@ def make_map(ts, ts2, scenario, v):
     for row in cursor:
         polygon = loads(row[0].decode('hex'))
         a = np.asarray(polygon.exterior)
-        (x, y) = m.map(a[:, 0], a[:, 1])
-        a = zip(x, y)
-        p = Polygon(a, fc='white', ec='k', zorder=2, lw=.1)
+        points = m.ax.projection.transform_points(ccrs.Geodetic(),
+                                                  a[:, 0], a[:, 1])
+        p = Polygon(points[:, :2], fc='white', ec='k', zorder=2, lw=.1)
         patches.append(p)
         data.append(row[1])
     data = np.array(data) * V2MULTI[v]
@@ -131,8 +132,8 @@ def make_map(ts, ts2, scenario, v):
     for val, patch in zip(data, patches):
         c = cmap(norm([val, ]))[0]
         patch.set_facecolor(c)
+        m.ax.add_patch(patch)
 
-    m.ax.add_collection(PatchCollection(patches, match_original=True))
     lbl = [round(_, 2) for _ in bins]
     m.draw_colorbar(bins, cmap, norm, units=V2UNITS[v],
                     clevlabels=lbl)
@@ -142,7 +143,7 @@ def make_map(ts, ts2, scenario, v):
     return ram.read(), True
 
 
-def main(argv):
+def main():
     """Do something fun"""
     form = cgi.FieldStorage()
     year = form.getfirst('year', 2015)
@@ -171,6 +172,7 @@ def main(argv):
             mc.set(mckey, res, 3600)
     sys.stdout.write(res)
 
+
 if __name__ == '__main__':
     # See how we are called
-    main(sys.argv)
+    main()
