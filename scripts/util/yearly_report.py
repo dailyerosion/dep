@@ -1,6 +1,8 @@
 """Generate a report for the yearly DEP totals"""
 import sys
+import datetime
 
+import matplotlib.pyplot as plt
 import psycopg2
 from pandas.io.sql import read_sql
 
@@ -31,6 +33,23 @@ def main(argv):
 
     print df
     print df.mean()
+
+    (fig, ax) = plt.subplots(1, 1)
+    ax.bar(df.index.values, df['detachment_ta'].values)
+    for year, row in df.iterrows():
+        ax.text(year, row['detachment_ta'] + 0.2,
+                "%.1f" % (row['detachment_ta'], ), ha='center')
+    ax.axhline(df['detachment_ta'].mean(), label='mean', zorder=5,
+               color='k', lw=1.5)
+    ax.legend(loc='best')
+    ax.grid(True)
+    ax.set_xlim(df.index.values[0] - 0.5, df.index.values[-1] + 0.5)
+    ax.set_ylabel("Yearly Detatchment [tons/acre]")
+    ax.set_title("Daily Erosion Project Iowa's Yearly Detachment")
+    fig.text(0.01, 0.01,
+             ("Plot generated %s"
+              ) % (datetime.datetime.now().strftime("%d %B %Y"),))
+    fig.savefig('test.png')
 
 
 if __name__ == '__main__':
