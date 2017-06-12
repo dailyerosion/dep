@@ -1,12 +1,14 @@
 """
  I do the realtime run!
 """
-import psycopg2
+from __future__ import print_function
 import sys
 import os
 import subprocess
 import datetime
 from multiprocessing import Pool
+
+import psycopg2
 
 SCENARIO = sys.argv[1]
 # don't need trailing /
@@ -17,7 +19,7 @@ FORCE_RUNFILE_REGEN = (datetime.date.today().month == 1 and
                        datetime.date.today().day == 2)
 
 
-class wepprun(object):
+class WeppRun(object):
     """ Represents a single run of WEPP
 
     Filenames have a 51 character restriction
@@ -77,56 +79,54 @@ class wepprun(object):
 
     def make_runfile(self):
         ''' Create a runfile for our runs '''
-        o = open(self.get_runfile_fn(), 'w')
-        o.write("E\n")      # English units
-        o.write("Yes\n")    # Run Hillslope
-        o.write("1\n")      # Continuous simulation
-        o.write("1\n")      # hillslope version
-        o.write("No\n")     # pass file output?
-        o.write("1\n")      # abbreviated annual output
-        o.write("No\n")     # initial conditions output
-        o.write("/dev/null\n")   # soil loss output file
-        o.write("Yes\n")        # Do water balance output
-        o.write("%s\n" % (self.get_wb_fn(),))   # water balance output file
-        o.write("No\n")     # crop output
-        o.write("No\n")     # soil output
-        o.write("No\n")     # distance and sed output
-        o.write("No\n")     # large graphics output
-        o.write("Yes\n")    # event by event output
-        o.write("%s\n" % (self.get_env_fn(),))  # event file output
-        o.write("No\n")     # element output
-        # o.write("%s\n" % (self.get_ofe_fn(),))
-        o.write("No\n")     # final summary output
-        o.write("No\n")     # daily winter output
-        o.write("No\n")     # plant yield output
-        o.write("%s\n" % (self.get_man_fn(),))  # management file
-        o.write("%s\n" % (self.get_slope_fn(),))  # slope file
-        o.write("%s\n" % (self.get_clifile_fn(),))  # climate file
-        o.write("%s\n" % (self.get_soil_fn(),))  # soil file
-        o.write("0\n")  # Irrigation
-        o.write("%s\n" % (YEARS,))  # years 2007-
-        o.write("0\n")  # route all events
+        out = open(self.get_runfile_fn(), 'w')
+        out.write("E\n")      # English units
+        out.write("Yes\n")    # Run Hillslope
+        out.write("1\n")      # Continuous simulation
+        out.write("1\n")      # hillslope version
+        out.write("No\n")     # pass file output?
+        out.write("1\n")      # abbreviated annual output
+        out.write("No\n")     # initial conditions output
+        out.write("/dev/null\n")   # soil loss output file
+        out.write("Yes\n")        # Do water balance output
+        out.write("%s\n" % (self.get_wb_fn(),))   # water balance output file
+        out.write("No\n")     # crop output
+        out.write("No\n")     # soil output
+        out.write("No\n")     # distance and sed output
+        out.write("No\n")     # large graphics output
+        out.write("Yes\n")    # event by event output
+        out.write("%s\n" % (self.get_env_fn(),))  # event file output
+        out.write("No\n")     # element output
+        # out.write("%s\n" % (self.get_ofe_fn(),))
+        out.write("No\n")     # final summary output
+        out.write("No\n")     # daily winter output
+        out.write("No\n")     # plant yield output
+        out.write("%s\n" % (self.get_man_fn(),))  # management file
+        out.write("%s\n" % (self.get_slope_fn(),))  # slope file
+        out.write("%s\n" % (self.get_clifile_fn(),))  # climate file
+        out.write("%s\n" % (self.get_soil_fn(),))  # soil file
+        out.write("0\n")  # Irrigation
+        out.write("%s\n" % (YEARS,))  # years 2007-
+        out.write("0\n")  # route all events
 
-        o.close()
+        out.close()
 
     def run(self):
         ''' Actually run wepp for this event '''
         runfile = self.get_runfile_fn()
         if FORCE_RUNFILE_REGEN or not os.path.isfile(runfile):
             self.make_runfile()
-        p = subprocess.Popen(["wepp", ],
-                             stderr=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-        p.stdin.write(open(runfile).read())
-        res = p.stdout.read()
+        proc = subprocess.Popen(["wepp", ],
+                                stderr=subprocess.PIPE,
+                                stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+        proc.stdin.write(open(runfile).read())
+        res = proc.stdout.read()
         if res[-13:-1] != 'SUCCESSFULLY':
-            print 'Run HUC12: %s FPATH: %4s errored!' % (self.huc12, self.fpid)
-            e = open(self.get_error_fn(), 'w')
-            e.write(res)
-            e.close()
-
-
-QUEUE = []
+            print('Run HUC12: %s FPATH: %4s errored!' % (self.huc12,
+                                                         self.fpid))
+            efp = open(self.get_error_fn(), 'w')
+            efp.write(res)
+            efp.close()
 
 
 def realtime_run():
@@ -134,30 +134,36 @@ def realtime_run():
     idep = psycopg2.connect(database='idep', host='iemdb', user='nobody')
     icursor = idep.cursor()
 
+    queue = []
     icursor.execute("""SELECT huc_12, fid, fpath, climate_file
     from flowpaths where scenario = %s""" % (SCENARIO,))
     for row in icursor:
-        QUEUE.append(row)
+        queue.append(row)
+    return queue
 
 
 def run(row):
     """ Run ! """
-    r = wepprun(row[0], row[2], row[3])
-    r.run()
+    wr = WeppRun(row[0], row[2], row[3])
+    wr.run()
 
 
-if __name__ == '__main__':
-    # Go main Go
-    realtime_run()
+def main():
+    """Go Main Go"""
+    queue = realtime_run()
     pool = Pool()  # defaults to cpu-count
     sts = datetime.datetime.now()
-    sz = len(QUEUE)
-    for i, _ in enumerate(pool.imap_unordered(run, QUEUE), 1):
+    sz = len(queue)
+    for i, _ in enumerate(pool.imap_unordered(run, queue), 1):
         if i > 0 and i % 5000 == 0:
             delta = datetime.datetime.now() - sts
             secs = delta.microseconds / 1000000. + delta.seconds
             speed = i / secs
             remaining = ((sz - i) / speed) / 3600.
-            print ('%5.2fh Processed %6s/%6s [%.2f runs per sec] '
+            print(('%5.2fh Processed %6s/%6s [%.2f runs per sec] '
                    'remaining: %5.2fh') % (secs / 3600., i, sz, speed,
-                                           remaining)
+                                           remaining))
+
+
+if __name__ == '__main__':
+    main()
