@@ -1,3 +1,31 @@
+ 8 Jun 2017 - AFRI Proposal and DEP Planning
+  James, Gelder, Yu, Chen, Bates, Miller(x2), Cruse, Todey, remote users
+  - Can we adjust the WEPP output timescale to get more detailed temporal?
+  - Tim believes there is a 50 timestep climate file output limit
+  - Idea would be to keep DEP daily and have gulley model due event based
+  - The workflow is that the gulley model needs DEP outputs, not the other way
+  - Can WEPP produce a hydrograph?  Perhaps it can based on a recent paper
+  - [ ] general TODO that daryl needs to look at more code to know these things
+  - Can we build a climatological gulley to bootstrap the model process
+  - Budget is 1.2mil over 5yr, need to trim current budget down
+  - [ ] need to send current+pending, conflict of interest, two page bio
+  - There may be a CoCoRaHS connection for citizen data science
+  - concerns about 508 compliance for our website and interactive map
+  - James and Tomer are presenting ACPF in DC next month
+  - Continued discussion of China expansion and they want more docs from me 
+  - Finding open data in China is difficult, talks of using a NASA precip prod
+  - China is all ridge till, some of which goes up and down the hill
+  - NE China has some cropping layers and rotations are similiar to us
+  - [ ] daryl maybe should start archving GFS 0.25 degree data for china climo
+  - Could DEP expand to Texas?  Maybe Chesapeake Bay area first
+  - Hired a post-doc, who will be shared with Miller and Helmers(?)
+  - Increasing the harvest index to get more biomass removed for an experiment
+  - [ ] daryl should be archiving the harvest output :/
+  - decision makers want some colorized maps tied to a platte book, so they know
+    who to go target with their work
+  - Gelder has the manuscript revisions near ready for our review
+  - this paper needs a better graphic showing the association of DEP to WEPP
+
 12 May 2017 - DEP Planning
   Chen, Yu, Gelder, Cruse, Bates, James, Miller, Claudette
   - There is a data request sent to Dr Cruse for 80 hillslopes, needs to forward
