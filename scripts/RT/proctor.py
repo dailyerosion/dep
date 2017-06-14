@@ -77,6 +77,11 @@ class WeppRun(object):
         return '%s/run/%s/%s_%s.run' % (IDEPHOME, self.subdir,
                                         self.huc12, self.fpid)
 
+    def get_yield_fn(self):
+        """Filename to be used for yield output"""
+        return "%s/yld/%s/%s_%s.yld" % (IDEPHOME, self.subdir, self.huc12,
+                                        self.fpid)
+
     def make_runfile(self):
         ''' Create a runfile for our runs '''
         out = open(self.get_runfile_fn(), 'w')
@@ -100,7 +105,8 @@ class WeppRun(object):
         # out.write("%s\n" % (self.get_ofe_fn(),))
         out.write("No\n")     # final summary output
         out.write("No\n")     # daily winter output
-        out.write("No\n")     # plant yield output
+        out.write("Yes\n")     # plant yield output
+        out.write("%s\n" % (self.get_yield_fn(),))  # yield file
         out.write("%s\n" % (self.get_man_fn(),))  # management file
         out.write("%s\n" % (self.get_slope_fn(),))  # slope file
         out.write("%s\n" % (self.get_clifile_fn(),))  # climate file
