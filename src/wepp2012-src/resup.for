@@ -182,7 +182,8 @@ c       ADD a write statement to a file to store crop yields
 c       for George Foster  3/25/93   dcf
 c
         if (yldflg.eq.1) then
-          write (46,1100) itype(nowcrp,iplane), sdate, iplane, hyield
+          write (46,1100) itype(nowcrp,iplane), sdate, iplane, hyield,
+     1        year
 c
 c         ADD summation variables to total up the yields of the
 c         various crops on the various OFE's.  ADD variable to
@@ -389,7 +390,7 @@ c
  1000 format(' ANNUAL CROP HARVEST DATE ',i3,' -- plane ',i2,
      1    ' yield ',f6.3,'(kg/m**2) '/)
  1100 format(' Crop Type # ',i2,' Date = ',i3,' OFE # ',i2,'  yield= ',
-     1    f8.3,'(kg/m**2)  ')
+     1    f8.3,' (kg/m**2) year= ',i4)
  1200 format(' ANNUAL CROP HARVEST DATE ',i3,' -- channel ',i2,
      1    ' yield ',f6.3,'(kg/m**2) '/)
       end

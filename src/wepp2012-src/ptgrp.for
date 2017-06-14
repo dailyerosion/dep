@@ -314,7 +314,7 @@ c             if (mgtopt(nowcrp,iplane).eq.1. and. yldflg.eq.1) then
               if (yldflg.eq.1) then
 c
                 write (46,1100) itype(nowcrp,iplane), sdate, iplane,
-     1              pyld
+     1              pyld, year
 c
 c               ADD summation variables to total up the yields of the
 c               various crops on the various OFE's.  ADD variable to
@@ -596,7 +596,7 @@ c
  1000 format (' HARVEST date ',i3,' plane ',i4,' yield ',f8.3,
      1    '(kg/m**2)')
  1100 format (' Crop Type # ',i2,' Date = ',i3,' OFE # ',i2,' yield= ',
-     1    f8.3,'(kg/m**2)')
+     1    f8.3,' (kg/m**2) year= ',i4)
  1200 format (' HARVEST date ',i3,' channel ',i4,' yield ',f8.3,
      1    ' (kg/m**2)')
       end
