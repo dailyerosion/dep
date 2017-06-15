@@ -1,64 +1,65 @@
+"""General HUC12 mapper"""
+from __future__ import print_function
+
+import datetime
+import sys
+
 from pyiem.plot import MapPlot, nwsprecip
 from shapely.wkb import loads
 import psycopg2
 import numpy as np
+import cartopy.crs as ccrs
 from matplotlib.patches import Polygon
-from matplotlib.collections import PatchCollection
 import matplotlib.colors as mpcolors
 
-DBCONN = psycopg2.connect(database='idep', host='iemdb', user='nobody')
-cursor = DBCONN.cursor()
+
+def main(argv):
+    """Do Great Things"""
+    year = int(argv[1])
+    pgconn = psycopg2.connect(database='idep', host='localhost',
+                              port=5555, user='nobody')
+    cursor = pgconn.cursor()
+
+    mp = MapPlot(continentalcolor='white', nologo=True,
+                 sector='custom',
+                 south=36.8, north=45.0, west=-99.2, east=-88.9,
+                 subtitle='Assumes 56 lb test weight',
+                 title=('%s Corn Yield HUC12 Average'
+                        ) % (year, ))
+
+    cursor.execute("""
+    with hucs as (
+        select huc_12, ST_Transform(simple_geom, 4326) as geo
+        from huc12),
+    data as (
+        SELECT huc12, avg(yield_kgm2) * 8921.8 / 56. as val from harvest
+        where crop = 'Corn' and valid between %s and %s
+        GROUP by huc12
+    )
+
+    SELECT geo, huc12, val from hucs h JOIN data d on (h.huc_12 = d.huc12)
+    """, (datetime.date(year, 1, 1), datetime.date(year, 12, 31)))
+
+    bins = np.arange(0, 310, 30)
+    cmap = nwsprecip()
+    cmap.set_under('white')
+    cmap.set_over('black')
+    norm = mpcolors.BoundaryNorm(bins, cmap.N)
+
+    for row in cursor:
+        polygon = loads(row[0].decode('hex'))
+        arr = np.asarray(polygon.exterior)
+        points = mp.ax.projection.transform_points(ccrs.Geodetic(),
+                                                   arr[:, 0], arr[:, 1])
+        color = cmap(norm([float(row[2]), ]))[0]
+        poly = Polygon(points[:, :2], fc=color, ec='None', zorder=2, lw=.1)
+        mp.ax.add_patch(poly)
+
+    mp.draw_colorbar(bins, cmap, norm, units='bu/acre')
+
+    # mp.drawcounties()
+    mp.postprocess(filename='test.png')
 
 
-threshold = 2
-m = MapPlot(sector='iowa', axisbg='white', nologo=True,
-            subtitle='1 Jan 2013 thru 27 September 2016',
-            title=('DEP Two Days with HUC12 Precip Total >= %s inches'
-                   ) % (threshold,))
-
-cursor.execute("""
- WITH data as (
-    select huc_12, qc_precip,
-      qc_precip +
-      lag(qc_precip) OVER (PARTITION by huc_12 ORDER by valid ASC) as p1,
-      qc_precip +
-      lead(qc_precip) OVER (PARTITION by huc_12 ORDER by valid ASC) as p2,
-      valid,
-      lag(valid) OVER (PARTITION by huc_12 ORDER by valid ASC) as lag_valid,
-      lead(valid) OVER (PARTITION by huc_12 ORDER by valid ASC) as lead_valid
-    from results_by_huc12 where scenario = 0
-    and valid > '2013-01-01'
-), agg as (
-    SELECT huc_12, count(*) as val
-    from data where p1 > (%s * 25.4) and p2 < (%s * 25.4)
-    GROUP by huc_12
-)
-
- SELECT ST_Transform(simple_geom, 4326), d.val
- from huc12 i JOIN agg d on (d.huc_12 = i.huc_12) ORDER by val DESC
-
-""", (threshold, threshold))
-
-bins = np.arange(0, 29, 4)
-cmap = nwsprecip()
-cmap.set_under('white')
-cmap.set_over('black')
-norm = mpcolors.BoundaryNorm(bins, cmap.N)
-patches = []
-
-for row in cursor:
-    # print "%s,%s" % (row[2], row[1])
-    polygon = loads(row[0].decode('hex'))
-    a = np.asarray(polygon.exterior)
-    x, y = m.map(a[:, 0], a[:, 1])
-    a = zip(x, y)
-    # c = cmap( norm([float(row[1]),]) )[0]
-    c = cmap(norm([float(row[1]), ]))[0]
-    p = Polygon(a, fc=c, ec='None', zorder=2, lw=.1)
-    patches.append(p)
-
-m.ax.add_collection(PatchCollection(patches, match_original=True))
-m.draw_colorbar(bins, cmap, norm, units='days')
-
-m.drawcounties()
-m.postprocess(filename='test.png')
+if __name__ == '__main__':
+    main(sys.argv)
