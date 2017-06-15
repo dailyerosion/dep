@@ -1,4 +1,5 @@
-PATH=$PATH:/home/mesonet/bin
+PATH=/opt/miniconda2/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/home/mesonet/bin
+
 # 
 # crontab entry for the IDEP realtime work
 # Wait till 53 after so that the stage IV file for 11PM is in
