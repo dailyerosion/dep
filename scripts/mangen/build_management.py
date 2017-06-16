@@ -15,11 +15,12 @@
   W - Wheat
   N - ???  *see 27 Sep 2016 email from dave, it is unused, so treat as I*
 """
-
-import psycopg2
+from __future__ import print_function
 import os
 import datetime
 import sys
+
+import psycopg2
 from tqdm import tqdm
 
 SCENARIO = sys.argv[1]
@@ -29,7 +30,6 @@ if len(sys.argv) == 2:
     OVERWRITE = False
 
 PGCONN = psycopg2.connect(database='idep', host='iemdb')
-cursor = PGCONN.cursor()
 
 # Note that the default used below is
 INITIAL_COND_DEFAULT = 'IniCropDef.Default'
@@ -120,8 +120,8 @@ def do_rotation(zone, code, cfactor):
     data['year10'] = read_file(zone, code[9], cfactor, 10)  # 2016
     data['year11'] = read_file(zone, code[10], cfactor, 11)  # 2017
 
-    o = open(fn, 'w')
-    o.write("""#
+    fp = open(fn, 'w')
+    fp.write("""#
 # WEPP rotation saved on: %(date)s
 #
 # Created with scripts/mangen/build_management.py
@@ -148,11 +148,12 @@ Operations {
 %(year11)s
 }
 """ % data)
-    o.close()
+    fp.close()
 
 
 def main():
     """Do Something"""
+    cursor = PGCONN.cursor()
     cursor.execute("""
     WITH np as (
         SELECT ST_ymax(ST_Transform(geom, 4326)) as lat, fid
@@ -175,6 +176,7 @@ def main():
             continue
         for i in (1, 25):  # loop over c-factors
             do_rotation(zone, row[1], i)
+
 
 if __name__ == '__main__':
     main()
