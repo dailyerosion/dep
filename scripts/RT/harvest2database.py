@@ -35,7 +35,7 @@ def do_huc12(basedir):
     """"Process this path's worth of data"""
     huc12 = "".join(basedir.split("/")[-2:])
     frames = [readfile(huc12, basedir+"/"+f) for f in os.listdir(basedir)]
-    if len(frames) == 0 or any([f is None for f in frames]):
+    if len(frames) == 0 or all([f is None for f in frames]):
         return
     df = pd.concat(frames)
     return df
@@ -77,6 +77,7 @@ def main(argv):
     print("  + Inserted %s rows" % (cursor.rowcount, ))
     cursor.close()
     pgconn.commit()
- 
+
+
 if __name__ == '__main__':
     main(sys.argv)
