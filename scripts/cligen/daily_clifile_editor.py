@@ -2,23 +2,25 @@
   This is it, we shall create our gridded weather analysis and edit the
   climate files!
 
-  development laptop has data for 9 Sep 2014
+  development laptop has data for 9 Sep 2014  and 23 May 2009
 
 """
-import numpy as np
+from __future__ import print_function
 import datetime
-import pytz
-import pygrib
 import sys
 import os
-import netCDF4
-from pyiem import iemre
-from scipy.interpolate import NearestNDInterpolator
-from pyiem.datatypes import temperature
-from multiprocessing import Pool
-from pyiem.dep import SOUTH, NORTH, EAST, WEST
 import unittest
 import logging
+from multiprocessing import Pool
+
+import numpy as np
+import pytz
+import pygrib
+import netCDF4
+from scipy.interpolate import NearestNDInterpolator
+from pyiem import iemre
+from pyiem.datatypes import temperature
+from pyiem.dep import SOUTH, NORTH, EAST, WEST
 from PIL import Image
 
 logging.basicConfig(format='%(asctime)-15s %(message)s')
@@ -28,23 +30,32 @@ LOG.setLevel(logging.INFO)
 SCENARIO = sys.argv[1]
 YS = int((NORTH - SOUTH) * 100.)
 XS = int((EAST - WEST) * 100.)
-high_temp = np.zeros((YS, XS), np.float16)
-low_temp = np.zeros((YS, XS), np.float16)
-dewpoint = np.zeros((YS, XS), np.float16)
-wind = np.zeros((YS, XS), np.float16)
-solar = np.zeros((YS, XS), np.float16)
-precip = np.zeros((30*24, YS, XS), np.float16)
-stage4 = np.zeros((YS, XS), np.float16)
+HIGH_TEMP = np.zeros((YS, XS), np.float16)
+LOW_TEMP = np.zeros((YS, XS), np.float16)
+DEWPOINT = np.zeros((YS, XS), np.float16)
+WIND = np.zeros((YS, XS), np.float16)
+SOLAR = np.zeros((YS, XS), np.float16)
+# Optimize array for the types of operations we do, since the time axis is
+# continuous memory
+PRECIP = np.zeros((YS, XS, 30*24), np.float16)
+STAGE4 = np.zeros((YS, XS), np.float16)
 
 # used for breakpoint logic
 ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
 
 
+def printt(msg):
+    """Print a message with a timestamp included"""
+    if sys.stdout.isatty():
+        print(("%s %s"
+               ) % (datetime.datetime.now().strftime("%H:%M:%S.%f"), msg))
+
+
 def get_xy_from_lonlat(lon, lat):
     """Get the grid position"""
-    x = int((lon - WEST) * 100.)
-    y = int((lat - SOUTH) * 100.)
-    return [x, y]
+    xidx = int((lon - WEST) * 100.)
+    yidx = int((lat - SOUTH) * 100.)
+    return [xidx, yidx]
 
 
 def iemre_bounds_check(name, val, lower, upper):
@@ -58,21 +69,22 @@ def iemre_bounds_check(name, val, lower, upper):
     return val
 
 
-def load_iemre(valid):
+def load_iemre():
     """Use IEM Reanalysis for non-precip data
 
     24km product is smoothed down to the 0.01 degree grid
     """
+    printt("load_iemre() called")
     xaxis = np.arange(WEST, EAST, 0.01)
     yaxis = np.arange(SOUTH, NORTH, 0.01)
     xi, yi = np.meshgrid(xaxis, yaxis)
 
-    fn = "/mesonet/data/iemre/%s_mw_daily.nc" % (valid.year,)
+    fn = "/mesonet/data/iemre/%s_mw_daily.nc" % (VALID.year,)
     if not os.path.isfile(fn):
-        print("Missing %s for load_solar, aborting" % (fn,))
+        printt("Missing %s for load_solar, aborting" % (fn,))
         sys.exit()
     nc = netCDF4.Dataset(fn, 'r')
-    offset = iemre.daily_offset(valid)
+    offset = iemre.daily_offset(VALID)
     lats = nc.variables['lat'][:]
     lons = nc.variables['lon'][:]
     lons, lats = np.meshgrid(lons, lats)
@@ -82,38 +94,49 @@ def load_iemre(valid):
     # Default to a value of 300 when this data is missing, for some reason
     nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
                                np.ravel(data))
-    solar[:] = iemre_bounds_check('rsds', nn(xi, yi), 0, 1000)
+    SOLAR[:] = iemre_bounds_check('rsds', nn(xi, yi), 0, 1000)
 
     data = temperature(nc.variables['high_tmpk'][offset, :, :], 'K').value('C')
     nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
                                np.ravel(data))
-    high_temp[:] = iemre_bounds_check('high_tmpk', nn(xi, yi), -60, 60)
+    HIGH_TEMP[:] = iemre_bounds_check('high_tmpk', nn(xi, yi), -60, 60)
 
     data = temperature(nc.variables['low_tmpk'][offset, :, :], 'K').value('C')
     nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
                                np.ravel(data))
-    low_temp[:] = iemre_bounds_check('low_tmpk', nn(xi, yi), -60, 60)
+    LOW_TEMP[:] = iemre_bounds_check('low_tmpk', nn(xi, yi), -60, 60)
 
     data = temperature(nc.variables['avg_dwpk'][offset, :, :], 'K').value('C')
     nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
                                np.ravel(data))
-    dewpoint[:] = iemre_bounds_check('avg_dwpk', nn(xi, yi), -60, 60)
+    DEWPOINT[:] = iemre_bounds_check('avg_dwpk', nn(xi, yi), -60, 60)
 
     data = nc.variables['wind_speed'][offset, :, :]
     nn = NearestNDInterpolator((np.ravel(lons), np.ravel(lats)),
                                np.ravel(data))
-    wind[:] = iemre_bounds_check('wind_speed', nn(xi, yi), 0, 30)
+    WIND[:] = iemre_bounds_check('wind_speed', nn(xi, yi), 0, 30)
 
     nc.close()
+    printt("load_iemre() finished")
 
 
-def load_stage4(valid):
+def _read_stage4(filename):
+    grbs = pygrib.open(filename)
+    grb = grbs[1]
+    # Don't take any values over 10 inches, this is bad data
+    values = np.where(grb['values'] < 250, grb['values'], 0)
+    # Cap any values over 4 inches to 4 inches
+    return filename, np.where(values > 100, 100, values)
+
+
+def load_stage4():
     """ It sucks, but we need to load the stage IV data to give us something
     to benchmark the MRMS data against, to account for two things:
     1) Wind Farms
     2) Over-estimates
     """
-    midnight = datetime.datetime(valid.year, valid.month, valid.day, 12, 0)
+    printt("load_stage4() called...")
+    midnight = datetime.datetime(VALID.year, VALID.month, VALID.day, 12, 0)
     midnight = midnight.replace(tzinfo=pytz.timezone("UTC"))
     midnight = midnight.astimezone(pytz.timezone("America/Chicago"))
     midnight = midnight.replace(hour=1, minute=0, second=0)
@@ -125,6 +148,7 @@ def load_stage4(valid):
     lons = None
     totals = None
     now = midnight
+    filenames = []
     while now <= tomorrow:
         utc = now.astimezone(pytz.timezone("UTC"))
         gribfn = utc.strftime(("/mesonet/ARCHIVE/data/%Y/%m/%d/stage4/"
@@ -133,18 +157,19 @@ def load_stage4(valid):
             print("%s is missing" % (gribfn,))
             now += datetime.timedelta(hours=1)
             continue
+        filenames.append(gribfn)
+        now += datetime.timedelta(hours=1)
 
-        grbs = pygrib.open(gribfn)
-        grb = grbs[1]
+    pool = Pool()
+    for filename, values in pool.imap_unordered(_read_stage4, filenames):
+        # Quasi hack here
         if totals is None:
+            grbs = pygrib.open(filename)
+            grb = grbs[1]
             lats, lons = grb.latlons()
             totals = np.zeros(np.shape(lats))
-        # Don't take any values over 10 inches, this is bad data
-        values = np.where(grb['values'] < 250, grb['values'], 0)
-        # Cap any values over 4 inches to 4 inches
-        values = np.where(values > 100, 100, values)
         totals += values
-        now += datetime.timedelta(hours=1)
+    del pool
 
     if totals is None:
         print('No StageIV data found, aborting...')
@@ -157,44 +182,61 @@ def load_stage4(valid):
     xi, yi = np.meshgrid(xaxis, yaxis)
     nn = NearestNDInterpolator((lons.flatten(), lats.flatten()),
                                totals.flatten())
-    stage4[:] = nn(xi, yi)
+    STAGE4[:] = nn(xi, yi)
     # write_grid(valid, stage4, 'stage4')
+    printt("load_stage4() finished...")
 
 
-def qc_precip(valid):
+def qc_precip():
     """Make some adjustments to the `precip` grid
 
     Not very sophisticated here, if the hires precip grid is within 33% of
     Stage IV, then we consider it good.  If not, then we apply a multiplier to
     bring it to near the stage IV value.
     """
-    hires_total = np.sum(precip, 0)
+    printt("qc_precip() called...")
+    hires_total = np.sum(PRECIP, 2)
+    printt("qc_precip() computed hires_total")
+    # prevent zeros
+    hires_total = np.where(hires_total < 0.01, 0.01, hires_total)
+    printt("qc_precip() computed hires total and floored it to 0.01")
     # write_grid(valid, hires_total, 'inqcprecip')
-    ratio = hires_total / stage4
-    print_threshold = 0
-    for y in range(YS):
-        for x in range(XS):
-            if ratio[y, x] > 0.67 and ratio[y, x] < 1.33:
-                continue
-            # Pull the functional form up/down to stage4 total
-            precip[:, y, x] = precip[:, y, x] / ratio[y, x]
-            # limit the amount of printout we do, not really useful anyway
-            if hires_total[y, x] > print_threshold:
-                print(('QC y: %3i x: %3i stageIV: %5.1f '
-                       'HIRES: %5.1f New: %5.1f'
-                       ) % (y, x, stage4[y, x], hires_total[y, x],
-                            np.sum(precip[:, y, x])))
-                print_threshold = hires_total[y, x]
-    precip[np.isnan(precip)] = 0.
+    multiplier = STAGE4 / hires_total
+    printt("qc_precip() computed the multiplier")
+
+    # Anything close to 1, set it to 1
+    multiplier = np.where(np.logical_and(multiplier > 0.67, multiplier < 1.33),
+                          1., multiplier)
+    printt("qc_precip() bounded the multiplier")
+    PRECIP[:] *= multiplier[:, :, None]
+    printt("qc_precip() 4 done")
+    PRECIP[np.isnan(PRECIP)] = 0.
     # write_grid(valid, np.sum(precip, 0), 'outqcprecip')
+    printt("qc_precip() finished...")
 
 
-def load_precip_legacy(valid):
+def _reader(arr):
+    top = int((50. - NORTH) * 100.)
+    bottom = int((50. - SOUTH) * 100.)
+
+    right = int((EAST - -126.) * 100.)
+    left = int((WEST - -126.) * 100.)
+
+    (index, filename) = arr
+    img = Image.open(filename)
+    imgdata = np.array(img)
+    # Convert the image data to dbz
+    dbz = (np.flipud(imgdata[top:bottom, left:right]) - 7.) * 5.
+    return (index,
+            np.where(dbz < 255, ((10. ** (dbz/10.)) / 200.) ** 0.625, 0))
+
+
+def load_precip_legacy():
     """ Compute a Legacy Precip product for dates prior to 1 Jan 2014"""
-    LOG.debug("load_precip_legacy() called...")
+    printt("load_precip_legacy() called...")
     ts = 12 * 24  # 5 minute
 
-    midnight = datetime.datetime(valid.year, valid.month, valid.day, 12, 0)
+    midnight = datetime.datetime(VALID.year, VALID.month, VALID.day, 12, 0)
     midnight = midnight.replace(tzinfo=pytz.timezone("UTC"))
     midnight = midnight.astimezone(pytz.timezone("America/Chicago"))
     midnight = midnight.replace(hour=0, minute=0, second=0)
@@ -202,15 +244,11 @@ def load_precip_legacy(valid):
     tomorrow = midnight + datetime.timedelta(hours=36)
     tomorrow = tomorrow.replace(hour=0)
 
-    top = int((50. - NORTH) * 100.)
-    bottom = int((50. - SOUTH) * 100.)
-
-    right = int((EAST - -126.) * 100.)
-    left = int((WEST - -126.) * 100.)
-
     now = midnight
     m5 = np.zeros((ts, YS, XS), np.float16)
     tidx = 0
+    filenames = []
+    indices = []
     # Load up the n0r data, every 5 minutes
     while now < tomorrow:
         utc = now.astimezone(pytz.timezone("UTC"))
@@ -220,50 +258,51 @@ def load_precip_legacy(valid):
             if tidx >= ts:
                 # Abort as we are in CST->CDT
                 break
-            img = Image.open(fn)
-            imgdata = np.array(img)
-            # Convert the image data to dbz
-            dbz = (np.flipud(imgdata[top:bottom, left:right]) - 7.) * 5.
-            m5[tidx, :, :] = np.where(dbz < 255,
-                                      ((10. ** (dbz/10.)) / 200.) ** 0.625,
-                                      0)
+            filenames.append(fn)
+            indices.append(tidx)
         else:
             print('daily_clifile_editor missing: %s' % (fn,))
 
         now += datetime.timedelta(minutes=5)
         tidx += 1
-    LOG.debug("load_precip_legacy() finished loading N0R Composites")
 
-    m5total = np.sum(m5, 0)
+    pool = Pool()
+    for tidx, data in pool.imap_unordered(_reader, zip(indices, filenames)):
+        m5[tidx, :, :] = data
+    printt("load_precip_legacy() finished loading N0R Composites")
+    m5 = np.transpose(m5, (1, 2, 0)).copy()
+    printt("load_precip_legacy() transposed the data!")
+    m5total = np.sum(m5, 2)
+    printt("load_precip_legacy() computed sum(m5)")
 
     minute2 = np.arange(0, 60 * 24, 2)
     minute5 = np.arange(0, 60 * 24, 5)
 
-    def _compute(y, x):
-        s4total = stage4[y, x]
+    def _compute(yidx, xidx):
+        s4total = STAGE4[yidx, xidx]
         if s4total < 1:
             return
-        five = m5total[y, x]
+        five = m5total[yidx, xidx]
         # TODO unsure of this... Smear the precip out over the first hour
         if five < 10:
-            precip[0:30, y, x] = s4total / 30.
+            PRECIP[yidx, xidx, 0:30] = s4total / 30.
             return
         # Interpolate weights to a 2 minute interval grid
         # we divide by 2.5 to downscale the 5 minute values to 2 minute
-        weights = np.interp(minute2, minute5, m5[:, y, x] / five / 2.5)
+        weights = np.interp(minute2, minute5, m5[yidx, xidx, :] / five / 2.5)
         # Now apply the weights to the s4total
-        precip[:, y, x] = weights * s4total
+        PRECIP[yidx, xidx, :] = weights * s4total
 
-    [_compute(y, x) for y in range(YS) for x in range(XS)]
+    _ = [_compute(y, x) for y in range(YS) for x in range(XS)]
 
-    LOG.debug("load_precip_legacy() finished precip calculation")
+    printt("load_precip_legacy() finished precip calculation")
 
 
-def load_precip(valid):
+def load_precip():
     """ Load the 5 minute precipitation data into our ginormus grid """
     ts = 30 * 24  # 2 minute
 
-    midnight = datetime.datetime(valid.year, valid.month, valid.day, 12, 0)
+    midnight = datetime.datetime(VALID.year, VALID.month, VALID.day, 12, 0)
     midnight = midnight.replace(tzinfo=pytz.timezone("UTC"))
     midnight = midnight.astimezone(pytz.timezone("America/Chicago"))
     midnight = midnight.replace(hour=0, minute=0, second=0)
@@ -281,7 +320,7 @@ def load_precip(valid):
     # sampley = int((55. - 42.71)*100)
 
     # Oopsy we discovered a problem
-    a2m_divisor = 10. if (valid < datetime.date(2015, 1, 1)) else 50.
+    a2m_divisor = 10. if (VALID < datetime.date(2015, 1, 1)) else 50.
 
     now = midnight
     # Require at least 75% data coverage, if not, we will abort back to legacy
@@ -295,7 +334,7 @@ def load_precip(valid):
             tidx = int((now - midnight).seconds / 120.)
             if tidx >= ts:
                 # Abort as we are in CST->CDT
-                return precip
+                return
             img = Image.open(fn)
             # --------------------------------------------------
             # OK, once and for all, 0,0 is the upper left!
@@ -314,17 +353,17 @@ def load_precip(valid):
             #    fig.savefig('test.png')
             #    sys.exit()
             # Turn 255 (missing) into zeros
-            precip[tidx, :, :] = np.where(data < 255, data / a2m_divisor, 0)
+            PRECIP[:, :, tidx] = np.where(data < 255, data / a2m_divisor, 0)
 
         else:
-            print 'daily_clifile_editor missing: %s' % (fn,)
+            print('daily_clifile_editor missing: %s' % (fn,))
 
         now += datetime.timedelta(minutes=2)
     if quorum > 0:
         print(("WARNING: Failed quorum with MRMS a2m %.1f, loading legacy"
                ) % (quorum,))
-        precip[:] = 0
-        load_precip_legacy(valid)
+        PRECIP[:] = 0
+        load_precip_legacy()
 
 
 def bpstr(ts, accum):
@@ -357,7 +396,7 @@ def compute_breakpoint(ar, accumThreshold=2., intensityThreshold=1.):
     lastaccum = 0
     lasti = 0
     for i, intensity in enumerate(ar):
-        if intensity == 0:
+        if intensity < 0.001:
             continue
         # Need to initialize the breakpoint data
         if bp is None:
@@ -387,9 +426,9 @@ def compute_breakpoint(ar, accumThreshold=2., intensityThreshold=1.):
 
 def myjob(row):
     """ Thread job, yo """
-    [x, y] = row
-    lon = WEST + x * 0.01
-    lat = SOUTH + y * 0.01
+    [xidx, yidx] = row
+    lon = WEST + xidx * 0.01
+    lat = SOUTH + yidx * 0.01
     fn = "/i/%s/cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (SCENARIO,
                                                         0 - lon,
                                                         lat,
@@ -400,55 +439,59 @@ def myjob(row):
 
     # Okay we have work to do
     data = open(fn, 'r').read()
-    pos = data.find(valid.strftime("%-d\t%-m\t%Y"))
+    pos = data.find(VALID.strftime("%-d\t%-m\t%Y"))
     if pos == -1:
-        print 'Date find failure for %s' % (fn,)
+        print('Date find failure for %s' % (fn,))
         return False
 
     pos2 = data[pos:].find(
-            (valid + datetime.timedelta(days=1)).strftime("%-d\t%-m\t%Y"))
+            (VALID + datetime.timedelta(days=1)).strftime("%-d\t%-m\t%Y"))
     if pos2 == -1:
-        print 'Date2 find failure for %s' % (fn,)
+        print('Date2 find failure for %s' % (fn,))
         return False
 
-    bpdata = compute_breakpoint(precip[:, y, x])
+    bpdata = compute_breakpoint(PRECIP[yidx, xidx, :])
 
     thisday = ("%s\t%s\t%s\t%s\t%3.1f\t%3.1f\t%4.0f\t%4.1f\t%s\t%4.1f\n%s%s"
-               ) % (valid.day, valid.month, valid.year, len(bpdata),
-                    high_temp[y, x], low_temp[y, x], solar[y, x],
-                    wind[y, x], 0, dewpoint[y, x], "\n".join(bpdata),
+               ) % (VALID.day, VALID.month, VALID.year, len(bpdata),
+                    HIGH_TEMP[yidx, xidx], LOW_TEMP[yidx, xidx],
+                    SOLAR[yidx, xidx],
+                    WIND[yidx, xidx], 0, DEWPOINT[yidx, xidx],
+                    "\n".join(bpdata),
                     "\n" if len(bpdata) > 0 else "")
 
-    o = open(fn, 'w')
-    o.write(data[:pos] + thisday + data[(pos+pos2):])
-    o.close()
+    fp = open(fn, 'w')
+    fp.write(data[:pos] + thisday + data[(pos+pos2):])
+    fp.close()
     return True
 
 
-def write_grid(valid, grid, fnadd=''):
+def write_grid(grid, fnadd=''):
     """Save off the daily precip totals for usage later in computing huc_12"""
-    basedir = "/mnt/idep2/data/dailyprecip/"+str(valid.year)
+    printt("write_grid() called...")
+    basedir = "/mnt/idep2/data/dailyprecip/%s" % (VALID.year, )
     if not os.path.isdir(basedir):
         os.makedirs(basedir)
-    np.save(valid.strftime(basedir+"/%Y%m%d"+fnadd+".npy"), grid)
+    np.save("%s/%s.npy%s" % (basedir, VALID.strftime("%Y%m%d"), fnadd), grid)
+    printt("write_grid() finished...")
 
 
-def precip_workflow(valid):
+def precip_workflow():
     """Drive the precipitation workflow
 
     Args:
       valid (date): The date that we care about
     """
     # zero out precip in the case of rerunning this code segment
-    precip[:] = 0
-    stage4[:] = 0
-    load_stage4(valid)
-    if valid.year >= 2014:
-        load_precip(valid)
+    PRECIP[:] = 0
+    STAGE4[:] = 0
+    load_stage4()
+    if VALID.year >= 2014:
+        load_precip()
     else:
-        load_precip_legacy(valid)
-    qc_precip(valid)
-    write_grid(valid, np.sum(precip, 0))
+        load_precip_legacy()
+    qc_precip()
+    write_grid(np.sum(PRECIP, 2))
 
 
 def workflow():
@@ -459,22 +502,24 @@ def workflow():
     # 3. Radiation l/d
     # 4. wind mps
     # 6. Mean dewpoint C
-    load_iemre(valid)
+    load_iemre()
     # 5. wind direction (always zero)
     # 7. breakpoint precip mm
-    precip_workflow(valid)
+    precip_workflow()
 
-    QUEUE = []
-    for y in range(YS):
-        for x in range(XS):
-            QUEUE.append([x, y])
+    printt("building queue")
+    queue = []
+    for yidx in range(YS):
+        for xidx in range(XS):
+            queue.append([xidx, yidx])
 
+    printt("starting pool")
     pool = Pool()  # defaults to cpu-count
-    sz = len(QUEUE)
+    sz = len(queue)
     sts = datetime.datetime.now()
     success = 0
     lsuccess = 0
-    for i, res in enumerate(pool.imap_unordered(myjob, QUEUE), 1):
+    for i, res in enumerate(pool.imap_unordered(myjob, queue), 1):
         if res:
             success += 1
         if success > 0 and success % 20000 == 0 and lsuccess != success:
@@ -482,18 +527,19 @@ def workflow():
             secs = delta.microseconds / 1000000. + delta.seconds
             rate = success / secs
             remaining = ((sz - i) / rate) / 3600.
-            print ('%5.2fh Processed %6s/%6s/%6s [%.2f /sec] '
-                   'remaining: %5.2fh') % (secs / 3600., success, i, sz, rate,
-                                           remaining)
+            printt(('%5.2fh Processed %6s/%6s/%6s [%.2f /sec] '
+                    'remaining: %5.2fh') % (secs / 3600., success, i, sz, rate,
+                                            remaining))
             lsuccess = success
-    print('daily_clifile_editor edited %s files...' % (success,))
+    del pool
+    printt('daily_clifile_editor edited %s files...' % (success,))
 
 
 if __name__ == '__main__':
     # This is important to keep valid in global scope
-    valid = datetime.date.today() - datetime.timedelta(days=1)
+    VALID = datetime.date.today() - datetime.timedelta(days=1)
     if len(sys.argv) == 5:
-        valid = datetime.date(int(sys.argv[2]), int(sys.argv[3]),
+        VALID = datetime.date(int(sys.argv[2]), int(sys.argv[3]),
                               int(sys.argv[4]))
 
     workflow()
@@ -503,9 +549,9 @@ class test(unittest.TestCase):
 
     def test_speed(self):
         """Test the speed of the processing"""
-        global SCENARIO, valid
+        global SCENARIO, VALID
         SCENARIO = 0
-        valid = datetime.date(2014, 10, 10)
+        VALID = datetime.date(2014, 10, 10)
         sts = datetime.datetime.now()
         myjob(get_xy_from_lonlat(-91.44, 41.28))
         ets = datetime.datetime.now()
@@ -541,8 +587,8 @@ class test(unittest.TestCase):
             for b in bp:
                 tokens = b.split()
                 if float(tokens[0]) <= lastts or float(tokens[1]) <= lastaccum:
-                    print data
-                    print bp
+                    print(data)
+                    print(bp)
                     self.assertTrue(1 == 0)
                 lastts = float(tokens[0])
                 lastaccum = float(tokens[1])
