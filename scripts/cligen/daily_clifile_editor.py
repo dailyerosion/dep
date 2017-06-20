@@ -429,6 +429,8 @@ def myjob(row):
         return False
 
     bpdata = compute_breakpoint(PRECIP[yidx, xidx, :])
+    if bpdata is None:
+        bpdata = []
 
     thisday = ("%s\t%s\t%s\t%s\t%3.1f\t%3.1f\t%4.0f\t%4.1f\t%s\t%4.1f\n%s%s"
                ) % (VALID.day, VALID.month, VALID.year, len(bpdata),
