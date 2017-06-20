@@ -108,6 +108,7 @@ $t->jsextra = <<<EOF
  <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script>
  <script src='/vendor/openlayers/{$OL}/ol.js'></script>
  <script src='/vendor/openlayers/{$OL}/ol3-layerswitcher.js'></script>
+ <script src="/vendor/jquery-ui/1.11.4/jquery-ui.min.js"></script>
         <script type="text/javascript">
 var tilecache = "{$TMS_SERVER}";
 var appstate = {
@@ -163,7 +164,7 @@ $t->content = <<<EOF
       <form name="huc12search">
 		<input type="text" name="q" id="huc12searchtext">
 		<button type="button" class="btn btn-default" id="huc12searchbtn">
-  <i class="glyphicon glyphicon-search"></i>
+  <i class="fa fa-search"></i>
 </button>
 		</form>
 		<hr />
@@ -181,10 +182,10 @@ $t->content = <<<EOF
 <div class="row">
 	<div class="col-md-6">
 		<h3>DEP Interactive Map</h3>
-		<button id="ia" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Iowa</button>
-		<button id="ks" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Kansas</button>
-		<button id="mn" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Minnesota</button>
-		<button id="ne" class="btn btn-default" type="button"><i class="glyphicon glyphicon-zoom-in"></i> Nebraska</button>
+		<button id="ia" class="btn btn-default" type="button"><i class="fa fa-search-plus"></i> Iowa</button>
+		<button id="ks" class="btn btn-default" type="button"><i class="fa fa-search-plus"></i> Kansas</button>
+		<button id="mn" class="btn btn-default" type="button"><i class="fa fa-search-plus"></i> Minnesota</button>
+		<button id="ne" class="btn btn-default" type="button"><i class="fa fa-search-plus"></i> Nebraska</button>
 		<br clear="all" />
 		<strong>Status:</strong> <span id="status">Idle</span>
 	</div>
@@ -217,11 +218,11 @@ $t->content = <<<EOF
 		<div class="col-md-4">
 			<h4>Date:</h4>
 		<div class="input-group">
-			<span class="input-group-btn"><button id="minus1d" class="btn btn-default" type="button"><i class="glyphicon glyphicon-arrow-left"></i></button></span>
+			<span class="input-group-btn"><button id="minus1d" class="btn btn-default" type="button"><i class="fa fa-arrow-left"></i></button></span>
 		<input type="text" name="date" id="datepicker" class="form-control" style="font-weight: bolder;">
-			<span class="input-group-btn"><button id="plus1d" class="btn btn-default" type="button"><i class="glyphicon glyphicon-arrow-right"></i></button></span>
+			<span class="input-group-btn"><button id="plus1d" class="btn btn-default" type="button"><i class="fa fa-arrow-right"></i></button></span>
 		</div>
-		<div style="display: none;" id="settoday"><a class="btn btn-default" role="button" href="javascript: setToday();"><i class="glyphicon glyphicon-chevron-left"></i> Back to Latest Date</a></div>
+		<div style="display: none;" id="settoday"><a class="btn btn-default" role="button" href="javascript: setToday();"><i class="fa fa-chevron-left"></i> Back to Latest Date</a></div>
 		</div>
 		<div class="col-md-3" style="visibility: hidden;" id="dp2">
 			<h4>To Date:</h4>
@@ -231,13 +232,13 @@ $t->content = <<<EOF
 		</div>
 		<div class="col-md-2">
 		<button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal">
-  <i class="glyphicon glyphicon-search"></i>
+  <i class="fa fa-search"></i>
 </button>
-		<button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() - 0.1);" class="btn btn-default" type="button"><i class="glyphicon glyphicon-minus"></i></button>
-		<button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() + 0.1);" class="btn btn-default" type="button"><i class="glyphicon glyphicon-plus"></i></button>
-		<button onclick="javascript: get_shapefile();" class="btn btn-default" type="button"><i class="glyphicon glyphicon-download"></i></button>
-		<button onclick="javascript: changeMapHeight(-0.1);" class="btn btn-default" type="button"><i class="glyphicon glyphicon-arrow-up"></i></button>
-		<button onclick="javascript: changeMapHeight(0.1);" class="btn btn-default" type="button"><i class="glyphicon glyphicon-arrow-down"></i></button>
+		<button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() - 0.1);" class="btn btn-default" type="button"><i class="fa fa-minus"></i></button>
+		<button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() + 0.1);" class="btn btn-default" type="button"><i class="fa fa-plus"></i></button>
+		<button onclick="javascript: get_shapefile();" class="btn btn-default" type="button"><i class="fa fa-download"></i></button>
+		<button onclick="javascript: changeMapHeight(-0.1);" class="btn btn-default" type="button"><i class="fa fa-arrow-up"></i></button>
+		<button onclick="javascript: changeMapHeight(0.1);" class="btn btn-default" type="button"><i class="fa fa-arrow-down"></i></button>
 		</div>
 	</div>
 </div>
