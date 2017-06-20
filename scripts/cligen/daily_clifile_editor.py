@@ -2,7 +2,7 @@
   This is it, we shall create our gridded weather analysis and edit the
   climate files!
 
-  development laptop has data for 9 Sep 2014  and 23 May 2009
+  development laptop has data for 9 Sep 2014, 23 May 2009, and 8 Jun 2009
 
 """
 from __future__ import print_function
@@ -15,7 +15,6 @@ from multiprocessing import Pool
 
 import numpy as np
 import pytz
-import pygrib
 import netCDF4
 from scipy.interpolate import NearestNDInterpolator
 from pyiem import iemre
@@ -120,15 +119,6 @@ def load_iemre():
     printt("load_iemre() finished")
 
 
-def _read_stage4(filename):
-    grbs = pygrib.open(filename)
-    grb = grbs[1]
-    # Don't take any values over 10 inches, this is bad data
-    values = np.where(grb['values'] < 250, grb['values'], 0)
-    # Cap any values over 4 inches to 4 inches
-    return filename, np.where(values > 100, 100, values)
-
-
 def load_stage4():
     """ It sucks, but we need to load the stage IV data to give us something
     to benchmark the MRMS data against, to account for two things:
@@ -136,42 +126,31 @@ def load_stage4():
     2) Over-estimates
     """
     printt("load_stage4() called...")
+    # The stage4 files store precip in the rears, so compute 1 AM
     midnight = datetime.datetime(VALID.year, VALID.month, VALID.day, 12, 0)
     midnight = midnight.replace(tzinfo=pytz.timezone("UTC"))
     midnight = midnight.astimezone(pytz.timezone("America/Chicago"))
     midnight = midnight.replace(hour=1, minute=0, second=0)
     # clever hack for CST/CDT
     tomorrow = midnight + datetime.timedelta(hours=36)
-    tomorrow = tomorrow.replace(hour=0)
+    tomorrow = tomorrow.replace(hour=1)
 
-    lats = None
-    lons = None
-    totals = None
-    now = midnight
-    filenames = []
-    while now <= tomorrow:
-        utc = now.astimezone(pytz.timezone("UTC"))
-        gribfn = utc.strftime(("/mesonet/ARCHIVE/data/%Y/%m/%d/stage4/"
-                               "ST4.%Y%m%d%H.01h.grib"))
-        if not os.path.isfile(gribfn):
-            print("%s is missing" % (gribfn,))
-            now += datetime.timedelta(hours=1)
-            continue
-        filenames.append(gribfn)
-        now += datetime.timedelta(hours=1)
+    sts_tidx = iemre.hourly_offset(midnight)
+    ets_tidx = iemre.hourly_offset(tomorrow)
+    nc = netCDF4.Dataset(("/mesonet/data/stage4/%s_stage4_hourly.nc"
+                          ) % (VALID.year, ), 'r')
+    nc.set_auto_scale(False)
+    p01m = nc.variables['p01m']
 
-    pool = Pool()
-    for filename, values in pool.imap_unordered(_read_stage4, filenames):
-        # Quasi hack here
-        if totals is None:
-            grbs = pygrib.open(filename)
-            grb = grbs[1]
-            lats, lons = grb.latlons()
-            totals = np.zeros(np.shape(lats))
-        totals += values
-    del pool
+    lats = nc.variables['lat'][:]
+    lons = nc.variables['lon'][:]
+    totals = (np.sum(p01m[sts_tidx:ets_tidx, :, :], axis=0) /
+              p01m.scale_factor)
+    nc.close()
 
-    if totals is None:
+    if np.ma.max(totals) > 0:
+        pass
+    else:
         print('No StageIV data found, aborting...')
         sys.exit()
     # set a small non-zero number to keep things non-zero
@@ -183,7 +162,7 @@ def load_stage4():
     nn = NearestNDInterpolator((lons.flatten(), lats.flatten()),
                                totals.flatten())
     STAGE4[:] = nn(xi, yi)
-    # write_grid(valid, stage4, 'stage4')
+    write_grid(STAGE4, 'stage4')
     printt("load_stage4() finished...")
 
 
@@ -200,7 +179,7 @@ def qc_precip():
     # prevent zeros
     hires_total = np.where(hires_total < 0.01, 0.01, hires_total)
     printt("qc_precip() computed hires total and floored it to 0.01")
-    # write_grid(valid, hires_total, 'inqcprecip')
+    write_grid(hires_total, 'inqcprecip')
     multiplier = STAGE4 / hires_total
     printt("qc_precip() computed the multiplier")
 
@@ -211,7 +190,7 @@ def qc_precip():
     PRECIP[:] *= multiplier[:, :, None]
     printt("qc_precip() 4 done")
     PRECIP[np.isnan(PRECIP)] = 0.
-    # write_grid(valid, np.sum(precip, 0), 'outqcprecip')
+    write_grid(np.sum(PRECIP, 2), 'outqcprecip')
     printt("qc_precip() finished...")
 
 
@@ -274,22 +253,21 @@ def load_precip_legacy():
     printt("load_precip_legacy() transposed the data!")
     m5total = np.sum(m5, 2)
     printt("load_precip_legacy() computed sum(m5)")
+    wm5 = m5 / m5total[:, :, None]
+    printt("load_precip_legacy() computed weights of m5")
 
     minute2 = np.arange(0, 60 * 24, 2)
     minute5 = np.arange(0, 60 * 24, 5)
 
     def _compute(yidx, xidx):
+        """expensive computation that needs vectorized, somehow"""
         s4total = STAGE4[yidx, xidx]
-        if s4total < 1:
-            return
-        five = m5total[yidx, xidx]
-        # TODO unsure of this... Smear the precip out over the first hour
-        if five < 10:
-            PRECIP[yidx, xidx, 0:30] = s4total / 30.
+        # any stage IV totals less than 0.4mm are ignored, so effectively 0
+        if s4total < 0.4:
             return
         # Interpolate weights to a 2 minute interval grid
         # we divide by 2.5 to downscale the 5 minute values to 2 minute
-        weights = np.interp(minute2, minute5, m5[yidx, xidx, :] / five / 2.5)
+        weights = np.interp(minute2, minute5, wm5[yidx, xidx, :])
         # Now apply the weights to the s4total
         PRECIP[yidx, xidx, :] = weights * s4total
 
@@ -469,10 +447,13 @@ def myjob(row):
 def write_grid(grid, fnadd=''):
     """Save off the daily precip totals for usage later in computing huc_12"""
     printt("write_grid() called...")
+    if fnadd != '' and not sys.stdout.isatty():
+        printt("not writting extra grid to disk")
+        return
     basedir = "/mnt/idep2/data/dailyprecip/%s" % (VALID.year, )
     if not os.path.isdir(basedir):
         os.makedirs(basedir)
-    np.save("%s/%s.npy%s" % (basedir, VALID.strftime("%Y%m%d"), fnadd), grid)
+    np.save("%s/%s%s.npy" % (basedir, VALID.strftime("%Y%m%d"), fnadd), grid)
     printt("write_grid() finished...")
 
 
@@ -546,6 +527,7 @@ if __name__ == '__main__':
 
 
 class test(unittest.TestCase):
+    """Some tests are better than no tests?"""
 
     def test_speed(self):
         """Test the speed of the processing"""
