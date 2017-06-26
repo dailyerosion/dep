@@ -8,7 +8,7 @@ import netCDF4
 import pytz
 import pandas as pd
 import requests
-from pyiem.datatypes import distance
+from pyiem.datatypes import distance, temperature
 from pyiem.dep import read_cli
 from pyiem.iemre import hourly_offset
 
@@ -16,13 +16,11 @@ from pyiem.iemre import hourly_offset
 def compute_stage4(lon, lat, year):
     """Build a daily dataframe for the stage4 data"""
     nc = netCDF4.Dataset("/mesonet/data/stage4/%s_stage4_hourly.nc" % (year,))
-    nc.set_auto_scale(False)
     lons = nc.variables['lon'][:]
     lats = nc.variables['lat'][:]
     dist = ((lons - lon)**2 + (lats - lat)**2)**0.5
     (yidx, xidx) = np.unravel_index(dist.argmin(), dist.shape)
-    p01i = distance((nc.variables['p01m'][:, yidx, xidx] /
-                     nc.variables['p01m'].scale_factor), 'MM').value('IN')
+    p01i = distance(nc.variables['p01m'][:, yidx, xidx], 'MM').value('IN')
     nc.close()
     df = pd.DataFrame({'precip': 0.0},
                       index=pd.date_range('%s-01-01' % (year, ),
@@ -70,7 +68,16 @@ def do_qc(fn, df, year):
                     distance(gdf['pcpn'].max(), 'MM').value('IN'),
                     len(gdf[gdf['pcpn'] > 0].index),
                     len(gdf[gdf['maxr'] > 25.4].index),
-                    gdf['rad'].mean()
+                    gdf['rad'].mean()))
+
+    print("----- Average high temperature -----")
+    print("YEAR | Avg High F | Avg Low F | Days > 100F")
+    print(" --- | --- | --- | ---")
+    for _year, gdf in df.groupby(by=df.index.year):
+        print(("%s | %6.2f | %6.2f | %3i"
+               ) % (_year, temperature(gdf['tmax'].mean(), 'C').value('F'),
+                    temperature(gdf['tmin'].mean(), 'C').value('F'),
+                    len(gdf[gdf['tmax'] > 37.7].index)
                     ))
 
     monthly = df[df.index.year == year]['pcpn'].resample('M').sum().copy()
@@ -94,7 +101,7 @@ def do_qc(fn, df, year):
         'M').sum().copy().values
 
     # Compare daily values
-    iemjson = requests.get(("https://mesonet.agron.iastate.edu/iemre/multiday/"
+    iemjson = requests.get(("http://mesonet.agron.iastate.edu/iemre/multiday/"
                             "%s-01-01/%s-12-31/%s/%s/json"
                             ) % (year, year, lat, lon)).json()
     rows = []

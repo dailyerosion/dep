@@ -139,13 +139,11 @@ def load_stage4():
     ets_tidx = iemre.hourly_offset(tomorrow)
     nc = netCDF4.Dataset(("/mesonet/data/stage4/%s_stage4_hourly.nc"
                           ) % (VALID.year, ), 'r')
-    nc.set_auto_scale(False)
     p01m = nc.variables['p01m']
 
     lats = nc.variables['lat'][:]
     lons = nc.variables['lon'][:]
-    totals = (np.sum(p01m[sts_tidx:ets_tidx, :, :], axis=0) /
-              p01m.scale_factor)
+    totals = np.sum(p01m[sts_tidx:ets_tidx, :, :], axis=0)
     nc.close()
 
     if np.ma.max(totals) > 0:
