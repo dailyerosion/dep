@@ -127,16 +127,19 @@ def load_stage4():
     """
     printt("load_stage4() called...")
     # The stage4 files store precip in the rears, so compute 1 AM
-    midnight = datetime.datetime(VALID.year, VALID.month, VALID.day, 12, 0)
-    midnight = midnight.replace(tzinfo=pytz.timezone("UTC"))
-    midnight = midnight.astimezone(pytz.timezone("America/Chicago"))
-    midnight = midnight.replace(hour=1, minute=0, second=0)
+    one_am = datetime.datetime(VALID.year, VALID.month, VALID.day, 12, 0)
+    one_am = one_am.replace(tzinfo=pytz.timezone("UTC"))
+    one_am = one_am.astimezone(pytz.timezone("America/Chicago"))
+    # stage4 data is stored in the rears, so 1am
+    one_am = one_am.replace(hour=1, minute=0, second=0)
     # clever hack for CST/CDT
-    tomorrow = midnight + datetime.timedelta(hours=36)
+    tomorrow = one_am + datetime.timedelta(hours=36)
     tomorrow = tomorrow.replace(hour=1)
 
-    sts_tidx = iemre.hourly_offset(midnight)
+    sts_tidx = iemre.hourly_offset(one_am)
     ets_tidx = iemre.hourly_offset(tomorrow)
+    printt(("stage4 sts_tidx:%s[%s] ets_tidx:%s[%s]"
+            ) % (sts_tidx, one_am, ets_tidx, tomorrow))
     nc = netCDF4.Dataset(("/mesonet/data/stage4/%s_stage4_hourly.nc"
                           ) % (VALID.year, ), 'r')
     p01m = nc.variables['p01m']
