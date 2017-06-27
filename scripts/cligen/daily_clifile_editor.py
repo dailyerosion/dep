@@ -184,6 +184,7 @@ def qc_precip():
     # Anything close to 1, set it to 1
     multiplier = np.where(np.logical_and(multiplier > 0.67, multiplier < 1.33),
                           1., multiplier)
+    write_grid(multiplier, 'multiplier')
     printt("qc_precip() bounded the multiplier")
     PRECIP[:] *= multiplier[:, :, None]
     printt("qc_precip() 4 done")
@@ -265,7 +266,7 @@ def load_precip_legacy():
             return
         # Interpolate weights to a 2 minute interval grid
         # we divide by 2.5 to downscale the 5 minute values to 2 minute
-        weights = np.interp(minute2, minute5, wm5[yidx, xidx, :])
+        weights = np.interp(minute2, minute5, wm5[yidx, xidx, :]) / 2.5
         # Now apply the weights to the s4total
         PRECIP[yidx, xidx, :] = weights * s4total
 
