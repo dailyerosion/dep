@@ -14,11 +14,20 @@ var defaultZoom = 6;
 var popup;
 var IDLE = "Idle";
 
+var varnames = ['qc_precip', 'avg_runoff', 'avg_loss', 'avg_delivery'];
+// How to get english units to metric, when appstate.metric == 1
+// multipliers[appstate.varname][appstate.metric]
+var multipliers = {
+	'qc_precip': [1, 25.4],
+	'avg_runoff': [1, 25.4],
+	'avg_loss': [1, 2.2417],
+	'avg_delivery': [1, 2.2417]
+};
 var levels = {
-	'qc_precip': [],
-	'avg_runoff': [],
-	'avg_loss': [],
-	'avg_delivery': []
+	'qc_precip': [[], []],
+	'avg_runoff': [[], []],
+	'avg_loss': [[], []],
+	'avg_delivery': [[], []]
 };
 var colors = {
   'qc_precip': ['#ffffa6', '#9cf26d', '#76cc94', '#6399ba', '#5558a1', '#c34dee'],     
@@ -49,10 +58,10 @@ var vardesc = {
 }
 
 var varunits = {
-	avg_runoff: 'inches',
-	avg_loss: 'tons per acre',
-	qc_precip: 'inches',
-	avg_delivery: 'tons per acre'
+	avg_runoff: ['inches', 'mm'],
+	avg_loss: ['tons per acre', 'tonnes per ha'],
+	qc_precip: ['inches', 'mm'],
+	avg_delivery: ['tons per acre', 'tonnes per ha']
 };
 var vartitle = {
 	avg_runoff: 'Water Runoff',
@@ -139,8 +148,9 @@ function setWindowHash(){
 	center = ol.proj.transform(center, 'EPSG:3857', 'EPSG:4326'),
 	hash += center[0].toFixed(2)+"/"+ center[1].toFixed(2) +"/"+ map.getView().getZoom()+"/";
 	if (detailedFeature){
-		hash += detailedFeature.getId();
+		hash += detailedFeature.getId() + "/";
 	}
+	hash += appstate.metric.toString() + "/";
 	window.location.hash = hash;
 }
 
@@ -169,6 +179,9 @@ function readWindowHash(){
 	if (tokens.length > 6 && tokens[6].length == 12){
 		detailedFeatureIn = tokens[6];
 	}
+	if (tokens.length > 7 && tokens[7].length == 1){
+		appstate.metric = parseInt(tokens[7]);
+	}
 	
 }
 
@@ -184,7 +197,7 @@ function setTitle(){
 	dt = formatDate(myDateFormat, appstate.date);
 	dtextra = (appstate.date2 === null) ? '': ' to '+formatDate(myDateFormat, appstate.date2);
 	$('#maptitle').html(vartitle[appstate.ltype] +" ["+
-			varunits[appstate.ltype] +"] for "+ dt +" "+ dtextra);
+			varunits[appstate.ltype][appstate.metric] +"] for "+ dt +" "+ dtextra);
 	$('#variable_desc').html(vardesc[appstate.ltype]);
 }
 
@@ -256,7 +269,15 @@ function remap(){
 			// clear out old content
 			vectorLayer.getSource().clear();
 
-			levels = json.jenks;
+			// Setup what was provided to use by the JSON service for levels,
+			// we also do the unit conversion so that we have levels in metric
+			for(var i=0; i<varnames.length; i++){
+				levels[varnames[i]][0] = json.jenks[varnames[i]];
+				for(var j=0; j<levels[varnames[i]][0].length; j++) {
+					levels[varnames[i]][1][j] = levels[varnames[i]][0][j] * multipliers[varnames[i]][1];
+				}
+				
+			}
 			drawColorbar();
 			
 			vectorLayer.getSource().addFeatures(
@@ -366,10 +387,19 @@ function viewEvents(huc12, mode){
 		data: {huc12: huc12, mode: mode}
 	}).done(function(res){
 		var myfunc = ((mode == 'yearly')? 'setYearInterval(': 'setDateFromString(');
-		var tbl = "<table class='table table-striped header-fixed'><thead><tr><th>Date</th><th>Precip [inch]</th><th>Runoff [inch]</th><th>Detach [t/a]</th><th>Delivery [t/a]</th></tr></thead>";
+		var tbl = "<table class='table table-striped header-fixed'>"+
+		"<thead><tr><th>Date</th><th>Precip [" + varunits['qc_precip'][appstate.metric] +
+		"]</th><th>Runoff [" + varunits['qc_precip'][appstate.metric] +
+		"]</th><th>Detach [" + varunits['avg_loss'][appstate.metric] +
+		"]</th><th>Delivery [" + varunits['avg_loss'][appstate.metric] +
+		"]</th></tr></thead>";
 		$.each(res.results, function(idx, result){
 			var dt = ((mode == 'daily')? result.date: result.date.substring(6,10));
-			tbl += "<tr><td><a href=\"javascript: "+ myfunc +"'"+ dt +"');\">"+ dt +"</a></td><td>"+ pprint(result.qc_precip) + pprint2(result.qc_precip_events, mode) +"</td><td>"+ pprint(result.avg_runoff) + pprint2(result.avg_runoff_events, mode) +"</td><td>"+ pprint(result.avg_loss) + pprint2(result.avg_loss_events, mode)+"</td><td>"+ pprint(result.avg_delivery) + pprint2(result.avg_delivery_events, mode) +"</td></tr>";
+			tbl += "<tr><td><a href=\"javascript: "+ myfunc +"'"+ dt +"');\">"+ dt +"</a></td><td>"+
+			pprint(result.qc_precip * multipliers['qc_precip'][appstate.metric]) + pprint2(result.qc_precip_events, mode) +"</td><td>"+
+			pprint(result.avg_runoff * multipliers['avg_runoff'][appstate.metric]) + pprint2(result.avg_runoff_events, mode) +"</td><td>"+
+			pprint(result.avg_loss * multipliers['avg_loss'][appstate.metric]) + pprint2(result.avg_loss_events, mode)+"</td><td>"+
+			pprint(result.avg_delivery * multipliers['avg_delivery'][appstate.metric]) + pprint2(result.avg_delivery_events, mode) +"</td></tr>";
 		});
 		tbl += "</table>";
 		if (mode == 'yearly'){
@@ -425,8 +455,8 @@ function drawColorbar(){
     ctx.fillText('Legend', (canvas.width / 2) - (metrics.width / 2), 14);
     
     var pos = 20;
-    $.each(levels[appstate.ltype], function(idx, level){
-    	if (idx == (levels[appstate.ltype].length - 1)){
+    $.each(levels[appstate.ltype][appstate.metric], function(idx, level){
+    	if (idx == (levels[appstate.ltype][appstate.metric].length - 1)){
     	    var txt = "Max: "+ level.toFixed(2);
     	    ctx.font = 'bold 10pt Calibri';
     	    ctx.fillStyle = 'yellow';
@@ -475,10 +505,10 @@ function popupFeatureInfo(evt){
 		  popup.setPosition(evt.coordinate);
 		  var h = '<table class="table table-condensed table-bordered">';
 		  h += '<tr><th>HUC12</th><td>'+feature.getId()+'</td></tr>';
-		  h += '<tr><th>Precipitation</th><td>'+ feature.get('qc_precip').toFixed(2) + ' in</td></tr>';
-		  h += '<tr><th>Runoff</th><td>'+ feature.get('avg_runoff').toFixed(2) + ' in</td></tr>';
-		  h += '<tr><th>Detachment</th><td>'+ feature.get('avg_loss').toFixed(2) + ' T/a</td></tr>';
-		  h += '<tr><th>Delivery</th><td>'+ feature.get('avg_delivery').toFixed(2) + ' T/a</td></tr>';
+		  h += '<tr><th>Precipitation</th><td>'+ (feature.get('qc_precip') * multipliers['qc_precip'][appstate.metric]).toFixed(2) + ' '+ varunits['qc_precip'][appstate.metric]  +'</td></tr>';
+		  h += '<tr><th>Runoff</th><td>'+ (feature.get('avg_runoff') * multipliers['avg_runoff'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_runoff'][appstate.metric]  +'</td></tr>';
+		  h += '<tr><th>Detachment</th><td>'+ (feature.get('avg_loss') * multipliers['avg_loss'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_loss'][appstate.metric]  +'</td></tr>';
+		  h += '<tr><th>Delivery</th><td>'+ (feature.get('avg_delivery') * multipliers['avg_delivery'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_delivery'][appstate.metric]  +'</td></tr>';
 		  h += '</table>';
 		  popover = $(element).popover({
 	    'placement': 'top',
@@ -512,10 +542,10 @@ function displayFeatureInfo(evt) {
       var info = document.getElementById('info');
       if (feature) {
     	  $('#info-huc12').html( feature.getId() );
-    	  $('#info-loss').html( feature.get('avg_loss').toFixed(2) + " T/a" );
-    	  $('#info-runoff').html( feature.get('avg_runoff').toFixed(2) + " in" );
-    	  $('#info-delivery').html( feature.get('avg_delivery').toFixed(2) + " T/a" );
-    	  $('#info-precip').html( feature.get('qc_precip').toFixed(2) + " in");
+    	  $('#info-loss').html( (feature.get('avg_loss') * multipliers['avg_loss'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_loss'][appstate.metric]);
+    	  $('#info-runoff').html( (feature.get('avg_runoff') * multipliers['avg_runoff'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_runoff'][appstate.metric] );
+    	  $('#info-delivery').html( (feature.get('avg_delivery') * multipliers['avg_delivery'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_delivery'][appstate.metric] );
+    	  $('#info-precip').html( (feature.get('qc_precip') * multipliers['qc_precip'][appstate.metric]).toFixed(2) + ' '+ varunits['qc_precip'][appstate.metric]);
       } else {
           $('#info-huc12').html('&nbsp;');
           $('#info-loss').html('&nbsp;');
@@ -577,9 +607,12 @@ $(document).ready(function(){
 		}),
 		  style: function(feature, resolution) {
 			  val = feature.get(appstate.ltype);
+			  if (appstate.metric == 1){
+				  val = val * multipliers[appstate.ltype][1];
+			  }
 			  var c = 'rgba(255, 255, 255, 0)'; //hallow
-			  for (var i=(levels[appstate.ltype].length-2); i>=0; i--){
-			      if (val >= levels[appstate.ltype][i]){
+			  for (var i=(levels[appstate.ltype][appstate.metric].length-2); i>=0; i--){
+			      if (val >= levels[appstate.ltype][appstate.metric][i]){
 			    	 c = colors[appstate.ltype][i];
 			    	 break;
 			      }
@@ -759,6 +792,11 @@ $(document).ready(function(){
     $("#radio input[type=radio]").change(function(){
     	//console.log("cb on radio this.value=" + this.value);
     	appstate.ltype = this.value;
+    	rerender_vectors();
+    });
+    $("#units_radio").buttonset();
+    $("#units_radio input[type=radio]").change(function(){
+    	appstate.metric = parseInt(this.value);
     	rerender_vectors();
     });
     $("#t").buttonset();

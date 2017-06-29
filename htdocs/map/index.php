@@ -8,7 +8,7 @@ $last_date = $row['value'];
 
 $lat = 42.22;
 $lon = -95.489;
-$OL = "4.0.0";
+$OL = "4.2.0";
 if (isset($_GET["huc_12"])){
 	$huc12 = substr($_GET["huc_12"],0,12);
 	$rs = pg_query($dbconn, "with d as "
@@ -117,6 +117,7 @@ var appstate = {
 	lon: {$lon},
 	date: new Date("{$ddd}"),
 	date2: null,
+    metric: 0,
 	ltype: 'qc_precip'
 };
         </script>
@@ -190,7 +191,11 @@ $t->content = <<<EOF
 		<strong>Status:</strong> <span id="status">Idle</span>
 	</div>
 	<div class="col-md-6">
-		<h4 class="pull-right">Select DEP Variable to View:</h4>
+		<div id="units_radio" class="pull-right">
+		<input type="radio" id="english_opt" name="units" value="0" checked="checked"><label for="english_opt">English</label>
+		<input type="radio" id="metric_opt" name="units" value="1"><label for="metric_opt">Metric</label>
+		</div>
+
 		<div id="radio" class="pull-right">
 		<input type="radio" id="precip-in2_opt" name="whichlayer" value="qc_precip" checked="checked"><label for="precip-in2_opt">Precipitation</label>
 		<input type="radio" id="runoff2_opt" name="whichlayer" value="avg_runoff"><label for="runoff2_opt">Runoff</label>
