@@ -471,10 +471,14 @@ def precip_workflow():
     PRECIP[:] = 0
     STAGE4[:] = 0
     load_stage4()
-    if VALID.year >= 2014:
-        load_precip()
-    else:
+    # We have MRMS a2m RASTER files prior to 1 Jan 2015, but these files used
+    # a very poor choice of data interval of 0.1mm, which is not large enough
+    # to capture low intensity events.  Files after 1 Jan 2015 used a better
+    # 0.02mm resolution
+    if VALID.year < 2015:
         load_precip_legacy()
+    else:
+        load_precip()
     qc_precip()
     write_grid(np.sum(PRECIP, 2))
 
