@@ -148,9 +148,9 @@ function setWindowHash(){
 	center = ol.proj.transform(center, 'EPSG:3857', 'EPSG:4326'),
 	hash += center[0].toFixed(2)+"/"+ center[1].toFixed(2) +"/"+ map.getView().getZoom()+"/";
 	if (detailedFeature){
-		hash += detailedFeature.getId() + "/";
+		hash += detailedFeature.getId();
 	}
-	hash += appstate.metric.toString() + "/";
+	hash += "/" + appstate.metric.toString() + "/";
 	window.location.hash = hash;
 }
 
@@ -181,6 +181,7 @@ function readWindowHash(){
 	}
 	if (tokens.length > 7 && tokens[7].length == 1){
 		appstate.metric = parseInt(tokens[7]);
+		$( '#units_radio input[value='+tokens[7]+']').prop('checked', true);
 	}
 	
 }
