@@ -458,7 +458,7 @@ function drawColorbar(){
     var pos = 20;
     $.each(levels[appstate.ltype][appstate.metric], function(idx, level){
     	if (idx == (levels[appstate.ltype][appstate.metric].length - 1)){
-    	    var txt = "Max: "+ level.toFixed(2);
+    	    var txt = "Max: "+ level.toFixed((level < 100) ? 2 : 0);
     	    ctx.font = 'bold 10pt Calibri';
     	    ctx.fillStyle = 'yellow';
     	    metrics = ctx.measureText(txt);
@@ -483,7 +483,7 @@ function drawColorbar(){
 
         ctx.font = 'bold 12pt Calibri';
         ctx.fillStyle = 'white';
-        var leveltxt = level.toFixed(2);
+        var leveltxt = level.toFixed((level < 100) ? 2 : 0);
         if (level == 0.001){
         	leveltxt = 0.001;
         }
