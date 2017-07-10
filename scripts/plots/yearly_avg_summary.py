@@ -1,9 +1,10 @@
+"""Period of record plot summaries"""
+from __future__ import print_function
 import datetime
-import cStringIO
-import psycopg2
-from shapely.wkb import loads
-import numpy as np
 import sys
+
+import psycopg2
+import numpy as np
 from geopandas import read_postgis
 import matplotlib
 matplotlib.use('agg')
@@ -39,80 +40,86 @@ V2RAMP = {
     'avg_runoff': [0, 2.5, 5, 10, 15, 30],
     }
 
-v = sys.argv[1]
-ts = datetime.date(2008, 1, 1)
-ts2 = datetime.date(2016, 12, 31)
-scenario = 0
 
-# suggested for runoff and precip
-if v in ['qc_precip', 'avg_runoff']:
-    c = ['#ffffa6', '#9cf26d', '#76cc94', '#6399ba', '#5558a1']
-# suggested for detachment
-elif v in ['avg_loss']:
-    c = ['#cbe3bb', '#c4ff4d', '#ffff4d', '#ffc44d', '#ff4d4d', '#c34dee']
-# suggested for delivery
-elif v in ['avg_delivery']:
-    c = ['#ffffd2', '#ffff4d', '#ffe0a5', '#eeb74d', '#ba7c57', '#96504d']
-cmap = mpcolors.ListedColormap(c, 'james')
-cmap.set_under('white')
-cmap.set_over('black')
+def main(argv):
+    """Go Main Go"""
+    v = argv[1]
+    agg = argv[2]
+    ts = datetime.date(2008, 1, 1)
+    ts2 = datetime.date(2016, 12, 31)
+    scenario = 0
 
-pgconn = psycopg2.connect(database='idep', host='localhost', port=5555,
-                          user='nobody')
-cursor = pgconn.cursor()
+    # suggested for runoff and precip
+    if v in ['qc_precip', 'avg_runoff']:
+        colors = ['#ffffa6', '#9cf26d', '#76cc94', '#6399ba', '#5558a1']
+    # suggested for detachment
+    elif v in ['avg_loss']:
+        colors = ['#cbe3bb', '#c4ff4d', '#ffff4d', '#ffc44d', '#ff4d4d',
+                  '#c34dee']
+    # suggested for delivery
+    elif v in ['avg_delivery']:
+        colors = ['#ffffd2', '#ffff4d', '#ffe0a5', '#eeb74d', '#ba7c57',
+                  '#96504d']
+    cmap = mpcolors.ListedColormap(colors, 'james')
+    cmap.set_under('white')
+    cmap.set_over('black')
 
-title = "for %s" % (ts.strftime("%-d %B %Y"),)
-if ts != ts2:
-    title = "between %s and %s" % (ts.strftime("%-d %b %Y"),
-                                              ts2.strftime("%-d %b %Y"))
-m = MapPlot(axisbg='#EEEEEE', nologo=True, sector='iowa',
-            title='DEP Yearly Average %s %s' % (V2NAME[v], title),
-            caption='Daily Erosion Project')
+    pgconn = psycopg2.connect(database='idep', host='localhost', port=5555,
+                              user='nobody')
 
-# Check that we have data for this date!
-cursor.execute("""
-    SELECT value from properties where key = 'last_date_0'
-""")
-lastts = datetime.datetime.strptime(cursor.fetchone()[0], '%Y-%m-%d')
-floor = datetime.date(2007, 1, 1)
-df = read_postgis("""
-WITH data as (
-  SELECT huc_12, extract(year from valid) as yr,
-  sum("""+v+""")  as d from results_by_huc12
-  WHERE scenario = %s and valid >= %s and valid <= %s
-  GROUP by huc_12, yr),
+    title = "for %s" % (ts.strftime("%-d %B %Y"),)
+    if ts != ts2:
+        title = "between %s and %s" % (ts.strftime("%-d %b %Y"),
+                                       ts2.strftime("%-d %b %Y"))
+    mp = MapPlot(axisbg='#EEEEEE', nologo=True, sector='iowa',
+                 nocaption=True,
+                 title=("DEP %s %s %s"
+                        ) % (V2NAME[v],
+                             "Yearly Average" if agg == 'avg' else 'Total',
+                             title),
+                 caption='Daily Erosion Project')
 
-agg as (
-  SELECT huc_12, avg(d) as d from data GROUP by huc_12)
+    df = read_postgis("""
+    WITH data as (
+      SELECT huc_12, extract(year from valid) as yr,
+      sum("""+v+""")  as d from results_by_huc12
+      WHERE scenario = %s and valid >= %s and valid <= %s
+      GROUP by huc_12, yr),
 
-SELECT ST_Transform(simple_geom, 4326) as geo, coalesce(d.d, 0) as data
-from huc12 i LEFT JOIN agg d
-ON (i.huc_12 = d.huc_12) WHERE i.scenario = %s and i.states ~* 'IA'
-""", pgconn, params=(scenario, ts, ts2, scenario), geom_col='geo',
-                  index_col=None)
-df['data'] = df['data'] * V2MULTI[v]
-if df['data'].max() < 0.01:
-    bins = [0.01, 0.02, 0.03, 0.04, 0.05]
-else:
-    bins = V2RAMP[v]
-norm = mpcolors.BoundaryNorm(bins, cmap.N)
+    agg as (
+      SELECT huc_12, """ + agg + """(d) as d from data GROUP by huc_12)
 
-patches = []
-#m.ax.add_geometries(df['geo'], ccrs.PlateCarree())
-for i, row in df.iterrows():
-    c = cmap(norm([row['data'], ]))[0]
-    arr = np.asarray(row['geo'].exterior)
-    points = m.ax.projection.transform_points(ccrs.Geodetic(),
-                                              arr[:, 0], arr[:, 1])
-    p = Polygon(points[:, :2], fc=c, ec='k', zorder=2, lw=0.1)
-    m.ax.add_patch(p)
+    SELECT ST_Transform(simple_geom, 4326) as geo, coalesce(d.d, 0) as data
+    from huc12 i LEFT JOIN agg d
+    ON (i.huc_12 = d.huc_12) WHERE i.scenario = %s and i.states ~* 'IA'
+    """, pgconn, params=(scenario, ts, ts2, scenario), geom_col='geo',
+                      index_col=None)
+    df['data'] = df['data'] * V2MULTI[v]
+    if df['data'].max() < 0.01:
+        bins = [0.01, 0.02, 0.03, 0.04, 0.05]
+    else:
+        bins = np.array(V2RAMP[v]) * (10. if agg == 'sum' else 1.)
+    norm = mpcolors.BoundaryNorm(bins, cmap.N)
 
-#print len(patches)
-#m.ax.add_collection(PatchCollection(patches, match_original=True))
-m.drawcounties()
-m.drawcities()
-lbl = [round(_, 2) for _ in bins]
-u = "%s, Avg: %.2f" % (V2UNITS[v], df['data'].mean())
-m.draw_colorbar(bins, cmap, norm, units=u,
-                clevlabels=lbl)
-plt.savefig('%s_%s_%s.png' % (ts.year, ts2.year, v))
+    # m.ax.add_geometries(df['geo'], ccrs.PlateCarree())
+    for _, row in df.iterrows():
+        c = cmap(norm([row['data'], ]))[0]
+        arr = np.asarray(row['geo'].exterior)
+        points = mp.ax.projection.transform_points(ccrs.Geodetic(),
+                                                   arr[:, 0], arr[:, 1])
+        p = Polygon(points[:, :2], fc=c, ec='k', zorder=2, lw=0.1)
+        mp.ax.add_patch(p)
+
+    mp.drawcounties()
+    mp.drawcities()
+    lbl = [round(_, 2) for _ in bins]
+    u = "%s, Avg: %.2f" % (V2UNITS[v], df['data'].mean())
+    mp.draw_colorbar(bins, cmap, norm,
+                     clevlabels=lbl, units=u,
+                     title="%s :: %s" % (V2NAME[v], V2UNITS[v]))
+    plt.savefig('%s_%s_%s%s.eps' % (ts.year, ts2.year, v,
+                                    "_sum" if agg == 'sum' else ''))
+
+
+if __name__ == '__main__':
+    main(sys.argv)
