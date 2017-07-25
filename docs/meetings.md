@@ -1,3 +1,18 @@
+20 Jul 2017 - DEP Planning
+  Gelder, James, Miller, Bates
+  - dear daryl, there are two Millers, Michelle and Mellisa.  Uh oh
+  - AFRI proposal would start in Februrary and last 5 years
+  - [ ] need python plots from me in MKS by Aug 20 for the paper
+  - Going with a 75 flowpath minimum per HUC12
+  - MN folks are visiting in early August
+  - The MN project ends on 30 Sep 2018
+  - [ ] James against asked about seeing summarizes of our tillage database
+  - Nebraska folks are interested in more ACPF expansion in the state
+  - the ARS project ends this month
+  - Will Gelder have new flowpaths for me by early August?  Likely not
+  - The Iowa Water Center has a new logo, which looks nice
+  - 20 TB of storage needs to move somewhere and off of GIS facility storage
+ 
  8 Jun 2017 - AFRI Proposal and DEP Planning
   James, Gelder, Yu, Chen, Bates, Miller(x2), Cruse, Todey, remote users
   - Can we adjust the WEPP output timescale to get more detailed temporal?
