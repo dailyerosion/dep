@@ -1,4 +1,5 @@
 """Generate a report for the yearly DEP totals"""
+from __future__ import print_function
 import sys
 import datetime
 
@@ -10,6 +11,7 @@ from pandas.io.sql import read_sql
 def main(argv):
     """Do What We Wanted"""
     scenario = int(argv[1])
+    print("This report covers the inclusive years 2008-2016")
     pgconn = psycopg2.connect(database='idep', host='localhost', port=5555)
 
     df = read_sql("""
@@ -21,6 +23,7 @@ def main(argv):
             sum(avg_delivery) as delivery,
             sum(avg_loss) as detachment from results_by_huc12 r JOIN iahuc12 i
             on (r.huc_12 = i.huc_12) WHERE r.scenario = %s
+            and r.valid >= '2008-01-01'
             and r.valid < '2017-01-01' GROUP by r.huc_12, yr
         )
 
@@ -31,8 +34,8 @@ def main(argv):
         from agg GROUP by yr ORDER by yr
     """, pgconn, params=(scenario, ), index_col='yr')
 
-    print df
-    print df.mean()
+    print(df)
+    print(df.mean())
 
     (fig, ax) = plt.subplots(1, 1)
     ax.bar(df.index.values, df['detachment_ta'].values)
