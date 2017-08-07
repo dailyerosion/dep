@@ -15,7 +15,7 @@ from jenks import jenks
 V2NAME = {
     'avg_loss': 'Detachment',
     'qc_precip': 'Precipitation',
-    'avg_delivery': 'Delivery',
+    'avg_delivery': 'Hillslope Soil Loss',
     'avg_runoff': 'Runoff'}
 V2MULTI = {
     'avg_loss': 4.463,

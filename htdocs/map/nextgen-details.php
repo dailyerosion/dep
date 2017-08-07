@@ -123,7 +123,7 @@ echo '<table class="table table-condensed table-bordered">';
 echo "<tr><th>Precipitation</th><td>". sprintf("%.2f in", $row["qc_precip"] / 25.4) ."</td></tr>";
 echo "<tr><th>Runoff</th><td>". sprintf("%.2f in", $row["avg_runoff"] / 25.4) ."</td></tr>";
 echo "<tr><th>Detachment</th><td>". sprintf("%.2f T/A", $row["avg_loss"] * 4.463) ."</td></tr>";
-echo "<tr><th>Delivery</th><td>". sprintf("%.2f T/A", $row["avg_delivery"] * 4.463) ."</td></tr>";
+echo "<tr><th>Hillslope Soil Loss</th><td>". sprintf("%.2f T/A", $row["avg_delivery"] * 4.463) ."</td></tr>";
 echo "</table>";
 
 /* Get top events */

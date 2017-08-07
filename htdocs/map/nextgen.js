@@ -54,7 +54,7 @@ var vardesc = {
 	avg_runoff: 'Runoff is the average amount of water that left the hillslopes via above ground transport.',
 	avg_loss: 'Soil Detachment is the average amount of soil disturbed on the modelled hillslopes.',
 	qc_precip: 'Precipitation is the average amount of rainfall and melted snow received on the hillslopes.',
-	avg_delivery: 'Delivery is the average amount of soil transported to the bottom of the modelled hillslopes.',
+	avg_delivery: 'Hillslope Soil Loss is the average amount of soil transported to the bottom of the modelled hillslopes.',
 }
 
 var varunits = {
@@ -67,7 +67,7 @@ var vartitle = {
 	avg_runoff: 'Water Runoff',
 	avg_loss: 'Soil Detachment',
 	qc_precip: 'Total Precipitation',
-	avg_delivery: 'Soil Delivery'
+	avg_delivery: 'Hillslope Soil Loss'
 };
 function formatDate(fmt, dt){
 	return $.datepicker.formatDate(fmt, dt)
@@ -392,7 +392,7 @@ function viewEvents(huc12, mode){
 		"<thead><tr><th>Date</th><th>Precip [" + varunits['qc_precip'][appstate.metric] +
 		"]</th><th>Runoff [" + varunits['qc_precip'][appstate.metric] +
 		"]</th><th>Detach [" + varunits['avg_loss'][appstate.metric] +
-		"]</th><th>Delivery [" + varunits['avg_loss'][appstate.metric] +
+		"]</th><th>Hillslope Soil Loss [" + varunits['avg_loss'][appstate.metric] +
 		"]</th></tr></thead>";
 		$.each(res.results, function(idx, result){
 			var dt = ((mode == 'daily')? result.date: result.date.substring(6,10));
@@ -509,7 +509,7 @@ function popupFeatureInfo(evt){
 		  h += '<tr><th>Precipitation</th><td>'+ (feature.get('qc_precip') * multipliers['qc_precip'][appstate.metric]).toFixed(2) + ' '+ varunits['qc_precip'][appstate.metric]  +'</td></tr>';
 		  h += '<tr><th>Runoff</th><td>'+ (feature.get('avg_runoff') * multipliers['avg_runoff'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_runoff'][appstate.metric]  +'</td></tr>';
 		  h += '<tr><th>Detachment</th><td>'+ (feature.get('avg_loss') * multipliers['avg_loss'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_loss'][appstate.metric]  +'</td></tr>';
-		  h += '<tr><th>Delivery</th><td>'+ (feature.get('avg_delivery') * multipliers['avg_delivery'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_delivery'][appstate.metric]  +'</td></tr>';
+		  h += '<tr><th>Hillslope Soil Loss</th><td>'+ (feature.get('avg_delivery') * multipliers['avg_delivery'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_delivery'][appstate.metric]  +'</td></tr>';
 		  h += '</table>';
 		  popover = $(element).popover({
 	    'placement': 'top',

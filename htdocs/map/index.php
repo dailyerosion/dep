@@ -121,7 +121,7 @@ var appstate = {
 	ltype: 'qc_precip'
 };
         </script>
- <script src='nextgen.js?v=18'></script>
+ <script src='nextgen.js?v=19'></script>
 EOF;
 
 $t->content = <<<EOF
@@ -200,7 +200,7 @@ $t->content = <<<EOF
 		<input type="radio" id="precip-in2_opt" name="whichlayer" value="qc_precip" checked="checked"><label for="precip-in2_opt">Precipitation</label>
 		<input type="radio" id="runoff2_opt" name="whichlayer" value="avg_runoff"><label for="runoff2_opt">Runoff</label>
 		<input type="radio" id="loss2_opt" name="whichlayer" value="avg_loss"><label for="loss2_opt">Detachment</label>
-		<input type="radio" id="delivery2_opt" name="whichlayer" value="avg_delivery"><label for="delivery2_opt">Delivery</label>
+		<input type="radio" id="delivery2_opt" name="whichlayer" value="avg_delivery"><label for="delivery2_opt">Hillslope Soil Loss</label>
 		</div>
 		<br clear="all" />
 		<div id="variable_desc" class="pull-right"></div>
@@ -260,7 +260,7 @@ $t->content = <<<EOF
 		<tr><th>Precipitation</th><td><div id="info-precip"></div></td></tr>
 		<tr><th>Runoff</th><td><div id="info-runoff"></div></td></tr>
 		<tr><th>Detachment</th><td><div id="info-loss"></div></td></tr>
-		<tr><th>Delivery</th><td><div id="info-delivery"></div></td></tr>
+		<tr><th>Hillslope Soil Loss</th><td><div id="info-delivery"></div></td></tr>
 		</table>
 		</div>
 		<div id="clickDetails" class="well">
