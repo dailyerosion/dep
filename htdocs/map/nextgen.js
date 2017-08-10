@@ -804,7 +804,7 @@ $(document).ready(function(){
     if (appstate.date2){
     	$( '#t input[value=multi]').prop('checked', true).button('refresh');	
     }
-    $( '#t input[type=radio]').change(function(){
+    $("#t input[type=radio]").change(function(){
     	if (this.value == 'single'){
     		appstate.date2 = null;
         	$("#dp2").css('visibility', 'hidden');    		

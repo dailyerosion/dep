@@ -40,6 +40,9 @@ $t->headextra = <<<EOF
 .ui-datepicker-year{
 	color: #000 !important;
 }
+.ui-widget{
+    font-size: 1em !important;
+}
 		.dp {
      border: 0px;
 font-weight: bolder;
@@ -181,7 +184,7 @@ $t->content = <<<EOF
 
 <form>		
 <div class="row">
-	<div class="col-md-6">
+	<div class="col-sm-6">
 		<h3>DEP Interactive Map</h3>
 		<button id="ia" class="btn btn-default" type="button"><i class="fa fa-search-plus"></i> Iowa</button>
 		<button id="ks" class="btn btn-default" type="button"><i class="fa fa-search-plus"></i> Kansas</button>
@@ -190,7 +193,7 @@ $t->content = <<<EOF
 		<br clear="all" />
 		<strong>Status:</strong> <span id="status">Idle</span>
 	</div>
-	<div class="col-md-6">
+	<div class="col-sm-6">
 		<div id="units_radio" class="pull-right">
 		<input type="radio" id="english_opt" name="units" value="0" checked="checked"><label for="english_opt">English</label>
 		<input type="radio" id="metric_opt" name="units" value="1"><label for="metric_opt">Metric</label>
@@ -207,20 +210,20 @@ $t->content = <<<EOF
 	</div>
 </div>
 <div class="row">
-<div class="col-md-9">
+<div class="col-md-9 col-sm-8">
 	<div id="map">
 		<div id="maptitle">The Map Title</div>
 		<canvas id="colorbar" width="75" height="300"></canvas>
 	</div>
     <div clas="row">
-		<div class="col-md-3">
+		<div class="col-md-3 col-sm-3">
 			<h4>Days to Display</h4>
-			<div id="t" class="pull-left">
+			<div id="t">
 			<input type="radio" id="single" name="t" value="single" checked="checked"><label for="single">Single</label>
 			<input type="radio" id="multi" name="t" value="multi"><label for="multi">Multi</label>
 			</div>
 		</div>
-		<div class="col-md-4">
+		<div class="col-md-4 col-sm-4">
 			<h4>Date:</h4>
 		<div class="input-group">
 			<span class="input-group-btn"><button id="minus1d" class="btn btn-default" type="button"><i class="fa fa-arrow-left"></i></button></span>
@@ -229,13 +232,13 @@ $t->content = <<<EOF
 		</div>
 		<div style="display: none;" id="settoday"><a class="btn btn-default" role="button" href="javascript: setToday();"><i class="fa fa-chevron-left"></i> Back to Latest Date</a></div>
 		</div>
-		<div class="col-md-3" style="visibility: hidden;" id="dp2">
+		<div class="col-md-3 col-sm-3" style="visibility: hidden;" id="dp2">
 			<h4>To Date:</h4>
 			<div class="input-group">
 			<input type="text" name="date2" id="datepicker2" class="form-control" style="font-weight: bolder;" />
 			</div>
 		</div>
-		<div class="col-md-2">
+		<div class="col-md-2 col-sm-2">
 		<button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal">
   <i class="fa fa-search"></i>
 </button>
@@ -247,7 +250,7 @@ $t->content = <<<EOF
 		</div>
 	</div>
 </div>
-<div id="detailsContainer" class="col-md-3">
+<div id="detailsContainer" class="col-md-3 col-sm-4">
 		<div id="t2">
 		<input type="radio" id="featureside" name="whichlayer2" value="side" checked="checked"><label for="featureside">Side</label>
 		<input type="radio" id="featurepopup" name="whichlayer2" value="popup"><label for="featurepopup">Popup</label>
