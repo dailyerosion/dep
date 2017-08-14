@@ -10,9 +10,11 @@ import matplotlib.pyplot as plt
 
 def two(year):
     """Compare yearly totals in a scatter plot"""
-    coop = psycopg2.connect(database='coop', host='iemdb', user='nobody')
+    coop = psycopg2.connect(database='coop', host='localhost', port=5555,
+                            user='nobody')
     ccursor = coop.cursor()
-    idep = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    idep = psycopg2.connect(database='idep', host='localhost', port=5555,
+                            user='nobody')
     icursor = idep.cursor()
 
     ccursor.execute("""
@@ -43,7 +45,10 @@ def two(year):
         WHERE valid between %s and %s and huc_12 = %s and scenario = 0
         """, (datetime.date(year, 1, 1), datetime.date(year, 12, 31),
               huc12))
-        iprecip = distance(icursor.fetchone()[0], 'MM').value('IN')
+        val = icursor.fetchone()[0]
+        if val is None:
+            continue
+        iprecip = distance(val, 'MM').value('IN')
         rows.append(dict(station=station,
                          precip=precip,
                          iprecip=iprecip,
@@ -77,29 +82,45 @@ def two(year):
 
 
 def one():
-    iem = psycopg2.connect(database='iem', host='iemdb', user='nobody')
+    iem = psycopg2.connect(database='iem', host='localhost', port=5555,
+                           user='nobody')
 
-    idep = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    idep = psycopg2.connect(database='idep', host='localhost', port=5555,
+                            user='nobody')
+    icursor = idep.cursor()
 
     # Get obs
-    df = read_sql("""SELECT day, coalesce(pday, 0) as pday
-        from summary_2015 s JOIN stations t on
-      (t.iemid = s.iemid) WHERE t.id = 'AMW'""", iem, index_col='day')
+    df = read_sql("""SELECT day, min(pday) as min_pday, avg(pday) as avg_pday,
+        max(pday) as max_pday
+        from summary_2014 s JOIN stations t on
+      (t.iemid = s.iemid) WHERE t.network = 'IA_ASOS'
+      GROUP by day""", iem, index_col='day')
 
     # Get idep
+    # Due to join issues, we hardcode the huc12 count
+    icursor.execute("""SELECT count(*) from huc12 where states = 'IA'
+    and scenario =0""")
+    huccount = icursor.fetchone()[0]
     df2 = read_sql("""
-        SELECT valid, qc_precip / 25.4 as pday from results_by_huc12
-        WHERE scenario = 0 and huc_12 = '070801050903'
-        and valid >= '2015-01-01'
+        WITH iahuc12 as (
+            SELECT huc_12 from huc12 where states = 'IA' and scenario = 0
+        )
+        SELECT valid, sum(qc_precip) / 25.4 as precip
+        from results_by_huc12 r JOIN iahuc12 i on (r.huc_12 = i.huc_12)
+        WHERE r.scenario = 0 and r.valid >= '2014-01-01' and
+        r.valid < '2015-01-01' GROUP by valid
       """, idep, index_col='valid')
 
-    df['idep'] = df2['pday']
+    df['idep'] = df2['precip'] / huccount
     df.fillna(0, inplace=True)
-    df['diff'] = df['pday'] - df['idep']
+    df['diff2max'] = df['max_pday'] - df['idep']
+    df['diff2avg'] = df['avg_pday'] - df['idep']
 
-    df2 = df.sort('diff')
+    df.sort_values(by='diff2avg', inplace=True, ascending=False)
 
     df.to_excel('test.xls')
 
-for year in range(2007, 2017):
-    two(year)
+if __name__ == '__main__':
+    one()
+    # for year in range(2007, 2017):
+    #    two(year)

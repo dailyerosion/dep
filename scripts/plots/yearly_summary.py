@@ -4,6 +4,7 @@ import psycopg2
 from shapely.wkb import loads
 import numpy as np
 import sys
+from geopandas import read_postgis
 import matplotlib
 matplotlib.use('agg')
 from pyiem.plot import MapPlot
@@ -11,6 +12,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 import matplotlib.colors as mpcolors
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 
 V2NAME = {
     'avg_loss': 'Detachment',
@@ -55,7 +58,8 @@ cmap = mpcolors.ListedColormap(c, 'james')
 cmap.set_under('white')
 cmap.set_over('black')
 
-pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+pgconn = psycopg2.connect(database='idep', host='localhost', port=5555,
+                          user='nobody')
 cursor = pgconn.cursor()
 
 title = "for %s" % (ts.strftime("%-d %B %Y"),)
@@ -63,7 +67,8 @@ if ts != ts2:
     title = "for period between %s and %s" % (ts.strftime("%-d %b %Y"),
                                               ts2.strftime("%-d %b %Y"))
 m = MapPlot(axisbg='#EEEEEE', nologo=True, sector='iowa',
-            title='DEP %s by HUC12 2008-2015 Yearly Average' % (V2NAME[v],),
+            nocaption=True,
+            title='DEP %s %s' % (V2NAME[v], title),
             caption='Daily Erosion Project')
 
 # Check that we have data for this date!
@@ -72,45 +77,41 @@ cursor.execute("""
 """)
 lastts = datetime.datetime.strptime(cursor.fetchone()[0], '%Y-%m-%d')
 floor = datetime.date(2007, 1, 1)
-cursor.execute("""
+df = read_postgis("""
 WITH data as (
-  SELECT huc_12, extract(year from valid) as yr,
+  SELECT huc_12,
   sum("""+v+""")  as d from results_by_huc12
-  WHERE scenario = %s and valid > '2008-01-01' and valid < '2016-01-01'
-  GROUP by huc_12, yr),
-agg as (
- SELECT huc_12, avg(d) as d2 from data GROUP by huc_12)
+  WHERE scenario = %s and valid >= %s and valid <= %s
+  GROUP by huc_12)
 
-SELECT ST_Transform(simple_geom, 4326), coalesce(d.d2, 0)
-from huc12 i LEFT JOIN agg d
+SELECT ST_Transform(simple_geom, 4326) as geo, coalesce(d.d, 0) as data
+from huc12 i LEFT JOIN data d
 ON (i.huc_12 = d.huc_12) WHERE i.scenario = %s and i.states ~* 'IA'
-""", (scenario, scenario))
-patches = []
-data = []
-for row in cursor:
-    polygon = loads(row[0].decode('hex'))
-    a = np.asarray(polygon.exterior)
-    (x, y) = m.map(a[:, 0], a[:, 1])
-    a = zip(x, y)
-    p = Polygon(a, fc='white', ec='k', zorder=2, lw=.1)
-    patches.append(p)
-    data.append(row[1])
-data = np.array(data) * V2MULTI[v]
-if np.max(data) < 0.01:
+""", pgconn, params=(scenario, ts, ts2, scenario), geom_col='geo',
+                  index_col=None)
+df['data'] = df['data'] * V2MULTI[v]
+if df['data'].max() < 0.01:
     bins = [0.01, 0.02, 0.03, 0.04, 0.05]
 else:
     bins = V2RAMP[v]
 norm = mpcolors.BoundaryNorm(bins, cmap.N)
-for val, patch in zip(data, patches):
-    c = cmap(norm([val, ]))[0]
-    patch.set_facecolor(c)
 
-m.ax.add_collection(PatchCollection(patches, match_original=True))
+patches = []
+#m.ax.add_geometries(df['geo'], ccrs.PlateCarree())
+for i, row in df.iterrows():
+    c = cmap(norm([row['data'], ]))[0]
+    arr = np.asarray(row['geo'].exterior)
+    points = m.ax.projection.transform_points(ccrs.Geodetic(),
+                                              arr[:, 0], arr[:, 1])
+    p = Polygon(points[:, :2], fc=c, ec='k', zorder=2, lw=0.1)
+    m.ax.add_patch(p)
+
+#print len(patches)
+#m.ax.add_collection(PatchCollection(patches, match_original=True))
 m.drawcounties()
 m.drawcities()
 lbl = [round(_, 2) for _ in bins]
-u = "%s, Avg: %.2f" % (V2UNITS[v], np.mean(data))
-m.draw_colorbar(bins, cmap, norm, units=u,
-                clevlabels=lbl)
-ram = cStringIO.StringIO()
+u = "%s, Avg: %.2f" % (V2UNITS[v], df['data'].mean())
+m.draw_colorbar(bins, cmap, norm,
+                clevlabels=lbl, title="%s :: %s" % (V2NAME[v], V2UNITS[v]))
 plt.savefig('%s_%s.png' % (year, v))

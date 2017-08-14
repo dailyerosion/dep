@@ -1,15 +1,18 @@
 """Plot what was saved from daily_clifile_editor processing"""
+from __future__ import print_function
+import sys
+import datetime
+import os
+
 from pyiem.plot import MapPlot
 from pyiem.iemre import daily_offset
-import sys
-import netCDF4
-import datetime
-import numpy as np
-import os
-import matplotlib.cm as cm
 from pyiem.dep import SOUTH, NORTH, EAST, WEST
+import netCDF4
+import numpy as np
+import matplotlib.pyplot as plt
 YS = np.arange(SOUTH, NORTH, 0.01)
 XS = np.arange(WEST, EAST, 0.01)
+SECTOR = 'iowa'
 
 
 def load_precip(date, extra=''):
@@ -29,95 +32,107 @@ def do(valid):
     clevs[0] = 0.01
 
     precip = load_precip(valid)
-    stageIV = load_precip(valid, '_stageIV')
-    mrms_total = load_precip(valid, '_mrms_total')
-    ratio = load_precip(valid, '_ratio')
+    stage4 = load_precip(valid, 'stage4')
+    inqcprecip = load_precip(valid, 'inqcprecip')
+    outqcprecip = load_precip(valid, 'outqcprecip')
+    multiplier = load_precip(valid, 'multiplier')
+
+    yidx = int((43.27 - SOUTH) / 0.01)
+    xidx = int((-94.39 - WEST) / 0.01)
+    print(("yidx:%s xidx:%s precip:%.2f stage4: %.2f inqc: %.2f outqc: %.2f "
+           "mul: %.2f"
+           ) % (yidx, xidx, precip[yidx, xidx], stage4[yidx, xidx],
+                inqcprecip[yidx, xidx], outqcprecip[yidx, xidx],
+                multiplier[yidx, xidx]))
+
+    mp = MapPlot(sector=SECTOR, axisbg='white',
+                 title=('%s DEP Quality Controlled Precip Totals'
+                        ) % (valid.strftime("%-d %b %Y"), ))
+    (lons, lats) = np.meshgrid(XS, YS)
+    mp.pcolormesh(lons, lats, precip / 25.4, clevs,
+                  units='inch')
+    mp.drawcounties()
+    mp.postprocess(filename='qc.png')
+    mp.close()
+
+    mp = MapPlot(sector=SECTOR, axisbg='white',
+                 title=('%s Stage IV Precip Totals'
+                        ) % (valid.strftime("%-d %b %Y"), ))
+    mp.pcolormesh(lons, lats, stage4 / 25.4, clevs,
+                  units='inch')
+    mp.drawcounties()
+    mp.postprocess(filename='stageIV.png')
+    mp.close()
+
+    mp = MapPlot(sector=SECTOR, axisbg='white',
+                 title=('%s High-res total prior to QC'
+                        ) % (valid.strftime("%-d %b %Y"), ))
+    mp.pcolormesh(lons, lats, inqcprecip / 25.4, clevs,
+                  units='inch')
+    mp.drawcounties()
+    mp.postprocess(filename='inqcprecip.png')
+    mp.close()
+
+    mp = MapPlot(sector=SECTOR, axisbg='white',
+                 title=('%s High-res total after QC'
+                        ) % (valid.strftime("%-d %b %Y"), ))
+    mp.pcolormesh(lons, lats, outqcprecip / 25.4, clevs,
+                  units='inch')
+    mp.drawcounties()
+    mp.postprocess(filename='outqcprecip.png')
+    mp.close()
+
+    mp = MapPlot(sector=SECTOR, axisbg='white',
+                 title=('%s QC Change in Precip Out - In'
+                        ) % (valid.strftime("%-d %b %Y"), ))
+    diff = (outqcprecip - inqcprecip) / 25.4
+    mp.pcolormesh(lons, lats, diff,
+                  np.arange(-1.4, 1.5, 0.1),
+                  cmap=plt.get_cmap('BrBG'),
+                  units='inch')
+    mp.drawcounties()
+    mp.postprocess(filename='qcprecipdiff.png')
+    mp.close()
+
+    mp = MapPlot(sector=SECTOR, axisbg='white',
+                 title=('%s multiplier'
+                        ) % (valid.strftime("%-d %b %Y"), ))
+    mp.pcolormesh(lons, lats, multiplier,
+                  np.arange(0.0, 2.5, 0.2),
+                  cmap=plt.get_cmap('jet'),
+                  units='ratio')
+    mp.drawcounties()
+    mp.postprocess(filename='multiplier.png')
+    mp.close()
+
+    mp = MapPlot(sector=SECTOR, axisbg='white',
+                 title=('%s manually computed QC Precip  mul * stage4'
+                        ) % (valid.strftime("%-d %b %Y"), ))
+    mp.pcolormesh(lons, lats, multiplier * stage4 / 25.4,
+                  clevs,
+                  units='inch')
+    mp.drawcounties()
+    mp.postprocess(filename='qcmancalc.png')
+    mp.close()
 
     # Go MRMS
-    idx = daily_offset(valid)
-    nc = netCDF4.Dataset(("/mesonet/data/iemre/%s_mw_mrms_daily.nc"
-                          ) % (valid.year, ),
-                         'r')
+    ncfn = "/mesonet/data/iemre/%s_mw_mrms_daily.nc" % (valid.year, )
+    if not os.path.isfile(ncfn):
+        return
+    nc = netCDF4.Dataset(ncfn, 'r')
     xidx = int((WEST - nc.variables['lon'][0]) * 100.)
     yidx = int((SOUTH - nc.variables['lat'][0]) * 100.)
+    idx = daily_offset(valid)
     mrms = nc.variables['p01d'][idx, yidx:(yidx+800), xidx:(xidx+921)]
     nc.close()
 
-    # Print out some debug
-    y = int((41.99 - SOUTH) * 100.)
-    x = int((-93.6 - WEST) * 100.)
-    print "%7s %7s %7s %7s %7s" % ('DEP', 'stageIV', 'MRMS_TOT', 'Ratio',
-                                   'MRMS')
-    print "%7.3s %7.3s %7.3s %7.3s %7.3s" % (precip[y, x], stageIV[y, x],
-                                             mrms_total[y, x], ratio[y, x],
-                                             mrms[y, x])
-
-    m = MapPlot(sector='iowa', axisbg='white',
-                title=('%s DEP Quality Controlled Precip Totals'
-                       ) % (valid.strftime("%-d %b %Y"), ))
-    (lons, lats) = np.meshgrid(XS, YS)
-    print np.shape(precip), np.shape(lons), np.shape(lats)
-    m.pcolormesh(lons, lats, precip / 25.4, clevs,
-                 units='inch')
-    m.drawcounties()
-    m.postprocess(filename='qc.png')
-    m.close()
-
-    m = MapPlot(sector='iowa', axisbg='white',
-                title=('%s Stage IV Precip Totals'
-                       ) % (valid.strftime("%-d %b %Y"), ))
-    print np.shape(stageIV), np.shape(lons), np.shape(lats)
-    m.pcolormesh(lons, lats, stageIV / 25.4, clevs,
-                 units='inch')
-    m.drawcounties()
-    m.postprocess(filename='stageIV.png')
-    m.close()
-
-    m = MapPlot(sector='iowa', axisbg='white',
-                title=('%s ORIG MRMS TOTAL Precip Totals'
-                       ) % (valid.strftime("%-d %b %Y"), ))
-    print np.shape(stageIV), np.shape(lons), np.shape(lats)
-    m.pcolormesh(lons, lats, mrms_total / 25.4, clevs,
-                 units='inch')
-    m.drawcounties()
-    m.postprocess(filename='mrms_total.png')
-    m.close()
-
-    m = MapPlot(sector='iowa', axisbg='white',
-                title=('%s Ratio Totals'
-                       ) % (valid.strftime("%-d %b %Y"), ))
-    print np.shape(stageIV), np.shape(lons), np.shape(lats)
-    m.pcolormesh(lons, lats, ratio, np.arange(0, 3, 0.25),
-                 units='inch')
-    m.drawcounties()
-    m.postprocess(filename='ratio.png')
-    m.close()
-
-    m = MapPlot(sector='iowa', axisbg='white',
-                title=('%s MRMS Precip Totals'
-                       ) % (valid.strftime("%-d %b %Y"), ))
-    print np.shape(mrms), np.shape(lons), np.shape(lats)
-    m.pcolormesh(lons, lats, mrms / 25.4, clevs,
-                 units='inch')
-    m.drawcounties()
-    m.postprocess(filename='mrms.png')
-    m.close()
-
-    m = MapPlot(sector='iowa', axisbg='white',
-                title=('%s DEP - MRMS Precip Totals'
-                       ) % (valid.strftime("%-d %b %Y"), ))
-    clevs = np.arange(-3, 3.1, 0.5)
-    m.pcolormesh(lons, lats, (precip - mrms_total) / 25.4, clevs,
-                 units='inch', cmap=cm.get_cmap("BrBG"))
-    m.drawcounties()
-    m.postprocess(filename='diff.png')
-    m.close()
-
 
 def main(argv):
+    """Do Magic"""
     valid = datetime.date(int(argv[1]), int(argv[2]),
                           int(argv[3]))
     do(valid)
+
 
 if __name__ == '__main__':
     main(sys.argv)

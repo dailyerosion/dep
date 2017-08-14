@@ -7,6 +7,7 @@ is one file per HUC12.
 3. go to ../util and run `python make_dirs.py <scenario>`
 4. python `python flowpath2prj.py <scenario>`
 5. python `python prj2wepp.py <scenario>`
+6. If new HUC12s are present, get an updated simplified HUC12 from Dave.
 
  insert into huc12
  (states, hu_12_name, huc_8, huc_12, simple_geom, geom, scenario)

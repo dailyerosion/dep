@@ -20,6 +20,8 @@ def compute_stage4(lon, lat, year):
     lats = nc.variables['lat'][:]
     dist = ((lons - lon)**2 + (lats - lat)**2)**0.5
     (yidx, xidx) = np.unravel_index(dist.argmin(), dist.shape)
+    print(("Computed stage4 nclon:%.2f nclat:%.2f yidx:%s xidx:%s "
+           ) % (lons[yidx, xidx], lats[yidx, xidx], yidx, xidx))
     p01i = distance(nc.variables['p01m'][:, yidx, xidx], 'MM').value('IN')
     nc.close()
     df = pd.DataFrame({'precip': 0.0},
@@ -69,6 +71,10 @@ def do_qc(fn, df, year):
                     len(gdf[gdf['pcpn'] > 0].index),
                     len(gdf[gdf['maxr'] > 25.4].index),
                     gdf['rad'].mean()))
+
+    print("---- Months with < 0.05 precipitation ----")
+    gdf = df.groupby(by=[df.index.year, df.index.month])['pcpn'].sum()
+    print(gdf[gdf < 1.])
 
     print("----- Average high temperature -----")
     print("YEAR | Avg High F | Avg Low F | Days > 100F")

@@ -1,9 +1,11 @@
 """Examination of erosion totals vs flowpath length"""
-import pandas as pd
+from __future__ import print_function
 import os
 import datetime
 import multiprocessing
 import sys
+
+import pandas as pd
 import numpy as np
 import psycopg2
 from tqdm import tqdm
@@ -80,6 +82,7 @@ def load_lengths():
     """, (SCENARIO,))
     for row in icursor:
         lengths["%s_%s" % (row[0], row[1])] = row[2]
+    print("load_lengths() loaded %s entries" % (len(lengths), ))
     return lengths
 
 
