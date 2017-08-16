@@ -8,7 +8,7 @@ $last_date = $row['value'];
 
 $lat = 42.22;
 $lon = -95.489;
-$OL = "4.2.0";
+$OL = "4.3.1";
 if (isset($_GET["huc_12"])){
 	$huc12 = substr($_GET["huc_12"],0,12);
 	$rs = pg_query($dbconn, "with d as "
@@ -124,7 +124,7 @@ var appstate = {
 	ltype: 'qc_precip'
 };
         </script>
- <script src='nextgen.js?v=19'></script>
+ <script src='nextgen.js?v=20'></script>
 EOF;
 
 $t->content = <<<EOF

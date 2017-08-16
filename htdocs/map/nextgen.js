@@ -497,12 +497,11 @@ function drawColorbar(){
 
 function popupFeatureInfo(evt){
 	
-	  var feature = map.forEachFeatureAtPixel(map.getEventPixel(evt.originalEvent), function(feature, layer) {
-        return feature;
-      });
-	
+	var features = map.getFeaturesAtPixel(map.getEventPixel(evt.originalEvent));
+	var feature;
 	  var element = popup.getElement();
-	  if (feature){
+	  if (features){
+		  feature = features[0];
 		  popup.setPosition(evt.coordinate);
 		  var h = '<table class="table table-condensed table-bordered">';
 		  h += '<tr><th>HUC12</th><td>'+feature.getId()+'</td></tr>';
@@ -536,12 +535,11 @@ function popupFeatureInfo(evt){
 
 function displayFeatureInfo(evt) {
 
-      var feature = map.forEachFeatureAtPixel(map.getEventPixel(evt.originalEvent), function(feature, layer) {
-        return feature;
-      });
-
+      var features = map.getFeaturesAtPixel(map.getEventPixel(evt.originalEvent));
+      var feature;
       var info = document.getElementById('info');
-      if (feature) {
+      if (features) {
+    	  feature = features[0];
     	  $('#info-huc12').html( feature.getId() );
     	  $('#info-loss').html( (feature.get('avg_loss') * multipliers['avg_loss'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_loss'][appstate.metric]);
     	  $('#info-runoff').html( (feature.get('avg_runoff') * multipliers['avg_runoff'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_runoff'][appstate.metric] );
@@ -721,11 +719,9 @@ $(document).ready(function(){
     map.on('click', function(evt) {
     	// console.log('map click() called');
     	var pixel = map.getEventPixel(evt.originalEvent);
-    	var feature = map.forEachFeatureAtPixel(pixel, function(feature, layer) {
-            return feature;
-        });
-    	if (feature){
-        	makeDetailedFeature(feature);
+    	var features = map.getFeaturesAtPixel(pixel);
+    	if (features){
+        	makeDetailedFeature(features[0]);
     	} else {
     		alert("No features found for where you clicked on the map.");
     	}
