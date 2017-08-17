@@ -1,0 +1,4 @@
+pyshp
+tqdm
+pandas
+psycopg2

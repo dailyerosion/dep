@@ -1,4 +1,12 @@
-""" Construct management files out of building blocks
+"""Construct building block management files
+
+In the database, we construct a list of unique rotation strings and then
+generate WEPP .rot files for each unique string.  These .rot files are later
+used by prj2wepp to generate the .man files.
+
+  python build_management.py <scenario> <optional_to_overwrite>
+
+Here's a listing of project landuse codes used
 
                      No-till (1)   (2-5)
   B - Soy               B1          B25    IniCropDef.Default
@@ -72,37 +80,61 @@ SOYBEAN = {
 
 
 def read_file(zone, code, cfactor, year):
-    """ Read a file and do replacement for year """
+    """Read a block file and do replacements
+
+    Args:
+      zone (str): The DEP cropping zone
+      code (str): the crop code
+      cfactor (int): the c-factor for tillage
+      year (int): the year of this crop
+
+    Returns:
+      str with the raw data used for the .rot file
+    """
     data = open('blocks/%s%s.txt' % (code, cfactor), 'r').read()
     pdate = ''
     pdatem5 = ''
     pdatem10 = ''
     plant = ''
+    # We currently only have zone specific files for Corn and Soybean
     if code == 'C':
-        d = CORN_PLANT[zone]
-        pdate = d.strftime("%m    %d")
-        pdatem5 = (d - datetime.timedelta(days=5)).strftime("%m    %d")
-        pdatem10 = (d - datetime.timedelta(days=10)).strftime("%m    %d")
-        plant = "CropDef.Corn"  # CORN[zone]
+        date = CORN_PLANT[zone]
+        pdate = date.strftime("%m    %d")
+        pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
+        pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
+        plant = CORN[zone]
     elif code == 'B':
-        d = SOYBEAN_PLANT[zone]
-        pdate = d.strftime("%m    %d")
-        pdatem5 = (d - datetime.timedelta(days=5)).strftime("%m    %d")
-        pdatem10 = (d - datetime.timedelta(days=10)).strftime("%m    %d")
-        plant = "CropDef.soybean2"  # SOYBEAN[zone]
+        date = SOYBEAN_PLANT[zone]
+        pdate = date.strftime("%m    %d")
+        pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
+        pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
+        plant = SOYBEAN[zone]
     return data % {'yr': year, 'pdate': pdate, 'pdatem5': pdatem5,
                    'pdatem10': pdatem10, 'plant': plant}
 
 
 def do_rotation(zone, code, cfactor):
-    """ Process a given rotation code and cfactor """
+    """Create the rotation file
+
+    Args:
+      zone (str): The DEP cropping zone
+      code (str): the management code string used to identify crops
+      cfactor (int): the c-factor at play here
+
+    Returns:
+      None
+    """
+    # We create a tree of codes to keep directory sizes in check
     dirname = ("../../prj2wepp/wepp/data/managements/IDEP2/%s/%s/%s"
                ) % (zone, code[:2], code[2:4])
     if not os.path.isdir(dirname):
         os.makedirs(dirname)
     fn = "%s/%s-%s.rot" % (dirname, code, cfactor)
+    # Don't re-create this file if it already exists and we don't have
+    # OVERWRITE set
     if not OVERWRITE and os.path.isfile(fn):
         return
+    # Dictionary of values used to fill out the file template below
     data = {}
     data['date'] = datetime.datetime.now()
     data['code'] = code
@@ -151,8 +183,22 @@ Operations {
     fp.close()
 
 
+def get_zone(latitude):
+    """Determine the DEP zone based on the provided latitude"""
+    if latitude is None:
+        return None
+    zone = "KS_NORTH"
+    if latitude >= 42.5:
+        zone = "IA_NORTH"
+    elif latitude >= 41.5:
+        zone = "IA_CENTRAL"
+    elif latitude >= 40.5:
+        zone = "IA_SOUTH"
+    return zone
+
+
 def main():
-    """Do Something"""
+    """Our main code entry point"""
     cursor = PGCONN.cursor()
     cursor.execute("""
     WITH np as (
@@ -163,16 +209,11 @@ def main():
         lu2007 || lu2008 || lu2009 || lu2010 || lu2011 || lu2012 || lu2013
         || lu2014 || lu2015 || lu2016 || lu2017
         from flowpath_points p, np WHERE p.flowpath = np.fid and
-        scenario = %s""", (SCENARIO, SCENARIO))
+        scenario = %s
+    """, (SCENARIO, SCENARIO))
     for row in tqdm(cursor, total=cursor.rowcount):
-        zone = "KS_NORTH"
-        if row[0] >= 42.5:
-            zone = "IA_NORTH"
-        elif row[0] >= 41.5:
-            zone = "IA_CENTRAL"
-        elif row[0] >= 40.5:
-            zone = "IA_SOUTH"
-        if row[1] is None:
+        zone = get_zone(row[1])
+        if zone is None:
             continue
         for i in (1, 25):  # loop over c-factors
             do_rotation(zone, row[1], i)
