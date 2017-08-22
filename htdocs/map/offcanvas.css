@@ -37,7 +37,9 @@ body {
          -o-transition: all .25s ease-out;
             transition: all .25s ease-out;
   }
-html,body{height:100%;}
+html,body {
+		height:100%;
+}
 body {
 	padding-top: 0px !important;
 }

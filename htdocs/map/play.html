@@ -104,10 +104,9 @@
 <div class="container-fluid">
  <div class="row row-offcanvas row-offcanvas-right fill">
   <div class="col-xs-12 fill">
-	<div id="map" class="fill">
-		<div id="maptitle">The Map Title</div>
-		<canvas id="colorbar" width="100" height="100"></canvas>
-	</div>
+    <div id="map" style="width: 100%; height: 100%; position:fixed;"></div>
+    <div id="maptitle">The Map Title</div>
+	<canvas id="colorbar" width="100" height="100"></canvas>
    </div>
    <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar">
 <div class="pull-left">
@@ -169,23 +168,22 @@
 		<div style="display: none;" id="settoday"><a class="btn btn-default" role="button" href="javascript: setToday();"><i class="fa fa-chevron-left"></i> Back to Latest Date</a>
 		</div>
 
-		<div class="col-md-3 col-sm-3" style="visibility: hidden;" id="dp2">
+		<div style="visibility: hidden;" id="dp2">
 			<h4>To Date:</h4>
 			<div class="input-group">
-			<input type="text" name="date2" id="datepicker2" class="form-control" style="font-weight: bolder;" />
+			  <input type="text" name="date2" id="datepicker2" class="form-control" style="font-weight: bolder;" />
 			</div>
 		</div>
-		<div class="col-md-2 col-sm-2">
-		<button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal">
-  <i class="fa fa-search"></i>
-</button>
-		<button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() - 0.1);" class="btn btn-default" type="button"><i class="fa fa-minus"></i></button>
-		<button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() + 0.1);" class="btn btn-default" type="button"><i class="fa fa-plus"></i></button>
-		<button onclick="javascript: get_shapefile();" class="btn btn-default" type="button"><i class="fa fa-download"></i></button>
+		<h4>Tools</h4>
+		<div>
+		 <button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal"><i class="fa fa-search"></i> Search</button>
+		 <button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() - 0.1);" class="btn btn-default" type="button"><i class="fa fa-minus"></i> Decrease Opacity</button>
+		 <button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() + 0.1);" class="btn btn-default" type="button"><i class="fa fa-plus"></i> Increase Opacity</button>
+		 <button onclick="javascript: get_shapefile();" class="btn btn-default" type="button"><i class="fa fa-download"></i> Download Data</button>
     	</div>
     	</div><!-- ./q2 -->
     <div id="q3">
-      <div id="detailsContainer" class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar">
+      <div id="detailsContainer">
 		<div id="t2">
 		  <input type="radio" id="featureside" name="whichlayer2" value="side" checked="checked"><label for="featureside">Side</label>
 		  <input type="radio" id="featurepopup" name="whichlayer2" value="popup"><label for="featurepopup">Popup</label>
@@ -218,9 +216,10 @@
  </div><!--/.row -->
 </div><!--/.container-fluid -->
     <!-- Placed at the end of the document so the pages load faster -->
+    <!-- Careful of the order here as buttonset conflicts from jquery and bs -->
     <script src="/vendor/jquery/1.11.3/jquery-1.11.3.min.js"></script>
- <script src="/vendor/jquery-ui/1.11.4/jquery-ui.min.js"></script>
     <script src="/vendor/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="/vendor/jquery-ui/1.11.4/jquery-ui.min.js"></script>
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="/vendor/bootstrap/3.3.7/js/ie10-viewport-bug-workaround.js"></script>
  	<script src='/vendor/openlayers/4.3.1/ol.js'></script>
@@ -228,7 +227,7 @@
      <script src="offcanvas.js"></script>
 
     <script type="text/javascript">
-    var tilecache = "http://iem.local";
+    var tilecache = "https://mesonet.agron.iastate.edu";
     var appstate = {
     	lastdate: new Date("2016/12/04"),
     	lat: 42.22,
@@ -240,7 +239,7 @@
     };
             </script>
 
-    <script src="nextgen.js"></script>
+    <script src="nextgen_tmp.js"></script>
 
 </html>
 
