@@ -654,9 +654,10 @@ $(document).ready(function(){
         	make_iem_tms('HUC 8', 'huc8-900913', false)
         ],
         view: new ol.View({
-                projection: ol.proj.get('EPSG:3857'),
-                center: defaultCenter,
-                zoom: defaultZoom
+        	enableRotation: false,
+            projection: ol.proj.get('EPSG:3857'),
+            center: defaultCenter,
+            zoom: defaultZoom
         })
     });
     
