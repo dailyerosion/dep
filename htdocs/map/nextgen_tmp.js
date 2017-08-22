@@ -714,9 +714,18 @@ $(document).ready(function(){
       }
       featureDisplayFunc(evt);
     });
-
-    // fired as somebody clicks on the map
+    //redundant to the above to support mobile
     map.on('click', function(evt) {
+        if (evt.dragging) {
+          return;
+        }
+        featureDisplayFunc(evt);
+      });
+
+    // fired as somebody double clicks
+    map.on('dblclick', function(evt) {
+    	// no zooming please
+    	evt.stopPropagation();
     	// console.log('map click() called');
     	if (currentTab != 3) handleClick(3);
     	var pixel = map.getEventPixel(evt.originalEvent);
@@ -724,7 +733,7 @@ $(document).ready(function(){
     	if (features){
         	makeDetailedFeature(features[0]);
     	} else {
-    		alert("No features found for where you clicked on the map.");
+    		alert("No features found for where you double clicked on the map.");
     	}
     });
     
