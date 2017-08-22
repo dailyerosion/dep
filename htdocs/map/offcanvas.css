@@ -109,3 +109,18 @@ body {
 	padding-right: 20px;
 	z-index: 1000;
 }
+#fdetails {
+	position: absolute;
+	bottom: 0px;
+	width: 100%;
+	background: rgba(0,0,0,0.8);
+	color: #FFF;
+	font-weight: bold;
+	font-size: 1.2em;
+	padding-left: 20px;
+	padding-right: 20px;
+	z-index: 1000;
+}
+#fdetails span {
+	color: #0ff;
+}
