@@ -6,7 +6,7 @@ FC_IF	  = ifort
 FC_G95        = g95
 FC_GNU        = gfortran
 FC_2      = f2c
-FFLAGS_IFORT    = -c -autodouble -O -align dcommons 
+FFLAGS_IFORT    = -c -autodouble -O1 -align dcommons 
 FFLAGS_G95    = -c -Wall -malign-double -O3 -march=pentium4 
 FFLAGS_G95    = -c -Wall -malign-double -O3 -i4 
 FFLAGS_GNU     = -c -fdefault-real-8 -Wall -malign-double -O2 
