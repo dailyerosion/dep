@@ -196,17 +196,17 @@ c
 c
 c           write headers for the water
 c
-           if (ui_run.eq.0) then
-               write (35,1400)
-           else
-               write (35, 1401)
-            endif
+c           if (ui_run.eq.0) then
+            write (35,1400)
+c           else
+c               write (35, 1401)
+c            endif
             
-            if (ivers.ne.3) then
-               write (35,1500)
-            else
-               write (35,1510)
-            endif
+c            if (ivers.ne.3) then
+c               write (35,1500)
+c            else
+c               write (35,1510)
+c            endif
            
             lunw = 1
           end if
@@ -432,11 +432,11 @@ c
                write (35,1401)
             endif
             
-            if (ivers.ne.3) then
-               write (35,1500)
-            else
-               write (35,1510)
-            endif
+c            if (ivers.ne.3) then
+c               write (35,1500)
+c            else
+c               write (35,1510)
+c            endif
             lunw = 1
           end if
 c
@@ -612,7 +612,7 @@ c
      1    '        ************'/,
      1    ' SILAGE VALUES NOT SUMMARIZED',/,
      1    '        ************',//'OUTPUT FILE NAME:',a51)
- 1400 format (' DAILY WATER BALANCE',/)
+ 1400 format ('ofe jday year precip runoff sw sw1 sw2 ep es er')
  1401 format (' DAILY WATER BALANCE - HOURLY SEEPAGE UPDATE FROM UI',/)
  1500 format (' J=julian day, Y=simulation year',/1x,
      1    'P= precipitation       ',/1x,
