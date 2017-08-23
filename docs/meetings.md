@@ -1,3 +1,21 @@
+22 Aug 2017 - DEP Planning
+  Claudette, Yu, Chen, Gelder, Bates, Tim, Miller, James, Cruse
+  - 2m DEM processing by Gelder is progressing, some IL data is along for ride
+  - MN ACPF data is coming along nicely and should be ready soon
+  - [ ] Probable that ACPF is expanding to the Chesapeake, so daryl needs to 
+    expand as well.
+  - Perhaps this expansion will be done by others
+  - DEP for China continues to progress
+  - Discussion of how to generate the China soil files based on Dave's script
+  - [ ] We should investigate why we omit the restrictive layer in the soils
+  - [ ] A general question has been raised as to why erosion in NE Iowa is low
+  - Upcoming reporting deadline for the HUC product for the end of September
+  - Interesting discussion about tracking changing conservation practices with
+    time, ie grass waterways being put in and taken out
+  - Need to get things finalized for the DEP partners presentation
+  - daryl showed the new website interface and the general agreement was to
+    proceed.
+   
 20 Jul 2017 - DEP Planning
   Gelder, James, Miller, Bates
   - dear daryl, there are two Millers, Michelle and Mellisa.  Uh oh
