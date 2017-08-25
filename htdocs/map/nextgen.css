@@ -1,11 +1,28 @@
 html,
 body {
-  overflow-x: hidden; /* Prevent scroll on narrow devices */
-}
-body {
-  padding-top: 70px;
+	height:100%;
+	overflow-x: hidden; /* Prevent scroll on narrow devices */
 }
 
+.modal .modal-body {
+    max-height: 420px;
+    overflow-y: auto;
+}
+.ui-datepicker-month{
+	color: #000 !important;
+}
+.ui-datepicker-year{
+	color: #000 !important;
+}
+.ui-widget{
+    font-size: 1em !important;
+}
+.dp {
+border: 0px;
+font-weight: bolder;
+width: 149px;
+float: left;
+     }
   .row-offcanvas {
     position: relative;
     -webkit-transition: all .25s ease-out;
@@ -19,41 +36,34 @@ body {
   
     .row-offcanvas-right
   .sidebar-offcanvas {
-    right: -248px; /* 6 columns */
+    right: -248px; 
   }
   
     .row-offcanvas-right.active
   .sidebar-offcanvas
    {
-    right: 0px; /* 6 columns */
+    right: 0px; 
   }
   
     .sidebar-offcanvas {
-    z-index: 3;
-    position: absolute;
+	z-index: 1004;
+	position: absolute;
     top: 0;
     width: 300px; /* 6 columns */
     -webkit-transition: all .25s ease-out;
          -o-transition: all .25s ease-out;
             transition: all .25s ease-out;
   }
-html,body {
-		height:100%;
-}
-body {
-	padding-top: 0px !important;
-}
+
 .container-fluid {
-	z-index: 2;
-    height:100%;
+	height:100%;
     width: 100%;
     padding: 0px !important;
     margin: 0px !important;
 }
 
 .fill{
-	z-index: 2;
-    width:100%;
+	width:100%;
     height:100%;
     min-height:100%;
     padding: 0px !important;
@@ -61,7 +71,6 @@ body {
 }
 #map {
 	z-index: 2;
-	background-color: #00f;
 }
 #sidebar {
 	margin: 0px;
@@ -85,42 +94,78 @@ body {
 .btn-sq-sm {
   width: 50px !important;
   height: 50px !important;
+  font-size: 2em !important;
+  z-index: 1003;
 }
-.btn-sq-sm i{
-  font-size: 28px !important;
-}
-
+.btn-danger.active{
+     background: rgba(0, 0, 0, 0.8) !important;
+ }
 #colorbar {
 	position: absolute;
-	left: 1em;
-	top: 8em;
+	left: 0px;
+	top: 30px;
 	background: rgba(0,0,0,0.8);
 	z-index: 1000;	
 }
-#maptitle {
+#maptitlediv {
 	position: absolute;
 	top: 0px;
-	left: 5em;
+	left: 0px;
 	background: rgba(0,0,0,0.8);
 	color: #FFF;
 	font-weight: bold;
-	font-size: 1.2em;
-	padding-left: 20px;
-	padding-right: 20px;
-	z-index: 1000;
+	padding: 5px;
+	z-index: 1001;
 }
 #fdetails {
 	position: absolute;
 	bottom: 0px;
 	width: 100%;
-	background: rgba(0,0,0,0.8);
 	color: #FFF;
 	font-weight: bold;
 	font-size: 1.2em;
 	padding-left: 20px;
 	padding-right: 20px;
-	z-index: 1000;
+	z-index: 1002;
+}
+#fdetails .fshaded {
+	background: rgba(0,0,0,0.8);
 }
 #fdetails span {
 	color: #0ff;
+}
+
+/* xs < 768 */
+@media screen and (max-width: 767px) {
+    body {
+        font-size: 1.2em;
+    }
+}
+
+/* sm */
+@media screen and (min-width: 768px) {
+    body {
+        font-size: 1em;
+    }
+}
+
+/* md */
+@media screen and (min-width: 992px) {
+    body {
+        font-size: 1.2em;
+    }
+}
+
+/* lg */
+@media screen and (min-width: 1200px) {
+    body {
+        font-size: 1.3em;
+    }
+}
+#ls-overlay-layers {
+	padding-left: 20px;
+}
+
+#ls-base-layers {
+	padding-left: 20px;
 }

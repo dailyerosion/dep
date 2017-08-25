@@ -22,113 +22,58 @@ if (isset($_GET["huc_12"])){
 	}
 }
 
-$t = new MyView();
-$t->title = "Map Interface";
-$t->headextra = <<<EOF
- <link type="text/css" href="/vendor/openlayers/{$OL}/ol.css" rel="stylesheet" />
- <link type="text/css" href="/vendor/openlayers/{$OL}/ol3-layerswitcher.css" rel="stylesheet" />
- <link type="text/css" href="/vendor/jquery-ui/1.11.4/jquery-ui.min.css" rel="stylesheet" />
- <link rel='stylesheet' href='/css/default/style.css' type='text/css'>
-          <style type="text/css">
-.modal .modal-body {
-    max-height: 420px;
-    overflow-y: auto;
-}
-.ui-datepicker-month{
-	color: #000 !important;
-}
-.ui-datepicker-year{
-	color: #000 !important;
-}
-.ui-widget{
-    font-size: 1em !important;
-}
-		.dp {
-     border: 0px;
-font-weight: bolder;
-font-size: 1.3em;
-width: 149px;
-float: left;
-     }
-           #map {
-		width: 100%;
-            }
-#colorbar {
-	position: absolute;
-	left: 1em;
-	top: 8em;
-	background: rgba(0,0,0,0.8);
-	z-index: 1000;	
-}
-#maptitle {
-	position: absolute;
-	top: 0px;
-	left: 5em;
-	background: rgba(0,0,0,0.8);
-	color: #FFF;
-	font-weight: bold;
-	font-size: 1.2em;
-	padding-left: 20px;
-	padding-right: 20px;
-	z-index: 1000;
-}
-.header-fixed {
-    width: 100% 
-}
 
-.header-fixed > thead,
-.header-fixed > tbody,
-.header-fixed > thead > tr,
-.header-fixed > tbody > tr,
-.header-fixed > thead > tr > th,
-.header-fixed > tbody > tr > td {
-    display: block;
-}
-
-.header-fixed > tbody > tr:after,
-.header-fixed > thead > tr:after {
-    content: ' ';
-    display: block;
-    visibility: hidden;
-    clear: both;
-}
-
-.header-fixed > tbody {
-    overflow-y: auto;
-    height: 150px;
-}
-
-.header-fixed > tbody > tr > td,
-.header-fixed > thead > tr > th {
-    width: 20%;
-    float: left;
-}
-        </style>
-EOF;
 $TMS_SERVER = TMS_SERVER;
 $ddd = str_replace("-","/", $last_date);
-$t->jsextra = <<<EOF
- <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script>
- <script src='/vendor/openlayers/{$OL}/ol.js'></script>
- <script src='/vendor/openlayers/{$OL}/ol3-layerswitcher.js'></script>
- <script src="/vendor/jquery-ui/1.11.4/jquery-ui.min.js"></script>
-        <script type="text/javascript">
-var tilecache = "{$TMS_SERVER}";
-var appstate = {
-	lastdate: new Date("{$ddd}"),
-	lat: {$lat},
-	lon: {$lon},
-	date: new Date("{$ddd}"),
-	date2: null,
-    metric: 0,
-	ltype: 'qc_precip'
-};
-        </script>
- <script src='nextgen.js?v=20'></script>
-EOF;
 
-$t->content = <<<EOF
-<!-- Modals -->
+echo <<<EOM
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEP :: Map Interface</title>
+    <meta name="description" content="Iowa State University, Daily Erosion Project">
+    <meta name="author" content="daryl herzmann akrherz@iastate.edu">
+
+	<link href="/vendor/fa/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link type="text/css" href="/vendor/openlayers/{$OL}/ol.css" rel="stylesheet" />
+    <!-- Le styles -->
+    <link type="text/css" href="/vendor/jquery-ui/1.11.4/jquery-ui.min.css" rel="stylesheet" />
+    <link href="/vendor/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/vendor/jquery-ui/1.11.4/jquery-ui.min.css" rel="stylesheet">
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="/vendor/bootstrap/3.3.7/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+
+    <!-- Custom styles for app -->
+    <link href="nextgen.css" rel="stylesheet">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="/js/html5shiv.js"></script>
+      <script src="/js/respond.min.js"></script>
+    <![endif]-->
+    <meta name="twitter:card" content="summary">
+	<meta name="twitter:image:src" content="https://mesonet.agron.iastate.edu/images/logo_small.png">
+	<meta name="twitter:title" content="DEP :: Map Interface">
+	<meta name="twitter:description" content="Daily Erosion Project of Iowa State University">
+	<meta name="twitter:url" content="https://dailyerosion.org">
+	<meta name="twitter:creator" content="@akrherz">
+	<meta name="twitter:image:width" content="85">
+	<meta name="twitter:image:height" content="65">
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/apple-touch-icon-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/apple-touch-icon-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-precomposed.png">
+
+  </head>
+
+  <body>
+  <!-- Modals -->
 <div id="newdate-message" title="Updated data available" style="display: none;">
   <p>
     <span class="ui-icon ui-icon-circle-check" style="float:left; margin:0 7px 50px 0;"></span>
@@ -181,102 +126,160 @@ $t->content = <<<EOF
     </div>
   </div>
 </div>
+  <!-- End of modals -->
+  
+<div class="container-fluid">
+ <div class="row row-offcanvas row-offcanvas-right fill">
+  <div class="col-xs-12 fill">
+    <div id="map" style="width: 100%; height: 100%; position:fixed;"></div>
+	<canvas id="colorbar" width="100" height="100"></canvas>
+   </div>
+   <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar">
+     <div class="pull-left" id="buttontabs">
+        <button id="btnq1" style="margin-top: 30px;" data-target="q1" class="btn btn-sq-sm btn-danger">
+              <i class="fa fa-map"></i></button><br />
+        <button id="btnq2" data-target="q2" class="btn btn-sq-sm btn-danger">
+              <i class="fa fa-wrench"></i></button><br />
+        <button id="btnq3" data-target="q3" class="btn btn-sq-sm btn-danger">
+              <i class="fa fa-info-circle"></i></button><br />
+        <button id="btnq4" data-target="q4" class="btn btn-sq-sm btn-danger">
+              <i class="fa fa-bars"></i></button><br />
+        <button style="margin-top: 30px;" class="btn btn-sq-sm btn-danger" id="mapplus">
+              <i class="fa fa-search-plus"></i></button><br />
+        <button class="btn btn-sq-sm btn-danger" id="mapminus">
+              <i class="fa fa-search-minus"></i></button><br />
+     </div><!-- ./pull-left buttons -->
+    
 
-<form>		
-<div class="row">
-	<div class="col-sm-6">
-		<h3>DEP Interactive Map</h3>
-		<button id="ia" class="btn btn-default" type="button"><i class="fa fa-search-plus"></i> Iowa</button>
+    <div class="pull-right" id="sidebar-content">
+      <div class="pull-right">
+    	<button id="close_sidebar" class="btn btn-default" type="button"><i class="fa fa-close"></i></button>
+ 	  </div>
+ 	  <div class="clearfix"></div>
+ 
+    <div id="q1">  
+        <h4>What to View:</h4>
+		<div id="radio">
+		  <input type="radio" id="precip-in2_opt" name="whichlayer" value="qc_precip" checked="checked"><label for="precip-in2_opt">Precipitation</label>
+		  <br /><input type="radio" id="runoff2_opt" name="whichlayer" value="avg_runoff"><label for="runoff2_opt">Runoff</label>
+		  <br /><input type="radio" id="loss2_opt" name="whichlayer" value="avg_loss"><label for="loss2_opt">Detachment</label>
+		  <br /><input type="radio" id="delivery2_opt" name="whichlayer" value="avg_delivery"><label for="delivery2_opt">Hillslope Soil Loss</label>
+		</div>
+
+    	<div id="variable_desc" class="well"></div>
+
+        <h4>Time Display Options:</h4>
+    	<div id="units_radio">
+		  <input type="radio" id="english_opt" name="units" value="0" checked="checked"><label for="english_opt">English</label>
+		  <input type="radio" id="metric_opt" name="units" value="1"><label for="metric_opt">Metric</label>
+		</div>
+
+        <h4>Preset Map Views:</h4>
+    	<button id="ia" class="btn btn-default" type="button"><i class="fa fa-search-plus"></i> Iowa</button>
 		<button id="ks" class="btn btn-default" type="button"><i class="fa fa-search-plus"></i> Kansas</button>
 		<button id="mn" class="btn btn-default" type="button"><i class="fa fa-search-plus"></i> Minnesota</button>
 		<button id="ne" class="btn btn-default" type="button"><i class="fa fa-search-plus"></i> Nebraska</button>
-		<br clear="all" />
-		<strong>Status:</strong> <span id="status">Idle</span>
-	</div>
-	<div class="col-sm-6">
-		<div id="units_radio" class="pull-right">
-		<input type="radio" id="english_opt" name="units" value="0" checked="checked"><label for="english_opt">English</label>
-		<input type="radio" id="metric_opt" name="units" value="1"><label for="metric_opt">Metric</label>
-		</div>
+		<br clear="all" />    
+    </div><!-- ./q1 -->
 
-		<div id="radio" class="pull-right">
-		<input type="radio" id="precip-in2_opt" name="whichlayer" value="qc_precip" checked="checked"><label for="precip-in2_opt">Precipitation</label>
-		<input type="radio" id="runoff2_opt" name="whichlayer" value="avg_runoff"><label for="runoff2_opt">Runoff</label>
-		<input type="radio" id="loss2_opt" name="whichlayer" value="avg_loss"><label for="loss2_opt">Detachment</label>
-		<input type="radio" id="delivery2_opt" name="whichlayer" value="avg_delivery"><label for="delivery2_opt">Hillslope Soil Loss</label>
-		</div>
-		<br clear="all" />
-		<div id="variable_desc" class="pull-right"></div>
-	</div>
-</div>
-<div class="row">
-<div class="col-md-9 col-sm-8">
-	<div id="map">
-		<div id="maptitle">The Map Title</div>
-		<canvas id="colorbar" width="75" height="300"></canvas>
-	</div>
-    <div clas="row">
-		<div class="col-md-3 col-sm-3">
-			<h4>Days to Display</h4>
+    <div id="q2">
+    	<h4>Days to Display</h4>
 			<div id="t">
 			<input type="radio" id="single" name="t" value="single" checked="checked"><label for="single">Single</label>
 			<input type="radio" id="multi" name="t" value="multi"><label for="multi">Multi</label>
 			</div>
-		</div>
-		<div class="col-md-4 col-sm-4">
-			<h4>Date:</h4>
-		<div class="input-group">
+    
+    	<h4>Date:</h4>
+			<div class="input-group">
 			<span class="input-group-btn"><button id="minus1d" class="btn btn-default" type="button"><i class="fa fa-arrow-left"></i></button></span>
-		<input type="text" name="date" id="datepicker" class="form-control" style="font-weight: bolder;">
+			<input type="text" name="date" id="datepicker" class="form-control" style="font-weight: bolder;">
 			<span class="input-group-btn"><button id="plus1d" class="btn btn-default" type="button"><i class="fa fa-arrow-right"></i></button></span>
+			</div>
+
+		<div style="display: none;" id="settoday"><a class="btn btn-default" role="button" href="javascript: setToday();"><i class="fa fa-chevron-left"></i> Back to Latest Date</a>
 		</div>
-		<div style="display: none;" id="settoday"><a class="btn btn-default" role="button" href="javascript: setToday();"><i class="fa fa-chevron-left"></i> Back to Latest Date</a></div>
-		</div>
-		<div class="col-md-3 col-sm-3" style="visibility: hidden;" id="dp2">
+
+		<div style="visibility: hidden;" id="dp2">
 			<h4>To Date:</h4>
 			<div class="input-group">
-			<input type="text" name="date2" id="datepicker2" class="form-control" style="font-weight: bolder;" />
+			  <input type="text" name="date2" id="datepicker2" class="form-control" style="font-weight: bolder;" />
 			</div>
 		</div>
-		<div class="col-md-2 col-sm-2">
-		<button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal">
-  <i class="fa fa-search"></i>
-</button>
-		<button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() - 0.1);" class="btn btn-default" type="button"><i class="fa fa-minus"></i></button>
-		<button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() + 0.1);" class="btn btn-default" type="button"><i class="fa fa-plus"></i></button>
-		<button onclick="javascript: get_shapefile();" class="btn btn-default" type="button"><i class="fa fa-download"></i></button>
-		<button onclick="javascript: changeMapHeight(-0.1);" class="btn btn-default" type="button"><i class="fa fa-arrow-up"></i></button>
-		<button onclick="javascript: changeMapHeight(0.1);" class="btn btn-default" type="button"><i class="fa fa-arrow-down"></i></button>
-		</div>
-	</div>
-</div>
-<div id="detailsContainer" class="col-md-3 col-sm-4">
-		<div id="t2">
-		<input type="radio" id="featureside" name="whichlayer2" value="side" checked="checked"><label for="featureside">Side</label>
-		<input type="radio" id="featurepopup" name="whichlayer2" value="popup"><label for="featurepopup">Popup</label>
-		</div>
-		
-		<div id="featureside_div">
-		<p><strong>Data for mouseover watershed</strong></p>
-		<table class="table table-condensed table-bordered">
-		<tr><th>HUC12</th><td><div id="info-huc12"></div></td></tr>
-		<tr><th>Precipitation</th><td><div id="info-precip"></div></td></tr>
-		<tr><th>Runoff</th><td><div id="info-runoff"></div></td></tr>
-		<tr><th>Detachment</th><td><div id="info-loss"></div></td></tr>
-		<tr><th>Hillslope Soil Loss</th><td><div id="info-delivery"></div></td></tr>
-		</table>
-		</div>
+		<h4>Tools</h4>
+		<div>
+		 <button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal"><i class="fa fa-search"></i> Search</button>
+		 <button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() - 0.1);" class="btn btn-default" type="button"><i class="fa fa-minus"></i> Decrease Opacity</button>
+		 <button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() + 0.1);" class="btn btn-default" type="button"><i class="fa fa-plus"></i> Increase Opacity</button>
+		 <button onclick="javascript: get_shapefile();" class="btn btn-default" type="button"><i class="fa fa-download"></i> Download Data</button>
+    	</div>
+    	</div><!-- ./q2 -->
+    <div id="q3">
+      <div id="detailsContainer">
 		<div id="clickDetails" class="well">
-		<div id="details_loading" style="display: none;"><img src="/images/wait24trans.gif" /> Loading...</div>
-		<div id="details_details"></div>
-		<div id="details_hidden">Click on a watershed to load detailed data</div>
+		  <div id="details_loading" style="display: none;"><img src="/images/wait24trans.gif" /> Loading...</div>
+		  <div id="details_details"></div>
+		  <div id="details_hidden">Double click on a watershed to load detailed data</div>
 		</div>
-</div>
-</div>
-<div id="popup" title="Quickview Summary">
-		</div>
-</form>
+      </div><!-- ./detailsContainer -->
+    </div><!-- ./q3 -->
+    <div id="q4">
 
-EOF;
-$t->render('single-fluid.phtml');
+    <h4>Map Base Layers</h4>
+        <ul id="ls-base-layers" class="list-unstyled"></ul>
+    <h4>Map Overlay Layers</h4>
+        <ul id="ls-overlay-layers" class="list-unstyled"></ul>
+
+    </div><!-- ./q4 -->
+</div><!-- ./sidebar-content -->
+
+  </div><!--/.sidebar-->
+ </div><!--/.row -->
+</div><!--/.container-fluid -->
+
+<div id="maptitlediv">
+    <div class="row">
+        <div class="col-xs-12"><span id="maptitle">DEP Map</span></div>
+    </div>
+</div>
+<div id="fdetails">
+    <div class="row">
+      <div class="col-xs-12 col-md-4">
+        <div class="row fshaded">
+        	<div class="col-xs-12">HUC12: <span id="info-huc12"></span></div>
+        	<div class="col-xs-6 col-md-12">Precipitation: <span class="visible-xs-inline"><br></span><span id="info-precip"></span></div>
+        	<div class="col-xs-6 col-md-12">Water Runoff: <span class="visible-xs-inline"><br></span><span id="info-runoff"></span></div>
+        	<div class="col-xs-6 col-md-12">Soil Detachment: <span class="visible-xs-inline"><br></span><span id="info-loss"></span></div>
+        	<div class="col-xs-6 col-md-12">Hillslope Soil Loss: <span class="visible-xs-inline"><br></span><span id="info-delivery"></span></div>
+        </div><!-- ./inner row container -->
+       </div><!-- ./column container -->
+    </div><!-- ./outer row container -->
+</div>
+
+    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- Careful of the order here as buttonset conflicts from jquery and bs -->
+    <script src="/vendor/jquery/1.11.3/jquery-1.11.3.min.js"></script>
+    <script src="/vendor/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="/vendor/jquery-ui/1.11.4/jquery-ui.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="/vendor/bootstrap/3.3.7/js/ie10-viewport-bug-workaround.js"></script>
+ 	<script src='/vendor/openlayers/{$OL}/ol.js'></script>
+ 	<script src='/vendor/jquery-toaster/1.2.0/jquery.toaster.js'></script>
+
+        <script type="text/javascript">
+var tilecache = "{$TMS_SERVER}";
+var appstate = {
+	lastdate: new Date("{$ddd}"),
+	lat: {$lat},
+	lon: {$lon},
+	date: new Date("{$ddd}"),
+	date2: null,
+    metric: 0,
+	ltype: 'qc_precip'
+};
+        </script>
+
+    <script src="nextgen.js?v=2"></script>
+
+</html>
+EOM;
 ?>

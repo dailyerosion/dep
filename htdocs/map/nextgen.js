@@ -12,7 +12,6 @@ var clickOverlayLayer;
 var defaultCenter = ol.proj.transform([-94.5, 42.1], 'EPSG:4326', 'EPSG:3857');
 var defaultZoom = 6;
 var popup;
-var IDLE = "Idle";
 
 var varnames = ['qc_precip', 'avg_runoff', 'avg_loss', 'avg_delivery'];
 // How to get english units to metric, when appstate.metric == 1
@@ -69,6 +68,30 @@ var vartitle = {
 	qc_precip: 'Total Precipitation',
 	avg_delivery: 'Hillslope Soil Loss'
 };
+
+var currentTab = null;
+function handleClick(target){
+	$("#buttontabs .btn").removeClass('active');
+	for (i=1;i<5;i++){
+		$('#q'+i).hide();
+	}
+	$('#q'+target).show();
+	// 1. If no currentTab, show the offcanvas
+	if ( currentTab == null){		
+		$("#btnq"+target).toggleClass('active');
+		$('.row-offcanvas').toggleClass("active");
+		currentTab = target;
+	}
+	// 2. current tab was clicked again
+	else if (currentTab == target ){
+		$('.row-offcanvas').toggleClass("active");
+		currentTab = null;
+	} else {
+		$("#btnq"+target).toggleClass('active');
+		currentTab = target;
+	}
+}
+
 function formatDate(fmt, dt){
 	return $.datepicker.formatDate(fmt, dt)
 }
@@ -79,19 +102,17 @@ function makeDate(year, month, day){
 }
 // Update the status box on the page with the given text
 function setStatus(text){
-	$('#status').html(text);
+	$.toaster({ message : text, priority : 'info' });
 }
 
 // Check the server for updated run information
 function checkDates(){
-	setStatus("Checking for new data.");
 	$.ajax({
 		url: '/geojson/timedomain.py?scenario=0',
 		fail: function(jqXHR, textStatus){
 			setStatus("New data check failed "+ textStatus);
 		},
 		success: function(data){
-			setStatus(IDLE);
 			if (data['last_date']){
 				// Avoid ISO -> Badness
 				var s = data['last_date'];
@@ -226,7 +247,6 @@ function updateDetails(huc12){
 	$('#details_hidden').css('display', 'none');
 	$('#details_details').css('display', 'none');
 	$('#details_loading').css('display', 'block');
-	setStatus("Loading detailed information for HUC12: "+ huc12);
     $.get('nextgen-details.php', {
     	huc12: huc12,
 		date: formatDate("yy-mm-dd", appstate.date),
@@ -236,7 +256,6 @@ function updateDetails(huc12){
 			$('#details_details').css('display', 'block');
 			$('#details_loading').css('display', 'none');
 			$('#details_details').html(data);
-			setStatus(IDLE);
 	});
 
 }
@@ -293,7 +312,6 @@ function remap(){
 				updateDetails(detailedFeature.getId());
 			}
 			drawColorbar();
-			setStatus(IDLE);
 		}
 	});
 	setTitle();
@@ -335,10 +353,11 @@ function zoom_iowa(){
     map.zoomToExtent(iaextent);
 }
 
-function make_iem_tms(title, layername, visible){
+function make_iem_tms(title, layername, visible, type){
 	return new ol.layer.Tile({
 		title : title,
 		visible: visible,
+		type: type,
 		source : new ol.source.XYZ({
 			url : tilecache +'/c/tile.py/1.0.0/'+layername+'/{z}/{x}/{y}.png'
 		})
@@ -495,44 +514,48 @@ function drawColorbar(){
 
 }
 
-function popupFeatureInfo(evt){
-	
-	var features = map.getFeaturesAtPixel(map.getEventPixel(evt.originalEvent));
-	var feature;
-	  var element = popup.getElement();
-	  if (features){
-		  feature = features[0];
-		  popup.setPosition(evt.coordinate);
-		  var h = '<table class="table table-condensed table-bordered">';
-		  h += '<tr><th>HUC12</th><td>'+feature.getId()+'</td></tr>';
-		  h += '<tr><th>Precipitation</th><td>'+ (feature.get('qc_precip') * multipliers['qc_precip'][appstate.metric]).toFixed(2) + ' '+ varunits['qc_precip'][appstate.metric]  +'</td></tr>';
-		  h += '<tr><th>Runoff</th><td>'+ (feature.get('avg_runoff') * multipliers['avg_runoff'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_runoff'][appstate.metric]  +'</td></tr>';
-		  h += '<tr><th>Detachment</th><td>'+ (feature.get('avg_loss') * multipliers['avg_loss'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_loss'][appstate.metric]  +'</td></tr>';
-		  h += '<tr><th>Hillslope Soil Loss</th><td>'+ (feature.get('avg_delivery') * multipliers['avg_delivery'][appstate.metric]).toFixed(2) + ' '+ varunits['avg_delivery'][appstate.metric]  +'</td></tr>';
-		  h += '</table>';
-		  popover = $(element).popover({
-	    'placement': 'top',
-	    'animation': false,
-	    'html': true
-		  });
-		  popover.attr('data-content', h);
-		  $(element).popover('show');
-	  } else{
-		  $(element).popover('hide');  
-	  }
-	  
-	  // Keep only one selected
-      if (feature !== quickFeature) {
-        if (quickFeature) {
-        	hoverOverlayLayer.getSource().removeFeature(quickFeature);
-        }
-        if (feature) {
-        	hoverOverlayLayer.getSource().addFeature(feature);
-        }
-        quickFeature = feature;
-      }
-}
+function layerVisible(lyr, visible){
+    lyr.setVisible(visible);
+    if (visible && lyr.get('type') === 'base') {
+        // Hide all other base layers regardless of grouping
+    	$.each(map.getLayers().getArray(), function(i, l) {
+            if (l != lyr && l.get('type') === 'base') {
+                l.setVisible(false);
+            }
+        });
+    }
 
+}
+function makeLayerSwitcher(){
+	var base_elem = $("#ls-base-layers")[0];
+	var over_elem = $("#ls-overlay-layers")[0];
+	$.each(map.getLayers().getArray(), function(i, lyr){
+		var lyrTitle = lyr.get('title');
+		if (lyrTitle === undefined) return;
+		var li = document.createElement('li');
+		var input = document.createElement('input');
+		var span = document.createElement('span');
+		if (lyr.get('type') === 'base') {
+            input.type = 'radio';
+            input.name = 'base';
+        } else {
+            input.type = 'checkbox';
+        }
+        input.checked = lyr.get('visible');
+        input.onchange = function(e) {
+            layerVisible(lyr, e.target.checked);
+        };
+        span.innerHTML = lyrTitle;
+        li.appendChild(input);
+        li.appendChild(span);        
+		if (lyr.get('type') === 'base') {
+            base_elem.appendChild(li);
+        } else {
+            over_elem.appendChild(li);
+        }
+
+	});
+}
 function displayFeatureInfo(evt) {
 
       var features = map.getFeaturesAtPixel(map.getEventPixel(evt.originalEvent));
@@ -576,7 +599,23 @@ $(document).ready(function(){
 		setStatus("An error occurred reading the hash link...");
 		//console.log(e);
 	}
-		
+	
+	  $('[data-target="q1"]').click(function (event) {
+		    handleClick(1);
+		  });
+	  $('[data-target="q2"]').click(function (event) {
+		    handleClick(2);
+		  });
+	  $('[data-target="q3"]').click(function (event) {
+		    handleClick(3);
+		  });
+	  $('[data-target="q4"]').click(function (event) {
+		    handleClick(4);
+		  });
+	  $("#close_sidebar").click(function(){
+		 handleClick(currentTab); 
+	  });
+	
 	var style = new ol.style.Style({
 		  fill: new ol.style.Fill({
 		    color: 'rgba(255, 255, 255, 0)'
@@ -627,36 +666,34 @@ $(document).ready(function(){
 	// Create map instance
     map = new ol.Map({
         target: 'map',
-        controls: [new ol.control.Zoom(),
-            new ol.control.ZoomToExtent({
-            	//map.getView().calculateExtent(map.getSize())
-            	extent: [-10889524, 4833877, -9972280, 5488178]
-            })
-        ],
+        controls: [],
         layers: [new ol.layer.Tile({
             	title: 'OpenStreetMap',
             	visible: true,
+            	type: 'base',
         		source: new ol.source.OSM()
         	}),
         	new ol.layer.Tile({
                 title: "Global Imagery",
                 visible: false,
+                type: 'base',
                 source: new ol.source.TileWMS({
                         url: 'http://maps.opengeo.org/geowebcache/service/wms',
                         params: {LAYERS: 'bluemarble', VERSION: '1.1.1'}
                 })
         	}),
-        	make_iem_tms('Iowa 100m Hillshade', 'iahshd-900913', false),
+        	make_iem_tms('Iowa 100m Hillshade', 'iahshd-900913', false, 'base'),
         	vectorLayer,
-        	make_iem_tms('US Counties', 'c-900913', false),
-        	make_iem_tms('US States', 's-900913', true),
-        	make_iem_tms('Hydrology', 'iahydrology-900913', false),
-        	make_iem_tms('HUC 8', 'huc8-900913', false)
+        	make_iem_tms('US Counties', 'c-900913', false, ''),
+        	make_iem_tms('US States', 's-900913', true, ''),
+        	make_iem_tms('Hydrology', 'iahydrology-900913', false, ''),
+        	make_iem_tms('HUC 8', 'huc8-900913', false, '')
         ],
         view: new ol.View({
-                projection: ol.proj.get('EPSG:3857'),
-                center: defaultCenter,
-                zoom: defaultZoom
+        	enableRotation: false,
+            projection: ol.proj.get('EPSG:3857'),
+            center: defaultCenter,
+            zoom: defaultZoom
         })
     });
     
@@ -714,23 +751,29 @@ $(document).ready(function(){
       }
       featureDisplayFunc(evt);
     });
-
-    // fired as somebody clicks on the map
+    //redundant to the above to support mobile
     map.on('click', function(evt) {
+        if (evt.dragging) {
+          return;
+        }
+        featureDisplayFunc(evt);
+      });
+
+    // fired as somebody double clicks
+    map.on('dblclick', function(evt) {
+    	// no zooming please
+    	evt.stopPropagation();
     	// console.log('map click() called');
+    	if (currentTab != 3) handleClick(3);
     	var pixel = map.getEventPixel(evt.originalEvent);
     	var features = map.getFeaturesAtPixel(pixel);
     	if (features){
         	makeDetailedFeature(features[0]);
     	} else {
-    		alert("No features found for where you clicked on the map.");
+    		setStatus("No features found for where you double clicked on the map.");
     	}
     });
-    
-    // Create a LayerSwitcher instance and add it to the map
-    var layerSwitcher = new ol.control.LayerSwitcher();
-    map.addControl(layerSwitcher);
-    
+        
     $("#datepicker").datepicker({
     	changeMonth: true,
     	changeYear: true,
@@ -812,18 +855,6 @@ $(document).ready(function(){
         	$("#dp2").css('visibility', 'visible');
     	}
     });
-    $("#t2").buttonset();
-    $( '#t2 input[type=radio]').change(function(){
-    	if (this.value == 'side'){
-        	$("#featureside_div").css('display', 'block');
-        	featureDisplayFunc = displayFeatureInfo;
-        	var element = popup.getElement();
-        	$(element).popover('hide');
-    	} else {
-        	$("#featureside_div").css('display', 'none');
-        	featureDisplayFunc = popupFeatureInfo;
-    	}
-    });
 
     if (appstate.date2){
     	$("#dp2").css('visibility', 'visible');	
@@ -886,14 +917,19 @@ $(document).ready(function(){
     	$(this).blur();
     });
     
+    $("#mapplus").click(function(){
+    	map.getView().setZoom(map.getView().getZoom() + 1);
+    });
+    $("#mapminus").click(function(){
+    	map.getView().setZoom(map.getView().getZoom() - 1);
+    });
     
     remap();
-    // Make the map 6x4
-    sz = map.getSize();
-    map.setSize([sz[0], sz[0] / 6. * 4.]);
+
     drawColorbar();
     
     checkDates();
     window.setInterval(checkDates, 600000);
+    makeLayerSwitcher();
     
 }); // End of document.ready()
