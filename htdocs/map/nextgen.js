@@ -677,10 +677,9 @@ $(document).ready(function(){
                 title: "Global Imagery",
                 visible: false,
                 type: 'base',
-                source: new ol.source.TileWMS({
-                        url: 'http://maps.opengeo.org/geowebcache/service/wms',
-                        params: {LAYERS: 'bluemarble', VERSION: '1.1.1'}
-                })
+                source : new ol.source.XYZ({
+        			url : 'http://s3.amazonaws.com/com.modestmaps.bluemarble/{z}-r{y}-c{x}.jpg'
+        		})
         	}),
         	make_iem_tms('Iowa 100m Hillshade', 'iahshd-900913', false, 'base'),
         	vectorLayer,
