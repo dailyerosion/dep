@@ -60,7 +60,6 @@ def make_map(ts, ts2, scenario, v):
     from pyiem.plot.geoplot import MapPlot
     import matplotlib.pyplot as plt
     from matplotlib.patches import Polygon
-    from matplotlib.collections import PatchCollection
     import matplotlib.colors as mpcolors
     import cartopy.crs as ccrs
 
@@ -167,7 +166,7 @@ def main():
     if not res or hostname == "dailyerosion.local":
         # Lazy import to help speed things up
         res, do_cache = make_map(ts, ts2, scenario, v)
-        sys.stderr.write("Setting cache: %s" % (mckey,))
+        sys.stderr.write("Setting cache: %s\n" % (mckey,))
         if do_cache:
             mc.set(mckey, res, 3600)
     sys.stdout.write(res)
