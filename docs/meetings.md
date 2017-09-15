@@ -1,3 +1,17 @@
+14 Sep 2017 - DEP Planning
+  Claudette, Yu, Chen, Miller, Bates, Cruse, Gelder, James, Emily
+  - Emily is a new postdoc joining us next year and working with Helmers
+  - Claudette hired 6 new students and have 10 total now
+  - Subcatchment scale is the future, a future I need to prepare for
+  - Need to check in with UofI on their HUD work for assessment
+  - James continues to work on better soils and a new and large update will come
+  - The funding for expansion in NE remains in limbo, hope for update on Mon
+  - Expanding into the Chesapeake is in limbo too
+  - James talked about using 250m reaches to define subcatchments
+  - DEP webinar is 20 Oct
+  - Study mentioned by Gelder looking into land price increases with conserv.
+  - Does a LMOD database webservice exist? Perhaps so, but where!
+
 22 Aug 2017 - DEP Planning
   Claudette, Yu, Chen, Gelder, Bates, Tim, Miller, James, Cruse
   - 2m DEM processing by Gelder is progressing, some IL data is along for ride
