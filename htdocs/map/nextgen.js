@@ -226,7 +226,11 @@ function setTitle(){
 // When user clicks the "Get Shapefile" Button
 function get_shapefile(){
 	dt = formatDate("yy-mm-dd", appstate.date);
-	var uri = '/dl/shapefile.py?dt='+dt;
+	var states = [];
+	$("input[name='dlstates']:checked").each(function (idx, v){
+		states.push($(v).val());
+	});
+	var uri = '/dl/shapefile.py?dt='+dt+'&states='+ states.join(",");
 	if (appstate.date2 !== null){
 		uri = uri + '&dt2='+ formatDate("yy-mm-dd", appstate.date2);
 	}

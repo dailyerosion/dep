@@ -183,12 +183,14 @@ echo <<<EOM
     </div><!-- ./q1 -->
 
     <div id="q2">
-    	<h4>Days to Display</h4>
+
+        <div class="panel panel-default">
+          <div class="panel-heading">Date Options</div>
+          <div class="panel-body">
 			<div id="t">
 			<input type="radio" id="single" name="t" value="single" checked="checked"><label for="single">Single</label>
 			<input type="radio" id="multi" name="t" value="multi"><label for="multi">Multi</label>
 			</div>
-    
     	<h4>Date:</h4>
 			<div class="input-group">
 			<span class="input-group-btn"><button id="minus1d" class="btn btn-default" type="button"><i class="fa fa-arrow-left"></i></button></span>
@@ -205,13 +207,37 @@ echo <<<EOM
 			  <input type="text" name="date2" id="datepicker2" class="form-control" style="font-weight: bolder;" />
 			</div>
 		</div>
-		<h4>Tools</h4>
-		<div>
+
+          </div>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-heading">Tools</div>
+          <div class="panel-body">
+
 		 <button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal"><i class="fa fa-search"></i> Search</button>
 		 <button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() - 0.1);" class="btn btn-default" type="button"><i class="fa fa-minus"></i> Decrease Opacity</button>
 		 <button onclick="javascript: vectorLayer.setOpacity(vectorLayer.getOpacity() + 0.1);" class="btn btn-default" type="button"><i class="fa fa-plus"></i> Increase Opacity</button>
+
+          </div>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-heading">Shapefile Data Download</div>
+          <div class="panel-body">
+            <p>Request a GIS Shapefile of the current data presented.<p>
+            <p>Include States:
+            <br /><input type="checkbox" checked="checked" name="dlstates" value="IA" id="STIA"> <label for="STIA">Iowa</label>
+            <br /><input type="checkbox" checked="checked" name="dlstates" value="KS" id="STKS"> <label for="STKS">Kansas</label>
+            <br /><input type="checkbox" checked="checked" name="dlstates" value="MN" id="STMN"> <label for="STMN">Minnesota</label>
+            <br /><input type="checkbox" checked="checked" name="dlstates" value="MO" id="STMO"> <label for="STMO">Missouri</label>
+            <br /><input type="checkbox" checked="checked" name="dlstates" value="NE" id="STNE"> <label for="STNE">Nebraska</label>
+            <br /><input type="checkbox" checked="checked" name="dlstates" value="WI" id="STWI"> <label for="STWI">Wisconsin</label>
+            </p>
 		 <button onclick="javascript: get_shapefile();" class="btn btn-default" type="button"><i class="fa fa-download"></i> Download Data</button>
-    	</div>
+          </div>
+        </div>        
+
     	</div><!-- ./q2 -->
     <div id="q3">
       <div id="detailsContainer">
@@ -278,7 +304,7 @@ var appstate = {
 };
         </script>
 
-    <script src="nextgen.js?v=2"></script>
+    <script src="nextgen.js?v=3"></script>
 
 </html>
 EOM;

@@ -13,7 +13,7 @@ import psycopg2
 from geopandas import GeoDataFrame
 
 
-def workflow(dt, dt2):
+def workflow(dt, dt2, states):
     """Generate for a given date """
     dbconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
     dextra = "valid = %s"
@@ -21,10 +21,17 @@ def workflow(dt, dt2):
     if dt2 is not None:
         dextra = "valid >= %s and valid <= %s"
         args = (dt, dt2)
+    statelimit = ""
+    if states is not None:
+        tokens = states.split(",")
+        if tokens:
+            _s = [" states ~* '%s' " % (a, ) for a in tokens]
+            statelimit = " and (" + " or ".join(_s) + " ) "
     df = GeoDataFrame.from_postgis("""
         WITH data as (
             SELECT simple_geom, huc_12
-            from huc12 WHERE scenario = 0),
+            from huc12 WHERE scenario = 0
+            """ + statelimit + """),
         obs as (
             SELECT huc_12,
             sum(coalesce(avg_loss, 0)) as avg_loss,
@@ -73,9 +80,10 @@ def main():
     form = cgi.FieldStorage()
     dt = datetime.datetime.strptime(form.getfirst('dt'), '%Y-%m-%d')
     dt2 = form.getfirst('dt2')
+    states = form.getfirst('states')
     if dt2 is not None:
         dt2 = datetime.datetime.strptime(form.getfirst('dt2'), '%Y-%m-%d')
-    workflow(dt, dt2)
+    workflow(dt, dt2, states)
 
 
 if __name__ == '__main__':
