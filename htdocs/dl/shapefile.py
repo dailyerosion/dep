@@ -29,7 +29,7 @@ def workflow(dt, dt2, states):
             statelimit = " and (" + " or ".join(_s) + " ) "
     df = GeoDataFrame.from_postgis("""
         WITH data as (
-            SELECT simple_geom, huc_12
+            SELECT simple_geom, huc_12, hu_12_name
             from huc12 WHERE scenario = 0
             """ + statelimit + """),
         obs as (
@@ -41,7 +41,7 @@ def workflow(dt, dt2, states):
             from results_by_huc12 WHERE
             """+dextra+""" and scenario = 0 GROUP by huc_12)
 
-        SELECT d.simple_geom, d.huc_12,
+        SELECT d.simple_geom, d.huc_12, d.hu_12_name as name,
         coalesce(o.qc_precip, 0) as prec_mm,
         coalesce(o.avg_loss, 0) as los_kgm2,
         coalesce(o.avg_runoff, 0) as runof_mm,
@@ -58,11 +58,11 @@ def workflow(dt, dt2, states):
     df.to_file(fn + ".shp")
     shutil.copyfile("/opt/iem/data/gis/meta/5070.prj",
                     fn+".prj")
-    z = zipfile.ZipFile(fn+".zip", 'w', zipfile.ZIP_DEFLATED)
+    zfp = zipfile.ZipFile(fn+".zip", 'w', zipfile.ZIP_DEFLATED)
     suffixes = ['shp', 'shx', 'dbf', 'prj']
-    for s in suffixes:
-        z.write(fn+"."+s)
-    z.close()
+    for suffix in suffixes:
+        zfp.write("%s.%s" % (fn, suffix))
+    zfp.close()
 
     sys.stdout.write("Content-type: application/octet-stream\n")
     sys.stdout.write(("Content-Disposition: attachment; filename=%s.zip\n\n"
@@ -71,8 +71,8 @@ def workflow(dt, dt2, states):
     sys.stdout.write(file(fn+".zip", 'r').read())
 
     suffixes.append('zip')
-    for s in suffixes:
-        os.remove(fn+"."+s)
+    for suffix in suffixes:
+        os.remove("%s.%s" % (fn, suffix))
 
 
 def main():
