@@ -1,3 +1,16 @@
+13 Oct 2017 - DEP Planning + IIHR
+  Claudette, Yu, Miller, Bates, Cruse, Gelder, Emily, Richardo, Andre
+  - IIHR folks were here and shared some of their validation work of our runoff
+  - The Iowa Flood Center model has 3 tunables for runoff and 3 for routing
+  - They are using Stage IV and MRMS primarily these days, along with IFC precip
+  - The assume 0.2 m/s flowrate on the hillslopes
+  - Evaporation in their model is parameterized from MODIS climatology
+  - [x] we sent them ET with the first batch of 2016 data
+  - Created issue #50 to check into if our climate files are in CST, gasp
+  - [ ] look more into this Nash Sutcliffe Efficiency
+  - [ ] Ah, I really should known and be able to detail WEPP's runoff model
+  - [ ] just double check that on days where CST/CDT changes, that we are OK
+
 14 Sep 2017 - DEP Planning
   Claudette, Yu, Chen, Miller, Bates, Cruse, Gelder, James, Emily
   - Emily is a new postdoc joining us next year and working with Helmers
