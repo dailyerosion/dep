@@ -1,3 +1,17 @@
+ 9 Nov 2017 - DEP Planning
+ Claudette, Tim, Yu, Bates, Cruse, Gelder, Emily, James
+  - A new student named Equardo(sp?) will be here for three months from HCI
+  - Hoping to hear more about the AFRI proposal within the next two weeks
+  - Minnesota ACPF is nearing completion
+  - Nebraska ACPF got a few more 'easy' counties added for training proposes
+  - No updates from NRCS regarding ACPF funding / expansion
+  - [x] James has been working on a 10m gSURGO web service and needs my help
+  - Discussion of the data request that will be coming from Middle Cedar
+  - There will be lots of communication opportunities for DEP upcoming with 
+    many HUD meetings in the works (70+ was thrown out as a number)
+  - Discussion of what to do with runoff forecasts.  I have done some initial
+    work and can likely make the magic happen.  Viz and output products are ???
+
 13 Oct 2017 - DEP Planning + IIHR
   Claudette, Yu, Miller, Bates, Cruse, Gelder, Emily, Richardo, Andre
   - IIHR folks were here and shared some of their validation work of our runoff
