@@ -1,4 +1,10 @@
 # Master exec script for the IDEP realtime run
+# A hack to allow this script to run at both 5 and 6 z
+HH=$(date +%H)
+if [ "$HH" -ne "00" ]
+ then
+ 	 exit
+fi 
 
 # Remove any previous run's error files
 find /i/0/error -name *.env -exec rm {} \;
