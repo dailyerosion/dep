@@ -17,7 +17,11 @@ $month = date("m", $last_date);
 $day = date("d", $last_date);
 $ld = date("Y/m/d", $last_date);
 
+$t->headextra = <<<EOM
+<link type="text/css" href="/vendor/jquery-ui/1.11.4/jquery-ui.min.css" rel="stylesheet" />
+EOM;
 $t->jsextra = <<<EOF
+<script src="/vendor/jquery-ui/1.11.4/jquery-ui.min.js"></script>
 <script>
 function update(dt){
 	var tmp = $.datepicker.formatDate('yymmdd', dt);
