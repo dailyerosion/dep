@@ -9,24 +9,22 @@ from tqdm import tqdm
 
 def main(argv):
     """Go Main Go"""
+    use_scenario = 18
     scenario = int(argv[1])
-    os.chdir("/i/0/run")
+    os.chdir("/i/%s/run" % (use_scenario, ))
     for huc8 in tqdm(glob.glob("*")):
         os.chdir(huc8)
         for huc4 in glob.glob("*"):
             os.chdir(huc4)
             for fn in glob.glob("*.run"):
-                newfn = "/i/%s/run/%s/%s/%s" % (scenario, huc8, huc4, fn)
+                newdir = "/i/%s/run/%s/%s" % (scenario, huc8, huc4)
+                if not os.path.isdir(newdir):
+                    continue
+                newfn = "%s/%s" % (newdir, fn)
                 lines = open(fn).readlines()
-                # disable water balance output
-                lines[8] = "No\n"
-                lines.pop(9)
                 # correct env output
-                lines[14] = lines[14].replace("/i/0/env",
+                lines[14] = lines[14].replace("/i/%s/env" % (use_scenario, ),
                                               "/i/%s/env" % (scenario, ))
-                # turn off yield
-                lines[18] = "No\n"
-                lines.pop(19)
                 # hard code climate
                 lines[21] = "/i/0/cli/093x041/093.07x040.71.cli\n"
                 fh = open(newfn, 'w')
