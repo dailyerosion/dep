@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 def main(argv):
     """Go Main Go"""
-    use_scenario = 21
+    use_scenario = 22
     scenario = int(argv[1])
     os.chdir("/i/%s/run" % (use_scenario, ))
     for huc8 in tqdm(glob.glob("*")):
