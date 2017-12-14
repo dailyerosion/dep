@@ -8,7 +8,7 @@ import subprocess
 import datetime
 from multiprocessing import Pool
 
-import psycopg2
+from pyiem.util import get_dbconn
 
 SCENARIO = sys.argv[1]
 # don't need trailing /
@@ -121,6 +121,9 @@ class WeppRun(object):
         ''' Actually run wepp for this event '''
         runfile = self.get_runfile_fn()
         if FORCE_RUNFILE_REGEN or not os.path.isfile(runfile):
+            # If this scenario does not have a run file, hmmm
+            if SCENARIO != '0':
+                return
             self.make_runfile()
         proc = subprocess.Popen(["wepp", ],
                                 stderr=subprocess.PIPE,
@@ -137,7 +140,7 @@ class WeppRun(object):
 
 def realtime_run():
     ''' Do a realtime run, please '''
-    idep = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    idep = get_dbconn('idep', user='nobody')
     icursor = idep.cursor()
 
     queue = []
