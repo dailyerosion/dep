@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 def main(argv):
     """Go Main Go"""
-    use_scenario = 23
+    use_scenario = 10
     scenario = int(argv[1])
     os.chdir("/i/%s/run" % (use_scenario, ))
     for huc8 in tqdm(glob.glob("*")):
@@ -25,6 +25,8 @@ def main(argv):
                 if len(lines) < 22:
                     print("Bad fn? %s" % (fn, ))
                     continue
+                lines[8] = "No\n"
+                lines.pop(9)
                 # correct env output
                 lines[14] = lines[14].replace("/i/%s/env" % (use_scenario, ),
                                               "/i/%s/env" % (scenario, ))
