@@ -1,3 +1,18 @@
+14 Dec 2017 - DEP Planning
+ Matt (HCI), Claudette, James, Cruse, Mellisa, Bates, Gelder, Yu
+  - Dr Cruse talked about an upcoming conference in Barcelona and if we should
+    participate / folks have interest in working with European erosion issues
+  - MN data processing continues and is getting close to being done
+  - NE appears to be a funded go for more ACPF expansion
+  - James mentioned that he hopes for a soon decision on NRCS+ACPF future
+  - [ ] I had better check that my management files are ready for 2018
+  - Yu made a great presentation on the DEP work he is doing in China
+  - USGS released some new cropping datasets based on LANDSAT 8 and MODIS
+  - Discussion on how to proceed with Matt's HCI work for the next 7 months
+  - [ ] Get CSCAP scenario results to Dr Cruse
+  - For the website, the power will be if we can show 'What Ifs'
+  - [ ] checkin with Frankenberger on cover crops in DEP
+
  9 Nov 2017 - DEP Planning
  Claudette, Tim, Yu, Bates, Cruse, Gelder, Emily, James
   - A new student named Equardo(sp?) will be here for three months from HCI
