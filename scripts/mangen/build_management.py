@@ -15,7 +15,7 @@ Here's a listing of project landuse codes used
   P - Pasture           P1          P25    IniCropDef.gra_3425
   C - Corn              C1          C25    IniCropDef.Default
   R - Other crops       R1          R25    IniCropDef.Aft_12889
-  T - Water
+  T - Water (could have flooded out for one year, wetlands)
   U - Developed
   X - Unclassified
   I - Idle
@@ -28,8 +28,8 @@ import os
 import datetime
 import sys
 
-import psycopg2
 from tqdm import tqdm
+from pyiem.util import get_dbconn
 
 SCENARIO = sys.argv[1]
 OVERWRITE = True
@@ -37,7 +37,7 @@ if len(sys.argv) == 2:
     print("WARNING: This does not overwrite old files!")
     OVERWRITE = False
 
-PGCONN = psycopg2.connect(database='idep', host='iemdb')
+PGCONN = get_dbconn('idep')
 
 # Note that the default used below is
 INITIAL_COND_DEFAULT = 'IniCropDef.Default'
@@ -151,6 +151,7 @@ def do_rotation(zone, code, cfactor):
     data['year9'] = read_file(zone, code[8], cfactor, 9)  # 2015
     data['year10'] = read_file(zone, code[9], cfactor, 10)  # 2016
     data['year11'] = read_file(zone, code[10], cfactor, 11)  # 2017
+    data['year12'] = read_file(zone, code[11], cfactor, 12)  # 2018
 
     fp = open(fn, 'w')
     fp.write("""#
@@ -178,6 +179,7 @@ Operations {
 %(year9)s
 %(year10)s
 %(year11)s
+%(year12)s
 }
 """ % data)
     fp.close()
@@ -207,12 +209,12 @@ def main():
 
     SELECT np.lat,
         lu2007 || lu2008 || lu2009 || lu2010 || lu2011 || lu2012 || lu2013
-        || lu2014 || lu2015 || lu2016 || lu2017
+        || lu2014 || lu2015 || lu2016 || lu2017 || lu2018
         from flowpath_points p, np WHERE p.flowpath = np.fid and
         scenario = %s
     """, (SCENARIO, SCENARIO))
     for row in tqdm(cursor, total=cursor.rowcount):
-        zone = get_zone(row[1])
+        zone = get_zone(row[0])
         if zone is None:
             continue
         for i in (1, 25):  # loop over c-factors
