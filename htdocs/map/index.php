@@ -8,7 +8,7 @@ $last_date = $row['value'];
 
 $lat = 42.22;
 $lon = -95.489;
-$OL = "4.3.1";
+$OL = "4.6.4";
 if (isset($_GET["huc_12"])){
 	$huc12 = substr($_GET["huc_12"],0,12);
 	$rs = pg_query($dbconn, "with d as "

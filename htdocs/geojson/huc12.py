@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 """GeoJSON service for HUC12 data"""
 import sys
-import psycopg2
 import json
-import memcache
 import cgi
 import datetime
+
+import memcache
 from jenks import jenks
+from pyiem.util import get_dbconn
 
 
 def myjenks(array, label):
@@ -33,7 +34,7 @@ def myjenks(array, label):
 
 def do(ts, ts2, domain):
     """Do work"""
-    pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
     utcnow = datetime.datetime.utcnow()
     dextra = "valid = %s"
@@ -64,8 +65,6 @@ def do(ts, ts2, domain):
         from data d LEFT JOIN obs o ON (d.huc_12 = o.huc_12)
     """, args)
     res = {'type': 'FeatureCollection',
-           'crs': {'type': 'EPSG',
-                   'properties': {'code': 4326, 'coordinate_order': [1, 0]}},
            'features': [],
            'generation_time': utcnow.strftime("%Y-%m-%dT%H:%M:%SZ"),
            'count': cursor.rowcount}
@@ -94,7 +93,7 @@ def do(ts, ts2, domain):
     return json.dumps(res)
 
 
-def main(argv):
+def main():
     """Do Fun things"""
     sys.stdout.write("Content-Type: application/vnd.geo+json\n\n")
     form = cgi.FieldStorage()
@@ -114,7 +113,7 @@ def main(argv):
     res = mc.get(mckey)
     if not res:
         res = do(ts, ts2, domain)
-        mc.set(mckey, res, 15)
+        mc.set(mckey, res, 3600)
 
     if cb is None:
         sys.stdout.write(res)
@@ -123,4 +122,4 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
