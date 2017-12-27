@@ -15,19 +15,20 @@ also do any of the following:
     python env2database.py 0 all
 
 """
-import pandas as pd
+from __future__ import print_function
 import os
 import datetime
 import multiprocessing
 import sys
 import unittest
 import numpy as np
-import psycopg2
+import pandas as pd
 from tqdm import tqdm
-from pyiem import dep as dep_utils
 import geopandas as gpd
 from rasterstats import zonal_stats
 from affine import Affine
+from pyiem import dep as dep_utils
+from pyiem.util import get_dbconn
 
 PRECIP_AFF = Affine(0.01, 0., dep_utils.WEST, 0., -0.01, dep_utils.NORTH)
 
@@ -125,7 +126,7 @@ def load_precip(dates, huc12s):
       dict of [date][huc12]
     """
     # 1. Build GeoPandas DataFrame of HUC12s of interest
-    idep = psycopg2.connect(database='idep', host='iemdb')
+    idep = get_dbconn('idep')
     huc12df = gpd.GeoDataFrame.from_postgis("""
         SELECT huc_12, ST_Transform(simple_geom, 4326) as geo
         from huc12 WHERE scenario = 0
@@ -153,21 +154,21 @@ def load_precip(dates, huc12s):
 
 
 def load_lengths():
-    idep = psycopg2.connect(database='idep', host='iemdb')
+    idep = get_dbconn('idep')
     icursor = idep.cursor()
-    lengths = {}
+    _lengths = {}
     icursor.execute("""
     SELECT huc_12, fpath, ST_Length(geom) from flowpaths where
     scenario = %s
     """, (SCENARIO,))
     for row in icursor:
-        lengths["%s_%s" % (row[0], row[1])] = row[2]
-    return lengths
+        _lengths["%s_%s" % (row[0], row[1])] = row[2]
+    return _lengths
 
 
 def delete_previous_entries(huc12):
     """Remove whatever previous data we have for this huc12 and dates"""
-    pgconn = psycopg2.connect(database='idep', host='iemdb')
+    pgconn = get_dbconn('idep')
     icursor = pgconn.cursor()
     icursor.execute("""
         DELETE from results_by_huc12 WHERE
@@ -183,7 +184,7 @@ def delete_previous_entries(huc12):
 
 def save_results(huc12, df):
     """Save our output to the database"""
-    pgconn = psycopg2.connect(database='idep', host='iemdb')
+    pgconn = get_dbconn('idep')
     icursor = pgconn.cursor()
     inserts = 0
     skipped = len(dates) - len(df.index)
@@ -219,7 +220,7 @@ def save_results(huc12, df):
 
 
 def update_metadata(dates):
-    pgconn = psycopg2.connect(database='idep', host='iemdb')
+    pgconn = get_dbconn('idep')
     icursor = pgconn.cursor()
     maxdate = max(dates)
     icursor.execute("""SELECT value from properties where
@@ -257,13 +258,15 @@ def do_huc12(huc12):
         # Do computation
         rows.append(
             compute_res(df2, date, huc12, hillslopes, qc_precip))
-    if len(rows) == 0:
+    if not rows:
         return huc12, 0, len(dates), deleted
     # save results
     df = pd.DataFrame(rows)
-    inserts, skipped = save_results(huc12, df)
+    # Prevent any NaN values
+    df.fillna(0, inplace=True)
+    _inserts, _skipped = save_results(huc12, df)
 
-    return huc12, inserts, skipped, deleted
+    return huc12, _inserts, _skipped, deleted
 
 
 if __name__ == '__main__':
