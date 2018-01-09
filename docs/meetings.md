@@ -1,3 +1,12 @@
+ 4 Jan 2018 - DEP/HCI Planning
+ Matt, Tianna, James, Claudette, Hanna, Cruse, Miller, Equardo, Gelder, Yu
+  - [ ] James mentioned the NOAA 1km gridded precip return intervals
+  - [ ] Group would like a forums interface for DEP
+  - maybe scenario information would not be presented within the map
+  - HCI exercise as a X, I would want Y from the website
+  - [x] remove webring from website
+  - [ ] send Matt the webmapping interactivity list
+
 14 Dec 2017 - DEP Planning
  Matt (HCI), Claudette, James, Cruse, Mellisa, Bates, Gelder, Yu
   - Dr Cruse talked about an upcoming conference in Barcelona and if we should
