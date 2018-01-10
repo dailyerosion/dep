@@ -9,8 +9,8 @@ import glob
 from pyiem.dep import read_slp
 
 
-SCENARIO = 37
-SLOPE_THRESHOLD = 6.
+SCENARIO = 38
+SLOPE_THRESHOLD = 10.
 
 
 def main():
