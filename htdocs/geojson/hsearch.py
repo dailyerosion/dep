@@ -2,12 +2,13 @@
 import cgi
 import sys
 import json
-import psycopg2
+
+from pyiem.util import get_dbconn
 
 
 def search(q):
     """Search for q"""
-    pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
     d = dict(results=[])
     cursor.execute("""SELECT huc_12, hu_12_name from huc12
@@ -25,6 +26,7 @@ def main():
     sys.stdout.write("Content-type: application/json\n\n")
 
     sys.stdout.write(json.dumps(search(q)))
+
 
 if __name__ == '__main__':
     main()

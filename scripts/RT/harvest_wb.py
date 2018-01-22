@@ -7,12 +7,12 @@ import sys
 
 import numpy as np
 import pandas as pd
-import psycopg2
 from tqdm import tqdm
 from pyiem import dep as dep_utils
 import geopandas as gpd
 from rasterstats import zonal_stats
 from affine import Affine
+from pyiem.util import get_dbconn
 
 PRECIP_AFF = Affine(0.01, 0., dep_utils.WEST, 0., -0.01, dep_utils.NORTH)
 
@@ -105,7 +105,7 @@ def load_precip():
       dict of [date][huc12]
     """
     # 1. Build GeoPandas DataFrame of HUC12s of interest
-    idep = psycopg2.connect(database='idep', host='iemdb')
+    idep = get_dbconn('idep')
     huc12df = gpd.GeoDataFrame.from_postgis("""
         SELECT huc_12, ST_Transform(simple_geom, 4326) as geo
         from huc12 WHERE scenario = 0

@@ -7,9 +7,9 @@ import multiprocessing
 import StringIO
 
 import pandas as pd
-import psycopg2
 from tqdm import tqdm
 from pyiem.dep import read_yld
+from pyiem.util import get_dbconn
 
 
 def readfile(huc12, filename):
@@ -64,7 +64,7 @@ def main(argv):
                                            index=False, header=False)
 
     tdf.seek(0)
-    pgconn = psycopg2.connect(database='idep', host='iemdb')
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
     cursor.execute("""
         DELETE from harvest WHERE scenario = %s

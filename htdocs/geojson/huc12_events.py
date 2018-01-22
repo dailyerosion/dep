@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 """GeoJSON service for HUC12 data"""
 import sys
-import psycopg2
 import json
-import memcache
 import cgi
 import datetime
+
+import memcache
+from pyiem.util import get_dbconn
 
 
 def do(huc12, mode):
     """Do work"""
-    pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
     utcnow = datetime.datetime.utcnow()
     if mode == 'daily':
@@ -53,7 +54,7 @@ def do(huc12, mode):
     return json.dumps(res)
 
 
-def main(argv):
+def main():
     """Do Fun things"""
     sys.stdout.write("Content-Type: application/vnd.geo+json\n\n")
     form = cgi.FieldStorage()
@@ -76,4 +77,4 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()

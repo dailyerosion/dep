@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 """Mapping Interface"""
-import psycopg2
 import cgi
 import sys
 import cStringIO
-import numpy as np
 import calendar
+
+import numpy as np
+from pyiem.util import get_dbconn
 
 
 def make_plot(huc12, scenario):
@@ -13,7 +14,7 @@ def make_plot(huc12, scenario):
     import matplotlib
     matplotlib.use('agg')
     import matplotlib.pyplot as plt
-    pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
 
     # Check that we have data for this date!
@@ -67,6 +68,7 @@ def main(argv):
 
     sys.stdout.write("Content-type: image/png\n\n")
     sys.stdout.write(make_plot(huc12, scenario))
+
 
 if __name__ == '__main__':
     # See how we are called

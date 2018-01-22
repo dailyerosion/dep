@@ -9,13 +9,13 @@ import os
 import shutil
 import zipfile
 
-import psycopg2
 from geopandas import GeoDataFrame
+from pyiem.util import get_dbconn
 
 
 def workflow(dt, dt2, states):
     """Generate for a given date """
-    dbconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    dbconn = get_dbconn('idep')
     dextra = "valid = %s"
     args = (dt,)
     if dt2 is not None:

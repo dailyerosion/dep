@@ -7,10 +7,10 @@ import os
 import cStringIO
 
 import memcache
-import psycopg2
 from shapely.wkb import loads
 import numpy as np
 from jenks import jenks
+from pyiem.util import get_dbconn
 
 V2NAME = {
     'avg_loss': 'Detachment',
@@ -76,7 +76,7 @@ def make_map(ts, ts2, scenario, v):
     cmap.set_under('white')
     cmap.set_over('black')
 
-    pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
 
     title = "for %s" % (ts.strftime("%-d %B %Y"),)

@@ -4,15 +4,15 @@ import sys
 import datetime
 
 import matplotlib.pyplot as plt
-import psycopg2
 from pandas.io.sql import read_sql
+from pyiem.util import get_dbconn
 
 
 def main(argv):
     """Do What We Wanted"""
     scenario = int(argv[1])
     print("This report covers the inclusive years 2008-2016")
-    pgconn = psycopg2.connect(database='idep', host='localhost', port=5555)
+    pgconn = get_dbconn('idep')
 
     df = read_sql("""
         WITH iahuc12 as (
