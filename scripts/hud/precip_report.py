@@ -24,6 +24,11 @@ Middle North English River 070802090406
 Middle English River 070802090302
 Gritter Creek 070802090301"""
 
+AVGS = [1.23 + 1.21 + 2.25,
+        3.42 + 4.19 + 4.73,
+        4.37 + 3.92 + 3.60,
+        2.66 + 2.03 + 1.50]
+
 
 def get_hucinfo():
     """Make our table"""
@@ -45,47 +50,55 @@ def main():
     SELECT huc_12, extract(month from valid) as mo,
     sum(qc_precip) / 25.4 as rain
     from results_by_huc12 WHERE scenario = 0 and
-    valid >= '2017-10-01' and valid < '2018-01-01'
+    valid >= '2017-01-01' and valid < '2018-01-01'
     and huc_12 in %s
     GROUP by huc_12, mo
     """, pgconn, params=(tuple(hucs), ), index_col=['huc_12', 'mo'])
-    fig = plt.figure()
-    fig.text(0.5, 0.95, "DEP Selected HUC12 2017Q4 Precipitation Totals",
+    fig = plt.figure(figsize=(9., 6.))
+    fig.text(0.5, 0.95,
+             "DEP Selected HUC12 2017 Quarterly Precipitation Totals",
              ha='center', fontsize=14)
-    ax1 = fig.add_axes([0.31, 0.1, 0.2, 0.8])
-    ax1.text(0, 1.01, "October", transform=ax1.transAxes)
+    ax1 = fig.add_axes([0.23, 0.1, 0.15, 0.8])
+    ax1.text(0, 1.01, "Jan, Feb, Mar", transform=ax1.transAxes)
     ax1.set_yticks(range(len(hucs)))
     ax1.set_yticklabels([x for x, _y in hucinfo])
     ax1.grid(True, zorder=1)
-    ax1.axvline(2.66, color='r', lw=2, zorder=3)
-    ax1.text(2.7, len(hucs) - 0.2, "Climate", color='r', va='center')
+    ax1.axvline(AVGS[0], color='r', lw=2, zorder=3)
 
-    ax2 = fig.add_axes([0.54, 0.1, 0.2, 0.8])
+    ax2 = fig.add_axes([0.43, 0.1, 0.15, 0.8])
     ax2.set_yticks(range(len(hucs)))
     ax2.set_yticklabels([])
     ax2.grid(True, zorder=1)
-    ax2.text(0, 1.01, "November", transform=ax2.transAxes)
-    ax2.axvline(2.03, color='r', lw=2, zorder=3)
-    ax2.text(1.98, len(hucs) - 0.2, "Climate", color='r', va='center',
-             ha='right')
+    ax2.text(0, 1.01, "Apr, May, Jun", transform=ax2.transAxes)
+    ax2.axvline(AVGS[1], color='r', lw=2, zorder=3)
 
-    ax3 = fig.add_axes([0.77, 0.1, 0.2, 0.8])
-    ax3.text(0, 1.01, "December", transform=ax3.transAxes)
+    ax3 = fig.add_axes([0.63, 0.1, 0.15, 0.8])
+    ax3.text(0, 1.01, "Jul, Aug, Sep", transform=ax3.transAxes)
     ax3.set_yticks(range(len(hucs)))
     ax3.set_yticklabels([])
     ax3.grid(True, zorder=1)
-    ax3.axvline(1.50, color='r', lw=2, zorder=3)
-    ax3.text(1.45, len(hucs) - 0.2, "Climate", color='r', va='center',
-             ha='right')
+    ax3.axvline(AVGS[2], color='r', lw=2, zorder=3)
 
-    for mo, ax in zip([10, 11, 12], [ax1, ax2, ax3]):
+    ax4 = fig.add_axes([0.83, 0.1, 0.15, 0.8])
+    ax4.text(0, 1.01, "Oct, Nov, Dec", transform=ax4.transAxes)
+    ax4.set_yticks(range(len(hucs)))
+    ax4.set_yticklabels([])
+    ax4.grid(True, zorder=1)
+    ax4.axvline(AVGS[3], color='r', lw=2, zorder=3)
+
+    for mo, ax in zip([1, 4, 7, 10], [ax1, ax2, ax3, ax4]):
         vals = []
         for huc in hucs:
-            vals.append(df.at[(huc, mo), 'rain'])
+            vals.append((df.at[(huc, mo), 'rain'] +
+                         df.at[(huc, mo + 1), 'rain'] +
+                         df.at[(huc, mo + 2), 'rain']))
         ax.barh(range(len(hucs)), vals, zorder=2)
         # ax.set_xlim(0, max(vals) * 1.1)
-        ax.set_xticks(range(0, int(max(vals)) + 1))
+        ax.set_xticks(range(0, int(max(vals)) + 1,
+                      1 if max(vals) < 9 else 2))
         ax.set_xlabel("Precip [inch]")
+    fig.text(0.02, 0.02, "Red Line is Climatology\nbased on 1893-2017 Data",
+             color='red')
     fig.savefig('test.png')
 
 
