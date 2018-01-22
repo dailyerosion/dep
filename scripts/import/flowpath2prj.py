@@ -8,10 +8,11 @@ from math import atan2, degrees, pi
 
 import psycopg2.extras
 from tqdm import tqdm
+from pyiem.util import get_dbconn
 
 SCENARIO = int(sys.argv[1])
 MISSED_SOILS = {}
-PGCONN = psycopg2.connect(database='idep', host='iemdb')
+PGCONN = get_dbconn('idep')
 cursor = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cursor2 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cursor3 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -139,7 +140,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
     slope, management, 'MWDEP_'||surgo||'.SOL' as soilfile,
     lu2007 || lu2008 || lu2009 ||
     lu2010 || lu2011 || lu2012 || lu2013 || lu2014 || lu2015 ||
-    lu2016 || lu2017 as lstring,
+    lu2016 || lu2017 || lu2018 as lstring,
     round(ST_X(ST_Transform(geom,4326))::numeric,2) as x,
     round(ST_Y(ST_Transform(geom,4326))::numeric,2) as y from
     flowpath_points f
