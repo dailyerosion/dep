@@ -1,0 +1,29 @@
+#
+# 
+#
+# 
+#
+Version = 98.7
+Name = switchgrass
+Description {
+}
+Color = 0 255 0
+LandUse = 1
+InitialConditions = IniCropDef.Default {0.000000, 0}
+
+Operations {
+5 15 1 1 Tillage   OpCropDef.CRNTFRRI      {0.050800, 2}
+5 15 1 1 Plant-Annual        CropDef.Swi_2785     {0.15000}
+10 20 1 1 Harvest-Annual     CropDef.Swi_2785    {}
+10 20 2 1 Harvest-Annual     CropDef.Swi_2785    {}
+10 20 3 1 Harvest-Annual     CropDef.Swi_2785    {}
+10 20 4 1 Harvest-Annual     CropDef.Swi_2785    {}
+10 20 5 1 Harvest-Annual     CropDef.Swi_2785    {}
+10 20 6 1 Harvest-Annual     CropDef.Swi_2785    {}
+10 20 7 1 Harvest-Annual     CropDef.Swi_2785    {}
+10 20 8 1 Harvest-Annual     CropDef.Swi_2785    {}
+10 20 9 1 Harvest-Annual     CropDef.Swi_2785    {}
+10 20 10 1 Harvest-Annual     CropDef.Swi_2785    {}
+10 20 11 1 Harvest-Annual     CropDef.Swi_2785    {}
+10 20 12 1 Harvest-Annual     CropDef.Swi_2785    {}
+}
