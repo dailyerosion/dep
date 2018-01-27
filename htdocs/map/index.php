@@ -304,7 +304,7 @@ var appstate = {
 };
         </script>
 
-    <script src="nextgen.js?v=3"></script>
+    <script src="nextgen.js?v=4"></script>
 
 </html>
 EOM;

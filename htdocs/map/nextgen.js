@@ -682,7 +682,7 @@ $(document).ready(function(){
                 visible: false,
                 type: 'base',
                 source : new ol.source.XYZ({
-        			url : 'http://s3.amazonaws.com/com.modestmaps.bluemarble/{z}-r{y}-c{x}.jpg'
+        			url : 'https://s3.amazonaws.com/com.modestmaps.bluemarble/{z}-r{y}-c{x}.jpg'
         		})
         	}),
         	make_iem_tms('Iowa 100m Hillshade', 'iahshd-900913', false, 'base'),
