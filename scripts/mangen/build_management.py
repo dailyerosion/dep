@@ -21,7 +21,7 @@ Here's a listing of project landuse codes used
   I - Idle
   L - Double Crop  (started previous year)
   W - Wheat
-  N - ???  *see 27 Sep 2016 email from dave, it is unused, so treat as I*
+  N - Small Grain
 """
 from __future__ import print_function
 import os
