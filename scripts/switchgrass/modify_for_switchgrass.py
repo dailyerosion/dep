@@ -4,24 +4,24 @@ IDEP2/CSCAP/SWITCHGRASS.rot
 """
 from __future__ import print_function
 import os
+import sys
 import glob
 
+from tqdm import tqdm
 from pyiem.dep import read_slp
 
 
-SCENARIO = 38
-SLOPE_THRESHOLD = 10.
-
-
-def main():
+def main(argv):
     """Go Main Go"""
+    SCENARIO = int(argv[1])
+    SLOPE_THRESHOLD = float(argv[2])
     # make needed mods
     # use old one with mods if slope less than threshold
     # replace rotation if slope greater
     os.chdir("/i/0/prj")
     hits = 0
     total = 0
-    for huc8 in glob.glob("*"):
+    for huc8 in tqdm(glob.glob("*")):
         os.chdir(huc8)
         for huc4 in glob.glob("*"):
             os.chdir(huc4)
@@ -42,7 +42,8 @@ def main():
                     if line.find("EventFile") > 0:
                         lines[i] = line.replace("/i/0/env",
                                                 "/i/%s/env" % (SCENARIO, ))
-                    if line.find('File = "IDEP2/') > 0:
+                    if (slope_percent >= SLOPE_THRESHOLD and
+                            line.find('File = "IDEP2/') > 0):
                         lines[i] = ('        File = '
                                     '"IDEP2/CSCAP/SWITCHGRASS.rot"\n')
                 fp = open(newfn, 'w')
@@ -56,4 +57,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
