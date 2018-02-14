@@ -1,3 +1,12 @@
+ 8 Feb 2018 - DEP Planning
+ Matt, Hanna, Gelder, Emily, Cruse, Miller
+  - [ ] Dump the Wisconsin HUC12s that are undersampled
+  - Continued interest from some folks in Europe wishing to do DEP stuff
+  - there will be an uncoming skype session with those folks in early March
+  - desire to perhaps spin up a few parcels in Europe to see how it goes
+  - More Nebraska stuff will be coming in a month or so
+  - No known updates about Chesapeake expansions
+
  4 Jan 2018 - DEP/HCI Planning
  Matt, Tianna, James, Claudette, Hanna, Cruse, Miller, Equardo, Gelder, Yu
   - [ ] James mentioned the NOAA 1km gridded precip return intervals
