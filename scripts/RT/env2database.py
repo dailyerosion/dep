@@ -287,6 +287,7 @@ if __name__ == '__main__':
     pool = multiprocessing.Pool()
     totalinserts = 0
     totalskipped = 0
+    totaldeleted = 0
     for huc12, inserts, skipped, deleted in tqdm(
             pool.imap_unordered(do_huc12, huc12s), total=len(huc12s),
             disable=(not sys.stdout.isatty())):
@@ -295,9 +296,10 @@ if __name__ == '__main__':
             continue
         totalinserts += inserts
         totalskipped += skipped
+        totaldeleted += deleted
     print("env2database.py inserts: %s skips: %s deleted: %s" % (totalinserts,
                                                                  totalskipped,
-                                                                 deleted))
+                                                                 totaldeleted))
     update_metadata(dates)
 
 
