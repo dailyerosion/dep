@@ -36,7 +36,8 @@ LABEL2CODE = {'soybean2': 'B',
               'Tre_2932': 'I',
               'bromegr1': 'P',
               'Bar_8319': 'W'}
-YEARS = (2016 - 2007) + 1
+# 2007 is skipped
+YEARS = (2017 - 2008) + 1
 
 
 def get_rotation_string(manres, ofe):
@@ -83,8 +84,9 @@ def main():
     for root, _dirs, files in tqdm(os.walk("/i/0/ofe")):
         for filename in files:
             ofedf = read_ofe("%s/%s" % (root, filename))
-            # Drop any 2018+ data
-            ofedf = ofedf[ofedf['date'] < datetime.date(2018, 1, 1)]
+            # Drop any 2007 or 2018+ data
+            ofedf = ofedf[(ofedf['date'] < datetime.date(2018, 1, 1)) &
+                          (ofedf['date'] >= datetime.date(2008, 1, 1))]
             # Figure out the crop string
             man = "%s/%s" % (root.replace("ofe", "man"),
                              filename.replace("ofe", "man"))
