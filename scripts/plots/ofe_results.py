@@ -16,7 +16,7 @@ def rotclass(val):
 
 def main():
     """Go Main Go"""
-    dfin = pd.read_csv('results.csv')
+    dfin = pd.read_csv('results.csv', dtype={'huc12':'str'})
     # Filter data to only include slopes < 0.5 and delivery values < 20 T/a/yr
     df = dfin[(dfin['slope[1]'] < 0.5) &
               (dfin['delivery[t/a/yr]'] < 20)].copy()
