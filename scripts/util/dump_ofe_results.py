@@ -111,7 +111,7 @@ def main():
                     'fpath': filename.split("_")[1][:-4],
                     'ofe': ofe,
                     'CropRotationString': (
-                        get_rotation_string(manres, ofe)[:YEARS]),
+                        get_rotation_string(manres, ofe)),
                     'slope[1]': slp,
                     'soil_mukey': soils[ofe - 1],
                     'rainfall': -1,
