@@ -1,3 +1,13 @@
+13 Apr 2018 - DEP Planning
+Rishi, Matt, Tim, Claudette, Hanna, Gelder, Mellisa, JAmes, Tianna, Andrew,
+Sarah
+  - MN and NE new HUC12s are progressing nicely, nearly done
+  - James hopes to provide me updated 2017 land use and 2018 soils soon
+  - We'll have a postdoc in the fall working on tillage erosion
+  - [ ] wish to write a User Guide / Developers Guide on DEP
+  - Issue of water bodies that get used within flowpaths causing a long
+    stretch of nearly flat ground
+
  8 Feb 2018 - DEP Planning
  Matt, Hanna, Gelder, Emily, Cruse, Miller
   - [ ] Dump the Wisconsin HUC12s that are undersampled
