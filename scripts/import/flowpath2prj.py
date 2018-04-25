@@ -357,7 +357,8 @@ def main(argv):
         print("Running for single flowpath HUC_12: %s FPATH: %s" % (argv[2],
                                                                     argv[3]))
         cursor.execute("""
-            SELECT fpath, fid, huc_12 from flowpaths
+            SELECT fpath, fid, huc_12,
+            ST_ymax(ST_Transform(geom, 4326)) as lat from flowpaths
             WHERE scenario = %s and huc_12 = %s and fpath = %s
         """, (SCENARIO, argv[2], int(argv[3])))
         if cursor.rowcount != 1:
