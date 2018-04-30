@@ -78,7 +78,7 @@ def load_iemre():
     yaxis = np.arange(SOUTH, NORTH, 0.01)
     xi, yi = np.meshgrid(xaxis, yaxis)
 
-    fn = "/mesonet/data/iemre/%s_mw_daily.nc" % (VALID.year,)
+    fn = iemre.get_daily_ncname(VALID.year)
     if not os.path.isfile(fn):
         printt("Missing %s for load_solar, aborting" % (fn,))
         sys.exit()
