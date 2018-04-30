@@ -17,6 +17,8 @@ import pandas as pd
 import psycopg2
 
 print("BE CAREFUL!  The dbf files may not be 5070, but 26915")
+print("TODO: compute length by hand and don't trust DBF files as wandering")
+sys.exit()
 
 SCENARIO = int(sys.argv[1])
 PREFIX = 'g4'
