@@ -3,3 +3,5 @@
 /data/
 /.buildpath
 *.o
+*.csv
+*.dbf
