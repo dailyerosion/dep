@@ -9,6 +9,7 @@ from math import atan2, degrees, pi
 import psycopg2.extras
 from tqdm import tqdm
 from pyiem.util import get_dbconn
+from pyiem.dep import get_cli_fname
 
 SCENARIO = int(sys.argv[1])
 MISSED_SOILS = {}
@@ -202,17 +203,15 @@ def do_flowpath(zone, huc_12, fid, fpath):
         return None
 
     res = {}
-    clifile = "cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (0 - x, y,
-                                                       0 - x, y)
     # These scenarios use one climate file
     if SCENARIO in [5, 0]:
-        res['clifile'] = "/i/%s/cli/096x043/096.44x043.28.cli" % (SCENARIO, )
+        res['clifile'] = get_cli_fname(-96.44, 43.28, SCENARIO)
     else:
-        res['clifile'] = "/i/%s/%s" % (SCENARIO, clifile)
+        res['clifile'] = get_cli_fname(x, y, SCENARIO)
 
     # Store climate_file name with flowpath to make life easier
     cursor3.execute("""UPDATE flowpaths SET climate_file = %s
-     WHERE fid = %s """, (clifile, fid))
+     WHERE fid = %s """, (res['clifile'], fid))
     if cursor3.rowcount != 1:
         print('ERROR Updating climate_file for FID: %s' % (fid,))
     # return

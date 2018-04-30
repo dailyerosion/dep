@@ -1,9 +1,11 @@
 """Utility script that copies neighboring clifiles when it is discovered
 that we need new ones!"""
-import psycopg2
 import os
 import sys
 import shutil
+
+from pyiem.util import get_dbconn
+from pyiem.dep import get_cli_fname
 
 
 def missing_logic(scenario, fn):
@@ -16,8 +18,7 @@ def missing_logic(scenario, fn):
     # So there should be a file at an interval of 0.25
     lon2 = lon - (lon * 100 % 25) / 100.
     lat2 = lat - (lat * 100 % 25) / 100.
-    testfn = ("/i/%s/cli/%03.0fx%03.0f/%06.2fx%06.2f.cli"
-              ) % (scenario, lon2, lat2, lon2, lat2)
+    testfn = get_cli_fname(lon2, lat2, scenario)
     if not os.path.isfile(testfn):
         print("Whoa, why doesn't %s exist?" % (testfn,))
         sys.exit()
@@ -28,7 +29,7 @@ def missing_logic(scenario, fn):
 def main(argv):
     """Go Main Go!"""
     scenario = argv[1]
-    pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
     cursor.execute("""
         SELECT distinct climate_file from flowpaths where scenario = %s
@@ -39,6 +40,7 @@ def main(argv):
         if os.path.isfile(fn):
             continue
         missing_logic(scenario, fn)
+
 
 if __name__ == '__main__':
     main(sys.argv)

@@ -19,7 +19,7 @@ import netCDF4
 from scipy.interpolate import NearestNDInterpolator
 from pyiem import iemre
 from pyiem.datatypes import temperature
-from pyiem.dep import SOUTH, NORTH, EAST, WEST
+from pyiem.dep import SOUTH, NORTH, EAST, WEST, get_cli_fname
 from PIL import Image
 
 logging.basicConfig(format='%(asctime)-15s %(message)s')
@@ -409,11 +409,7 @@ def myjob(row):
     [xidx, yidx] = row
     lon = WEST + xidx * 0.01
     lat = SOUTH + yidx * 0.01
-    fn = "/i/%s/cli/%03.0fx%03.0f/%06.2fx%06.2f.cli" % (SCENARIO,
-                                                        0 - lon,
-                                                        lat,
-                                                        0 - lon,
-                                                        lat)
+    fn = get_cli_fname(lon, lat, SCENARIO)
     if not os.path.isfile(fn):
         return False
 

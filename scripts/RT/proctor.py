@@ -70,7 +70,7 @@ class WeppRun(object):
 
     def get_clifile_fn(self):
         ''' Return the climate filename for this run '''
-        return '%s/%s' % (IDEPHOME, self.clifile)
+        return self.clifile
 
     def get_runfile_fn(self):
         ''' Return the run filename for this run '''
