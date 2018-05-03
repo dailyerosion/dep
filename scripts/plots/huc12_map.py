@@ -4,58 +4,77 @@ from __future__ import print_function
 import datetime
 import sys
 
+import matplotlib
+matplotlib.use('agg')
+import matplotlib.pyplot as plt
 from pyiem.plot import MapPlot, nwsprecip
 from shapely.wkb import loads
-import psycopg2
 import numpy as np
 import cartopy.crs as ccrs
 from matplotlib.patches import Polygon
 import matplotlib.colors as mpcolors
+from pyiem.util import get_dbconn
+
+MYHUCS = ['071000060202', '071000060307', '070802051004', '070802051003',
+          '070802051102', '070802050907', '070802051201', '070802051202',
+          '070802050808', '070802050807', '070802090401', '070802090101',
+          '070802090102', '070802090103', '070802090406', '070802090302',
+          '070802090301']
 
 
 def main(argv):
     """Do Great Things"""
-    year = int(argv[1])
-    pgconn = psycopg2.connect(database='idep', host='localhost',
-                              port=5555, user='nobody')
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
 
-    mp = MapPlot(continentalcolor='white', nologo=True,
-                 sector='custom',
-                 south=36.8, north=45.0, west=-99.2, east=-88.9,
-                 subtitle='Assumes 56 lb test weight',
-                 title=('%s Corn Yield HUC12 Average'
-                        ) % (year, ))
+    mp = MapPlot(continentalcolor='#EEEEEE', nologo=True,
+                 # sector='custom',
+                 # south=36.8, north=45.0, west=-99.2, east=-88.9,
+                 subtitle='',
+                 title=('DEP MLRA identifier assignment using HUC12 Centroid'))
 
     cursor.execute("""
-    with hucs as (
-        select huc_12, ST_Transform(simple_geom, 4326) as geo
-        from huc12),
-    data as (
-        SELECT huc12, avg(yield_kgm2) * 8921.8 / 56. as val from harvest
-        where crop = 'Corn' and valid between %s and %s
-        GROUP by huc12
-    )
+    select st_transform(geom, 4326), mlra_id from huc12 where scenario = 0
+    """)
 
-    SELECT geo, huc12, val from hucs h JOIN data d on (h.huc_12 = d.huc12)
-    """, (datetime.date(year, 1, 1), datetime.date(year, 12, 31)))
-
-    bins = np.arange(0, 310, 30)
-    cmap = nwsprecip()
+    bins = [106,
+            107,
+            108,
+            109,
+            121,
+            137,
+            150,
+            155,
+            166,
+            175,
+            176,
+            177,
+            178,
+            179,
+            181,
+            182,
+            186,
+            187,
+            188,
+            196,
+            197,
+            204,
+            205]
+    cmap = plt.get_cmap('terrain')
     cmap.set_under('white')
     cmap.set_over('black')
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
 
     for row in cursor:
-        polygon = loads(row[0].decode('hex'))
-        arr = np.asarray(polygon.exterior)
-        points = mp.ax.projection.transform_points(ccrs.Geodetic(),
-                                                   arr[:, 0], arr[:, 1])
-        color = cmap(norm([float(row[2]), ]))[0]
-        poly = Polygon(points[:, :2], fc=color, ec='None', zorder=2, lw=.1)
-        mp.ax.add_patch(poly)
+        for polygon in loads(row[0].decode('hex')):
+            arr = np.asarray(polygon.exterior)
+            points = mp.ax.projection.transform_points(ccrs.Geodetic(),
+                                                       arr[:, 0], arr[:, 1])
+            color = cmap(norm([float(row[1]), ]))[0]
+            poly = Polygon(points[:, :2], fc=color, ec='None', zorder=2, lw=.1)
+            mp.ax.add_patch(poly)
 
-    mp.draw_colorbar(bins, cmap, norm, units='bu/acre')
+    mp.draw_colorbar(bins, cmap, norm, units='MLRA ID')
 
     # mp.drawcounties()
     mp.postprocess(filename='test.png')

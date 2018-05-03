@@ -37,10 +37,11 @@ def main(argv):
     GROUP by r.huc_12, year, scenario
     """, pgconn, params=(mlra_id, ), index_col=None)
     gdf = df.groupby('scenario').mean()
-    print("%s" % (mlraxref.at[mlra_id, 'mlra_name'], ), end='\t')
+    print("%s\t%.2f" % (mlraxref.at[mlra_id, 'mlra_name'],
+                        gdf.at[0, 'runoff']), end='\t')
     for scenario in range(36, 39):
-        delta = (gdf.loc[(scenario, )] - gdf.loc[(0, )]) / gdf.loc[(0, )] * 100.
-        print("%.2f" % (delta['runoff'], ), end='\t')
+        delta = gdf.loc[(scenario, )] / gdf.loc[(0, )] * 100.
+        print("%.2f (%.1f%%)" % (gdf.at[scenario, 'runoff'], delta['runoff']), end='\t')
     print()
 
 
