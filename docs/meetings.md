@@ -1,3 +1,35 @@
+10 May 2018 - DEP Planning
+Claude, Porter, James, Gelder, Cruse, Tianna, Andrew, Matt, Tim
+ - Just a few more days left until MN data is ready for James processing
+ - then NE data should get done and then maybe some OH data
+ - discussion on how we can proceed with the Cheaspeake Bay modelling
+ - IN remains doubtful as proposal was not funded, but not declined either
+ - discussion on if we can work with LMOD and WEPP/DEP, hopefully
+ - Matt discussed survey results, but not everybody got it, so will try again
+ - [ ] have the calendar highlight active days (nebulous)
+ - [ ] could one draw freehand on the map and get averaged values for that area
+ - [ ] allow the data tables to more easily be downloaded
+ - [ ] a share button on the screen somewhere
+ - Matt shows a UI mockup that is mostly targetted for desktop
+ - FSA is considering funding some HEL work with looking at using prairie
+   strips where currently all CRP
+ - There are ongoing discussions of a DEP implementation in Europe
+
+ 9 May 2018 - HUD Project Update
+Gelder, Cruse, Bates, Miller
+ - Attempting to be proactive with defining a set of deliverables for HUD
+ - Would like to set up automated reporting and deliver via USB drives
+ - The USB drives would contain job sheets with how to use the data
+ - Gelder will include maps of residue cover
+ - There is some windshield survey data floating around, but need to clarify
+   the methodology and timing of collection
+ - In the future, the hope is that we can update residue management every 2y
+ - NRCS has a standard for reporting residue cover at planting
+ - [ ] need to generate precipitation profile changes for a deliverable
+ - by the end of August
+ - [ ] generate maps at huc12 scale with just that data provided
+ - Tim's INRC scenarios can be used for the scenario work here
+
 13 Apr 2018 - DEP Planning
 Rishi, Matt, Tim, Claudette, Hanna, Gelder, Mellisa, JAmes, Tianna, Andrew,
 Sarah
