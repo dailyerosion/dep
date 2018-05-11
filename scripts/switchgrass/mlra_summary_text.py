@@ -21,8 +21,16 @@ def main(argv):
     pgconn = get_dbconn('idep')
 
     mlraxref = read_sql("""
-    select distinct mlra_id, mlra_name from mlra
-    """, pgconn, index_col='mlra_id')
+    with m as (
+        select mlra_id, mlra_name, sum(st_area(geography(geom))) from mlra
+        WHERE mlra_id = %s GROUP by mlra_id, mlra_name),
+    h as (
+        select mlra_id, sum(st_area(geography(st_transform(geom, 4326))))
+        from huc12 WHERE scenario = 0 and mlra_id = %s GROUP by mlra_id
+    )
+    SELECT m.mlra_id, m.mlra_name, h.sum / m.sum * 100. as coverage
+    from m JOIN h on (m.mlra_id = h.mlra_id)
+    """, pgconn, params=(mlra_id, mlra_id), index_col='mlra_id')
 
     df = read_sql("""
     with myhucs as (
@@ -37,13 +45,14 @@ def main(argv):
     GROUP by r.huc_12, year, scenario
     """, pgconn, params=(mlra_id, ), index_col=None)
     gdf = df.groupby('scenario').mean()
-    print("%s\t%.2f" % (mlraxref.at[mlra_id, 'mlra_name'],
-                        gdf.at[0, 'runoff']), end='\t')
+    print("%s\t%.1f\t%.2f" % (mlraxref.at[mlra_id, 'mlra_name'],
+                              mlraxref.at[mlra_id, 'coverage'],
+                              gdf.at[0, 'runoff']), end='\t')
     for scenario in range(36, 39):
         delta = gdf.loc[(scenario, )] / gdf.loc[(0, )] * 100.
-        print("%.2f (%.1f%%)" % (gdf.at[scenario, 'runoff'], delta['runoff']), end='\t')
+        print("%.2f (%.1f%%)" % (gdf.at[scenario, 'runoff'], delta['runoff']),
+              end='\t')
     print()
-
 
 
 if __name__ == '__main__':

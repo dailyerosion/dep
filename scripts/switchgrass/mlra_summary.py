@@ -22,7 +22,7 @@ def main(argv):
     fig, ax = plt.subplots(3, 3, figsize=(12, 6))
 
     mlraxref = read_sql("""
-    select mlra_id, mlra_name from mlra
+    select distinct mlra_id, mlra_name from mlra
     """, pgconn, index_col='mlra_id')
     fig.text(0.5, 0.96,
              ("CSCAP Yearly Scenario Changes for MLRA: %s [%s]"
@@ -35,8 +35,8 @@ def main(argv):
             SELECT huc_12 from huc12 where scenario = 0 and mlra_id = %s
         )
         select r.huc_12, scenario, extract(year from valid)::int as year,
-        sum(avg_loss) * 4.463 as loss, sum(avg_runoff) as runoff,
-        sum(avg_delivery) * 4.463 as delivery
+        sum(avg_loss) * 10. as loss, sum(avg_runoff) as runoff,
+        sum(avg_delivery) * 10. as delivery
         from results_by_huc12 r JOIN myhucs h on (r.huc_12 = h.huc_12)
         where r.valid >= '2008-01-01' and r.valid < '2017-01-01'
         and (scenario = 0 or scenario = %s)
@@ -52,7 +52,8 @@ def main(argv):
             if row == 0:
                 ax[row, col].set_title("Scenario %s\n%s" % (scenario,
                                                             LABELS[scenario]))
-    ylabels = ['Runoff [mm]', 'Loss [T/a]', 'Delivery [T/a]']
+    ylabels = ['Runoff [mm]', 'Detachment\n[tonnes/ha]',
+               'Delivery [tonnes/ha]']
     for row in range(3):
         ymin = 99
         ymax = -99
@@ -69,6 +70,7 @@ def main(argv):
                 ax[row, col].set_ylabel(ylabels[row])
 
     fig.savefig('mlra%s.png' % (mlra_id, ))
+    fig.savefig('mlra%s.pdf' % (mlra_id, ))
     plt.close()
 
 
