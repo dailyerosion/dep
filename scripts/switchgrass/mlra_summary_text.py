@@ -37,8 +37,8 @@ def main(argv):
         SELECT huc_12 from huc12 where scenario = 0 and mlra_id = %s
     )
     select r.huc_12, scenario, extract(year from valid)::int as year,
-    sum(avg_loss) * 4.463 as loss, sum(avg_runoff) as runoff,
-    sum(avg_delivery) * 4.463 as delivery
+    sum(avg_loss) * 10. as loss, sum(avg_runoff) as runoff,
+    sum(avg_delivery) * 10. as delivery
     from results_by_huc12 r JOIN myhucs h on (r.huc_12 = h.huc_12)
     where r.valid >= '2008-01-01' and r.valid < '2017-01-01'
     and scenario in (0, 36, 37, 38)
@@ -47,10 +47,10 @@ def main(argv):
     gdf = df.groupby('scenario').mean()
     print("%s\t%.1f\t%.2f" % (mlraxref.at[mlra_id, 'mlra_name'],
                               mlraxref.at[mlra_id, 'coverage'],
-                              gdf.at[0, 'runoff']), end='\t')
+                              gdf.at[0, 'delivery']), end='\t')
     for scenario in range(36, 39):
         delta = gdf.loc[(scenario, )] / gdf.loc[(0, )] * 100.
-        print("%.2f (%.1f%%)" % (gdf.at[scenario, 'runoff'], delta['runoff']),
+        print("%.2f (%.1f%%)" % (gdf.at[scenario, 'delivery'], delta['delivery']),
               end='\t')
     print()
 
