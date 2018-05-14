@@ -22,6 +22,17 @@ Here's a listing of project landuse codes used
   L - Double Crop  (started previous year)
   W - Wheat
   N - Small Grain
+  E - Sugarbeets
+  J - Rice
+  N - Cotton
+  a - Nuts
+  d - Fruit
+  g - Small Grains
+  m - Legumes
+  o - Oilseed
+  p - Grapes
+  q - Orchards
+  v - Vegetables
 """
 from __future__ import print_function
 import os
