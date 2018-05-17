@@ -1,3 +1,13 @@
+15 May 2018 - Website HCI + ISU Luggage
+Ann, John, Sarah, Matt
+ - So we can develop custom modules in our github repo and they will pull
+ - one-page apps would become git submodules, which they then pull into repo
+ - [x] dailyerosion.org needs to reside at ISU DNS
+ - just to note that various websites may include my twitter feed in roll
+ - Discussion of differences between ISU Theme and Luggage team and how
+   bootstrap fits in.  Summary: differences are hoped to be small
+ - Meet again during the beginning of June
+
 10 May 2018 - DEP Planning
 Claude, Porter, James, Gelder, Cruse, Tianna, Andrew, Matt, Tim
  - Just a few more days left until MN data is ready for James processing
