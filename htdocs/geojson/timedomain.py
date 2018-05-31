@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 """Return the time domain that we have DEP data for, given this scenario"""
 import cgi
-import sys
 import json
-import psycopg2
 import datetime
+
+from pyiem.util import get_dbconn, ssw
 ISO = "%Y-%m-%dT%H:%M:%SZ"
 
 
 def get_time(scenario):
     """Search for q"""
-    pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
     d = dict()
     d['server_time'] = datetime.datetime.utcnow().strftime(ISO)
@@ -33,9 +33,10 @@ def main():
     """DO Something"""
     form = cgi.FieldStorage()
     scenario = int(form.getfirst('scenario', 0))
-    sys.stdout.write("Content-type: application/json\n\n")
+    ssw("Content-type: application/json\n\n")
 
-    sys.stdout.write(json.dumps(get_time(scenario)))
+    ssw(json.dumps(get_time(scenario)))
+
 
 if __name__ == '__main__':
     main()

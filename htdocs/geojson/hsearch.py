@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 import cgi
-import sys
 import json
 
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconn, ssw
 
 
 def search(q):
@@ -23,9 +22,9 @@ def main():
     """DO Something"""
     form = cgi.FieldStorage()
     q = form.getfirst('q', '')
-    sys.stdout.write("Content-type: application/json\n\n")
+    ssw("Content-type: application/json\n\n")
 
-    sys.stdout.write(json.dumps(search(q)))
+    ssw(json.dumps(search(q)))
 
 
 if __name__ == '__main__':

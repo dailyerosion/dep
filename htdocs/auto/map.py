@@ -4,13 +4,13 @@ import sys
 import cgi
 import datetime
 import os
-import cStringIO
+from io import BytesIO
 
 import memcache
 from shapely.wkb import loads
 import numpy as np
 from jenks import jenks
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconn, ssw
 
 V2NAME = {
     'avg_loss': 'Detachment',
@@ -97,7 +97,7 @@ def make_map(ts, ts2, scenario, v):
     if ts > lastts.date() or ts2 > lastts.date() or ts < floor:
         m.ax.text(0.5, 0.5, "Data Not Available\nPlease Check Back Later!",
                   transform=m.ax.transAxes, fontsize=20, ha='center')
-        ram = cStringIO.StringIO()
+        ram = BytesIO()
         plt.savefig(ram, format='png', dpi=100)
         ram.seek(0)
         return ram.read(), False
@@ -115,7 +115,7 @@ def make_map(ts, ts2, scenario, v):
     patches = []
     data = []
     for row in cursor:
-        polygon = loads(row[0].decode('hex'))
+        polygon = loads(row[0], hex=True)
         a = np.asarray(polygon.exterior)
         points = m.ax.projection.transform_points(ccrs.Geodetic(),
                                                   a[:, 0], a[:, 1])
@@ -136,7 +136,7 @@ def make_map(ts, ts2, scenario, v):
     lbl = [round(_, 2) for _ in bins]
     m.draw_colorbar(bins, cmap, norm, units=V2UNITS[v],
                     clevlabels=lbl)
-    ram = cStringIO.StringIO()
+    ram = BytesIO()
     plt.savefig(ram, format='png', dpi=100)
     ram.seek(0)
     return ram.read(), True
@@ -161,7 +161,7 @@ def main():
                                           v)
     mc = memcache.Client(['iem-memcached:11211'], debug=0)
     res = mc.get(mckey)
-    sys.stdout.write("Content-type: image/png\n\n")
+    ssw("Content-type: image/png\n\n")
     hostname = os.environ.get("SERVER_NAME", "")
     if not res or hostname == "dailyerosion.local":
         # Lazy import to help speed things up
@@ -169,7 +169,7 @@ def main():
         sys.stderr.write("Setting cache: %s\n" % (mckey,))
         if do_cache:
             mc.set(mckey, res, 3600)
-    sys.stdout.write(res)
+    ssw(res)
 
 
 if __name__ == '__main__':

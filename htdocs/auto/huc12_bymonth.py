@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 """Mapping Interface"""
 import cgi
-import sys
-import cStringIO
+from io import BytesIO
 import calendar
 
 import numpy as np
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconn, ssw
 
 
 def make_plot(huc12, scenario):
@@ -54,22 +53,22 @@ def make_plot(huc12, scenario):
             ax.text(rect.get_x() + rect.get_width()/2., 1.05 * height,
                     '%.1f' % height, ha='center', va='bottom')
     autolabel(bars)
-    ram = cStringIO.StringIO()
+    ram = BytesIO()
     plt.savefig(ram, format='png', dpi=100)
     ram.seek(0)
     return ram.read()
 
 
-def main(argv):
+def main():
     """Do something fun"""
     form = cgi.FieldStorage()
     huc12 = form.getfirst('huc12', '000000000000')[:12]
     scenario = int(form.getfirst('scenario', 0))
 
-    sys.stdout.write("Content-type: image/png\n\n")
-    sys.stdout.write(make_plot(huc12, scenario))
+    ssw("Content-type: image/png\n\n")
+    ssw(make_plot(huc12, scenario))
 
 
 if __name__ == '__main__':
     # See how we are called
-    main(sys.argv)
+    main()

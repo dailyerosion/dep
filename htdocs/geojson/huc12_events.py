@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 """GeoJSON service for HUC12 data"""
-import sys
 import json
 import cgi
 import datetime
 
 import memcache
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconn, ssw
 
 
 def do(huc12, mode):
@@ -56,7 +55,7 @@ def do(huc12, mode):
 
 def main():
     """Do Fun things"""
-    sys.stdout.write("Content-Type: application/vnd.geo+json\n\n")
+    ssw("Content-Type: application/vnd.geo+json\n\n")
     form = cgi.FieldStorage()
     cb = form.getfirst('callback', None)
     huc12 = form.getfirst('huc12', '000000000000')[:12]
@@ -71,9 +70,9 @@ def main():
         mc.set(mckey, res, 15)
 
     if cb is None:
-        sys.stdout.write(res)
+        ssw(res)
     else:
-        sys.stdout.write("%s(%s)" % (cb, res))
+        ssw("%s(%s)" % (cb, res))
 
 
 if __name__ == '__main__':

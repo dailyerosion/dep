@@ -4,13 +4,12 @@ Called from DEP map application
 """
 import cgi
 import datetime
-import sys
 import os
 import shutil
 import zipfile
 
 from geopandas import GeoDataFrame
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconn, ssw
 
 
 def workflow(dt, dt2, states):
@@ -64,11 +63,10 @@ def workflow(dt, dt2, states):
         zfp.write("%s.%s" % (fn, suffix))
     zfp.close()
 
-    sys.stdout.write("Content-type: application/octet-stream\n")
-    sys.stdout.write(("Content-Disposition: attachment; filename=%s.zip\n\n"
-                      "") % (fn,))
+    ssw("Content-type: application/octet-stream\n")
+    ssw("Content-Disposition: attachment; filename=%s.zip\n\n" % (fn,))
 
-    sys.stdout.write(file(fn+".zip", 'r').read())
+    ssw(open(fn+".zip", 'rb').read())
 
     suffixes.append('zip')
     for suffix in suffixes:

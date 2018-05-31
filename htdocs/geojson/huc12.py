@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 """GeoJSON service for HUC12 data"""
-import sys
 import json
 import cgi
 import datetime
 
 import memcache
 from jenks import jenks
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconn, ssw
 
 
-def myjenks(array, label):
+def myjenks(array, _label):
     """Create classification breaks for the array"""
     a = list(set(jenks(array, 6)))
     # Some failures happen when number of values > 0 is less than 6
@@ -95,7 +94,7 @@ def do(ts, ts2, domain):
 
 def main():
     """Do Fun things"""
-    sys.stdout.write("Content-Type: application/vnd.geo+json\n\n")
+    ssw("Content-Type: application/vnd.geo+json\n\n")
     form = cgi.FieldStorage()
     cb = form.getfirst('callback', None)
     domain = form.getfirst('domain', None)
@@ -116,9 +115,9 @@ def main():
         mc.set(mckey, res, 3600)
 
     if cb is None:
-        sys.stdout.write(res)
+        ssw(res)
     else:
-        sys.stdout.write("%s(%s)" % (cb, res))
+        ssw("%s(%s)" % (cb, res))
 
 
 if __name__ == '__main__':
