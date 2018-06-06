@@ -127,6 +127,8 @@ def make_map(ts, ts2, scenario, v):
         bins = [0.01, 0.02, 0.03, 0.04, 0.05]
     else:
         bins = myjenks(data, 'bah', len(c))
+    if len(bins) < 3:
+        bins = [0.01, 0.02, 0.03, 0.04, 0.05]
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
     for val, patch in zip(data, patches):
         c = cmap(norm([val, ]))[0]
