@@ -2,3 +2,4 @@ pyshp
 tqdm
 pandas
 psycopg2
+twython
