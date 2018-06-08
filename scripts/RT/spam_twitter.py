@@ -3,12 +3,12 @@ import datetime
 from io import BytesIO
 
 import requests
-import pyiem.dep as deputil
+from pyiem import util
 
 
 def main():
     """Do Wonderful things"""
-    twitter = deputil.get_twitter()
+    twitter = util.get_twitter('dailyerosion')
     # assume we run for yesterday
     yesterday = datetime.date.today() - datetime.timedelta(days=1)
     yyyymmdd = yesterday.strftime("%Y%m%d")
