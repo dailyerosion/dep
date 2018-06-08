@@ -128,12 +128,12 @@ class WeppRun(object):
         proc = subprocess.Popen(["wepp", ],
                                 stderr=subprocess.PIPE,
                                 stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-        proc.stdin.write(open(runfile).read())
+        proc.stdin.write(open(runfile, 'rb').read())
         res = proc.stdout.read()
         if res[-13:-1] != 'SUCCESSFULLY':
             print('Run HUC12: %s FPATH: %4s errored!' % (self.huc12,
                                                          self.fpid))
-            efp = open(self.get_error_fn(), 'w')
+            efp = open(self.get_error_fn(), 'wb')
             efp.write(res)
             efp.close()
 

@@ -4,7 +4,7 @@ import sys
 import datetime
 import os
 import multiprocessing
-import StringIO
+from io import StringIO
 
 import pandas as pd
 from tqdm import tqdm
@@ -52,7 +52,7 @@ def main(argv):
                                                                   year))
     huc12s = find_huc12s(scenario)
     pool = multiprocessing.Pool()
-    tdf = StringIO.StringIO()
+    tdf = StringIO()
     for df in tqdm(pool.imap_unordered(do_huc12, huc12s), total=len(huc12s),
                    disable=(not sys.stdout.isatty())):
         if df is None:
