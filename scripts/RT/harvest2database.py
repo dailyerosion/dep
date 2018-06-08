@@ -15,7 +15,7 @@ from pyiem.util import get_dbconn
 def readfile(huc12, filename):
     """Make me a df please"""
     df = read_yld(filename)
-    if len(df.index) == 0:
+    if df.empty:
         return None
     df['huc12'] = huc12
     df['fpath'] = filename.split("/")[-1].split("_")[-1].split(".")[0]
@@ -35,7 +35,7 @@ def do_huc12(basedir):
     """"Process this path's worth of data"""
     huc12 = "".join(basedir.split("/")[-2:])
     frames = [readfile(huc12, basedir+"/"+f) for f in os.listdir(basedir)]
-    if len(frames) == 0 or all([f is None for f in frames]):
+    if not frames or all([f is None for f in frames]):
         return
     df = pd.concat(frames)
     return df

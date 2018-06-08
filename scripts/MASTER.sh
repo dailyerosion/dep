@@ -13,7 +13,4 @@ cd cligen
 python daily_clifile_editor.py 0
 
 cd ../RT
-python proctor.py 0
-python env2database.py 0
-python harvest2database.py 0
-python spam_twitter.py
+python proctor.py 0 && python env2database.py 0 && python harvest2database.py 0 && python spam_twitter.py

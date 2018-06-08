@@ -128,14 +128,16 @@ class WeppRun(object):
         proc = subprocess.Popen(["wepp", ],
                                 stderr=subprocess.PIPE,
                                 stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-        proc.stdin.write(open(runfile, 'rb').read())
-        res = proc.stdout.read()
-        if res[-13:-1] != 'SUCCESSFULLY':
-            print('Run HUC12: %s FPATH: %4s errored!' % (self.huc12,
-                                                         self.fpid))
+        (stdoutdata, stderrdata) = proc.communicate(open(runfile, 'rb').read())
+        if stdoutdata[-13:-1] != b'SUCCESSFULLY':
+            print(('Run HUC12: %s FPATH: %4s errored! "%s"'
+                   ) % (self.huc12, self.fpid, stdoutdata[-13:-1]))
             efp = open(self.get_error_fn(), 'wb')
-            efp.write(res)
+            efp.write(stdoutdata)
+            efp.write(stderrdata)
             efp.close()
+            return False
+        return True
 
 
 def realtime_run():
@@ -144,8 +146,10 @@ def realtime_run():
     icursor = idep.cursor()
 
     queue = []
-    icursor.execute("""SELECT huc_12, fid, fpath, climate_file
-    from flowpaths where scenario = %s""" % (SCENARIO,))
+    icursor.execute("""
+        SELECT huc_12, fid, fpath, climate_file
+        from flowpaths where scenario = %s
+    """ % (SCENARIO,))
     for row in icursor:
         queue.append(row)
     return queue
@@ -163,7 +167,13 @@ def main():
     pool = Pool()  # defaults to cpu-count
     sts = datetime.datetime.now()
     sz = len(queue)
-    for i, _ in enumerate(pool.imap_unordered(run, queue), 1):
+    failures = 0
+    for i, res in enumerate(pool.imap_unordered(run, queue), 1):
+        if not res:
+            failures += 1
+        if failures > 100:
+            print("ABORT due to more than 100 failures...")
+            sys.exit(10)
         if i > 0 and i % 5000 == 0:
             delta = datetime.datetime.now() - sts
             secs = delta.microseconds / 1000000. + delta.seconds
