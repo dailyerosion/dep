@@ -158,7 +158,7 @@ def realtime_run():
 def run(row):
     """ Run ! """
     wr = WeppRun(row[0], row[2], row[3])
-    wr.run()
+    return wr.run()
 
 
 def main():
