@@ -250,7 +250,8 @@ def do_huc12(huc12):
     rows = []
     deleted = delete_previous_entries(huc12)
     for date in dates:
-        df2 = df[df.date == date]
+        # df['date'] is datetime64, so need to cast
+        df2 = df[df['date'].dt.date == date]
         # We have no data, any previous entries were deleted above already
         qc_precip = 0 if SCENARIO > 0 else precip[date][huc12]
         if len(df2.index) == 0 and qc_precip == 0:
