@@ -1,3 +1,20 @@
+14 Jun 2018 - DEP Panning
+Claude, Miller, Gelder, Bates, Cruse, Andrea
+ - MN is basically done, just need to round trip via Gelder (2 months)
+ - NE is almost done too, with the same round trip in play
+ - There was an ISU Luggage training session that I missed out on, sigh
+ - There is a demonstration test DEP website that I was not told of
+ - An upcoming usability survey will have a 10 dollar allowance
+ - [ ] ensure that ISU Google Appliance is indexing the new dailyerosion.org
+ - [ ] search functionality by name is not good enough, add by zipcode, review
+   what IFIS map has for their search functionality
+ - Our China collaborators have found a 30 minute interval precipitation prod
+ - Upcoming funded work on evaluating prairie strings within DEP
+ - Dr Bruno Basso has some sort of digitial corn yield map that would be nice
+   to use to identify HEL
+ - [ ] stabilize the ramps used on plots and on the maps
+ - [ ] create state-only images as possible for twitter upload
+
 15 May 2018 - Website HCI + ISU Luggage
 Ann, John, Sarah, Matt
  - So we can develop custom modules in our github repo and they will pull
