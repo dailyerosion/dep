@@ -9,8 +9,9 @@ from io import BytesIO
 import memcache
 from shapely.wkb import loads
 import numpy as np
-from jenks import jenks
+from pyiem.plot.colormaps import james, james2
 from pyiem.util import get_dbconn, ssw
+from pyiem.dep import RAMPS
 
 V2NAME = {
     'avg_loss': 'Detachment',
@@ -31,28 +32,6 @@ V2UNITS = {
     }
 
 
-def myjenks(array, label, sz=6):
-    """Create classification breaks for the array"""
-    a = list(set(jenks(array, sz)))
-    # Some failures happen when number of values > 0 is less than 6
-    # sys.stderr.write(label + str(a))
-    a.sort()
-    if max(a) == 0:
-        return [0]
-    if a[1] < 0.01:
-        newa = [a[0]]
-        for _ in a[1:]:
-            if _ > 0.01:
-                newa.append(_)
-        a = newa
-    # sys.stderr.write(label + str(a))
-    if max(a) == 0 or len(a) < 2:
-        return [0]
-    if a[0] == 0 and a[1] > 0.001:
-        a[0] = 0.001
-    return [float(_) for _ in a]
-
-
 def make_map(ts, ts2, scenario, v):
     """Make the map"""
     import matplotlib
@@ -65,16 +44,16 @@ def make_map(ts, ts2, scenario, v):
 
     # suggested for runoff and precip
     if v in ['qc_precip', 'avg_runoff']:
-        c = ['#ffffa6', '#9cf26d', '#76cc94', '#6399ba', '#5558a1']
+        # c = ['#ffffa6', '#9cf26d', '#76cc94', '#6399ba', '#5558a1']
+        cmap = james()
     # suggested for detachment
     elif v in ['avg_loss']:
-        c = ['#cbe3bb', '#c4ff4d', '#ffff4d', '#ffc44d', '#ff4d4d', '#c34dee']
+        # c = ['#cbe3bb', '#c4ff4d', '#ffff4d', '#ffc44d', '#ff4d4d', '#c34dee']
+        cmap = james2()
     # suggested for delivery
     elif v in ['avg_delivery']:
-        c = ['#ffffd2', '#ffff4d', '#ffe0a5', '#eeb74d', '#ba7c57', '#96504d']
-    cmap = mpcolors.ListedColormap(c, 'james')
-    cmap.set_under('white')
-    cmap.set_over('black')
+        # c = ['#ffffd2', '#ffff4d', '#ffe0a5', '#eeb74d', '#ba7c57', '#96504d']
+        cmap = james2()
 
     pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
@@ -123,12 +102,11 @@ def make_map(ts, ts2, scenario, v):
         patches.append(p)
         data.append(row[1])
     data = np.array(data) * V2MULTI[v]
-    if np.max(data) < 0.05:
-        bins = [0.01, 0.02, 0.03, 0.04, 0.05]
+    if ts == ts2:
+        # Daily
+        bins = RAMPS['english'][0]
     else:
-        bins = myjenks(data, 'bah', len(c))
-    if len(bins) < 3:
-        bins = [0.01, 0.02, 0.03, 0.04, 0.05]
+        bins = RAMPS['english'][1]
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
     for val, patch in zip(data, patches):
         c = cmap(norm([val, ]))[0]

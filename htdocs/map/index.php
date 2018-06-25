@@ -132,7 +132,7 @@ echo <<<EOM
  <div class="row row-offcanvas row-offcanvas-right fill">
   <div class="col-xs-12 fill">
     <div id="map" style="width: 100%; height: 100%; position:fixed;"></div>
-	<canvas id="colorbar" width="100" height="100"></canvas>
+	<canvas id="colorbar" width="100" height="150"></canvas>
    </div>
    <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar">
      <div class="pull-left" id="buttontabs">
@@ -304,7 +304,7 @@ var appstate = {
 };
         </script>
 
-    <script src="nextgen.js?v=4"></script>
+    <script src="nextgen.js?v=5"></script>
 
 </html>
 EOM;

@@ -29,10 +29,15 @@ var levels = {
 	'avg_delivery': [[], []]
 };
 var colors = {
-  'qc_precip': ['#ffffa6', '#9cf26d', '#76cc94', '#6399ba', '#5558a1', '#c34dee'],     
-  'avg_runoff': ['#ffffa6', '#9cf26d', '#76cc94', '#6399ba', '#5558a1', '#c34dee'],
-  'avg_loss': ['#cbe3bb', '#c4ff4d', '#ffff4d', '#ffc44d', '#ff4d4d', '#c34dee'],
-  'avg_delivery': ['#ffffd2', '#ffff4d', '#ffe0a5', '#eeb74d', '#ba7c57', '#96504d']
+  'qc_precip': ['#FFFF80', '#CDFA64', '#98F046', '#61E827', '#3BD923', '#3FC453',
+  		        '#37AD7A', '#26989E', '#217AA3', '#215394', '#1B3187', '#0C1078'],     
+  'avg_runoff': ['#FFFF80', '#CDFA64', '#98F046', '#61E827', '#3BD923', '#3FC453',
+  				 '#37AD7A', '#26989E', '#217AA3', '#215394', '#1B3187', '#0C1078'],
+  // james2
+  'avg_loss': ['#FFFF80', '#FFEE70', '#FCDD60', '#FACD52', '#F7BE43', '#F5AF36',
+  			   '#E69729', '#CC781F', '#B35915', '#9C400E', '#822507', '#6B0000'],
+  'avg_delivery': ['#FFFF80', '#FFEE70', '#FCDD60', '#FACD52', '#F7BE43', '#F5AF36',
+  				   '#E69729', '#CC781F', '#B35915', '#9C400E', '#822507', '#6B0000']
 };
 
 /*
@@ -468,7 +473,7 @@ function drawColorbar(){
     var canvas = document.getElementById('colorbar');
     var ctx = canvas.getContext('2d');
     
-    canvas.height = colors[appstate.ltype].length * 20 + 50;
+    canvas.height = colors[appstate.ltype].length * 20 + 10;
     
     // Clear out the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);

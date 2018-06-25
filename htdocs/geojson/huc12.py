@@ -5,30 +5,8 @@ import cgi
 import datetime
 
 import memcache
-from jenks import jenks
+from pyiem.dep import RAMPS
 from pyiem.util import get_dbconn, ssw
-
-
-def myjenks(array, _label):
-    """Create classification breaks for the array"""
-    a = list(set(jenks(array, 6)))
-    # Some failures happen when number of values > 0 is less than 6
-    # sys.stderr.write(label + str(a))
-    a.sort()
-    if max(a) == 0:
-        return [0]
-    if a[1] < 0.01:
-        newa = [a[0]]
-        for _ in a[1:]:
-            if _ > 0.01:
-                newa.append(_)
-        a = newa
-    # sys.stderr.write(label + str(a))
-    if max(a) == 0 or len(a) < 2:
-        return [0]
-    if a[0] == 0 and a[1] > 0.001:
-        a[0] = 0.001
-    return [float(_) for _ in a]
 
 
 def do(ts, ts2, domain):
@@ -85,10 +63,17 @@ def do(ts, ts2, domain):
                                         avg_runoff=row[5]),
                                     geometry=json.loads(row[0])
                                     ))
-    res['jenks'] = dict(avg_loss=myjenks(avg_loss, 'avg_loss'),
-                        qc_precip=myjenks(qc_precip, 'qc_precip'),
-                        avg_delivery=myjenks(avg_delivery, 'avg_delivery'),
-                        avg_runoff=myjenks(avg_runoff, 'avg_runoff'))
+    myramp = RAMPS['english'][0]
+    if ts2 is not None:
+        days = (ts2 - ts).days
+        myramp = RAMPS['english'][1]
+        if days > 31:
+            myramp = RAMPS['english'][2]
+
+    res['jenks'] = dict(avg_loss=myramp,
+                        qc_precip=myramp,
+                        avg_delivery=myramp,
+                        avg_runoff=myramp)
     return json.dumps(res)
 
 

@@ -12,7 +12,7 @@ Claude, Miller, Gelder, Bates, Cruse, Andrea
  - Upcoming funded work on evaluating prairie strings within DEP
  - Dr Bruno Basso has some sort of digitial corn yield map that would be nice
    to use to identify HEL
- - [ ] stabilize the ramps used on plots and on the maps
+ - akrherz/dep#60 stabilize the ramps used on plots and on the maps
  - [ ] create state-only images as possible for twitter upload
 
 15 May 2018 - Website HCI + ISU Luggage
