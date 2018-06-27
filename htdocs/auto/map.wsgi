@@ -1,20 +1,16 @@
-#!/usr/bin/env python
 """Mapping Interface"""
 import sys
 import datetime
-import os
 from io import BytesIO
 
-import memcache
-from shapely.wkb import loads
 import numpy as np
+import memcache
 from paste.request import parse_formvars
-import matplotlib
-matplotlib.use('agg')
-import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 import matplotlib.colors as mpcolors
+from geopandas import read_postgis
 import cartopy.crs as ccrs
+from pyiem.plot.use_agg import plt
 from pyiem.plot.geoplot import MapPlot
 from pyiem.plot.colormaps import james, james2
 from pyiem.util import get_dbconn
@@ -39,7 +35,7 @@ V2UNITS = {
     }
 
 
-def make_map(ts, ts2, scenario, v):
+def make_map(huc, ts, ts2, scenario, v):
     """Make the map"""
     plt.close()
     # suggested for runoff and precip
@@ -62,10 +58,7 @@ def make_map(ts, ts2, scenario, v):
     if ts != ts2:
         title = "for period between %s and %s" % (ts.strftime("%-d %b %Y"),
                                                   ts2.strftime("%-d %b %Y"))
-    m = MapPlot(axisbg='#EEEEEE', nologo=True, sector='custom',
-                south=36.8, north=45.0, west=-99.2, east=-88.9,
-                title='DEP %s by HUC12 %s' % (V2NAME[v], title),
-                caption='Daily Erosion Project')
+    projection = ccrs.Mercator()
 
     # Check that we have data for this date!
     cursor.execute("""
@@ -74,47 +67,60 @@ def make_map(ts, ts2, scenario, v):
     lastts = datetime.datetime.strptime(cursor.fetchone()[0], '%Y-%m-%d')
     floor = datetime.date(2007, 1, 1)
     if ts > lastts.date() or ts2 > lastts.date() or ts < floor:
-        m.ax.text(0.5, 0.5, "Data Not Available\nPlease Check Back Later!",
-                  transform=m.ax.transAxes, fontsize=20, ha='center')
+        plt.text(0.5, 0.5, "Data Not Available\nPlease Check Back Later!",
+                 fontsize=20, ha='center')
         ram = BytesIO()
         plt.savefig(ram, format='png', dpi=100)
         plt.close()
         ram.seek(0)
         return ram.read(), False
-    cursor.execute("""
+    if huc is None:
+        huclimiter = ''
+    elif len(huc) == 8:
+        huclimiter = " and substr(i.huc_12, 1, 8) = '%s' " % (huc, )
+    elif len(huc) == 12:
+        huclimiter = " and i.huc_12 = '%s' " % (huc, )
+    df = read_postgis("""
     WITH data as (
       SELECT huc_12, sum("""+v+""")  as d from results_by_huc12
       WHERE scenario = %s and valid between %s and %s
       GROUP by huc_12)
 
-    SELECT ST_Transform(simple_geom, 4326), coalesce(d.d, 0)
+    SELECT ST_Transform(simple_geom, %s) as geom,
+    coalesce(d.d, 0) * %s as data
     from huc12 i LEFT JOIN data d
     ON (i.huc_12 = d.huc_12) WHERE i.scenario = %s
-    """, (scenario, ts.strftime("%Y-%m-%d"),
-          ts2.strftime("%Y-%m-%d"), scenario))
-    patches = []
-    data = []
-    for row in cursor:
-        polygon = loads(row[0], hex=True)
-        a = np.asarray(polygon.exterior)
-        points = m.ax.projection.transform_points(ccrs.Geodetic(),
-                                                  a[:, 0], a[:, 1])
-        p = Polygon(points[:, :2], fc='white', ec='k', zorder=2, lw=.1)
-        patches.append(p)
-        data.append(row[1])
-    data = np.array(data) * V2MULTI[v]
+    """ + huclimiter + """
+    """, pgconn, params=(scenario, ts.strftime("%Y-%m-%d"),
+                         ts2.strftime("%Y-%m-%d"), projection.proj4_init,
+                         V2MULTI[v], scenario), geom_col='geom')
+    minx, miny, maxx, maxy = df['geom'].total_bounds
+    buf = 10000.  # 10km
+    pts = ccrs.Geodetic().transform_points(
+        projection, np.asarray([minx - buf, maxx + buf]),
+        np.asarray([miny - buf, maxy + buf]))
+    m = MapPlot(axisbg='#EEEEEE', nologo=True, sector='custom',
+                south=pts[0, 1], north=pts[1, 1],
+                west=pts[0, 0], east=pts[1, 0],
+                projection=projection,
+                title='DEP %s by HUC12 %s' % (V2NAME[v], title),
+                caption='Daily Erosion Project')
     if ts == ts2:
         # Daily
         bins = RAMPS['english'][0]
     else:
         bins = RAMPS['english'][1]
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
-    for val, patch in zip(data, patches):
-        c = cmap(norm([val, ]))[0]
-        patch.set_facecolor(c)
-        m.ax.add_patch(patch)
+    for _, row in df.iterrows():
+        p = Polygon(row['geom'].exterior,
+                    fc=cmap(norm([row['data'], ]))[0], ec='k',
+                    zorder=2, lw=.1)
+        m.ax.add_patch(p)
 
     lbl = [round(_, 2) for _ in bins]
+    if huc is not None:
+        m.drawcounties()
+        m.drawcities()
     m.draw_colorbar(bins, cmap, norm, units=V2UNITS[v],
                     clevlabels=lbl)
     ram = BytesIO()
@@ -124,8 +130,9 @@ def make_map(ts, ts2, scenario, v):
     return ram.read(), True
 
 
-def main(form):
+def main(environ):
     """Do something fun"""
+    form = parse_formvars(environ)
     year = form.get('year', 2015)
     month = form.get('month', 5)
     day = form.get('day', 5)
@@ -134,18 +141,19 @@ def main(form):
     day2 = form.get('day2', day)
     scenario = int(form.get('scenario', 0))
     v = form.get('v', 'avg_loss')
+    huc = form.get('huc')
 
     ts = datetime.date(int(year), int(month), int(day))
     ts2 = datetime.date(int(year2), int(month2), int(day2))
-    mckey = "/auto/map.py/%s/%s/%s/%s" % (ts.strftime("%Y%m%d"),
-                                          ts2.strftime("%Y%m%d"), scenario,
-                                          v)
+    mckey = "/auto/map.py/%s/%s/%s/%s/%s" % (huc, ts.strftime("%Y%m%d"),
+                                             ts2.strftime("%Y%m%d"), scenario,
+                                             v)
     mc = memcache.Client(['iem-memcached:11211'], debug=0)
     res = mc.get(mckey)
-    hostname = os.environ.get("SERVER_NAME", "")
+    hostname = environ.get("SERVER_NAME", "")
     if not res or hostname == "dailyerosion.local":
         # Lazy import to help speed things up
-        res, do_cache = make_map(ts, ts2, scenario, v)
+        res, do_cache = make_map(huc, ts, ts2, scenario, v)
         sys.stderr.write("Setting cache: %s\n" % (mckey,))
         if do_cache:
             mc.set(mckey, res, 3600)
@@ -154,9 +162,13 @@ def main(form):
 
 def application(environ, start_response):
     """Our mod-wsgi handler"""
-    form = parse_formvars(environ)
-    output = main(form)
+    output = main(environ)
     response_headers = [('Content-type', 'image/png')]
     start_response('200 OK', response_headers)
 
     return [output]
+
+
+if __name__ == '__main__':
+    make_map(None, datetime.date(2017, 12, 25), datetime.date(2017, 12, 25), 0,
+             'qc_precip')
