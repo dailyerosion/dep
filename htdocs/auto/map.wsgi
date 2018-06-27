@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """Mapping Interface"""
 import sys
-import cgi
 import datetime
 import os
 from io import BytesIO
@@ -9,8 +8,16 @@ from io import BytesIO
 import memcache
 from shapely.wkb import loads
 import numpy as np
+from paste.request import parse_formvars
+import matplotlib
+matplotlib.use('agg')
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+import matplotlib.colors as mpcolors
+import cartopy.crs as ccrs
+from pyiem.plot.geoplot import MapPlot
 from pyiem.plot.colormaps import james, james2
-from pyiem.util import get_dbconn, ssw
+from pyiem.util import get_dbconn
 from pyiem.dep import RAMPS
 
 V2NAME = {
@@ -34,25 +41,18 @@ V2UNITS = {
 
 def make_map(ts, ts2, scenario, v):
     """Make the map"""
-    import matplotlib
-    matplotlib.use('agg')
-    from pyiem.plot.geoplot import MapPlot
-    import matplotlib.pyplot as plt
-    from matplotlib.patches import Polygon
-    import matplotlib.colors as mpcolors
-    import cartopy.crs as ccrs
-
+    plt.close()
     # suggested for runoff and precip
     if v in ['qc_precip', 'avg_runoff']:
         # c = ['#ffffa6', '#9cf26d', '#76cc94', '#6399ba', '#5558a1']
         cmap = james()
     # suggested for detachment
     elif v in ['avg_loss']:
-        # c = ['#cbe3bb', '#c4ff4d', '#ffff4d', '#ffc44d', '#ff4d4d', '#c34dee']
+        # c =['#cbe3bb', '#c4ff4d', '#ffff4d', '#ffc44d', '#ff4d4d', '#c34dee']
         cmap = james2()
     # suggested for delivery
     elif v in ['avg_delivery']:
-        # c = ['#ffffd2', '#ffff4d', '#ffe0a5', '#eeb74d', '#ba7c57', '#96504d']
+        # c =['#ffffd2', '#ffff4d', '#ffe0a5', '#eeb74d', '#ba7c57', '#96504d']
         cmap = james2()
 
     pgconn = get_dbconn('idep')
@@ -78,6 +78,7 @@ def make_map(ts, ts2, scenario, v):
                   transform=m.ax.transAxes, fontsize=20, ha='center')
         ram = BytesIO()
         plt.savefig(ram, format='png', dpi=100)
+        plt.close()
         ram.seek(0)
         return ram.read(), False
     cursor.execute("""
@@ -118,21 +119,21 @@ def make_map(ts, ts2, scenario, v):
                     clevlabels=lbl)
     ram = BytesIO()
     plt.savefig(ram, format='png', dpi=100)
+    plt.close()
     ram.seek(0)
     return ram.read(), True
 
 
-def main():
+def main(form):
     """Do something fun"""
-    form = cgi.FieldStorage()
-    year = form.getfirst('year', 2015)
-    month = form.getfirst('month', 5)
-    day = form.getfirst('day', 5)
-    year2 = form.getfirst('year2', year)
-    month2 = form.getfirst('month2', month)
-    day2 = form.getfirst('day2', day)
-    scenario = int(form.getfirst('scenario', 0))
-    v = form.getfirst('v', 'avg_loss')
+    year = form.get('year', 2015)
+    month = form.get('month', 5)
+    day = form.get('day', 5)
+    year2 = form.get('year2', year)
+    month2 = form.get('month2', month)
+    day2 = form.get('day2', day)
+    scenario = int(form.get('scenario', 0))
+    v = form.get('v', 'avg_loss')
 
     ts = datetime.date(int(year), int(month), int(day))
     ts2 = datetime.date(int(year2), int(month2), int(day2))
@@ -141,7 +142,6 @@ def main():
                                           v)
     mc = memcache.Client(['iem-memcached:11211'], debug=0)
     res = mc.get(mckey)
-    ssw("Content-type: image/png\n\n")
     hostname = os.environ.get("SERVER_NAME", "")
     if not res or hostname == "dailyerosion.local":
         # Lazy import to help speed things up
@@ -149,9 +149,14 @@ def main():
         sys.stderr.write("Setting cache: %s\n" % (mckey,))
         if do_cache:
             mc.set(mckey, res, 3600)
-    ssw(res)
+    return res
 
 
-if __name__ == '__main__':
-    # See how we are called
-    main()
+def application(environ, start_response):
+    """Our mod-wsgi handler"""
+    form = parse_formvars(environ)
+    output = main(form)
+    response_headers = [('Content-type', 'image/png')]
+    start_response('200 OK', response_headers)
+
+    return [output]
