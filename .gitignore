@@ -5,6 +5,6 @@
 *.o
 *.csv
 *.dbf
-*.txt
+/scripts/import/*_0.txt
 /.vscode
 prj2wepp/wepp/hill.slp
