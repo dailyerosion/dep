@@ -42,6 +42,8 @@ def do(ts, ts2, domain):
         from data d LEFT JOIN obs o ON (d.huc_12 = o.huc_12)
     """, args)
     res = {'type': 'FeatureCollection',
+           'date': ts.strftime("%Y-%m-%d"),
+           'date2': None if ts2 is None else ts2.strftime("%Y-%m-%d"),
            'features': [],
            'generation_time': utcnow.strftime("%Y-%m-%dT%H:%M:%SZ"),
            'count': cursor.rowcount}
