@@ -3,3 +3,4 @@ tqdm
 pandas
 psycopg2
 twython
+reportlab

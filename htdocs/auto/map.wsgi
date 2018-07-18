@@ -35,6 +35,49 @@ V2UNITS = {
     }
 
 
+def make_overviewmap(form):
+    """Draw a pretty map of just the HUC."""
+    huc = form.get('huc')
+    plt.close()
+    projection = ccrs.Mercator()
+    if huc is None:
+        huclimiter = ''
+    elif len(huc) == 8:
+        huclimiter = " and substr(huc_12, 1, 8) = '%s' " % (huc, )
+    elif len(huc) == 12:
+        huclimiter = " and huc_12 = '%s' " % (huc, )
+    pgconn = get_dbconn('idep')
+    df = read_postgis("""
+        SELECT ST_Transform(simple_geom, %s) as geom
+        from huc12 i WHERE i.scenario = 0 """ + huclimiter + """
+    """, pgconn, params=(projection.proj4_init, ), geom_col='geom')
+    minx, miny, maxx, maxy = df['geom'].total_bounds
+    buf = float(form.get('zoom', 10.)) * 1000.  # 10km
+    pts = ccrs.Geodetic().transform_points(
+        projection, np.asarray([minx - buf, maxx + buf]),
+        np.asarray([miny - buf, maxy + buf]))
+    m = MapPlot(axisbg='#EEEEEE', nologo=True, sector='custom',
+                south=pts[0, 1], north=pts[1, 1],
+                west=pts[0, 0], east=pts[1, 0],
+                projection=projection,
+                continentalcolor='white',
+                title='DEP HUC %s' % (huc, ),
+                caption='Daily Erosion Project')
+    for _, row in df.iterrows():
+        p = Polygon(row['geom'].exterior,
+                    fc='red', ec='k',
+                    zorder=20, lw=.1)
+        m.ax.add_patch(p)
+    if huc is not None:
+        m.drawcounties()
+        m.drawcities()
+    ram = BytesIO()
+    plt.savefig(ram, format='png', dpi=100)
+    plt.close()
+    ram.seek(0)
+    return ram.read(), True
+
+
 def make_map(huc, ts, ts2, scenario, v):
     """Make the map"""
     plt.close()
@@ -148,12 +191,17 @@ def main(environ):
     mckey = "/auto/map.py/%s/%s/%s/%s/%s" % (huc, ts.strftime("%Y%m%d"),
                                              ts2.strftime("%Y%m%d"), scenario,
                                              v)
+    if form.get('overview'):
+        mckey = "/auto/map.py/%s/%s" % (huc, form.get('zoom'))
     mc = memcache.Client(['iem-memcached:11211'], debug=0)
     res = mc.get(mckey)
     hostname = environ.get("SERVER_NAME", "")
-    if not res or hostname == "dailyerosion.local":
+    if not res or hostname == "dailyerosion.local2":
         # Lazy import to help speed things up
-        res, do_cache = make_map(huc, ts, ts2, scenario, v)
+        if form.get('overview'):
+            res, do_cache = make_overviewmap(form)
+        else:
+            res, do_cache = make_map(huc, ts, ts2, scenario, v)
         sys.stderr.write("Setting cache: %s\n" % (mckey,))
         if do_cache:
             mc.set(mckey, res, 3600)
