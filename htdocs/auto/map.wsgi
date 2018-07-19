@@ -42,15 +42,14 @@ def make_overviewmap(form):
     projection = ccrs.Mercator()
     if huc is None:
         huclimiter = ''
-    elif len(huc) == 8:
-        huclimiter = " and substr(huc_12, 1, 8) = '%s' " % (huc, )
-    elif len(huc) == 12:
-        huclimiter = " and huc_12 = '%s' " % (huc, )
+    elif len(huc) >= 8:
+        huclimiter = " and substr(huc_12, 1, 8) = '%s' " % (huc[:8], )
     pgconn = get_dbconn('idep')
     df = read_postgis("""
-        SELECT ST_Transform(simple_geom, %s) as geom
+        SELECT ST_Transform(simple_geom, %s) as geom, huc_12
         from huc12 i WHERE i.scenario = 0 """ + huclimiter + """
-    """, pgconn, params=(projection.proj4_init, ), geom_col='geom')
+    """, pgconn, params=(projection.proj4_init, ), geom_col='geom',
+                      index_col='huc_12')
     minx, miny, maxx, maxy = df['geom'].total_bounds
     buf = float(form.get('zoom', 10.)) * 1000.  # 10km
     pts = ccrs.Geodetic().transform_points(
@@ -63,9 +62,9 @@ def make_overviewmap(form):
                 continentalcolor='white',
                 title='DEP HUC %s' % (huc, ),
                 caption='Daily Erosion Project')
-    for _, row in df.iterrows():
+    for _huc12, row in df.iterrows():
         p = Polygon(row['geom'].exterior,
-                    fc='red', ec='k',
+                    fc='red' if _huc12 == huc else 'tan', ec='k',
                     zorder=20, lw=.1)
         m.ax.add_patch(p)
     if huc is not None:

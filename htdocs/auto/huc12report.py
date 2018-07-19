@@ -5,8 +5,9 @@ import datetime
 import cgi
 
 import requests
+from pandas.io.sql import read_sql
 from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Image,
-                                Table)
+                                Table, TableStyle, PageBreak)
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
@@ -23,19 +24,43 @@ accomplish.  Until then, you must await more magic to happen.
 def generate_summary_table(huc12):
     """Make a table summarizing our results, please."""
     data = []
-    data.append(['YEAR', 'PRECIP', "LOSS", "RUNOFF", "DELIVERY"])
+    data.append(['Year', 'Precip', "Runoff", "Loss", "Delivery",
+                '2+" Precip', 'Events'])
+    data.append(['', '[inch]', "[inch]", "[tons/acre]", "[tons/acre]",
+                 "[days]", "[days]"])
     pgconn = get_dbconn('idep')
-    cursor = pgconn.cursor()
-    cursor.execute("""
-        SELECT extract(year from valid) as year, sum(qc_precip),
-        sum(avg_loss), sum(avg_runoff), sum(avg_delivery)
+    df = read_sql("""
+        SELECT extract(year from valid)::int as year,
+        round((sum(qc_precip) / 25.4)::numeric, 2),
+        round((sum(avg_runoff) / 25.4)::numeric, 2),
+        round((sum(avg_loss) * 4.463)::numeric, 2),
+        round((sum(avg_delivery) * 4.463)::numeric, 2),
+        sum(case when qc_precip >= 50.8 then 1 else 0 end) as pdays,
+        sum(case when avg_loss > 0 then 1 else 0 end) as events
         from results_by_huc12 WHERE scenario = 0 and huc_12 = %s
+        and valid >= '2008-01-01'
         GROUP by year ORDER by year ASC
-    """, (huc12, ))
-    for row in cursor:
-        data.append(row)
+    """, pgconn, params=(huc12, ), index_col='year')
+    for year, row in df.iterrows():
+        vals = [year]
+        vals.extend(["%.2f" % (f, ) for f in list(row)[:-2]])
+        vals.extend(["%.0f" % (f, ) for f in list(row)[-2:]])
+        data.append(vals)
+    data[-1][0] = "%s*" % (data[-1][0], )
+    totals = df.iloc[:-1].mean()
+    vals = ['Average']
+    vals.extend(["%.2f" % (f, ) for f in list(totals)])
+    data.append(vals)
 
-    return Table(data)
+    style = TableStyle(
+        [('LINEBELOW', (1, 1), (-1, 1), 0.5, '#000000'),
+         ('LINEAFTER', (0, 2), (0, -2), 0.5, '#000000'),
+         ('LINEABOVE', (1, -1), (-1, -1), 0.5, '#000000'),
+         ('ALIGN', (0, 0), (-1, -1), 'RIGHT')]
+    )
+    for rownum in range(3, len(data)+1, 2):
+        style.add('LINEBELOW', (0, rownum), (-1, rownum), 0.25, '#EEEEEE')
+    return Table(data, style=style)
 
 
 def draw_header(canvas, doc, huc12):
@@ -56,6 +81,14 @@ def draw_header(canvas, doc, huc12):
     canvas.restoreState()
 
 
+def get_image_bytes(uri):
+    """Return BytesIO object with web content."""
+    req = requests.get(uri)
+    image = BytesIO(req.content)
+    image.seek(0)
+    return image
+
+
 def main():
     """See how we are called"""
     form = cgi.FieldStorage()
@@ -67,32 +100,30 @@ def main():
     story.append(Paragraph(INTROTEXT, styles['Normal']))
     story.append(Spacer(inch, inch * 0.25))
     story.append(Paragraph('Geographic Location', styles['Heading1']))
-    # get map
-    uri = ('http://dailyerosion.local/'
-           'auto/map.wsgi?overview=1&huc=%s&zoom=10'
-           ) % (huc12,)
-    req = requests.get(uri)
-    image = BytesIO(req.content)
-    image.seek(0)
-    # get map
-    uri = ('http://dailyerosion.local/'
-           'auto/map.wsgi?overview=1&huc=%s&zoom=300'
-           ) % (huc12,)
-    req = requests.get(uri)
-    image2 = BytesIO(req.content)
-    image2.seek(0)
     story.append(Table([
-        [Image(image2, width=3.6*inch, height=2.4*inch),
-         Image(image, width=3.6*inch, height=2.4*inch)]
+        [[Image(get_image_bytes(
+             ('http://dailyerosion.local/'
+              'auto/map.wsgi?overview=1&huc=%s&zoom=250') % (huc12,)),
+          width=3.6*inch, height=2.4*inch),
+          Paragraph(('Figure 1: Regional View with HUC8 highlighted in tan'
+                     ' and HUC12 in red.'), styles['Normal'])],
+         [Image(get_image_bytes(
+             ('http://dailyerosion.local/'
+              'auto/map.wsgi?overview=1&huc=%s&zoom=11') % (huc12,)),
+          width=3.6*inch, height=2.4*inch),
+          Paragraph(('Figure 2: Local View with HUC8 highlighted in tan '
+                     'and HUC8 in red'), styles['Normal'])]]
     ]))
     story.append(Spacer(inch, inch * 0.25))
     story.append(Paragraph('Yearly Summary', styles['Heading1']))
     story.append(generate_summary_table(huc12))
-    story.append(Spacer(inch, inch))
-    for i in range(100):
-        bogustext = ("This is Paragraph number %s. " % i) * 20
-        p = Paragraph(bogustext, styles['Normal'])
-        story.append(p)
+    story.append(Paragraph(('Table 1: Average value does not include the '
+                            'current year. Events column are the number of '
+                            'days with non-zero soil loss. '
+                            '(* year to date total)'
+                            ), styles['Normal']))
+    story.append(PageBreak())
+    story.append(Paragraph('Content to be determined....', styles['Normal']))
 
     def pagecb(canvas, doc):
         """Proxy to our draw_header func"""
