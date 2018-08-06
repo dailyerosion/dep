@@ -1,3 +1,21 @@
+12 Jul 2018 - DEP Planning
+Gelder, Cruse, Andrea, Emily
+ - MN is done for ACPF, a matter of time for it round trips to me
+ - NE is about done and should be in my hands by the late summer
+ - [ ] need to review what irrigation options there are for us with WEPP
+ - Continued interest in us expanding to the Great Lakes Basin
+ - Europe has LUCAS, which is like NRI
+ - Another project was funded, but am unsure of what it is
+ - Discussion of what match opportunties there are for current RFPs
+
+11 Jul 2018 - Neil Huth talk CSIRO
+ - working on modelling sediment from unsealed roadways into waterways
+ - Has outfitted cows with sensors and has maps of grazing patterns
+ - experience with farmers is to not tell them what to think, but have them
+   come to the conclusion.
+ - their clay soils shrink and expand, so things like elevation change yearly
+ - Also, their precision mapping can see continental drift
+
 14 Jun 2018 - DEP Panning
 Claude, Miller, Gelder, Bates, Cruse, Andrea
  - MN is basically done, just need to round trip via Gelder (2 months)
