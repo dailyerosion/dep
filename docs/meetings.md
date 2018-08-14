@@ -1,3 +1,21 @@
+ 8 Aug 2018 - DEP Planning
+Emily, Hanna, Gelder, Rishi, Matt, Cruse, Claude
+ - 8757 watersheds are now done by Claude's group
+ - One of the maps scared me that we may be leaking into southern Canada, but
+   alas disaster adverted for now (IEMRE stops firmly at the border)
+ - six more counties in NE are nearly done
+ - More editing has been done in NE, where some newer datasets were merged in
+ - Gelder described a fun and ugly elevation issue in MN with waterways having
+   incorrect elevations
+ - Discussion of Matt's deliverables and the various TODO items for me
+ - Matt would like another round of usability tests when I am done
+ - Tim provided an update on his Phosophorus work
+ - [ ] consider using some seaborn plots in PDF report for the tables
+ - [ ] PDFs need to be generated for HUC8s too
+ - Deadline on the PDF stuff is 1 Sept
+ - [ ] will provide Hanna via cybox 8 zipped files containing my data
+ - FFAR proposal is being worked on and due 18 Aug
+
 12 Jul 2018 - DEP Planning
 Gelder, Cruse, Andrea, Emily
  - MN is done for ACPF, a matter of time for it round trips to me
