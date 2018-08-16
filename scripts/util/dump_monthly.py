@@ -89,6 +89,10 @@ DATA = """ 070802050101
  070802051505
  070802051506
  070802051507"""
+# Clear Creek
+DATA = """070802090101
+070802090102
+070802090103"""
 HUCS = [x.strip() for x in DATA.split("\n")]
 
 
@@ -102,10 +106,10 @@ def main():
     sum(avg_delivery) as delivery_kgm2,
     sum(avg_runoff) as runoff_mm from results_by_huc12
     WHERE scenario = 0 and huc_12 in %s
-    and valid >= '2008-01-01' and valid < '2018-01-01'
+    and valid >= '2008-01-01' and valid < '2019-01-01'
     GROUP by huc_12, date ORDER by huc_12, date
     """, pgconn, params=(tuple(HUCS), ))
-    df.to_csv('dep_middle_cedar.csv', index=False)
+    df.to_csv('clear_creek.csv', index=False)
 
 
 if __name__ == '__main__':
