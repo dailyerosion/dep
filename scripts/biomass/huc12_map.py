@@ -1,20 +1,19 @@
 """Draw a fancy map"""
 import sys
 
-import psycopg2
 import numpy as np
-from pyiem.plot import MapPlot
 from shapely.wkb import loads
 from matplotlib.patches import Polygon
 import matplotlib.colors as mpcolors
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
+from pyiem.plot import MapPlot
+from pyiem.util import get_dbconn
 
 
 def main():
     """GO!"""
-    pgconn = psycopg2.connect(database='idep', host='localhost', port=5555,
-                              user='nobody')
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
 
     scenario = int(sys.argv[1])

@@ -14,6 +14,7 @@ from matplotlib.collections import PatchCollection
 import matplotlib.colors as mpcolors
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+from pyiem.util import get_dbconn
 
 V2NAME = {
     'avg_loss': 'Detachment',
@@ -58,8 +59,7 @@ cmap = mpcolors.ListedColormap(c, 'james')
 cmap.set_under('white')
 cmap.set_over('black')
 
-pgconn = psycopg2.connect(database='idep', host='localhost', port=5555,
-                          user='nobody')
+pgconn = get_dbconn('idep')
 cursor = pgconn.cursor()
 
 title = "for %s" % (ts.strftime("%-d %B %Y"),)

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import random
 import numpy as np
 
-(fig, ax) = plt.subplots(1,1)
+(fig, ax) = plt.subplots(1, 1)
 
 x = []
 y = []

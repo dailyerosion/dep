@@ -1,10 +1,9 @@
-import psycopg2
+from pyiem.util import get_dbconn
 
-postgis = psycopg2.connect(dbname='postgis', host='iemdb', user='nobody')
+postgis = get_dbconn('postgis')
 pcursor = postgis.cursor()
 
-dep = psycopg2.connect(dbname='idep', host='localhost', port=5555,
-                       user='mesonet')
+dep = get_dbconn('idep')
 cursor = dep.cursor()
 cursor2 = dep.cursor()
 

@@ -2,12 +2,11 @@
 from __future__ import print_function
 import calendar
 
-import psycopg2
 from pandas.io.sql import read_sql
 import matplotlib.pyplot as plt
+from pyiem.util import get_dbconn
 
-PGCONN = psycopg2.connect(database='idep', host='localhost', port=5555,
-                          user='nobody')
+PGCONN = get_dbconn('idep')
 
 
 def get_scenario(scenario):

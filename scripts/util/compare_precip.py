@@ -1,20 +1,19 @@
-import psycopg2
 import datetime
+
 import pandas as pd
 from pandas.io.sql import read_sql
+import matplotlib.pyplot as plt
 from pyiem.datatypes import distance
 from pyiem.network import Table as NetworkTable
 from pyiem.plot import MapPlot
-import matplotlib.pyplot as plt
+from pyiem.util import get_dbconn
 
 
 def two(year):
     """Compare yearly totals in a scatter plot"""
-    coop = psycopg2.connect(database='coop', host='localhost', port=5555,
-                            user='nobody')
+    coop = get_dbconn('coop')
     ccursor = coop.cursor()
-    idep = psycopg2.connect(database='idep', host='localhost', port=5555,
-                            user='nobody')
+    idep = get_dbconn('idep')
     icursor = idep.cursor()
 
     ccursor.execute("""
@@ -82,11 +81,9 @@ def two(year):
 
 
 def one():
-    iem = psycopg2.connect(database='iem', host='localhost', port=5555,
-                           user='nobody')
+    iem = get_dbconn('iem')
 
-    idep = psycopg2.connect(database='idep', host='localhost', port=5555,
-                            user='nobody')
+    idep = get_dbconn('idep')
     icursor = idep.cursor()
 
     # Get obs

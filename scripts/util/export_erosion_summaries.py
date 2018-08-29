@@ -19,7 +19,7 @@ dates = """4/9/2011    4/10/2011
 
 def do(sts, ets):
     """ Process this year """
-    subprocess.call(('pgsql2shp -f idep%s_%s.shp -h localhost -p 5555 '
+    subprocess.call(('pgsql2shp -f idep%s_%s.shp -h iemdb '
                      '-u mesonet -g geom idep  "select i.geom, r.huc_12, '
                      'sum(avg_delivery) as delivery, '
                      'sum(avg_loss) as loss, '
