@@ -16,10 +16,24 @@ from pyiem.util import ssw, get_dbconn
 PAGE_WIDTH = letter[0]
 PAGE_HEIGHT = letter[1]
 GENTIME = datetime.datetime.now().strftime("%B %-d %Y")
-INTROTEXT = """Hello there! This is from glorious automation. Someday, you will
-find interesting things here and actual details on what fun this is trying to
-accomplish.  Until then, you must await more magic to happen.
-"""
+INTROTEXT = (
+    "The Daily Erosion Project generates estimates of sheet and rill "
+    "erosion.  This PDF summarizes our model results.  All results should be "
+    "considered preliminary and subject to future revision as improvements "
+    "are made to our model system and input datasets."
+)
+LOCALIZATION = {
+    'F1': [
+        'Figure 1: Regional view with HUC8 highlighted in tan.',
+        ('Figure 1: Regional view with HUC8 highlighted in tan '
+         'and HUC12 in red.'),
+    ],
+    'F2': [
+        'Figure 2: Zoomed in view of HUC8.',
+        ('Figure 1: Zoomed in view with HUC8 highlighted in tan '
+         'and HUC12 in red.'),
+    ],
+}
 
 
 def generate_monthly_summary_table(huc12):
@@ -30,18 +44,31 @@ def generate_monthly_summary_table(huc12):
     data.append(['', '', '[inch]', "[inch]", "[tons/acre]", "[tons/acre]",
                  "[days]", "[days]"])
     pgconn = get_dbconn('idep')
+    huc12col = "huc_12"
+    if len(huc12) == 8:
+        huc12col = "substr(huc_12, 1, 8)"
     df = read_sql("""
+    WITH data as (
         SELECT extract(year from valid)::int as year,
-        extract(month from valid)::int as month,
-        round((sum(qc_precip) / 25.4)::numeric, 2),
-        round((sum(avg_runoff) / 25.4)::numeric, 2),
-        round((sum(avg_loss) * 4.463)::numeric, 2),
-        round((sum(avg_delivery) * 4.463)::numeric, 2),
+        extract(month from valid)::int as month, huc_12,
+        (sum(qc_precip) / 25.4)::numeric as sum_qc_precip,
+        (sum(avg_runoff) / 25.4)::numeric as sum_avg_runoff,
+        (sum(avg_loss) * 4.463)::numeric as sum_avg_loss,
+        (sum(avg_delivery) * 4.463)::numeric as sum_avg_delivery,
         sum(case when qc_precip >= 50.8 then 1 else 0 end) as pdays,
         sum(case when avg_loss > 0 then 1 else 0 end) as events
-        from results_by_huc12 WHERE scenario = 0 and huc_12 = %s
+        from results_by_huc12 WHERE scenario = 0 and
+        """ + huc12col + """ = %s
         and valid >= '2016-01-01'
-        GROUP by year, month ORDER by year, month ASC
+        GROUP by year, month, huc_12)
+    SELECT year, month,
+    round(avg(sum_qc_precip), 2),
+    round(avg(sum_avg_runoff), 2),
+    round(avg(sum_avg_loss), 2),
+    round(avg(sum_avg_delivery), 2),
+    round(avg(pdays)::numeric, 1),
+    round(avg(events)::numeric, 1)
+    from data GROUP by year, month ORDER by year, month
     """, pgconn, params=(huc12, ), index_col=None)
     for _, row in df.iterrows():
         vals = [int(row['year']), calendar.month_abbr[int(row['month'])]]
@@ -62,7 +89,7 @@ def generate_monthly_summary_table(huc12):
     )
     for rownum in range(3, len(data)+1, 2):
         style.add('LINEBELOW', (0, rownum), (-1, rownum), 0.25, '#EEEEEE')
-    return Table(data, style=style)
+    return Table(data, style=style, repeatRows=2)
 
 
 def generate_summary_table(huc12):
@@ -73,17 +100,30 @@ def generate_summary_table(huc12):
     data.append(['', '[inch]', "[inch]", "[tons/acre]", "[tons/acre]",
                  "[days]", "[days]"])
     pgconn = get_dbconn('idep')
+    huc12col = "huc_12"
+    if len(huc12) == 8:
+        huc12col = "substr(huc_12, 1, 8)"
     df = read_sql("""
-        SELECT extract(year from valid)::int as year,
-        round((sum(qc_precip) / 25.4)::numeric, 2),
-        round((sum(avg_runoff) / 25.4)::numeric, 2),
-        round((sum(avg_loss) * 4.463)::numeric, 2),
-        round((sum(avg_delivery) * 4.463)::numeric, 2),
+    WITH data as (
+        SELECT extract(year from valid)::int as year, huc_12,
+        (sum(qc_precip) / 25.4)::numeric as sum_qc_precip,
+        (sum(avg_runoff) / 25.4)::numeric as sum_avg_runoff,
+        (sum(avg_loss) * 4.463)::numeric as sum_avg_loss,
+        (sum(avg_delivery) * 4.463)::numeric as sum_avg_delivery,
         sum(case when qc_precip >= 50.8 then 1 else 0 end) as pdays,
         sum(case when avg_loss > 0 then 1 else 0 end) as events
-        from results_by_huc12 WHERE scenario = 0 and huc_12 = %s
+        from results_by_huc12 WHERE scenario = 0 and
+        """ + huc12col + """ = %s
         and valid >= '2008-01-01'
-        GROUP by year ORDER by year ASC
+        GROUP by year, huc_12)
+    SELECT year,
+    round(avg(sum_qc_precip), 2),
+    round(avg(sum_avg_runoff), 2),
+    round(avg(sum_avg_loss), 2),
+    round(avg(sum_avg_delivery), 2),
+    round(avg(pdays)::numeric, 1),
+    round(avg(events)::numeric, 1)
+    from data GROUP by year ORDER by year
     """, pgconn, params=(huc12, ), index_col='year')
     for year, row in df.iterrows():
         vals = [year]
@@ -113,10 +153,11 @@ def draw_header(canvas, doc, huc12):
     canvas.drawImage('../images/logo_horiz_white.png', inch * 1.,
                      PAGE_HEIGHT - 100)
     canvas.setFont('Times-Bold', 16)
-    canvas.drawString(PAGE_WIDTH * 0.35, PAGE_HEIGHT - inch + 20,
-                      'Daily Erosion Project HUC12 Summary Report')
+    canvas.drawString(
+        PAGE_WIDTH * 0.35, PAGE_HEIGHT - inch + 20,
+        'Daily Erosion Project HUC%s Summary Report' % (len(huc12),))
     canvas.drawString(PAGE_WIDTH * 0.35, PAGE_HEIGHT - inch,
-                      'HUC12: %s' % (huc12, ))
+                      'HUC%s: %s' % (len(huc12), huc12))
     canvas.drawString(PAGE_WIDTH * 0.35, PAGE_HEIGHT - inch - 20,
                       'Generated %s' % (GENTIME, ))
     canvas.setFont('Times-Roman', 9)
@@ -136,7 +177,8 @@ def get_image_bytes(uri):
 def main():
     """See how we are called"""
     form = cgi.FieldStorage()
-    huc12 = form.getfirst('huc12', '070801050306')[:12]
+    huc12 = form.getfirst('huc', '070801050306')[:12]
+    ishuc12 = (len(huc12) == 12)
     bio = BytesIO()
     styles = getSampleStyleSheet()
     doc = SimpleDocTemplate(bio, pagesize=letter, topMargin=(inch * 1.5))
@@ -149,15 +191,18 @@ def main():
              ('http://dailyerosion.local/'
               'auto/map.wsgi?overview=1&huc=%s&zoom=250') % (huc12,)),
           width=3.6*inch, height=2.4*inch),
-          Paragraph(('Figure 1: Regional View with HUC8 highlighted in tan'
-                     ' and HUC12 in red.'), styles['Normal'])],
+          Paragraph(LOCALIZATION['F1'][int(ishuc12)], styles['Normal'])],
          [Image(get_image_bytes(
              ('http://dailyerosion.local/'
               'auto/map.wsgi?overview=1&huc=%s&zoom=11') % (huc12,)),
           width=3.6*inch, height=2.4*inch),
-          Paragraph(('Figure 2: Local View with HUC8 highlighted in tan '
-                     'and HUC8 in red'), styles['Normal'])]]
+          Paragraph(LOCALIZATION['F2'][int(ishuc12)], styles['Normal'])]]
     ]))
+    story.append(Spacer(inch, inch * 0.25))
+    story.append(Paragraph('DEP Input Data', styles['Heading1']))
+    story.append(Paragraph('...more content coming here...', styles['Normal']))
+
+    story.append(PageBreak())
     story.append(Spacer(inch, inch * 0.25))
     story.append(Paragraph('Yearly Summary', styles['Heading1']))
     story.append(generate_summary_table(huc12))
@@ -170,6 +215,10 @@ def main():
     story.append(Spacer(inch, inch * 0.25))
     story.append(Paragraph('Monthly Summary', styles['Heading1']))
     story.append(generate_monthly_summary_table(huc12))
+    story.append(Paragraph(
+        ('Table 2: Monthly Totals. Events column are the number of '
+         'days with non-zero soil loss. (* month to date total)'
+         ), styles['Normal']))
 
     def pagecb(canvas, doc):
         """Proxy to our draw_header func"""

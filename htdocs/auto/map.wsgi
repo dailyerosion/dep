@@ -11,7 +11,7 @@ import matplotlib.colors as mpcolors
 from geopandas import read_postgis
 import cartopy.crs as ccrs
 from pyiem.plot.use_agg import plt
-from pyiem.plot.geoplot import MapPlot
+from pyiem.plot.geoplot import MapPlot, Z_OVERLAY2
 from pyiem.plot.colormaps import james, james2
 from pyiem.util import get_dbconn
 from pyiem.dep import RAMPS
@@ -46,7 +46,10 @@ def make_overviewmap(form):
         huclimiter = " and substr(huc_12, 1, 8) = '%s' " % (huc[:8], )
     pgconn = get_dbconn('idep')
     df = read_postgis("""
-        SELECT ST_Transform(simple_geom, %s) as geom, huc_12
+        SELECT ST_Transform(simple_geom, %s) as geom, huc_12,
+        ST_x(ST_Transform(ST_Centroid(geom), 4326)) as centroid_x,
+        ST_y(ST_Transform(ST_Centroid(geom), 4326)) as centroid_y,
+        hu_12_name
         from huc12 i WHERE i.scenario = 0 """ + huclimiter + """
     """, pgconn, params=(projection.proj4_init, ), geom_col='geom',
                       index_col='huc_12')
@@ -55,18 +58,29 @@ def make_overviewmap(form):
     pts = ccrs.Geodetic().transform_points(
         projection, np.asarray([minx - buf, maxx + buf]),
         np.asarray([miny - buf, maxy + buf]))
+    hucname = '' if huc not in df.index else df.at[huc, 'hu_12_name']
+    subtitle = 'The HUC8 is in tan'
+    if len(huc) == 12:
+        subtitle = 'HUC12 highlighted in red, the HUC8 it resides in is in tan'
     m = MapPlot(axisbg='#EEEEEE', nologo=True, sector='custom',
                 south=pts[0, 1], north=pts[1, 1],
                 west=pts[0, 0], east=pts[1, 0],
                 projection=projection,
                 continentalcolor='white',
-                title='DEP HUC %s' % (huc, ),
+                title='DEP HUC %s:: %s' % (huc, hucname),
+                subtitle=subtitle,
                 caption='Daily Erosion Project')
     for _huc12, row in df.iterrows():
         p = Polygon(row['geom'].exterior,
                     fc='red' if _huc12 == huc else 'tan', ec='k',
-                    zorder=20, lw=.1)
+                    zorder=Z_OVERLAY2, lw=.1)
         m.ax.add_patch(p)
+        # If this is our HUC, add some text to prevent cities overlay overlap
+        if _huc12 == huc:
+            m.plot_values(
+                [row['centroid_x'], ], [row['centroid_y'], ],
+                ['    .    ', ], color='None', outlinecolor='None'
+            )
     if huc is not None:
         m.drawcounties()
         m.drawcities()
