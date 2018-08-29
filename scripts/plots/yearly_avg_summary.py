@@ -3,41 +3,58 @@ from __future__ import print_function
 import datetime
 import sys
 
-import psycopg2
 import numpy as np
 from geopandas import read_postgis
-import matplotlib
-matplotlib.use('agg')
-from pyiem.plot import MapPlot
-import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
-from matplotlib.collections import PatchCollection
 import matplotlib.colors as mpcolors
 import cartopy.crs as ccrs
-import cartopy.feature as cfeature
+from pyiem.util import get_dbconn
+from pyiem.plot.use_agg import plt
+from pyiem.plot import MapPlot
 
 V2NAME = {
     'avg_loss': 'Detachment',
     'qc_precip': 'Precipitation',
     'avg_delivery': 'Delivery',
-    'avg_runoff': 'Runoff'}
+    'avg_runoff': 'Runoff',
+    'avg_loss_metric': 'Detachment',
+    'qc_precip_metric': 'Precipitation',
+    'avg_delivery_metric': 'Delivery',
+    'avg_runoff_metric': 'Runoff'}
 V2MULTI = {
     'avg_loss': 4.463,
     'qc_precip': 1. / 25.4,
     'avg_delivery': 4.463,
     'avg_runoff': 1. / 25.4,
+    'avg_loss_metric': 10.,
+    'qc_precip_metric': 1.,
+    'avg_delivery_metric': 10.,
+    'avg_runoff_metric': 1.,
     }
 V2UNITS = {
     'avg_loss': 'tons/acre',
     'qc_precip': 'inches',
     'avg_delivery': 'tons/acre',
     'avg_runoff': 'inches',
+    'avg_loss_metric': 'tonnes/hectare',
+    'qc_precip_metric': 'mm',
+    'avg_delivery_metric': 'tonnes/hectare',
+    'avg_runoff_metric': 'mm',
     }
+R1 = [0, 2.5, 5, 10, 20, 40, 60]
+R1M = [0, 5, 10, 20, 40, 80, 120]
+R3M = [0, 25, 50, 100, 150, 200]
+R2 = [15, 25, 35, 45, 55]
+R2M = [600, 700, 900, 1000, 1200]
 V2RAMP = {
-    'avg_loss': [0, 2.5, 5, 10, 20, 40, 60],
-    'qc_precip': [15, 25, 35, 45, 55],
-    'avg_delivery': [0, 2.5, 5, 10, 20, 40, 60],
-    'avg_runoff': [0, 2.5, 5, 10, 15, 30],
+    'avg_loss': R1,
+    'qc_precip': R2,
+    'avg_delivery': R1,
+    'avg_runoff': R1,
+    'avg_loss_metric': R1M,
+    'qc_precip_metric': R2M,
+    'avg_delivery_metric': R1M,
+    'avg_runoff_metric': R3M,
     }
 
 
@@ -46,26 +63,25 @@ def main(argv):
     v = argv[1]
     agg = argv[2]
     ts = datetime.date(2008, 1, 1)
-    ts2 = datetime.date(2016, 12, 31)
+    ts2 = datetime.date(2017, 12, 31)
     scenario = 0
 
     # suggested for runoff and precip
-    if v in ['qc_precip', 'avg_runoff']:
+    if V2UNITS[v] in ['mm', 'inches']:
         colors = ['#ffffa6', '#9cf26d', '#76cc94', '#6399ba', '#5558a1']
     # suggested for detachment
-    elif v in ['avg_loss']:
+    elif v in ['avg_loss', 'avg_loss_metric']:
         colors = ['#cbe3bb', '#c4ff4d', '#ffff4d', '#ffc44d', '#ff4d4d',
                   '#c34dee']
     # suggested for delivery
-    elif v in ['avg_delivery']:
+    elif v in ['avg_delivery', 'avg_delivery_metric']:
         colors = ['#ffffd2', '#ffff4d', '#ffe0a5', '#eeb74d', '#ba7c57',
                   '#96504d']
     cmap = mpcolors.ListedColormap(colors, 'james')
     cmap.set_under('white')
     cmap.set_over('black')
 
-    pgconn = psycopg2.connect(database='idep', host='localhost', port=5555,
-                              user='nobody')
+    pgconn = get_dbconn('idep')
 
     title = "for %s" % (ts.strftime("%-d %B %Y"),)
     if ts != ts2:
@@ -74,7 +90,7 @@ def main(argv):
     mp = MapPlot(axisbg='#EEEEEE', nologo=True, sector='iowa',
                  nocaption=True,
                  title=("DEP %s %s %s"
-                        ) % (V2NAME[v],
+                        ) % (V2NAME[v.replace("_metric", "")],
                              "Yearly Average" if agg == 'avg' else 'Total',
                              title),
                  caption='Daily Erosion Project')
@@ -82,7 +98,7 @@ def main(argv):
     df = read_postgis("""
     WITH data as (
       SELECT huc_12, extract(year from valid) as yr,
-      sum("""+v+""")  as d from results_by_huc12
+      sum(""" + v.replace("_metric", "") + """)  as d from results_by_huc12
       WHERE scenario = %s and valid >= %s and valid <= %s
       GROUP by huc_12, yr),
 
@@ -117,7 +133,7 @@ def main(argv):
     mp.draw_colorbar(bins, cmap, norm,
                      clevlabels=lbl, units=u,
                      title="%s :: %s" % (V2NAME[v], V2UNITS[v]))
-    plt.savefig('%s_%s_%s%s.eps' % (ts.year, ts2.year, v,
+    plt.savefig('%s_%s_%s%s.png' % (ts.year, ts2.year, v,
                                     "_sum" if agg == 'sum' else ''))
 
 
