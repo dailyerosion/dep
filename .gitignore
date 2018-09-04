@@ -3,8 +3,11 @@
 /data/
 /.buildpath
 *.o
-*.csv
-*.dbf
+**/*.csv
+**/*.dbf
+**/*.shp
+**/*.shx
+**/*.pdf
 /scripts/import/*_0.txt
 /.vscode
 prj2wepp/wepp/hill.slp
