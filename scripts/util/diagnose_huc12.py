@@ -3,8 +3,8 @@ from __future__ import print_function
 import sys
 import glob
 
-from pyiem import dep
 import pandas as pd
+from pyiem import dep
 
 
 def summarize_hillslopes(huc12, scenario):

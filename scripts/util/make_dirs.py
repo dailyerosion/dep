@@ -2,7 +2,7 @@
 import os
 import sys
 
-import psycopg2
+from pyiem.util import get_dbconn
 
 SCENARIO = sys.argv[1]
 BASELINESCENARIO = 0 if len(sys.argv) == 2 else sys.argv[2]
@@ -22,10 +22,12 @@ def do_huc12(huc12):
 def main():
     """Do Main"""
     # Go Main Go
-    pgconn = psycopg2.connect(database='idep', host='iemdb')
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
-    cursor.execute("""SELECT distinct huc_12 from flowpaths
-    WHERE scenario = %s""", (BASELINESCENARIO,))
+    cursor.execute("""
+        SELECT distinct huc_12 from flowpaths
+        WHERE scenario = %s
+    """, (BASELINESCENARIO,))
     for row in cursor:
         do_huc12(row[0])
 

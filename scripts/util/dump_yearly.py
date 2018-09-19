@@ -1,6 +1,8 @@
 """Dump some monthly data"""
 from __future__ import print_function
 
+import pandas as pd
+from pandas.io.sql import read_sql
 from pyiem.util import get_dbconn
 
 # East Nish
@@ -81,20 +83,36 @@ DATA = """102400020402
 102400020201
 102400020806
 102400020706"""
+# Beaver Creek
+DATA = """071000040901
+071000040902
+071000040903
+071000040904
+071000040905
+071000040906
+071000040907
+071000040908
+071000040909
+071000040910
+071000040911"""
 HUCS = [x.strip() for x in DATA.split("\n")]
 
 
 def main():
     """Go Main Go"""
     pgconn = get_dbconn('idep', user='nobody')
-    cursor = pgconn.cursor()
-    for huc in HUCS:
-        cursor.execute("""
-        SELECT sum(avg_loss) * 4.463 from results_by_huc12 WHERE
-        scenario = 0 and huc_12 = %s and valid >= '2017-01-01'
-        and valid < '2018-01-01'
-        """, (huc, ))
-        print("%.2f" % (cursor.fetchone()[0], ))
+    df = read_sql("""
+        SELECT huc_12, extract(year from valid) as year,
+        sum(avg_loss) * 4.463 as loss_ton_per_acre from results_by_huc12 WHERE
+        scenario = 0 and huc_12 in %s and valid >= '2007-01-01'
+        and valid < '2018-01-01' GROUP by huc_12, year
+    """, pgconn, params=(tuple(HUCS), ))
+    writer = pd.ExcelWriter(
+        'dep_yearly.xlsx', options={'remove_timezone': True})
+    df.to_excel(writer, 'Yearly Totals', index=False)
+    gdf = df.groupby('huc_12').mean()
+    gdf[['loss_ton_per_acre']].to_excel(writer, 'Yearly Averages')
+    writer.save()
 
 
 if __name__ == '__main__':

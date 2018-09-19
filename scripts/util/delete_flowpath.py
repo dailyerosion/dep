@@ -1,8 +1,8 @@
 """Utility script to delete a flowpath from the database and on-disk"""
-
-import psycopg2
 import sys
 import os
+
+from pyiem.util import get_dbconn
 
 
 def do_delete(huc12, fpath, scenario):
@@ -13,7 +13,7 @@ def do_delete(huc12, fpath, scenario):
       fpath (str): The flowpath within that HUC12 that needs removal
       scenario (str): The IDEP scenario to remove this flowpath from
     """
-    pgconn = psycopg2.connect(database='idep', host='iemdb')
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
 
     # Find the FID

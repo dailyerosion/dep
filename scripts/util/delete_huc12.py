@@ -1,13 +1,14 @@
 """Delete all traces of a HUC12"""
-
-import psycopg2
 import sys
 import os
 import glob
 
+from pyiem.util import get_dbconn
+
 
 def do_delete(huc12, scenario):
-    pgconn = psycopg2.connect(database='idep', host='iemdb')
+    """Delete all things."""
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
 
     # Remove any flowpath points

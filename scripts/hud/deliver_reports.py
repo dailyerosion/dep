@@ -67,7 +67,7 @@ def workflow(name, hucs):
 
     res = sendfiles2box(
         "Iowa Watershed Approach - Daily Erosion Project/%s" % (name, ),
-        filenames
+        filenames, overwrite=True
     )
     for retval, fn in zip(res, filenames):
         if retval is None:
