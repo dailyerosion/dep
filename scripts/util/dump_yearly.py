@@ -95,6 +95,83 @@ DATA = """071000040901
 071000040909
 071000040910
 071000040911"""
+# North Raccoon
+DATA = """071000061502
+071000061602
+071000060605
+071000061201
+071000060401
+071000061501
+071000060802
+071000060208
+071000060403
+071000061202
+071000060602
+071000060207
+071000060502
+071000061004
+071000061402
+071000061204
+071000060805
+071000060201
+071000061001
+071000060904
+071000060702
+071000061002
+071000060203
+071000060205
+071000061703
+071000060304
+071000060601
+071000060310
+071000061405
+071000061203
+071000060804
+071000060903
+071000060604
+071000060803
+071000060505
+071000061701
+071000060303
+071000061702
+071000061301
+071000061302
+071000061005
+071000061401
+071000060308
+071000061504
+071000060306
+071000060301
+071000061003
+071000061102
+071000060902
+071000060901
+071000060603
+071000060305
+071000060701
+071000060503
+071000060101
+071000060103
+071000060204
+071000061403
+071000061404
+071000060206
+071000060307
+071000061503
+071000060309
+071000060302
+071000060202
+071000060801
+071000061406
+071000060504
+071000060501
+071000061601
+071000061505
+071000060402
+071000061101
+071000060806
+071000060102"""
+
 HUCS = [x.strip() for x in DATA.split("\n")]
 
 
@@ -103,7 +180,11 @@ def main():
     pgconn = get_dbconn('idep', user='nobody')
     df = read_sql("""
         SELECT huc_12, extract(year from valid) as year,
-        sum(avg_loss) * 4.463 as loss_ton_per_acre from results_by_huc12 WHERE
+        sum(avg_loss) * 4.463 as loss_ton_per_acre,
+        sum(avg_delivery) * 4.463 as delivery_ton_per_acre,
+        sum(qc_precip) / 25.4 as precip_inch,
+        sum(avg_runoff) / 25.4 as runoff_inch
+        from results_by_huc12 WHERE
         scenario = 0 and huc_12 in %s and valid >= '2007-01-01'
         and valid < '2018-01-01' GROUP by huc_12, year
     """, pgconn, params=(tuple(HUCS), ))
@@ -111,7 +192,15 @@ def main():
         'dep_yearly.xlsx', options={'remove_timezone': True})
     df.to_excel(writer, 'Yearly Totals', index=False)
     gdf = df.groupby('huc_12').mean()
-    gdf[['loss_ton_per_acre']].to_excel(writer, 'Yearly Averages')
+    gdf[['loss_ton_per_acre', 'delivery_ton_per_acre', 'precip_inch',
+         'runoff_inch']].to_excel(writer, 'Yearly Averages')
+    format1 = writer.book.add_format({'num_format': '0.00'})
+    worksheet = writer.sheets['Yearly Totals']
+    worksheet.set_column('A:A', 18)
+    worksheet.set_column('C:F', 20, format1)
+    worksheet = writer.sheets['Yearly Averages']
+    worksheet.set_column('A:A', 18)
+    worksheet.set_column('B:E', 20, format1)
     writer.save()
 
 
