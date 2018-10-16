@@ -69,6 +69,8 @@ def make_overviewmap(form):
                 continentalcolor='white',
                 title='DEP HUC %s:: %s' % (huc, hucname),
                 subtitle=subtitle,
+                titlefontsize=20,
+                subtitlefontsize=18,
                 caption='Daily Erosion Project')
     for _huc12, row in df.iterrows():
         p = Polygon(row['geom'].exterior,

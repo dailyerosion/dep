@@ -85,7 +85,6 @@ def generate_run_metadata(huc12):
                 rows[-1].append("None")
         rows[-1].append("%.1f%%" % (leftover / total * 100., ))
 
-
     # Histogram of slope profiles
     res.append(Table([[[
         Image(get_image_bytes(
