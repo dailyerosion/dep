@@ -1,3 +1,23 @@
+11 Oct 2018 - DEP Planning
+Hanna, Gelder, Tim, Cruse, Claude, Mellisa
+ - Nebraska editing is done
+ - There is some editing going on in Missouri, that is eventually coming to me
+ - 2m DEM processing has been fraught with frustration, so gonna use 3m now
+ - Science question: How much better is 2m DEM at detecting terraces than 3m?
+ - Tim has the new tillage stuff mostly ready to go, will meet next week about
+ - [x] my per-HUC12 PDFs have Figure 1 duplicated.
+ - Some suggestions were made for the page and added to issue #61
+ - My PDFs may be given out as soon as early next month
+ - Potential to go present DEP at EGU in Vienna
+ - Discussion of PIRI work and how it relates to a INFEWS proposal
+ - Discussion of finding a HUC postdoc to do work
+ - The new website is coming, but so is Christmas.
+
+14 Sep 2018 - Stats Project PIRI
+Niemi, Gelder, Tim, Gulzanna(sp)
+ - [ ] website has a bug with how the mainpage images reload on calendar change
+ - [x] provide one hillslope run with everything needed to run WEPP
+
  8 Aug 2018 - DEP Planning
 Emily, Hanna, Gelder, Rishi, Matt, Cruse, Claude
  - 8757 watersheds are now done by Claude's group
