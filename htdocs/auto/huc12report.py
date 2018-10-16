@@ -6,9 +6,12 @@ import cgi
 import calendar
 
 import requests
+from metpy.units import units
 from pandas.io.sql import read_sql
-from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Image,
-                                Table, TableStyle, PageBreak)
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Image,
+    Table, TableStyle, PageBreak
+)
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
@@ -30,10 +33,77 @@ LOCALIZATION = {
     ],
     'F2': [
         'Figure 2: Zoomed in view of HUC8.',
-        ('Figure 1: Zoomed in view with HUC8 highlighted in tan '
+        ('Figure 2: Zoomed in view with HUC8 highlighted in tan '
          'and HUC12 in red.'),
     ],
 }
+
+
+def m2f(val):
+    """Convert meters to feet."""
+    return ((val * units('m')).to(units('feet'))).m
+
+
+def generate_run_metadata(huc12):
+    """Information about DEP modelling of this huc12."""
+    styles = getSampleStyleSheet()
+    res = []
+    pgconn = get_dbconn('idep')
+    # Get the number of runs
+    cursor = pgconn.cursor()
+    cursor.execute("""
+    select count(*), min(ST_Length(geom)), avg(ST_Length(geom)),
+    max(ST_Length(geom)) from flowpaths
+    where huc_12 = %s and scenario = 0
+    """, (huc12, ))
+    row = cursor.fetchone()
+    res.append(Paragraph((
+        "The Daily Erosion Project models %s hill slopes within this HUC12."
+        "These slopes range in length from %.1f to %.1f meters "
+        "(%.1f to %.1f feet) with an overall average of %.1f meters "
+        "(%.1f feet)."
+    ) % (row[0], row[1], row[3], m2f(row[1]), m2f(row[3]), row[2],
+         m2f(row[2])), styles['Normal']))
+
+    # Something about managements and crops
+    rows = [['Year', 'Corn', 'Soybean', 'Pasture', 'Other']]
+    for year in range(2016, 2019):
+        df = read_sql("""
+        select lu""" + str(year) + """ as datum, count(*) from
+        flowpath_points p JOIN flowpaths f on (p.flowpath = f.fid)
+        WHERE f.huc_12 = %s and f.scenario = 0 GROUP by datum
+        """, pgconn, params=(huc12, ), index_col='datum')
+        total = df['count'].sum()
+        leftover = total
+        rows.append([year])
+        for cropcode in ['C', 'B', 'P']:
+            if cropcode in df.index:
+                val = df.loc[cropcode, 'count']
+                leftover -= val
+                rows[-1].append("%.1f%%" % (val / total * 100., ))
+            else:
+                rows[-1].append("None")
+        rows[-1].append("%.1f%%" % (leftover / total * 100., ))
+
+
+    # Histogram of slope profiles
+    res.append(Table([[[
+        Image(get_image_bytes(
+             ('http://dailyerosion.local/'
+              'auto/huc12_slopes.py?huc12=%s') % (huc12,)),
+              width=3.6*inch, height=2.4*inch),
+        Paragraph("Figure 3: Hillslope Lengths and Slopes.", styles['Normal'])
+        ], [
+        Paragraph("Cropping Systems", styles['Heading3']),
+        Table(rows),
+        Paragraph((
+            "Table 1: Estimated cropping percentage based on modelled "
+            "hillslopes.  The 'Other' column represents all other cropping "
+            "types supported by DEP."), styles['Normal'])
+        ]
+    ]]))
+
+    return res
 
 
 def generate_monthly_summary_table(huc12):
@@ -200,13 +270,13 @@ def main():
     ]))
     story.append(Spacer(inch, inch * 0.25))
     story.append(Paragraph('DEP Input Data', styles['Heading1']))
-    story.append(Paragraph('...more content coming here...', styles['Normal']))
+    story.extend(generate_run_metadata(huc12))
 
     story.append(PageBreak())
     story.append(Spacer(inch, inch * 0.25))
     story.append(Paragraph('Yearly Summary', styles['Heading1']))
     story.append(generate_summary_table(huc12))
-    story.append(Paragraph(('Table 1: Average value does not include the '
+    story.append(Paragraph(('Table 2: Average value does not include the '
                             'current year. Events column are the number of '
                             'days with non-zero soil loss. '
                             '(* year to date total)'
@@ -216,7 +286,7 @@ def main():
     story.append(Paragraph('Monthly Summary', styles['Heading1']))
     story.append(generate_monthly_summary_table(huc12))
     story.append(Paragraph(
-        ('Table 2: Monthly Totals. Events column are the number of '
+        ('Table 3: Monthly Totals. Events column are the number of '
          'days with non-zero soil loss. (* month to date total)'
          ), styles['Normal']))
 
