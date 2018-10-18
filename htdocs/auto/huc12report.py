@@ -86,13 +86,21 @@ def generate_run_metadata(huc12):
         rows[-1].append("%.1f%%" % (leftover / total * 100., ))
 
     # Histogram of slope profiles
+    tablestyle = TableStyle([
+         ('VALIGN', (0, 0), (-1, -1), 'TOP')]
+    )
     res.append(Table([[[
         Image(get_image_bytes(
              ('http://dailyerosion.local/'
               'auto/huc12_slopes.py?huc12=%s') % (huc12,)),
               width=3.6*inch, height=2.4*inch),
-        Paragraph("Figure 3: Hillslope Lengths and Slopes.", styles['Normal'])
+        Paragraph((
+            "Figure 3: Hillslope Lengths and Slopes. The Kernel Density "
+            "Estimate is a way to show the join density of length vs slope "
+            "shown in this plot. Rewording, where the most points lie."
+        ), styles['Normal'])
         ], [
+        Spacer(inch, inch * 0.25),
         Paragraph("Cropping Systems", styles['Heading3']),
         Table(rows),
         Paragraph((
@@ -100,7 +108,7 @@ def generate_run_metadata(huc12):
             "hillslopes.  The 'Other' column represents all other cropping "
             "types supported by DEP."), styles['Normal'])
         ]
-    ]]))
+    ]], style=tablestyle))
 
     return res
 
