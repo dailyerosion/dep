@@ -8,6 +8,7 @@
 **/*.shp
 **/*.shx
 **/*.pdf
+**/*.xlsx
 /scripts/import/*_0.txt
 /.vscode
 prj2wepp/wepp/hill.slp

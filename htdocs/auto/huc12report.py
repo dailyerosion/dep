@@ -95,9 +95,8 @@ def generate_run_metadata(huc12):
               'auto/huc12_slopes.py?huc12=%s') % (huc12,)),
               width=3.6*inch, height=2.4*inch),
         Paragraph((
-            "Figure 3: Hillslope Lengths and Slopes. The Kernel Density "
-            "Estimate is a way to show the join density of length vs slope "
-            "shown in this plot. Rewording, where the most points lie."
+            "Figure 3: This plot shows the most dominate combination of slope "
+            "length and general steepness in the watershed."
         ), styles['Normal'])
         ], [
         Spacer(inch, inch * 0.25),
