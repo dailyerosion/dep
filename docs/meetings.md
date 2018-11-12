@@ -1,3 +1,12 @@
+ 8 Nov 2018 - DEP Planning
+Emily, Otto, Claude, Rishi, James, Hanna, Cruse, Mellisa, Tim, Gelder
+ - Joe is a post doc with the Water Center and knows a lot about drainage!
+ - Discussion on the response to the EU generated list of questions
+ - Work continues in NE and MO with editing
+ - [ ] daryl needs to check on exactly what needs to happen for WEPP to do IRR
+ - Discussion of DEM issues found in Minnesota
+ - Sarah left NLAE and went to MSP, sadface.
+
 11 Oct 2018 - DEP Planning
 Hanna, Gelder, Tim, Cruse, Claude, Mellisa
  - Nebraska editing is done
