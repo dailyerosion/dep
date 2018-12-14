@@ -1,3 +1,17 @@
+14 Dec 2018 - DEP Planning and Holiday Party
+Joe Hanna Mellisa James Cruse Time Gelder Rishi Claude
+ - Claude's team is currently working away in Missouri
+ - Claude is resolving the remaining border issues in Nebraska
+ - Minnesota LIDAR data quality remains a frustrating issue
+ - Future of ACPF was discussed with the recent departures of Sarah and Jessie
+ - ACPF has an exciting YouTube Channel
+ - The HUD USB drives with the data on them are popular, great!
+ - Discussion of the search for the new postdoc, had 19 apps so far.
+ - FAO wants a world map of erosion risk, can be do something like that?
+ - [ ] daryl needs to look into a global precip product with 30minute res
+ - Jan 10 is the deadline for EGU abstracts, there will be two erosion sessions
+ - Still hope that a Chinese collaborator is coming this spring semester
+
  8 Nov 2018 - DEP Planning
 Emily, Otto, Claude, Rishi, James, Hanna, Cruse, Mellisa, Tim, Gelder
  - Joe is a post doc with the Water Center and knows a lot about drainage!
