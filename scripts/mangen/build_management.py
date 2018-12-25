@@ -163,6 +163,7 @@ def do_rotation(zone, code, cfactor):
     data['year10'] = read_file(zone, code[9], cfactor, 10)  # 2016
     data['year11'] = read_file(zone, code[10], cfactor, 11)  # 2017
     data['year12'] = read_file(zone, code[11], cfactor, 12)  # 2018
+    data['year13'] = read_file(zone, code[12], cfactor, 13)  # 2018
 
     fp = open(fn, 'w')
     fp.write("""#
@@ -191,6 +192,7 @@ Operations {
 %(year10)s
 %(year11)s
 %(year12)s
+%(year13)s
 }
 """ % data)
     fp.close()
@@ -220,7 +222,7 @@ def main():
 
     SELECT np.lat,
         lu2007 || lu2008 || lu2009 || lu2010 || lu2011 || lu2012 || lu2013
-        || lu2014 || lu2015 || lu2016 || lu2017 || lu2018
+        || lu2014 || lu2015 || lu2016 || lu2017 || lu2018 || lu2019
         from flowpath_points p, np WHERE p.flowpath = np.fid and
         scenario = %s
     """, (SCENARIO, SCENARIO))

@@ -20,8 +20,8 @@ cursor3 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 surgo2file = {}
 cursor.execute("""SELECT surgo, soilfile from xref_surgo""")
-for row in cursor:
-    surgo2file[row[0]] = row[1]
+for _row in cursor:
+    surgo2file[_row[0]] = _row[1]
 
 
 def get_rotation(zone, code, maxmanagement):
@@ -138,10 +138,10 @@ def do_flowpath(zone, huc_12, fid, fpath):
     # slope = compute_slope(fid)
     # I need bad soilfiles so that the length can be computed
     cursor2.execute("""SELECT segid, elevation, length, f.surgo,
-    slope, management, 'DEP_'||surgo||'.SOL' as soilfile,
+    slope, management, 'MWDEP_'||surgo||'.SOL' as soilfile,
     lu2007 || lu2008 || lu2009 ||
     lu2010 || lu2011 || lu2012 || lu2013 || lu2014 || lu2015 ||
-    lu2016 || lu2017 || lu2018 as lstring,
+    lu2016 || lu2017 || lu2018 || lu2019 as lstring,
     round(ST_X(ST_Transform(geom,4326))::numeric,2) as x,
     round(ST_Y(ST_Transform(geom,4326))::numeric,2) as y from
     flowpath_points f
@@ -156,7 +156,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
             print('%s,%s had a negative slope, deleting!' % (huc_12, fpath))
             delete_flowpath(fid)
             return None
-        if row['soilfile'] == 'DEP_9999.SOL':
+        if row['soilfile'] == 'MWDEP_9999.SOL':
             continue
         if not os.path.isfile("/i/%s/sol_input/%s" % (SCENARIO,
                                                       row['soilfile'])):
@@ -261,7 +261,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
     for d, s in zip(soillengths, soils):
         res['soils'] += """    %s {
         Distance = %.3f
-        File = "/i/%s/sol_input/DEP_%s.SOL"
+        File = "/i/%s/sol_input/MWDEP_%s.SOL"
     }\n""" % (s, d, SCENARIO, s)
 
     prevman = None
