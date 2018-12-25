@@ -31,22 +31,22 @@ def run_db(dbname):
         dbconn.commit()
         cursor = dbconn.cursor()
     
-    print 'Database: %s has revision: %s' % (dbname, baseversion)
+    print('Database: %s has revision: %s' % (dbname, baseversion))
     
     while True:
         baseversion += 1
         fn = 'upgrade/%s.sql' % (baseversion,)
         if not os.path.isfile(fn):
             break
-        print ' -> Attempting schema upgrade #%s ...' % (baseversion,),
+        print(' -> Attempting schema upgrade #%s ...' % (baseversion,), end='')
         sys.stdout.flush()
         try:
             cursor.execute( open(fn).read() )
             cursor.execute("""UPDATE iem_version SET version = %s 
             WHERE name = 'schema'""", (baseversion,))
-            print ' Done!'
-        except Exception, exp:
-            print ' ERROR %s' % (exp,),
+            print(' Done!')
+        except Exception as exp:
+            print(' ERROR %s' % (exp,), end='')
             break
             
         
