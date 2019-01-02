@@ -17,10 +17,11 @@ import numpy as np
 import pytz
 import netCDF4
 from scipy.interpolate import NearestNDInterpolator
+from PIL import Image
 from pyiem import iemre
 from pyiem.datatypes import temperature
 from pyiem.dep import SOUTH, NORTH, EAST, WEST, get_cli_fname
-from PIL import Image
+from pyiem.util import ncopen
 
 logging.basicConfig(format='%(asctime)-15s %(message)s')
 LOG = logging.getLogger()
@@ -140,13 +141,23 @@ def load_stage4():
     ets_tidx = iemre.hourly_offset(tomorrow)
     printt(("stage4 sts_tidx:%s[%s] ets_tidx:%s[%s]"
             ) % (sts_tidx, one_am, ets_tidx, tomorrow))
-    nc = netCDF4.Dataset(("/mesonet/data/stage4/%s_stage4_hourly.nc"
-                          ) % (VALID.year, ), 'r')
+    nc = ncopen("/mesonet/data/stage4/%s_stage4_hourly.nc" % (VALID.year, ))
     p01m = nc.variables['p01m']
 
     lats = nc.variables['lat'][:]
     lons = nc.variables['lon'][:]
-    totals = np.sum(p01m[sts_tidx:ets_tidx, :, :], axis=0)
+    # crossing jan 1
+    if ets_tidx < sts_tidx:
+        printt("Exercise special stageIV logic for jan1!")
+        totals = np.sum(p01m[sts_tidx:, :, :], axis=0)
+        nc.close()
+        nc = ncopen(
+            "/mesonet/data/stage4/%s_stage4_hourly.nc" % (tomorrow.year, )
+        )
+        p01m = nc.variables['p01m']
+        totals += np.sum(p01m[:ets_tidx, :, :], axis=0)
+    else:
+        totals = np.sum(p01m[sts_tidx:ets_tidx, :, :], axis=0)
     nc.close()
 
     if np.ma.max(totals) > 0:
