@@ -162,6 +162,7 @@ def make_map(huc, ts, ts2, scenario, v):
                 west=pts[0, 0], east=pts[1, 0],
                 projection=projection,
                 title='DEP %s by HUC12 %s' % (V2NAME[v], title),
+                titlefontsize=16,
                 caption='Daily Erosion Project')
     if ts == ts2:
         # Daily
