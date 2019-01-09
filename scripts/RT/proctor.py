@@ -122,8 +122,6 @@ class WeppRun(object):
         runfile = self.get_runfile_fn()
         if FORCE_RUNFILE_REGEN or not os.path.isfile(runfile):
             # If this scenario does not have a run file, hmmm
-            if SCENARIO != '0':
-                return
             self.make_runfile()
         proc = subprocess.Popen(["wepp", ],
                                 stderr=subprocess.PIPE,
