@@ -1,0 +1,2 @@
+%(pdate)s  %(yr)s  1 Tillage	OpCropDef.PLDDO	{0.050800, 2}
+%(pdate)s  %(yr)s  1 Plant-Annual	%(plant)s	 {0.762000}

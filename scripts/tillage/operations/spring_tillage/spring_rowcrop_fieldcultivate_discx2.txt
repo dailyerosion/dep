@@ -1,0 +1,3 @@
+%(pdatem10)s  %(yr)s  1 Tillage	OpCropDef.FCSTACDP	{0.101600, 2}
+%(pdatem5)s  %(yr)s  1 Tillage	OpCropDef.TAND0002	{0.101600, 2}
+%(pdate)s  %(yr)s  1 Tillage	OpCropDef.TAND0002	{0.101600, 2}

@@ -1,0 +1,1 @@
+11  1  %(yr)s  1 Tillage	OpCropDef.CHISSTSP	{0.203200, 1}
