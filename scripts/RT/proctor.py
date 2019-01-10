@@ -82,6 +82,11 @@ class WeppRun(object):
         return "%s/yld/%s/%s_%s.yld" % (IDEPHOME, self.subdir, self.huc12,
                                         self.fpid)
 
+    def get_event_fn(self):
+        """Filename to be used for event output"""
+        return "%s/event/%s/%s_%s.txt" % (IDEPHOME, self.subdir, self.huc12,
+                                          self.fpid)
+
     def make_runfile(self):
         ''' Create a runfile for our runs '''
         out = open(self.get_runfile_fn(), 'w')
