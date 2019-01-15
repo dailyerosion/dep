@@ -6,7 +6,7 @@ from io import BytesIO
 import numpy as np
 import memcache
 from paste.request import parse_formvars
-from matplotlib.patches import Polygon
+from matplotlib.patches import Polygon, Rectangle
 import matplotlib.colors as mpcolors
 from geopandas import read_postgis
 import cartopy.crs as ccrs
@@ -93,7 +93,7 @@ def make_overviewmap(form):
     return ram.read(), True
 
 
-def make_map(huc, ts, ts2, scenario, v):
+def make_map(huc, ts, ts2, scenario, v, form):
     """Make the map"""
     plt.close()
     # suggested for runoff and precip
@@ -138,6 +138,8 @@ def make_map(huc, ts, ts2, scenario, v):
         huclimiter = " and substr(i.huc_12, 1, 8) = '%s' " % (huc, )
     elif len(huc) == 12:
         huclimiter = " and i.huc_12 = '%s' " % (huc, )
+    if 'iowa' in form:
+        huclimiter += " and i.states ~* 'IA' "
     df = read_postgis("""
     WITH data as (
       SELECT huc_12, sum("""+v+""")  as d from results_by_huc12
@@ -181,7 +183,26 @@ def make_map(huc, ts, ts2, scenario, v):
         m.drawcounties()
         m.drawcities()
     m.draw_colorbar(bins, cmap, norm, units=V2UNITS[v],
-                    clevlabels=lbl)
+                    clevlabels=lbl, spacing='proportional')
+    if 'progressbar' in form:
+        fig = plt.gcf()
+        avgval = df['data'].mean()
+        fig.text(
+            0.01, 0.905, "%s: %4.1f T/a" % (ts.year, avgval),
+            fontsize=14)
+        bar_width = 0.758
+        # yes, a small one off with years having 366 days
+        proportion = (ts2 - ts).days / 365. * bar_width
+        rect1 = Rectangle(
+            (0.15, 0.905), bar_width, 0.02,
+            color='k', zorder=40,
+            transform=fig.transFigure, figure=fig)
+        fig.patches.append(rect1)
+        rect2 = Rectangle(
+            (0.151, 0.907), proportion, 0.016,
+            color=cmap(norm([avgval, ]))[0], zorder=50,
+            transform=fig.transFigure, figure=fig)
+        fig.patches.append(rect2)
     ram = BytesIO()
     plt.savefig(ram, format='png', dpi=100)
     plt.close()
@@ -212,12 +233,12 @@ def main(environ):
     mc = memcache.Client(['iem-memcached:11211'], debug=0)
     res = mc.get(mckey)
     hostname = environ.get("SERVER_NAME", "")
-    if not res or hostname == "dailyerosion.local2":
+    if not res or hostname == "dailyerosion.local":
         # Lazy import to help speed things up
         if form.get('overview'):
             res, do_cache = make_overviewmap(form)
         else:
-            res, do_cache = make_map(huc, ts, ts2, scenario, v)
+            res, do_cache = make_map(huc, ts, ts2, scenario, v, form)
         sys.stderr.write("Setting cache: %s\n" % (mckey,))
         if do_cache:
             mc.set(mckey, res, 3600)
