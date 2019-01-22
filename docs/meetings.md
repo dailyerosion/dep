@@ -1,3 +1,27 @@
+17 Jan 2019 - DEP Planning
+ Hanna, Gelder, Mellisa, Joe, Tim, Cruse, James
+ - [ ] for the yearly erosion lapse, tweek ramp above 5 T/a to another color
+ - Hanna has some source of printing grab with logos, I should bug her about
+ - One paper is submitted to EGU, another in progress
+ - Tim's P processing is giving some strange results
+ - [ ] in general, need more generalized management control in input processing
+ - [x] produce total amount of hillslopes within a MLRA slope class
+ - Pasquille is working on a global soil risk map for FAO
+ - [ ] need to generate the github tickets for Matt's UI improvements
+ - there are some software processing issues in ACPF on NE/KS border
+ - gov shutdown is impacting soil data availability
+ - NE should be done soon in ACPF, MO is cruising along
+ - Gelder will dump me data with the latest and greatest soils update
+ - Discussion of how we are doing with HUD deliverables
+ - [ ] need to do validation aspects, maybe a check on crop rotations
+ - [ ] could do some weather data validation?!?!
+ - [ ] look into a IIHR project called GHOST(?)
+ - ARS is looking to consolidate web resources, moving ACPF to ISU servers?
+ - disucssion of logistics with ACPF at the ISU GIS Facility
+ - James will be retiring this Nov
+ - "Riparan Catchments" vs HUC12s
+ - Can ACPF come to the DEP/Water Center to live?
+
 14 Dec 2018 - DEP Planning and Holiday Party
 Joe Hanna Mellisa James Cruse Time Gelder Rishi Claude
  - Claude's team is currently working away in Missouri
