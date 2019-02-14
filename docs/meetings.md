@@ -1,3 +1,26 @@
+ 1 Feb 2019 - HUD Postdoc Tasks
+ Gelder, Cruse, Bates, Emily
+ - Division of labor discussion given the postdoc is not happening
+ - [ ] daryl is responsible for the precip profiles aspect, check
+ - For field validation, can we somehow use NRI, maybe provide them a dataset
+ - NRI could provide us some township agg data?
+ - Need to do an assessment of the flowpaths against NRI, ie length, location
+ - Can SWAT do some of this work for us with regards to impacts from changes
+ - Can we just run ACPF to assess the change impact
+
+25 Jan 2019 - MN Skype Meeting
+ - Their SWEEP setup seems to be working, but WEPS is too
+ - [ ] Is there a proactive need to feed residue data from remote sensing as
+   inputs in this system?
+ - Will have whatever the realtime runs be run at ISU
+ - Don't think we have to input res management?
+ - We can't handle irrigation and the circular planting rows
+ - [ ] Am I actually archving wind from the 3km HRRR or something that res?
+ - Gelder goal of March for MN output being on the website
+ - Need to have a progress report by April 8 for advisory meeting
+ - [ ] They would like to see a public dev version of DEP so to evaluate
+ - I committed to the new map interface by fall
+
 17 Jan 2019 - DEP Planning
  Hanna, Gelder, Mellisa, Joe, Tim, Cruse, James
  - [ ] for the yearly erosion lapse, tweek ramp above 5 T/a to another color
