@@ -1,3 +1,22 @@
+14 Feb 2019 - DEP Planning
+ Gelder, Cruse, Miller, Tim, Joe, Wang, James
+ - Enheng Wang is a visiting scholar who will be working with us.
+ - MN DEM processing is coming along, so is IA now too, both 2 and 3m
+ - Interesting discussion here about if LIDAR 2019 finds newly constructed
+   terraces, then we would be back dating these to 2008.  Ufff
+ - Cutter has database size issues when running at 2m, hits 10 GB limit
+ - MO ACPF work chugs along, maybe done by the end of the semester
+ - NE ACPF is nearly done
+ - James hopes to have the CONUS GSURGO in house very soon
+ - Cruse hopes to meet European DEP folks at EGU
+ - Wang has interest in quantifying tillage erosion and tillage timing
+ - [ ] does NASS have county based planting progress?
+ - Hope to meet with Mike Kucera regarding National Soil Survey
+ - [ ] movies showing perenial grass erosion progression, like what was done
+ - [ ] side-by-side? movies of the above against baseline
+ - There will be a 2019 NAIP flight, so possible ACPF work to do there
+ - [ ] data is flopping on the new map app with first page load
+ 
  1 Feb 2019 - HUD Postdoc Tasks
  Gelder, Cruse, Bates, Emily
  - Division of labor discussion given the postdoc is not happening
