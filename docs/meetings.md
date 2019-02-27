@@ -1,3 +1,10 @@
+26 Feb 2019 - NRCS Liason Meeting
+ Todey, Justin Mount
+ - Showed the fancy ArcGIS toolkit, Integrated Erosion Toolkit
+ - They use cligen and windgen for actual data
+ - Colorado State has developed web services around WEPP
+ - LMOD is now working with WEPP and there are federated databases
+
 14 Feb 2019 - DEP Planning
  Gelder, Cruse, Miller, Tim, Joe, Wang, James
  - Enheng Wang is a visiting scholar who will be working with us.
@@ -15,7 +22,8 @@
  - [ ] movies showing perenial grass erosion progression, like what was done
  - [ ] side-by-side? movies of the above against baseline
  - There will be a 2019 NAIP flight, so possible ACPF work to do there
- - [ ] data is flopping on the new map app with first page load
+ - data is flopping on the new map app with first page load
+   filed as: dailyerosion/depmap#4
  
  1 Feb 2019 - HUD Postdoc Tasks
  Gelder, Cruse, Bates, Emily
