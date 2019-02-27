@@ -12,7 +12,7 @@ from geopandas import read_postgis
 import cartopy.crs as ccrs
 from pyiem.plot.use_agg import plt
 from pyiem.plot.geoplot import MapPlot, Z_OVERLAY2
-from pyiem.plot.colormaps import james, james2
+from pyiem.plot.colormaps import james, dep_erosion
 from pyiem.util import get_dbconn
 from pyiem.dep import RAMPS
 
@@ -103,11 +103,11 @@ def make_map(huc, ts, ts2, scenario, v, form):
     # suggested for detachment
     elif v in ['avg_loss']:
         # c =['#cbe3bb', '#c4ff4d', '#ffff4d', '#ffc44d', '#ff4d4d', '#c34dee']
-        cmap = james2()
+        cmap = dep_erosion()
     # suggested for delivery
     elif v in ['avg_delivery']:
         # c =['#ffffd2', '#ffff4d', '#ffe0a5', '#eeb74d', '#ba7c57', '#96504d']
-        cmap = james2()
+        cmap = dep_erosion()
 
     pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
@@ -183,7 +183,7 @@ def make_map(huc, ts, ts2, scenario, v, form):
         m.drawcounties()
         m.drawcities()
     m.draw_colorbar(bins, cmap, norm, units=V2UNITS[v],
-                    clevlabels=lbl, spacing='proportional')
+                    clevlabels=lbl, spacing='uniform')
     if 'progressbar' in form:
         fig = plt.gcf()
         avgval = df['data'].mean()
