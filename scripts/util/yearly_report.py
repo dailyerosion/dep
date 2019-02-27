@@ -11,7 +11,7 @@ from pyiem.util import get_dbconn
 def main(argv):
     """Do What We Wanted"""
     scenario = int(argv[1])
-    print("This report covers the inclusive years 2008-2016")
+    print("This report covers the inclusive years 2008-2018")
     pgconn = get_dbconn('idep')
 
     df = read_sql("""
@@ -24,7 +24,7 @@ def main(argv):
             sum(avg_loss) as detachment from results_by_huc12 r JOIN iahuc12 i
             on (r.huc_12 = i.huc_12) WHERE r.scenario = %s
             and r.valid >= '2008-01-01'
-            and r.valid < '2017-01-01' GROUP by r.huc_12, yr
+            and r.valid < '2019-01-01' GROUP by r.huc_12, yr
         )
 
         SELECT yr, round((avg(precip) / 25.4)::numeric, 2) as precip_in,
