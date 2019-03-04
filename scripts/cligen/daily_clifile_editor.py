@@ -526,7 +526,7 @@ def workflow():
             queue.append([xidx, yidx])
 
     printt("starting pool")
-    pool = Pool(cpu_count() / 4)  # above us is 4x
+    pool = Pool(int(cpu_count() / 4))  # above us is 4x
     sz = len(queue)
     sts = datetime.datetime.now()
     success = 0
