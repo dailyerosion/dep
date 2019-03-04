@@ -34,6 +34,7 @@ def main():
                 # print("lon: %s lat: %s is not onland" % (lon, lat))
                 if os.path.isfile(fn):
                     print("Removing %s" % (fn, ))
+                    os.unlink(fn)
                     removed += 1
                 continue
             mydir = fn.rsplit("/", 1)[0]
