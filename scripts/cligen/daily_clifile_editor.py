@@ -1,8 +1,12 @@
-"""
-  This is it, we shall create our gridded weather analysis and edit the
-  climate files!
+"""Edit a DEP Climate file.
 
-  development laptop has data for 9 Sep 2014, 23 May 2009, and 8 Jun 2009
+Usage:
+    python daily_climate_editor.py <xtile> <ytile> <tilesz> \
+        <scenario> <YYYY> <mm> <dd>
+
+Where tiles start in the lower left corner and are 2x2 deg in size, TODO
+
+development laptop has data for 9 Sep 2014, 23 May 2009, and 8 Jun 2009
 
 """
 from __future__ import print_function
@@ -11,7 +15,7 @@ import sys
 import os
 import unittest
 import logging
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 
 import numpy as np
 import pytz
@@ -20,16 +24,24 @@ from scipy.interpolate import NearestNDInterpolator
 from PIL import Image
 from pyiem import iemre
 from pyiem.datatypes import temperature
-from pyiem.dep import SOUTH, NORTH, EAST, WEST, get_cli_fname
+from pyiem.dep import SOUTH, WEST, NORTH, EAST, get_cli_fname
 from pyiem.util import ncopen
 
 logging.basicConfig(format='%(asctime)-15s %(message)s')
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 
-SCENARIO = sys.argv[1]
-YS = int((NORTH - SOUTH) * 100.)
-XS = int((EAST - WEST) * 100.)
+XTILE = int(sys.argv[1])
+YTILE = int(sys.argv[2])
+# Tilesize was arrived at thru non-scientific testing
+TILESIZE = int(sys.argv[3])
+SCENARIO = int(sys.argv[4])
+MYSOUTH = SOUTH + YTILE * TILESIZE
+MYNORTH = min([MYSOUTH + TILESIZE, NORTH])
+MYWEST = WEST + XTILE * TILESIZE
+MYEAST = min([MYWEST + TILESIZE, EAST])
+YS = int((MYNORTH - MYSOUTH) * 100)
+XS = int((MYEAST - MYWEST) * 100)
 HIGH_TEMP = np.zeros((YS, XS), np.float16)
 LOW_TEMP = np.zeros((YS, XS), np.float16)
 DEWPOINT = np.zeros((YS, XS), np.float16)
@@ -53,8 +65,8 @@ def printt(msg):
 
 def get_xy_from_lonlat(lon, lat):
     """Get the grid position"""
-    xidx = int((lon - WEST) * 100.)
-    yidx = int((lat - SOUTH) * 100.)
+    xidx = int((lon - MYWEST) * 100.)
+    yidx = int((lat - MYSOUTH) * 100.)
     return [xidx, yidx]
 
 
@@ -75,8 +87,8 @@ def load_iemre():
     24km product is smoothed down to the 0.01 degree grid
     """
     printt("load_iemre() called")
-    xaxis = np.arange(WEST, EAST, 0.01)
-    yaxis = np.arange(SOUTH, NORTH, 0.01)
+    xaxis = np.arange(MYWEST, MYEAST, 0.01)
+    yaxis = np.arange(MYSOUTH, MYNORTH, 0.01)
     xi, yi = np.meshgrid(xaxis, yaxis)
 
     fn = iemre.get_daily_ncname(VALID.year)
@@ -168,8 +180,8 @@ def load_stage4():
     # set a small non-zero number to keep things non-zero
     totals = np.where(totals > 0.001, totals, 0.001)
 
-    xaxis = np.arange(WEST, EAST, 0.01)
-    yaxis = np.arange(SOUTH, NORTH, 0.01)
+    xaxis = np.arange(MYWEST, MYEAST, 0.01)
+    yaxis = np.arange(MYSOUTH, MYNORTH, 0.01)
     xi, yi = np.meshgrid(xaxis, yaxis)
     nn = NearestNDInterpolator((lons.flatten(), lats.flatten()),
                                totals.flatten())
@@ -208,11 +220,11 @@ def qc_precip():
 
 
 def _reader(arr):
-    top = int((50. - NORTH) * 100.)
-    bottom = int((50. - SOUTH) * 100.)
+    top = int((50. - MYNORTH) * 100.)
+    bottom = int((50. - MYSOUTH) * 100.)
 
-    right = int((EAST - -126.) * 100.)
-    left = int((WEST - -126.) * 100.)
+    right = int((MYEAST - -126.) * 100.)
+    left = int((MYWEST - -126.) * 100.)
 
     (index, filename) = arr
     img = Image.open(filename)
@@ -284,7 +296,9 @@ def load_precip_legacy():
         # Now apply the weights to the s4total
         PRECIP[yidx, xidx, :] = weights * s4total
 
-    _ = [_compute(y, x) for y in range(YS) for x in range(XS)]
+    for x in range(XS):
+        for y in range(YS):
+            _compute(y, x)
 
     printt("load_precip_legacy() finished precip calculation")
 
@@ -301,11 +315,11 @@ def load_precip():
     tomorrow = midnight + datetime.timedelta(hours=36)
     tomorrow = tomorrow.replace(hour=0)
 
-    top = int((55. - NORTH) * 100.)
-    bottom = int((55. - SOUTH) * 100.)
+    top = int((55. - MYNORTH) * 100.)
+    bottom = int((55. - MYSOUTH) * 100.)
 
-    right = int((EAST - -130.) * 100.)
-    left = int((WEST - -130.) * 100.)
+    right = int((MYEAST - -130.) * 100.)
+    left = int((MYWEST - -130.) * 100.)
     # (myx, myy) = get_xy_from_lonlat(-93.6, 41.99)
     # samplex = int((-96.37 - -130.)*100.)
     # sampley = int((55. - 42.71)*100)
@@ -418,8 +432,8 @@ def compute_breakpoint(ar, accumThreshold=2., intensityThreshold=1.):
 def myjob(row):
     """ Thread job, yo """
     [xidx, yidx] = row
-    lon = WEST + xidx * 0.01
-    lat = SOUTH + yidx * 0.01
+    lon = MYWEST + xidx * 0.01
+    lat = MYSOUTH + yidx * 0.01
     fn = get_cli_fname(lon, lat, SCENARIO)
     if not os.path.isfile(fn):
         return False
@@ -447,7 +461,7 @@ def myjob(row):
                     SOLAR[yidx, xidx],
                     WIND[yidx, xidx], 0, DEWPOINT[yidx, xidx],
                     "\n".join(bpdata),
-                    "\n" if len(bpdata) > 0 else "")
+                    "\n" if bpdata else "")
 
     fp = open(fn, 'w')
     fp.write(data[:pos] + thisday + data[(pos+pos2):])
@@ -464,7 +478,8 @@ def write_grid(grid, fnadd=''):
     basedir = "/mnt/idep2/data/dailyprecip/%s" % (VALID.year, )
     if not os.path.isdir(basedir):
         os.makedirs(basedir)
-    np.save("%s/%s%s.npy" % (basedir, VALID.strftime("%Y%m%d"), fnadd), grid)
+    np.save("%s/%s%s.tile_%s_%s" % (
+        basedir, VALID.strftime("%Y%m%d"), fnadd, XTILE, YTILE), grid)
     printt("write_grid() finished...")
 
 
@@ -492,7 +507,8 @@ def precip_workflow():
 
 def workflow():
     """ The workflow to get the weather data variables we want! """
-
+    printt("Domain south: %s north: %s west: %s east: %s" % (
+        MYSOUTH, MYNORTH, MYWEST, MYEAST))
     # 1. Max Temp C
     # 2. Min Temp C
     # 3. Radiation l/d
@@ -510,7 +526,7 @@ def workflow():
             queue.append([xidx, yidx])
 
     printt("starting pool")
-    pool = Pool()  # defaults to cpu-count
+    pool = Pool(cpu_count() / 4)  # above us is 4x
     sz = len(queue)
     sts = datetime.datetime.now()
     success = 0
@@ -533,10 +549,8 @@ def workflow():
 
 if __name__ == '__main__':
     # This is important to keep valid in global scope
-    VALID = datetime.date.today() - datetime.timedelta(days=1)
-    if len(sys.argv) == 5:
-        VALID = datetime.date(int(sys.argv[2]), int(sys.argv[3]),
-                              int(sys.argv[4]))
+    VALID = datetime.date(
+        int(sys.argv[5]), int(sys.argv[6]), int(sys.argv[7]))
 
     workflow()
 
@@ -589,4 +603,3 @@ class test(unittest.TestCase):
                     self.assertTrue(1 == 0)
                 lastts = float(tokens[0])
                 lastaccum = float(tokens[1])
-                self.assertTrue(True)

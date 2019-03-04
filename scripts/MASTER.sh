@@ -10,7 +10,7 @@ fi
 find /i/0/error -name *.env -exec rm {} \;
 
 cd cligen
-python daily_clifile_editor.py 0
+python proctor_tile_edit.py 0 $(date --date '1 day ago' +'%Y %m %d')
 
 cd ../RT
 python proctor.py 0 && python env2database.py 0 && python harvest2database.py 0 && python spam_twitter.py
