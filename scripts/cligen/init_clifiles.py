@@ -7,20 +7,35 @@ import os
 import shutil
 
 import numpy as np
+from pyiem.util import get_dbconn
 from pyiem.dep import SOUTH, EAST, NORTH, WEST, get_cli_fname
 
 
-# We shall use this file, no mater what
-SRC = "/i/0/cli/095x038/095.17x038.13.cli"
-SCENARIO = 0
+def main():
+    """Go Main Go."""
+    # We shall use this file, no mater what
+    SRC = "/i/0/cli/095x038/095.17x038.13.cli"
+    SCENARIO = 0
+    pgconn = get_dbconn('postgis')
+    cursor = pgconn.cursor()
 
-WANTS = ['.00', '.25', '.50', '.75']
-created = 0
-for lon in np.arange(WEST, EAST, 0.05):
-    for lat in np.arange(SOUTH, NORTH, 0.05):
-        if (("%.2f" % (lon,))[-3:] in WANTS and
-                ("%.2f" % (lat,))[-3:] in WANTS):
+    created = 0
+    removed = 0
+    for lon in np.arange(WEST, EAST + 0.25, 0.25):
+        for lat in np.arange(SOUTH, NORTH + 0.25, 0.25):
             fn = get_cli_fname(lon, lat, SCENARIO)
+            # Ensure this point is on land, in CONUS
+            cursor.execute("""
+                SELECT ugc from ugcs where
+                ST_Contains(geom, ST_GeomFromText('Point(%s %s)',4326))
+                and substr(ugc, 3, 1) = 'C' and end_ts is null
+            """, (lon, lat))
+            if cursor.rowcount == 0:
+                # print("lon: %s lat: %s is not onland" % (lon, lat))
+                if os.path.isfile(fn):
+                    print("Removing %s" % (fn, ))
+                    removed += 1
+                continue
             mydir = fn.rsplit("/", 1)[0]
             if not os.path.isdir(mydir):
                 os.makedirs(mydir)
@@ -28,4 +43,9 @@ for lon in np.arange(WEST, EAST, 0.05):
                 created += 1
                 shutil.copyfile(SRC, fn)
 
-print("We just created %s new files!" % (created,))
+    print(
+        "We just created %s new files, removed %s files!" % (created, removed))
+
+
+if __name__ == '__main__':
+    main()
