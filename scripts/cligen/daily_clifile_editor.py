@@ -6,7 +6,7 @@ Usage:
 
 Where tiles start in the lower left corner and are 2x2 deg in size, TODO
 
-development laptop has data for 9 Sep 2014, 23 May 2009, and 8 Jun 2009
+development laptop has data for 3 March 2019, 23 May 2009, and 8 Jun 2009
 
 """
 from __future__ import print_function
@@ -16,6 +16,7 @@ import os
 import unittest
 import logging
 from multiprocessing import Pool, cpu_count
+from multiprocessing.pool import ThreadPool
 
 import numpy as np
 import pytz
@@ -55,12 +56,20 @@ STAGE4 = np.zeros((YS, XS), np.float16)
 # used for breakpoint logic
 ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
 
+# How many CPUs are we going to burn
+CPUCOUNT = max([4, int(cpu_count() / 4)])
+MEMORY = {
+    'stamp': datetime.datetime.now()
+}
+
 
 def printt(msg):
     """Print a message with a timestamp included"""
     if sys.stdout.isatty():
-        print(("%s %s"
-               ) % (datetime.datetime.now().strftime("%H:%M:%S.%f"), msg))
+        delta = (datetime.datetime.now() - MEMORY['stamp']).total_seconds()
+        MEMORY['stamp'] = datetime.datetime.now()
+        print(("%7.3f %s %s"
+               ) % (delta, datetime.datetime.now().strftime("%H:%M:%S"), msg))
 
 
 def get_xy_from_lonlat(lon, lat):
@@ -305,6 +314,7 @@ def load_precip_legacy():
 
 def load_precip():
     """ Load the 5 minute precipitation data into our ginormus grid """
+    printt("load_precip() called...")
     ts = 30 * 24  # 2 minute
 
     midnight = datetime.datetime(VALID.year, VALID.month, VALID.day, 12, 0)
@@ -330,23 +340,21 @@ def load_precip():
     now = midnight
     # Require at least 75% data coverage, if not, we will abort back to legacy
     quorum = 720 * 0.75
+    fns = []
     while now < tomorrow:
-        utc = now.astimezone(pytz.timezone("UTC"))
+        utc = now.astimezone(pytz.UTC)
         fn = utc.strftime(("/mesonet/ARCHIVE/data/%Y/%m/%d/GIS/mrms/"
                            "a2m_%Y%m%d%H%M.png"))
         if os.path.isfile(fn):
             quorum -= 1
-            tidx = int((now - midnight).seconds / 120.)
-            if tidx >= ts:
-                # Abort as we are in CST->CDT
-                return
-            img = Image.open(fn)
+            fns.append(fn)
+            # img = Image.open(fn)
             # --------------------------------------------------
             # OK, once and for all, 0,0 is the upper left!
             # units are 0.1mm
-            imgdata = np.array(img)
+            # imgdata = np.array(img)
             # sample out and then flip top to bottom!
-            data = np.flipud(imgdata[top:bottom, left:right])
+            # data = np.flipud(imgdata[top:bottom, left:right])
             # print now, data[myy, myx]
             # print np.shape(imgdata), bottom, top, left, right
             # print now, imgdata[sampley, samplex]
@@ -358,9 +366,10 @@ def load_precip():
             #    fig.savefig('test.png')
             #    sys.exit()
             # Turn 255 (missing) into zeros
-            PRECIP[:, :, tidx] = np.where(data < 255, data / a2m_divisor, 0)
+            # PRECIP[:, :, tidx] = np.where(data < 255, data / a2m_divisor, 0)
 
         else:
+            fns.append(None)
             print('daily_clifile_editor missing: %s' % (fn,))
 
         now += datetime.timedelta(minutes=2)
@@ -369,6 +378,31 @@ def load_precip():
                ) % (quorum,))
         PRECIP[:] = 0
         load_precip_legacy()
+
+    def _reader(tidx, fn):
+        """Reader."""
+        if fn is None:
+            return tidx, 0
+        img = Image.open(fn)
+        imgdata = np.array(img)
+        # sample out and then flip top to bottom!
+        return tidx, np.flipud(imgdata[top:bottom, left:right])
+
+    def _cb(args):
+        """write data."""
+        tidx, data = args
+        PRECIP[:, :, tidx] = np.where(data < 255, data / a2m_divisor, 0)
+
+    printt("load_precip() starting %s threads to read a2m" % (CPUCOUNT, ))
+    pool = ThreadPool(CPUCOUNT)
+    for tidx, fn in enumerate(fns):
+        # we ignore an hour for CDT->CST, meh
+        if tidx >= ts:
+            continue
+        pool.apply_async(_reader, (tidx, fn), callback=_cb)
+    pool.close()
+    pool.join()
+    printt("load_precip() finished...")
 
 
 def bpstr(ts, accum):
@@ -526,7 +560,7 @@ def workflow():
             queue.append([xidx, yidx])
 
     printt("starting pool")
-    pool = Pool(int(cpu_count() / 4))  # above us is 4x
+    pool = Pool(CPUCOUNT)
     sz = len(queue)
     sts = datetime.datetime.now()
     success = 0
