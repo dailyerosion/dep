@@ -7,10 +7,11 @@ if [ "$HH" -ne "00" ]
 fi 
 
 # Remove any previous run's error files
-find /i/0/error -name *.env -exec rm {} \;
+find /i/0/error -type f -name *.env -exec rm {} \;
 
 cd cligen
-python proctor_tile_edit.py 0 $(date --date '1 day ago' +'%Y %m %d')
+# usage of 1 day ago here is problematic during spring CST -> CDT
+python proctor_tile_edit.py 0 $(date --date '16 hours ago' +'%Y %m %d')
 
 cd ../RT
 python proctor.py 0 && python env2database.py 0 && python harvest2database.py 0 && python spam_twitter.py
