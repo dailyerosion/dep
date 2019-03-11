@@ -93,6 +93,21 @@ def make_overviewmap(form):
     return ram.read(), True
 
 
+def label_scenario(ax, scenario, pgconn):
+    """Overlay a simple label of this scenario."""
+    if scenario == 0:
+        return
+    cursor = pgconn.cursor()
+    cursor.execute("select label from scenarios where id = %s", (scenario, ))
+    if cursor.rowcount == 0:
+        return
+    label = cursor.fetchone()[0]
+    ax.text(
+        0.99, 0.99, "Scenario %s: %s" % (scenario, label),
+        transform=ax.transAxes, ha='right', va='top',
+        bbox=dict(color='white'), zorder=1000)
+
+
 def make_map(huc, ts, ts2, scenario, v, form):
     """Make the map"""
     plt.close()
@@ -116,6 +131,10 @@ def make_map(huc, ts, ts2, scenario, v, form):
     if ts != ts2:
         title = "for period between %s and %s" % (ts.strftime("%-d %b %Y"),
                                                   ts2.strftime("%-d %b %Y"))
+        if 'averaged' in form:
+            title = "averaged between %s and %s (2008-2017)" % (
+                ts.strftime("%-d %b"), ts2.strftime("%-d %b"))
+
     projection = ccrs.Mercator()
 
     # Check that we have data for this date!
@@ -140,20 +159,40 @@ def make_map(huc, ts, ts2, scenario, v, form):
         huclimiter = " and i.huc_12 = '%s' " % (huc, )
     if 'iowa' in form:
         huclimiter += " and i.states ~* 'IA' "
-    df = read_postgis("""
-    WITH data as (
-      SELECT huc_12, sum("""+v+""")  as d from results_by_huc12
-      WHERE scenario = %s and valid between %s and %s
-      GROUP by huc_12)
+    if 'averaged' in form:
+        # 11 years of data is standard
+        # 10 years is for the switchgrass one-off
+        df = read_postgis("""
+        WITH data as (
+        SELECT huc_12, sum("""+v+""") / 10. as d from results_by_huc12
+        WHERE scenario = %s and to_char(valid, 'mmdd') between %s and %s
+        and valid between '2008-01-01' and '2018-01-01'
+        GROUP by huc_12)
 
-    SELECT ST_Transform(simple_geom, %s) as geom,
-    coalesce(d.d, 0) * %s as data
-    from huc12 i LEFT JOIN data d
-    ON (i.huc_12 = d.huc_12) WHERE i.scenario = %s
-    """ + huclimiter + """
-    """, pgconn, params=(scenario, ts.strftime("%Y-%m-%d"),
-                         ts2.strftime("%Y-%m-%d"), projection.proj4_init,
-                         V2MULTI[v], scenario), geom_col='geom')
+        SELECT ST_Transform(simple_geom, %s) as geom,
+        coalesce(d.d, 0) * %s as data
+        from huc12 i LEFT JOIN data d
+        ON (i.huc_12 = d.huc_12) WHERE i.scenario = %s
+        """ + huclimiter + """
+        """, pgconn, params=(scenario, ts.strftime("%m%d"),
+                             ts2.strftime("%m%d"), projection.proj4_init,
+                             V2MULTI[v], 0), geom_col='geom')
+
+    else:
+        df = read_postgis("""
+        WITH data as (
+        SELECT huc_12, sum("""+v+""")  as d from results_by_huc12
+        WHERE scenario = %s and valid between %s and %s
+        GROUP by huc_12)
+
+        SELECT ST_Transform(simple_geom, %s) as geom,
+        coalesce(d.d, 0) * %s as data
+        from huc12 i LEFT JOIN data d
+        ON (i.huc_12 = d.huc_12) WHERE i.scenario = %s
+        """ + huclimiter + """
+        """, pgconn, params=(scenario, ts.strftime("%Y-%m-%d"),
+                             ts2.strftime("%Y-%m-%d"), projection.proj4_init,
+                             V2MULTI[v], 0), geom_col='geom')
     minx, miny, maxx, maxy = df['geom'].total_bounds
     buf = 10000.  # 10km
     pts = ccrs.Geodetic().transform_points(
@@ -178,6 +217,8 @@ def make_map(huc, ts, ts2, scenario, v, form):
                     zorder=2, lw=.1)
         m.ax.add_patch(p)
 
+    label_scenario(m.ax, scenario, pgconn)
+
     lbl = [round(_, 2) for _ in bins]
     if huc is not None:
         m.drawcounties()
@@ -188,7 +229,8 @@ def make_map(huc, ts, ts2, scenario, v, form):
         fig = plt.gcf()
         avgval = df['data'].mean()
         fig.text(
-            0.01, 0.905, "%s: %4.1f T/a" % (ts.year, avgval),
+            0.01, 0.905, "%s: %4.1f T/a" % (
+                ts.year if 'averaged' not in form else 'Avg', avgval),
             fontsize=14)
         bar_width = 0.758
         # yes, a small one off with years having 366 days
@@ -203,6 +245,14 @@ def make_map(huc, ts, ts2, scenario, v, form):
             color=cmap(norm([avgval, ]))[0], zorder=50,
             transform=fig.transFigure, figure=fig)
         fig.patches.append(rect2)
+    if 'cruse' in form:
+        # Crude conversion of T/a to mm depth
+        depth = avgval / 5.0
+        m.ax.text(
+            0.5, 0.5, "%.2fmm" % (depth, ), zorder=1000, fontsize=40,
+            transform=m.ax.transAxes, ha='center', va='center',
+            bbox=dict(color='k', alpha=0.5, boxstyle="round,pad=0.1"),
+            color='white')
     ram = BytesIO()
     plt.savefig(ram, format='png', dpi=100)
     plt.close()
@@ -252,8 +302,3 @@ def application(environ, start_response):
     start_response('200 OK', response_headers)
 
     return [output]
-
-
-if __name__ == '__main__':
-    make_map(None, datetime.date(2017, 12, 25), datetime.date(2017, 12, 25), 0,
-             'qc_precip')
