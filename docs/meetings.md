@@ -1,3 +1,10 @@
+14 Mar 2019 - DEP Planning
+ Cruse, Miller, Bates, Wang, Claude
+ - MO is done, Work in IN is ongoing for Claude's group
+ - [x] for my slope time lapse, the request is to plot the slope of the line
+ - Talked about the Justin Mount discussion I had last month
+ - WEPP has emfemeral gulley code?
+
 26 Feb 2019 - NRCS Liason Meeting
  Todey, Justin Mount
  - Showed the fancy ArcGIS toolkit, Integrated Erosion Toolkit
