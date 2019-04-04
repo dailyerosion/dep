@@ -33,40 +33,38 @@ class WeppRun(object):
         self.fpid = fpid
         self.clifile = clifile
 
+    def _getfn(self, prefix):
+        """boilerplate code to get a filename."""
+        return '%s/%s/%s/%s_%s.%s' % (IDEPHOME, prefix, self.subdir,
+                                      self.huc12, self.fpid, prefix)
+
     def get_wb_fn(self):
         ''' Return the water balance filename for this run '''
-        return '%s/wb/%s/%s_%s.wb' % (IDEPHOME, self.subdir,
-                                      self.huc12, self.fpid)
+        return self._getfn('wb')
 
     def get_env_fn(self):
         ''' Return the event filename for this run '''
-        return '%s/env/%s/%s_%s.env' % (IDEPHOME, self.subdir,
-                                        self.huc12, self.fpid)
+        return self._getfn('env')
 
     def get_ofe_fn(self):
         """ Return the filename used for OFE output """
-        return '%s/ofe/%s/%s_%s.ofe' % (IDEPHOME, self.subdir, self.huc12,
-                                        self.fpid)
+        return self._getfn('ofe')
 
     def get_error_fn(self):
         ''' Return the event filename for this run '''
-        return '%s/error/%s/%s_%s.error' % (IDEPHOME, self.subdir,
-                                            self.huc12, self.fpid)
+        return self._getfn('error')
 
     def get_man_fn(self):
         ''' Return the management filename for this run '''
-        return '%s/man/%s/%s_%s.man' % (IDEPHOME, self.subdir,
-                                        self.huc12, self.fpid)
+        return self._getfn('man')
 
     def get_slope_fn(self):
         ''' Return the slope filename for this run '''
-        return '%s/slp/%s/%s_%s.slp' % (IDEPHOME, self.subdir,
-                                        self.huc12, self.fpid)
+        return self._getfn('slp')
 
     def get_soil_fn(self):
         ''' Return the soil filename for this run '''
-        return '%s/sol/%s/%s_%s.sol' % (IDEPHOME, self.subdir,
-                                        self.huc12, self.fpid)
+        return self._getfn('sol')
 
     def get_clifile_fn(self):
         ''' Return the climate filename for this run '''
@@ -74,18 +72,19 @@ class WeppRun(object):
 
     def get_runfile_fn(self):
         ''' Return the run filename for this run '''
-        return '%s/run/%s/%s_%s.run' % (IDEPHOME, self.subdir,
-                                        self.huc12, self.fpid)
+        return self._getfn('run')
 
     def get_yield_fn(self):
         """Filename to be used for yield output"""
-        return "%s/yld/%s/%s_%s.yld" % (IDEPHOME, self.subdir, self.huc12,
-                                        self.fpid)
+        return self._getfn('yld')
 
     def get_event_fn(self):
         """Filename to be used for event output"""
-        return "%s/event/%s/%s_%s.txt" % (IDEPHOME, self.subdir, self.huc12,
-                                          self.fpid)
+        return self._getfn('event')
+
+    def get_crop_fn(self):
+        """Filename to be used for crop output."""
+        return self._getfn('crop')
 
     def make_runfile(self):
         ''' Create a runfile for our runs '''
@@ -101,6 +100,7 @@ class WeppRun(object):
         out.write("Yes\n")        # Do water balance output
         out.write("%s\n" % (self.get_wb_fn(),))   # water balance output file
         out.write("No\n")     # crop output
+        # out.write("%s\n" % (self.get_crop_fn(),))  # crop output file
         out.write("No\n")     # soil output
         out.write("No\n")     # distance and sed output
         out.write("No\n")     # large graphics output

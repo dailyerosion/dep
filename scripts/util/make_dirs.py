@@ -8,7 +8,7 @@ SCENARIO = sys.argv[1]
 BASELINESCENARIO = 0 if len(sys.argv) == 2 else sys.argv[2]
 
 
-PREFIXES = 'env  man  prj  run  slp  sol  wb error ofe yld'.split()
+PREFIXES = 'crop env man prj run slp sol wb error ofe yld'.split()
 
 
 def do_huc12(huc12):
