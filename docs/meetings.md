@@ -1,3 +1,38 @@
+11 Apr 2019 - DEP Planning
+ Gelder, James, Miller, Wang, Bates, Claude
+ - Interesting issue was shown with ACPF buffering problem when a road or river
+   is not truncated within a HUC12
+ - Would like to seek funding for WEPP Watershed work
+ - Big meetings in progress this week and next regarding ACPF planning
+ - [ ] look into 3DEP and usgs.entwine.io, hobu's stuff
+
+ 9 Apr 2019 - ACPF Project Planning
+ Gelder, Josh, Claudette
+ - Thinking 30 watersheds will be added from this proposal, 15 of which will
+   be in 'exotic' locations
+ - Dave's workflow has a PDF generation step, these are pre-canned and made
+   available on the download website
+ - The at-rest format is zipped file geodatabases on CyBox going forward
+ - A SQL server database tracks the amount of downloads
+ - There is a processing step that downloads some soil data
+ - Two sets of yearly updates
+
+ 9 Apr 2019 - Flanigan et al
+ Gelder, Wang, Flanigan, Livingston, Esissi(sp)
+ - [x] remove MN border HUC12s from the map that are not used
+ - [ ] Gelder laptop had some strange caching issue whereby it was not
+   processing geojson data properly on Firefox.  One of the date variables
+   must not have been updating?  Will have to boggle this.
+ - His firefox was butchering my IEM website too, shrug
+ - updated WEPP code is about done, just awaiting NRCS blessing
+ - Should have their implementation done by 1 Oct
+ - [ ] map ramp for long term precip does not cover sub-inch values
+ - new WEPP will have a 'release cover crop' option, to provide some LAI value
+   on date of harvesting previous crop
+ - Flanigan thinks our cover crop issues are a result of decomposition of weeds
+   being used for the previous crop
+ - [ ] ipad interaction with the map is not good, using chrome even
+
 14 Mar 2019 - DEP Planning
  Cruse, Miller, Bates, Wang, Claude
  - MO is done, Work in IN is ongoing for Claude's group
