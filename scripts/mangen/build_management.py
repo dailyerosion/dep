@@ -102,7 +102,10 @@ def read_file(zone, code, cfactor, year):
     Returns:
       str with the raw data used for the .rot file
     """
-    data = open('blocks/%s%s.txt' % (code, cfactor), 'r').read()
+    fn = 'blocks/%s%s.txt' % (code, cfactor)
+    if not os.path.isfile(fn):
+        return ''
+    data = open(fn, 'r').read()
     pdate = ''
     pdatem5 = ''
     pdatem10 = ''
@@ -163,7 +166,7 @@ def do_rotation(zone, code, cfactor):
     data['year10'] = read_file(zone, code[9], cfactor, 10)  # 2016
     data['year11'] = read_file(zone, code[10], cfactor, 11)  # 2017
     data['year12'] = read_file(zone, code[11], cfactor, 12)  # 2018
-    data['year13'] = read_file(zone, code[12], cfactor, 13)  # 2018
+    data['year13'] = read_file(zone, code[12], cfactor, 13)  # 2019
 
     fp = open(fn, 'w')
     fp.write("""#

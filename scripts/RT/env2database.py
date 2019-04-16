@@ -241,7 +241,7 @@ def do_huc12(huc12):
     """Process a huc12's worth of WEPP output files"""
     basedir = "/i/%s/env/%s/%s" % (SCENARIO, huc12[:8], huc12[8:])
     frames = [readfile(huc12, basedir+"/"+f) for f in os.listdir(basedir)]
-    if len(frames) == 0 or any([f is None for f in frames]):
+    if not frames or any([f is None for f in frames]):
         return huc12, None, None, None
     # Push all dataframes into one
     df = pd.concat(frames)
@@ -254,7 +254,7 @@ def do_huc12(huc12):
         df2 = df[df['date'].dt.date == date]
         # We have no data, any previous entries were deleted above already
         qc_precip = 0 if SCENARIO > 0 else precip[date][huc12]
-        if len(df2.index) == 0 and qc_precip == 0:
+        if df2.empty and qc_precip == 0:
             continue
         # Do computation
         rows.append(

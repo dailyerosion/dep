@@ -138,7 +138,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
     # slope = compute_slope(fid)
     # I need bad soilfiles so that the length can be computed
     cursor2.execute("""SELECT segid, elevation, length, f.surgo,
-    slope, management, 'MWDEP_'||surgo||'.SOL' as soilfile,
+    slope, management, 'DEP_'||surgo||'.SOL' as soilfile,
     lu2007 || lu2008 || lu2009 ||
     lu2010 || lu2011 || lu2012 || lu2013 || lu2014 || lu2015 ||
     lu2016 || lu2017 || lu2018 || lu2019 as lstring,
@@ -156,7 +156,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
             print('%s,%s had a negative slope, deleting!' % (huc_12, fpath))
             delete_flowpath(fid)
             return None
-        if row['soilfile'] == 'MWDEP_9999.SOL':
+        if row['soilfile'] == 'DEP_9999.SOL':
             continue
         if not os.path.isfile("/i/%s/sol_input/%s" % (SCENARIO,
                                                       row['soilfile'])):
@@ -191,10 +191,12 @@ def do_flowpath(zone, huc_12, fid, fpath):
     for row in rows:
         if row['slope'] > maxslope:
             maxslope = row['slope']
-    if maxslope > 1:
+    if maxslope > 0.3:
         s = compute_slope(fid)
-        print("%s %3i %4.1f %5.1f %5.1f" % (huc_12, fpath, maxslope,
-                                            rows[-1]['length'], s))
+        print("Error max-slope>0.3 %s[%3i] max:%4.1f len:%5.1f bulk:%5.1f" % (
+            huc_12, fpath, maxslope, rows[-1]['length'], s))
+        delete_flowpath(fid)
+        return None
     # SLP.write("%s,%.6f\n" % (fid, maxslope))
 
     if rows[-1]['length'] < 1:
@@ -204,14 +206,16 @@ def do_flowpath(zone, huc_12, fid, fpath):
 
     res = {}
     # These scenarios use one climate file
-    if SCENARIO in [5, 0]:
+    if SCENARIO in [5, ]:
         res['clifile'] = get_cli_fname(-96.44, 43.28, SCENARIO)
     else:
         res['clifile'] = get_cli_fname(x, y, SCENARIO)
 
     # Store climate_file name with flowpath to make life easier
-    cursor3.execute("""UPDATE flowpaths SET climate_file = %s
-     WHERE fid = %s """, (res['clifile'], fid))
+    cursor3.execute("""
+        UPDATE flowpaths SET climate_file = %s
+        WHERE fid = %s
+    """, (res['clifile'], fid))
     if cursor3.rowcount != 1:
         print('ERROR Updating climate_file for FID: %s' % (fid,))
     # return
@@ -261,7 +265,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
     for d, s in zip(soillengths, soils):
         res['soils'] += """    %s {
         Distance = %.3f
-        File = "/i/%s/sol_input/MWDEP_%s.SOL"
+        File = "/i/%s/sol_input/DEP_%s.SOL"
     }\n""" % (s, d, SCENARIO, s)
 
     prevman = None

@@ -14,24 +14,23 @@ import sys
 import shapefile
 from tqdm import tqdm
 import pandas as pd
-import psycopg2
+from pyiem.util import get_dbconn
 
 print("BE CAREFUL!  The dbf files may not be 5070, but 26915")
-print("TODO: compute length by hand and don't trust DBF files as wandering")
-sys.exit()
+print("VERIFY IF POINT_X or X is the 5070 grid value")
 
 SCENARIO = int(sys.argv[1])
-PREFIX = 'g4'
-# TRUNC_GRIDORDER_AT = int(sys.argv[3])
+PREFIX = 'fp'
+TRUNC_GRIDORDER_AT = 4
 
-PGCONN = psycopg2.connect(database='idep', host='iemdb')
+PGCONN = get_dbconn('idep')
 INSERT_SQL = """
     INSERT into flowpath_points(flowpath, segid,
     elevation, length,  surgo, management, slope, geom,
     lu2007, lu2008, lu2009, lu2010, lu2011, lu2012, lu2013,
-    lu2014, lu2015, lu2016, lu2017, scenario, gridorder)
+    lu2014, lu2015, lu2016, lu2017, lu2018, lu2019, scenario, gridorder)
     values(%s, %s, %s, %s, %s, %s, %s, 'SRID=5070;POINT(%s %s)',
-    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 """
 
 
@@ -47,13 +46,13 @@ def get_flowpath(cursor, huc12, fpath):
       int the value of this huc12 flowpath
     """
     cursor.execute("""
-    SELECT fid from flowpaths where huc_12 = %s and fpath = %s
-    and scenario = %s
+        SELECT fid from flowpaths where huc_12 = %s and fpath = %s
+        and scenario = %s
     """, (huc12, fpath, SCENARIO))
     if cursor.rowcount == 0:
         cursor.execute("""
-        INSERT into flowpaths(huc_12, fpath, scenario)
-        values (%s, %s, %s) RETURNING fid
+            INSERT into flowpaths(huc_12, fpath, scenario)
+            values (%s, %s, %s) RETURNING fid
         """, (huc12, fpath, SCENARIO))
     return cursor.fetchone()[0]
 
@@ -78,6 +77,20 @@ def get_data(filename):
     return df
 
 
+def delete_previous(cursor, huc12):
+    """This file is the authority for the HUC12, so we cull previous content.
+    """
+    cursor.execute("""
+        DELETE from flowpath_points p USING flowpaths f WHERE
+        p.scenario = %s and p.flowpath = f.fid and f.huc_12 = %s
+        and f.scenario = %s
+    """, (SCENARIO, huc12, SCENARIO))
+    cursor.execute("""
+        DELETE from flowpaths WHERE
+        scenario = %s and huc_12 = %s
+    """, (SCENARIO, huc12))
+
+
 def process(cursor, filename, huc12df):
     """Processing of a HUC12's data into the database
 
@@ -91,6 +104,7 @@ def process(cursor, filename, huc12df):
     """
     # We get the huc12 code based on the filename
     huc12 = filename[-16:-4]
+    delete_previous(cursor, huc12)
     huc8 = huc12[:-4]
     # the inbound dataframe has lots of data, one row per flowpath point
     # We group the dataframe by the column which uses a PREFIX and the huc8
@@ -107,7 +121,7 @@ def process(cursor, filename, huc12df):
         cursor.execute("""
             DELETE from flowpath_points WHERE flowpath = %s
             and scenario = %s
-            """, (fid, SCENARIO))
+        """, (fid, SCENARIO))
         linestring = []
         sz = len(df.index)
         for segid, (_, row) in enumerate(df.iterrows()):
@@ -120,33 +134,36 @@ def process(cursor, filename, huc12df):
             dy = row['ep3m%s' % (huc8[:6],)] - row2['ep3m%s' % (huc8[:6],)]
             dx = (row2['%sLen%s' % (PREFIX, huc8[:5])] -
                   row['%sLen%s' % (PREFIX, huc8[:5])])
-            gridorder = 4
+            # gridorder = 4
             # Some optional code here that was used for the grid order work
-            # gridorder = row['gord_%s' % (huc8[:5], )]
-            # if gridorder > TRUNC_GRIDORDER_AT:
-            #    continue
+            gridorder = row['gord_%s' % (huc8[:5], )]
+            if gridorder > TRUNC_GRIDORDER_AT:
+                continue
             if dx == 0:
                 slope = 0
             else:
                 slope = dy/dx
             lu = row['CropRotatn'].strip()
-            # print "%3s %7.1f %7.1f %7.4f %s" % (segid, dx, dy, slope, lu)
+            # Don't allow points without a rotation
             if lu == "":
-                lu = [None, ] * 8
+                continue
 
-            # OK, be careful here.  the landuse codes start in 2008 as there
-            # is no national coverage in 2007.  So for 2007, we will repeat
-            # the value for 2009.
-            # no 2016 data, so repeat 2014 value
+            # OK, be careful here. Presently, the 6 char field covers
+            # 2010 thru 2017, so we rotate to cover the first and last years
+            # 2007 2011[1]
+            # 2008 2010[0]
+            # 2009 2011[1]
+            # 2018 2016[6]
+            # 2019 2017[7]
             args = (fid, segid, row['ep3m%s' % (huc8[:6],)]/100.,
                     row['%sLen%s' % (PREFIX, huc8[:5])]/100.,
-                    row['gSSURGO'], row['Management'], slope, row['X'],
-                    row['Y'], lu[1], lu[0], lu[1], lu[2],
-                    lu[3], lu[4], lu[5], lu[6], lu[7], lu[6], lu[7],
-                    SCENARIO, gridorder)
+                    row['ssurgo'], row['Management'], slope, row['X'],
+                    row['Y'], lu[1], lu[0], lu[1], lu[0],
+                    lu[1], lu[2], lu[3], lu[4], lu[5], lu[6], lu[7],
+                    lu[6], lu[7], SCENARIO, gridorder)
             cursor.execute(INSERT_SQL, args)
 
-            linestring.append("%s %s" % (row['X'], row['Y']))
+            linestring.append("%s %s" % (row['POINT_X'], row['POINT_Y']))
 
         # Line string must have at least 2 points
         if len(linestring) > 1:

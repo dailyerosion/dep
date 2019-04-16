@@ -14,4 +14,4 @@ is one file per HUC12.
  select states, name, huc_8, huc_12, st_geometryn(geom, 1),
  geom, 0 from p200 where huc_12 in
  	(select distinct huc_12 from flowpaths where huc_12 not in
- 		(select huc_12 from huc12));
+ 		(select huc_12 from huc12 where scenario = 0));
