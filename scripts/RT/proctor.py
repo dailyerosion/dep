@@ -1,18 +1,17 @@
-"""
- I do the realtime run!
+"""I proctor the run of a scenario.
+
+    $ python proctor.py <scenario>
 """
 from __future__ import print_function
 import sys
 import os
 import subprocess
 import datetime
-from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
 
+from pyiem.dep import load_scenarios
 from pyiem.util import get_dbconn
 
-SCENARIO = sys.argv[1]
-# don't need trailing /
-IDEPHOME = "/i/%s" % (SCENARIO, )
 YEARS = datetime.date.today().year - 2006
 # need to regenerate run files on 2 January
 FORCE_RUNFILE_REGEN = (datetime.date.today().month == 1 and
@@ -25,18 +24,21 @@ class WeppRun(object):
     Filenames have a 51 character restriction
     """
 
-    def __init__(self, huc12, fpid, clifile):
+    def __init__(self, huc12, fpid, clifile, scenario):
         """ We initialize with a huc12 identifier and a flowpath id """
         self.huc12 = huc12
         self.huc8 = huc12[:8]
         self.subdir = "%s/%s" % (huc12[:8], huc12[8:])
         self.fpid = fpid
         self.clifile = clifile
+        self.scenario = scenario
 
     def _getfn(self, prefix):
         """boilerplate code to get a filename."""
-        return '%s/%s/%s/%s_%s.%s' % (IDEPHOME, prefix, self.subdir,
-                                      self.huc12, self.fpid, prefix)
+        return '/i/%s/%s/%s/%s_%s.%s' % (
+            self.scenario, prefix, self.subdir,
+            self.huc12, self.fpid, prefix
+        )
 
     def get_wb_fn(self):
         ''' Return the water balance filename for this run '''
@@ -143,7 +145,7 @@ class WeppRun(object):
         return True
 
 
-def realtime_run():
+def realtime_run(config):
     ''' Do a realtime run, please '''
     idep = get_dbconn('idep', user='nobody')
     icursor = idep.cursor()
@@ -152,26 +154,28 @@ def realtime_run():
     icursor.execute("""
         SELECT huc_12, fid, fpath, climate_file
         from flowpaths where scenario = %s
-    """ % (SCENARIO,))
+    """ % (config['flowpath_scenario'], ))
     for row in icursor:
         queue.append(row)
     return queue
 
 
-def run(row):
-    """ Run ! """
-    wr = WeppRun(row[0], row[2], row[3])
-    return wr.run()
-
-
-def main():
+def main(argv):
     """Go Main Go"""
-    queue = realtime_run()
-    pool = Pool()  # defaults to cpu-count
+    scenario = int(argv[1])
+    sdf = load_scenarios()
+    queue = realtime_run(sdf.loc[scenario])
+    pool = ThreadPool()  # defaults to cpu-count
     sts = datetime.datetime.now()
     sz = len(queue)
     failures = 0
-    for i, res in enumerate(pool.imap_unordered(run, queue), 1):
+
+    def _run(row):
+        """ Run ! """
+        wr = WeppRun(row[0], row[2], row[3], scenario)
+        return wr.run()
+
+    for i, res in enumerate(pool.imap_unordered(_run, queue), 1):
         if not res:
             failures += 1
         if failures > 100:
@@ -188,4 +192,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
