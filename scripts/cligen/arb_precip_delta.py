@@ -4,13 +4,14 @@ see GH #39
 """
 import os
 import sys
-from multiprocessing.pool import ThreadPool
+from multiprocessing import Pool
 
 from tqdm import tqdm
 
 
-def editor(fn, scenario, multiplier):
+def editor(arg):
     """Do the editing."""
+    fn, scenario, multiplier = arg
     newfn = fn.replace("/i/0/", "/i/%s/" % (scenario, ))
     newdir = os.path.dirname(newfn)
     if not os.path.isdir(newdir):
@@ -25,7 +26,11 @@ def editor(fn, scenario, multiplier):
         if len(tokens) != 2:
             fp.write(line)
             continue
-        fp.write("%s %.2f\n" % (tokens[0], float(tokens[1]) * multiplier))
+        try:
+            fp.write("%s %.2f\n" % (tokens[0], float(tokens[1]) * multiplier))
+        except Exception as exp:
+            print("Editing %s hit exp: %s" % (fn, exp))
+            sys.exit()
     fp.close()
 
 
@@ -44,12 +49,10 @@ def main(argv):
         return
     multiplier = float(argv[2])
     print("Applying %.2f multiplier for scenario %s" % (multiplier, scenario))
-    pool = ThreadPool()
-
-    def _editor(fn):
-        """Proxy."""
-        editor(fn, scenario, multiplier)
-    for _ in tqdm(pool.imap_unordered(_editor, finder())):
+    jobs = []
+    for fn in finder():
+        jobs.append([fn, scenario, multiplier])
+    for _ in tqdm(Pool().imap_unordered(editor, jobs)):
         pass
 
 
