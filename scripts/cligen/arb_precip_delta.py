@@ -16,9 +16,9 @@ def editor(arg):
     newdir = os.path.dirname(newfn)
     if not os.path.isdir(newdir):
         try:
-            # not thread safe
+            # subject to race conditions
             os.makedirs(newdir)
-        except:
+        except FileExistsError:
             pass
     fp = open(newfn, 'w')
     for line in open(fn):
@@ -34,11 +34,11 @@ def editor(arg):
     fp.close()
 
 
-def finder():
+def finder(scenario, multiplier):
     """yield what we can find."""
     for dirname, _dirpath, filenames in os.walk("/i/0/cli"):
         for fn in filenames:
-            yield "%s/%s" % (dirname, fn)
+            yield ["%s/%s" % (dirname, fn), scenario, multiplier]
 
 
 def main(argv):
@@ -49,10 +49,7 @@ def main(argv):
         return
     multiplier = float(argv[2])
     print("Applying %.2f multiplier for scenario %s" % (multiplier, scenario))
-    jobs = []
-    for fn in finder():
-        jobs.append([fn, scenario, multiplier])
-    for _ in tqdm(Pool().imap_unordered(editor, jobs)):
+    for _ in tqdm(Pool().imap_unordered(editor, finder(scenario, multiplier))):
         pass
 
 

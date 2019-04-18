@@ -166,7 +166,6 @@ def main(argv):
     sdf = load_scenarios()
     queue = realtime_run(sdf.loc[scenario])
     pool = ThreadPool()  # defaults to cpu-count
-    sts = datetime.datetime.now()
     sz = len(queue)
     failures = 0
 
@@ -175,6 +174,8 @@ def main(argv):
         wr = WeppRun(row[0], row[2], row[3], scenario)
         return wr.run()
 
+    sts00 = datetime.datetime.now()
+    sts0 = datetime.datetime.now()
     for i, res in enumerate(pool.imap_unordered(_run, queue), 1):
         if not res:
             failures += 1
@@ -182,13 +183,17 @@ def main(argv):
             print("ABORT due to more than 100 failures...")
             sys.exit(10)
         if i > 0 and i % 5000 == 0:
-            delta = datetime.datetime.now() - sts
-            secs = delta.microseconds / 1000000. + delta.seconds
-            speed = i / secs
-            remaining = ((sz - i) / speed) / 3600.
-            print(('%5.2fh Processed %6s/%6s [%.2f runs per sec] '
-                   'remaining: %5.2fh') % (secs / 3600., i, sz, speed,
-                                           remaining))
+            delta00 = datetime.datetime.now() - sts00
+            delta0 = datetime.datetime.now() - sts0
+            speed00 = i / delta00.total_seconds()
+            speed0 = 5000 / delta0.total_seconds()
+            remaining = ((sz - i) / speed00) / 3600.
+            print((
+                '%5.2fh Processed %6s/%6s [inst/tot %.2f/%.2f rps] '
+                'remaining: %5.2fh'
+                ) % (delta00.total_seconds() / 3600., i, sz,
+                     speed0, speed00, remaining)
+            )
 
 
 if __name__ == '__main__':
