@@ -188,6 +188,7 @@ def main(argv):
             speed00 = i / delta00.total_seconds()
             speed0 = 5000 / delta0.total_seconds()
             remaining = ((sz - i) / speed00) / 3600.
+            sts0 = datetime.datetime.now()
             print((
                 '%5.2fh Processed %6s/%6s [inst/tot %.2f/%.2f rps] '
                 'remaining: %5.2fh'
