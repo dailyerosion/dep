@@ -145,18 +145,32 @@ class WeppRun(object):
         return True
 
 
-def realtime_run(config):
+def realtime_run(config, scenario):
     ''' Do a realtime run, please '''
     idep = get_dbconn('idep', user='nobody')
     icursor = idep.cursor()
 
-    queue = []
+    cliscenario = "/i/%s/cli/" % (config['climate_scenario'], )
     icursor.execute("""
-        SELECT huc_12, fid, fpath, climate_file
+        SELECT huc_12, fpath, climate_file
         from flowpaths where scenario = %s
     """ % (config['flowpath_scenario'], ))
+    queue = []
+
+    def noop(clifn):
+        """Do we need to make mods?"""
+        return clifn
+
+    def _mod(clifn):
+        """Need to edit it."""
+        tokens = clifn.split("/")
+        return cliscenario + tokens[-2] + "/" + tokens[-1]
+
+    func = _mod if config['flowpath_scenario'] != scenario else noop
     for row in icursor:
-        queue.append(row)
+        queue.append([
+            row[0], row[1], func(row[2])
+        ])
     return queue
 
 
@@ -164,14 +178,14 @@ def main(argv):
     """Go Main Go"""
     scenario = int(argv[1])
     sdf = load_scenarios()
-    queue = realtime_run(sdf.loc[scenario])
+    queue = realtime_run(sdf.loc[scenario], scenario)
     pool = ThreadPool()  # defaults to cpu-count
     sz = len(queue)
     failures = 0
 
     def _run(row):
         """ Run ! """
-        wr = WeppRun(row[0], row[2], row[3], scenario)
+        wr = WeppRun(row[0], row[1], row[2], scenario)
         return wr.run()
 
     sts00 = datetime.datetime.now()
