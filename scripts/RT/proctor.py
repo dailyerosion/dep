@@ -99,8 +99,8 @@ class WeppRun(object):
         out.write("1\n")      # abbreviated annual output
         out.write("No\n")     # initial conditions output
         out.write("/dev/null\n")   # soil loss output file
-        out.write("Yes\n")        # Do water balance output
-        out.write("%s\n" % (self.get_wb_fn(),))   # water balance output file
+        out.write("No\n")        # Do water balance output
+        # out.write("%s\n" % (self.get_wb_fn(),))   # water balance output file
         out.write("No\n")     # crop output
         # out.write("%s\n" % (self.get_crop_fn(),))  # crop output file
         out.write("No\n")     # soil output
