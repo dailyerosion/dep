@@ -1,3 +1,15 @@
+25 Apr 2019 - DEP DEM Processing
+ Gelder, James, Tim, Cruse, Wang
+ - CCSM (NRI Folks) have been looking more into WEPP and 2m LIDAR data
+ - James showed an interesting spreadsheet with summary stats on the G1-9
+   slopes and their contributing areas
+ - Gelder wants to change the 18cm filtering to use MinMax Mild vs Mean Mild
+ - Just a computing performance note when going from 3m to 2m -> 2.4x
+ - More discussion about WEPP Watershed and how our LIDAR data could be used
+ - Continued debate on where to start slopes at and try to get the top of the
+   hill as best as possible
+ - Gelder will have the issue corrected of zeros in the DBF files I get
+
 11 Apr 2019 - DEP Planning
  Gelder, James, Miller, Wang, Bates, Claude
  - Interesting issue was shown with ACPF buffering problem when a road or river
