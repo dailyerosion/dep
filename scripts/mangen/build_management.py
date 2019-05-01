@@ -56,6 +56,14 @@ INITIAL_COND = {'F': 'IniCropDef.Tre_2239',
                 'P': 'IniCropDef.gra_3425',
                 'R': 'IniCropDef.Aft_12889',
                 }
+WHEAT_PLANT = {
+    'KS_SOUTH': datetime.date(2000, 5, 25),
+    'KS_CENTRAL': datetime.date(2000, 5, 25),
+    'KS_NORTH': datetime.date(2000, 5, 25),
+    'IA_SOUTH': datetime.date(2000, 5, 12),
+    'IA_CENTRAL': datetime.date(2000, 5, 17),
+    'IA_NORTH': datetime.date(2000, 5, 23)
+    }
 SOYBEAN_PLANT = {
     'KS_SOUTH': datetime.date(2000, 5, 25),
     'KS_CENTRAL': datetime.date(2000, 5, 25),
@@ -123,6 +131,11 @@ def read_file(zone, code, cfactor, year):
         pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
         plant = SOYBEAN[zone]
+    elif code == 'W':
+        date = WHEAT_PLANT[zone]
+        pdate = date.strftime("%m    %d")
+        pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
+        pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
     return data % {'yr': year, 'pdate': pdate, 'pdatem5': pdatem5,
                    'pdatem10': pdatem10, 'plant': plant}
 
