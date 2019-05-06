@@ -36,9 +36,11 @@ def editor(arg):
 
 def finder(scenario, multiplier):
     """yield what we can find."""
+    res = []
     for dirname, _dirpath, filenames in os.walk("/i/0/cli"):
         for fn in filenames:
-            yield ["%s/%s" % (dirname, fn), scenario, multiplier]
+            res.append(["%s/%s" % (dirname, fn), scenario, multiplier])
+    return res
 
 
 def main(argv):
@@ -48,8 +50,9 @@ def main(argv):
         print("NO!")
         return
     multiplier = float(argv[2])
+    queue = finder(scenario, multiplier)
     print("Applying %.2f multiplier for scenario %s" % (multiplier, scenario))
-    for _ in tqdm(Pool().imap_unordered(editor, finder(scenario, multiplier))):
+    for _ in tqdm(Pool().imap_unordered(editor, queue)):
         pass
 
 
