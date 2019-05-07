@@ -52,7 +52,8 @@ def main(argv):
     multiplier = float(argv[2])
     queue = finder(scenario, multiplier)
     print("Applying %.2f multiplier for scenario %s" % (multiplier, scenario))
-    for _ in tqdm(Pool().imap_unordered(editor, queue)):
+    pool = Pool()
+    for _ in tqdm(pool.imap_unordered(editor, queue), total=len(queue)):
         pass
 
 
