@@ -30,6 +30,12 @@ def do_delete(huc12, scenario):
     """, (huc12, scenario))
     print("removed %s results_by_huc12" % (cursor.rowcount, ))
 
+    # remove the huc12 from the baseline table
+    cursor.execute("""
+        DELETE from huc12 where huc_12 = %s and scenario = %s
+    """, (huc12, scenario))
+    print("removed %s rows from huc12" % (cursor.rowcount, ))
+
     # Remove some files
     for prefix in ['env', 'error', 'man', 'prj', 'run', 'slp', 'sol', 'wb']:
         dirname = "/i/%s/%s/%s/%s" % (scenario, prefix, huc12[:8],
@@ -40,6 +46,12 @@ def do_delete(huc12, scenario):
             os.unlink(fn)
         os.rmdir(dirname)
         print("Removed %s files from %s" % (len(files), dirname))
+
+        # Try to remove the huc8 folder
+        try:
+            os.rmdir("/i/%s/%s/%s" % (scenario, prefix, huc12[:8]))
+        except FileNotFoundError:
+            pass
 
     cursor.close()
     pgconn.commit()
