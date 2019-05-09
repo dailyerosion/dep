@@ -50,7 +50,7 @@ def do_delete(huc12, scenario):
         # Try to remove the huc8 folder
         try:
             os.rmdir("/i/%s/%s/%s" % (scenario, prefix, huc12[:8]))
-        except FileNotFoundError:
+        except OSError:
             pass
 
     cursor.close()
