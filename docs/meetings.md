@@ -1,3 +1,14 @@
+ 9 May 2019 - DEP Planning
+ Gelder, Bates, Claude, Wang, Cruse
+ - MO ACPF is done and the portions of IN being worked on too
+ - Would like to see some ACPF done in western lake erie and Cheseapke
+ - next traunche from Gelder will be southern MN
+ - [x] dump Wisconsin's data
+ - general need to publish the results of our scenario work
+ - trim huc12 samples down to 100, which matches Tim's convergence work
+ - ISA would like some places to go sample to test our rotations, et al data
+ - Hanna is going to IIHR on the 29th to talk collaboration
+
 25 Apr 2019 - DEP DEM Processing
  Gelder, James, Tim, Cruse, Wang
  - CCSM (NRI Folks) have been looking more into WEPP and 2m LIDAR data
