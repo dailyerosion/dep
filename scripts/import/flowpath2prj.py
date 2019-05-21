@@ -356,7 +356,9 @@ RunOptions {
 
 def main(argv):
     """ Go main go """
+    myhucs = []
     if len(argv) == 4:
+        myhucs = [argv[2], ]
         print("Running for single flowpath HUC_12: %s FPATH: %s" % (argv[2],
                                                                     argv[3]))
         cursor.execute("""
@@ -367,14 +369,19 @@ def main(argv):
         if cursor.rowcount != 1:
             print("Error: dbquery found %s rows" % (cursor.rowcount,))
     else:
+        if os.path.isfile('myhucs.txt'):
+            myhucs = open('myhucs.txt').read().split("\n")
+            print("Only running for HUC_12s in myhucs.txt")
         cursor.execute("""
             SELECT ST_ymax(ST_Transform(geom, 4326)) as lat,
             fpath, fid, huc_12 from flowpaths
             WHERE scenario = %s and fpath != 0
-        """, (SCENARIO,))
+        """, (SCENARIO, ))
     for row in tqdm(cursor, total=cursor.rowcount):
         # SLP.write("%s,%.6f\n" % (row['fid'], compute_slope(row['fid'])))
         # continue
+        if myhucs and row['huc_12'] not in myhucs:
+            continue
         zone = "KS_NORTH"
         if row['lat'] >= 42.5:
             zone = "IA_NORTH"

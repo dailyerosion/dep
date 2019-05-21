@@ -15,14 +15,19 @@ BASEDIR = "/i/%s/prj" % (SCENARIO,)
 
 
 def main():
+    """Go Main Go."""
+    myhucs = []
+    if os.path.isfile('myhucs.txt'):
+        myhucs = open('myhucs.txt').read().split("\n")
     os.chdir(BASEDIR)
     huc8s = glob.glob("*")
-    # huc8s = ['10290101', ]
     errors = 0
     for huc8 in tqdm(huc8s):
         os.chdir(huc8)
         for huc4 in glob.glob("*"):
             huc12 = "%s%s" % (huc8, huc4)
+            if myhucs and huc12 not in myhucs:
+                continue
             os.chdir(huc4)
             for pfile in glob.glob("*.prj"):
                 # Run prj2wepp in its install dir so that the local userdb

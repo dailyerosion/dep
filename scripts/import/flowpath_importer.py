@@ -16,8 +16,9 @@ from tqdm import tqdm
 import pandas as pd
 from pyiem.util import get_dbconn
 
-print("BE CAREFUL!  The dbf files may not be 5070, but 26915")
-print("VERIFY IF POINT_X or X is the 5070 grid value")
+print(" * BE CAREFUL!  The dbf files may not be 5070, but 26915")
+print(" * VERIFY IF POINT_X or X is the 5070 grid value")
+print(" * This will generate a `myhucs.txt` file with found HUCs")
 
 SCENARIO = int(sys.argv[1])
 PREFIX = 'fp'
@@ -157,13 +158,13 @@ def process(cursor, filename, huc12df):
             # 2019 2017[7]
             args = (fid, segid, row['ep3m%s' % (huc8[:6],)]/100.,
                     row['%sLen%s' % (PREFIX, huc8[:5])]/100.,
-                    row['ssurgo'], row['Management'], slope, row['X'],
-                    row['Y'], lu[1], lu[0], lu[1], lu[0],
+                    row['ssurgo'], row['Management'], slope, row['X_5070'],
+                    row['Y_5070'], lu[1], lu[0], lu[1], lu[0],
                     lu[1], lu[2], lu[3], lu[4], lu[5], lu[6], lu[7],
                     lu[6], lu[7], SCENARIO, gridorder)
             cursor.execute(INSERT_SQL, args)
 
-            linestring.append("%s %s" % (row['POINT_X'], row['POINT_Y']))
+            linestring.append("%s %s" % (row['X_5070'], row['Y_5070']))
 
         # Line string must have at least 2 points
         if len(linestring) > 1:
@@ -182,6 +183,7 @@ def process(cursor, filename, huc12df):
                 DELETE from flowpaths where fid = %s
                 and scenario = %s
             """, (fid, SCENARIO))
+    return huc12
 
 
 def main():
@@ -192,6 +194,7 @@ def main():
     fns = glob.glob("*.dbf")
     i = 0
     cursor = PGCONN.cursor()
+    fp = open('myhucs.txt', 'w')
 
     for fn in tqdm(fns):
         # Save our work every 100 dbfs, so to keep the database transaction
@@ -200,9 +203,11 @@ def main():
             PGCONN.commit()
             cursor = PGCONN.cursor()
         df = get_data(fn)
-        process(cursor, fn, df)
+        huc12 = process(cursor, fn, df)
+        fp.write("%s\n" % (huc12, ))
         i += 1
 
+    fp.close()
     # Commit the database changes
     cursor.close()
     PGCONN.commit()
