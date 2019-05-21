@@ -188,13 +188,14 @@ def process(cursor, filename, huc12df):
 
 def main():
     """Our main function, the starting point for code execution"""
+    # track our work
+    fp = open('myhucs.txt', 'w')
     # Change the working directory to where we have data files
     os.chdir("../../data/%s" % (sys.argv[2],))
     # collect up the dbfs in that directory
     fns = glob.glob("*.dbf")
     i = 0
     cursor = PGCONN.cursor()
-    fp = open('myhucs.txt', 'w')
 
     for fn in tqdm(fns):
         # Save our work every 100 dbfs, so to keep the database transaction

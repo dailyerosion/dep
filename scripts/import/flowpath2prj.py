@@ -13,6 +13,7 @@ from pyiem.dep import get_cli_fname
 
 SCENARIO = int(sys.argv[1])
 MISSED_SOILS = {}
+MAX_SLOPE_RATIO = 0.9
 PGCONN = get_dbconn('idep')
 cursor = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cursor2 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -191,7 +192,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
     for row in rows:
         if row['slope'] > maxslope:
             maxslope = row['slope']
-    if maxslope > 0.3:
+    if maxslope > MAX_SLOPE_RATIO:
         s = compute_slope(fid)
         print("Error max-slope>0.3 %s[%3i] max:%4.1f len:%5.1f bulk:%5.1f" % (
             huc_12, fpath, maxslope, rows[-1]['length'], s))
