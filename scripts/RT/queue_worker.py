@@ -1,5 +1,6 @@
 """We do work when jobs are placed in the queue."""
 import sys
+import re
 import subprocess
 from multiprocessing.pool import ThreadPool
 import time
@@ -7,6 +8,9 @@ import time
 import rabbitpy
 
 URL = 'amqp://guest:guest@iem-rabbitmq.local:5672/%2f'
+FILENAME_RE = re.compile((
+    "/i/(?P<scenario>[0-9]+)/env/(?P<huc8>[0-9]{8})/(?P<huc812>[0-9]{4})/"
+    "(?P<huc12>[0-9]{12})_(?P<fpath>[0-9]+).env"))
 
 
 def run(rundata):
@@ -14,9 +18,20 @@ def run(rundata):
     proc = subprocess.Popen(
         ["wepp", ],
         stderr=subprocess.PIPE, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-    (stdoutdata, _stderrdata) = proc.communicate(rundata)
+    (stdoutdata, stderrdata) = proc.communicate(rundata)
     if stdoutdata[-13:-1] != b'SUCCESSFULLY':
-        print("ERROR!")
+        # So our job failed and we now have to figure out a filename to use
+        # for the error file.  This is a quasi-hack here, but the env file
+        # should always point to the right scenario being run.
+        m = FILENAME_RE.search(rundata.decode('ascii'))
+        if m:
+            d = m.groupdict()
+            errorfn = "/i/%s/error/%s/%s/%s_%s.error" % (
+                d['scenario'], d['huc8'], d['huc812'], d['huc12'], d['fpath']
+            )
+            with open(errorfn, 'wb') as fp:
+                fp.write(stdoutdata)
+                fp.write(stderrdata)
         return False
     return True
 
@@ -48,6 +63,9 @@ def runloop(argv):
 
 def main(argv):
     """Go main Go."""
+    if len(argv) != 3:
+        print("USAGE: python queue_worker.py <scenario> <threads>")
+        return
     while True:
         try:
             runloop(argv)

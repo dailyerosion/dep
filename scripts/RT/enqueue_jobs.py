@@ -11,9 +11,9 @@ YEARS = datetime.date.today().year - 2006
 
 
 class WeppRun:
-    """ Represents a single run of WEPP
+    """Represents a single run of WEPP.
 
-    Filenames have a 51 character restriction
+    Filenames have a 51 character restriction.
     """
 
     def __init__(self, huc12, fpid, clifile, scenario):
@@ -43,10 +43,6 @@ class WeppRun:
     def get_ofe_fn(self):
         """ Return the filename used for OFE output """
         return self._getfn('ofe')
-
-    def get_error_fn(self):
-        ''' Return the event filename for this run '''
-        return self._getfn('error')
 
     def get_man_fn(self):
         ''' Return the management filename for this run '''
@@ -144,7 +140,7 @@ def main(argv):
             ))
     # Wait a few seconds for the dust to settle
     time.sleep(10)
-    percentile = 0.9
+    percentile = 1.0001
     while True:
         now = datetime.datetime.now()
         cnt = channel.queue_declare(

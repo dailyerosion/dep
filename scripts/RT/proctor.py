@@ -1,4 +1,4 @@
-"""I proctor the run of a scenario.
+"""NOTE: Legacy code for job exec.
 
     $ python proctor.py <scenario>
 """
