@@ -1,3 +1,15 @@
+ 6 Jun 2019 - DEP Planning
+ Gelder, Bates, Claude, Wang, Cruse, Tim, James, Mellisa
+ - WI,IL border ACPF work almost done
+ - N IN is close to done as well
+ - ACPF is up to 11,135 counties
+ - 3m DEM work in MN is getting close to done
+ - [ ] what precentage of hillslopes in DEP are row-crop
+ - Tim found that our runoff is higher than what is measured in Strips
+ - Wang's tillage product is nearing completion
+ - [ ] create a soil moisture lapse that delineates between the croping types
+ - [ ] I relally need to look into WEPP watershed
+
  9 May 2019 - DEP Planning
  Gelder, Bates, Claude, Wang, Cruse
  - MO ACPF is done and the portions of IN being worked on too
