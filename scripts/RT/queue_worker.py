@@ -48,12 +48,13 @@ def runloop(argv):
             run(message.body)
             message.ack()
 
-        connection = rabbitpy.Connection(URL)
-        channel = connection.channel()
-        channel.prefetch_count(10)
-        for message in rabbitpy.Queue(channel, name=queuename):
-            consume(message)
-        connection.close()
+        # Use context managers as we had some strange thread issues otherwise?
+        with rabbitpy.Connection(URL) as conn:
+            with conn.channel() as channel:
+                channel.prefetch_count(10)
+                queue = rabbitpy.Queue(channel, name=queuename, durable=True)
+                for message in queue:
+                    consume(message)
 
     pool = ThreadPool(start_threads)
     for _ in range(start_threads):
