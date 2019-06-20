@@ -2,7 +2,8 @@
 import sys
 import re
 import subprocess
-from multiprocessing.pool import ThreadPool
+from functools import partial
+from multiprocessing import Pool
 import time
 
 import rabbitpy
@@ -36,6 +37,30 @@ def run(rundata):
     return True
 
 
+def cb(*args):
+    """If apply_async has troubles?"""
+    print("cb() called and got the following as args:")
+    print(args)
+
+
+def setup_connection(queuename):
+    """Setup and run."""
+
+    def consume(message):
+        run(message.body)
+        message.ack()
+
+    # Use context managers as we had some strange thread issues otherwise?
+    with rabbitpy.Connection(URL) as conn:
+        with conn.channel() as channel:
+            channel.prefetch_count(10)
+            queue = rabbitpy.Queue(channel, name=queuename, durable=True)
+            print(queue)
+            for message in queue:
+                consume(message)
+            print('done')
+
+
 def runloop(argv):
     """Our main runloop."""
     scenario = int(argv[1])
@@ -43,22 +68,10 @@ def runloop(argv):
 
     queuename = 'dep' if scenario == 0 else 'depscenario'
 
-    def setup_connection():
-        def consume(message):
-            run(message.body)
-            message.ack()
-
-        # Use context managers as we had some strange thread issues otherwise?
-        with rabbitpy.Connection(URL) as conn:
-            with conn.channel() as channel:
-                channel.prefetch_count(10)
-                queue = rabbitpy.Queue(channel, name=queuename, durable=True)
-                for message in queue:
-                    consume(message)
-
-    pool = ThreadPool(start_threads)
+    pool = Pool(start_threads)
+    f = partial(setup_connection, queuename)
     for _ in range(start_threads):
-        pool.apply_async(setup_connection)
+        pool.apply_async(f, callback=cb, error_callback=cb)
     pool.close()
     pool.join()
 
