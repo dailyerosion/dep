@@ -53,6 +53,7 @@ def runloop(argv):
         channel.prefetch_count(10)
         for message in rabbitpy.Queue(channel, name=queuename):
             consume(message)
+        connection.close()
 
     pool = ThreadPool(start_threads)
     for _ in range(start_threads):
