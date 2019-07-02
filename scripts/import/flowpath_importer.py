@@ -1,9 +1,11 @@
-"""Process provided DBF files into the database
+"""Process provided GeoJSON files into the database.
 
-Brian Gelder provides me a zipfile full of dbfs (one per HUC12).  This script
-consumes those dbf files and places them in the database.
+Brian Gelder provides me some archive of processed HUC12s, this archive is
+dumped to disk and then glob'd by this script.  It then creates a `myhucs.txt`
+file, which provides the downstream scripts the data domain to limit processing
+to.
 
-    python flowpath_importer.py <scenario> <path to dbf files in ../../data/>
+    python flowpath_importer.py <scenario> <path to geojsons in ../../data/>
 
 """
 from __future__ import print_function
@@ -11,13 +13,12 @@ import glob
 import os
 import sys
 
-import shapefile
 from tqdm import tqdm
-import pandas as pd
+import geopandas as gpd
 from pyiem.util import get_dbconn
 
-print(" * BE CAREFUL!  The dbf files may not be 5070, but 26915")
-print(" * VERIFY IF POINT_X or X is the 5070 grid value")
+print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")
+print(" * VERIFY that the GeoJSON is the 5070 grid value")
 print(" * This will generate a `myhucs.txt` file with found HUCs")
 
 SCENARIO = int(sys.argv[1])
@@ -59,22 +60,15 @@ def get_flowpath(cursor, huc12, fpath):
 
 
 def get_data(filename):
-    """Converts a dbf file into a pandas dataframe
+    """Converts a GeoJSON file into a pandas dataframe
 
     Args:
-      filename (str): The dbf filename to process
+      filename (str): The geojson filename to process
 
     Returns:
-      pd.DataFrame with the dbf data included.
+      gpd.DataFrame with the geojson data included.
     """
-    # hack to read just dbf file
-    # https://github.com/GeospatialPython/pyshp/issues/35
-    dbf = shapefile.Reader(dbf=open(filename, 'rb'))
-    rows = dbf.records()
-    fields = dbf.fields[1:]
-    field_names = [field[0] for field in fields]
-    df = pd.DataFrame(rows)
-    df.columns = field_names
+    df = gpd.read_file(filename, index='OBJECTID')
     return df
 
 
@@ -97,25 +91,24 @@ def process(cursor, filename, huc12df):
 
     Args:
       cursor (psycopg2.cursor): database cursor
-      filename (str): the dbf filename
-      huc12df (pd.DataFrame): the dataframe containing the dbf data
+      filename (str): the geojson filename
+      huc12df (pd.DataFrame): the dataframe containing the data
 
     Returns:
       None
     """
     # We get the huc12 code based on the filename
-    huc12 = filename[-16:-4]
+    huc12 = filename.split(".")[0].split("_")[1]
     delete_previous(cursor, huc12)
-    huc8 = huc12[:-4]
     # the inbound dataframe has lots of data, one row per flowpath point
     # We group the dataframe by the column which uses a PREFIX and the huc8
-    for flowpath, df in huc12df.groupby('%s%s' % (PREFIX, huc8)):
+    for flowpath, df in huc12df.groupby('%s%s_tif' % (PREFIX, huc12)):
         # never do flowpath zero!
         if flowpath == 0:
             continue
         # Sort along the length column, which orders the points from top
         # to bottom
-        df = df.sort_values('%sLen%s' % (PREFIX, huc8[:5]), ascending=True)
+        df = df.sort_values('%sLen%s' % (PREFIX, huc12), ascending=True)
         # Get or create the flowpathid from the database
         fid = get_flowpath(cursor, huc12, flowpath)
         # Remove any previous data for this flowpath
@@ -132,12 +125,12 @@ def process(cursor, filename, huc12df):
                 row2 = df.iloc[segid-1]
             else:
                 row2 = df.iloc[segid+1]
-            dy = row['ep3m%s' % (huc8[:6],)] - row2['ep3m%s' % (huc8[:6],)]
-            dx = (row2['%sLen%s' % (PREFIX, huc8[:5])] -
-                  row['%sLen%s' % (PREFIX, huc8[:5])])
+            dy = row['ep3m%s' % (huc12,)] - row2['ep3m%s' % (huc12,)]
+            dx = (row2['%sLen%s' % (PREFIX, huc12)] -
+                  row['%sLen%s' % (PREFIX, huc12)])
             # gridorder = 4
             # Some optional code here that was used for the grid order work
-            gridorder = row['gord_%s' % (huc8[:5], )]
+            gridorder = row['gord_%s' % (huc12, )]
             if gridorder > TRUNC_GRIDORDER_AT:
                 continue
             if dx == 0:
@@ -156,15 +149,17 @@ def process(cursor, filename, huc12df):
             # 2009 2011[1]
             # 2018 2016[6]
             # 2019 2017[7]
-            args = (fid, segid, row['ep3m%s' % (huc8[:6],)]/100.,
-                    row['%sLen%s' % (PREFIX, huc8[:5])]/100.,
-                    row['ssurgo'], row['Management'], slope, row['X_5070'],
-                    row['Y_5070'], lu[1], lu[0], lu[1], lu[0],
+            args = (fid, segid, row['ep3m%s' % (huc12,)]/100.,
+                    row['%sLen%s' % (PREFIX, huc12)]/100.,
+                    row['ssurgo'], row['Management'], slope,
+                    row['geometry'].x,
+                    row['geometry'].y, lu[1], lu[0], lu[1], lu[0],
                     lu[1], lu[2], lu[3], lu[4], lu[5], lu[6], lu[7],
                     lu[6], lu[7], SCENARIO, gridorder)
             cursor.execute(INSERT_SQL, args)
 
-            linestring.append("%s %s" % (row['X_5070'], row['Y_5070']))
+            linestring.append("%s %s" % (
+                row['geometry'].x, row['geometry'].y))
 
         # Line string must have at least 2 points
         if len(linestring) > 1:
@@ -192,13 +187,13 @@ def main():
     fp = open('myhucs.txt', 'w')
     # Change the working directory to where we have data files
     os.chdir("../../data/%s" % (sys.argv[2],))
-    # collect up the dbfs in that directory
-    fns = glob.glob("*.dbf")
+    # collect up the GeoJSONs in that directory
+    fns = glob.glob("smpl3m*.json")
     i = 0
     cursor = PGCONN.cursor()
 
     for fn in tqdm(fns):
-        # Save our work every 100 dbfs, so to keep the database transaction
+        # Save our work every 100 HUC12s, so to keep the database transaction
         # at a reasonable size
         if i > 0 and i % 100 == 0:
             PGCONN.commit()
