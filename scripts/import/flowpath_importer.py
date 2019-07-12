@@ -102,7 +102,7 @@ def process(cursor, filename, huc12df):
     delete_previous(cursor, huc12)
     # the inbound dataframe has lots of data, one row per flowpath point
     # We group the dataframe by the column which uses a PREFIX and the huc8
-    for flowpath, df in huc12df.groupby('%s%s_tif' % (PREFIX, huc12)):
+    for flowpath, df in huc12df.groupby('%s%s' % (PREFIX, huc12)):
         # never do flowpath zero!
         if flowpath == 0:
             continue
