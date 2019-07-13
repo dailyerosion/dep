@@ -11,7 +11,7 @@ def main(argv):
         removed = 0
         for subdir in [
                 'crop', 'error', 'man', 'ofe', 'prj', 'run', 'slp', 'sol',
-                'wb', 'yld']:
+                'wb', 'yld', 'env']:
             mydir = "/i/%s/%s/%s/%s" % (scenario, subdir, huc12[:8], huc12[8:])
             if not os.path.isdir(mydir):
                 continue
