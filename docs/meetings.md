@@ -1,3 +1,12 @@
+11 Jul 2019 - DEP Planning
+ Gelder, Cruse, James, Bates, Mellisa, Green, Wang
+ - Claude currently has two editors and five counties left to process in IN
+ - There may now be some IL data coming my way.
+ - Next traunch is more MN HUCs12 and close out southern MN
+ - Discussion of sabatical application received
+ - FAO has interest in further investigating hot spots over the globe
+ - Discussion about how much interest we have in more global type work
+
  6 Jun 2019 - DEP Planning
  Gelder, Bates, Claude, Wang, Cruse, Tim, James, Mellisa
  - WI,IL border ACPF work almost done
