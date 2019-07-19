@@ -27,13 +27,20 @@ import geopandas as gpd
 from rasterstats import zonal_stats
 from affine import Affine
 from pyiem import dep as dep_utils
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconn, logger
 
+LOG = logger()
 PRECIP_AFF = Affine(0.01, 0., dep_utils.WEST, 0., -0.01, dep_utils.NORTH)
+CONFIG = {'subset': False}
 
 
 def find_huc12s(scenario):
     """yield a listing of huc12s with output!"""
+    if os.path.isfile("myhucs.txt"):
+        LOG.warning("Using myhucs.txt to guide processing...")
+        CONFIG['subset'] = True
+        return [s.strip() for s in open('myhucs.txt').readlines()]
+
     res = []
     for huc8 in os.listdir("/i/%s/env" % (scenario, )):
         for huc12 in os.listdir("/i/%s/env/%s" % (scenario, huc8)):
@@ -110,7 +117,7 @@ def compute_res(df, date, slopes, qc_precip):
                 )
 
 
-def load_precip(dates):
+def load_precip(dates, huc12s):
     """Compute the HUC12 spatially averaged precip
 
     This provides the `qc_precip` value stored in the database for each HUC12,
@@ -120,6 +127,7 @@ def load_precip(dates):
 
     Args:
       dates (list): the dates we need precip data for
+      huc12s (list): listing of huc12s of interest, use if CONFIG['subset']
 
     Returns:
       dict of [date][huc12]
@@ -130,6 +138,8 @@ def load_precip(dates):
         SELECT huc_12, ST_Transform(simple_geom, 4326) as geo
         from huc12 WHERE scenario = 0
     """, idep, index_col='huc_12', geom_col='geo')
+    if CONFIG['subset']:
+        huc12df = huc12df.loc[huc12s]
     # 2. Loop over dates
     res = {}
     for date in tqdm(dates, disable=(not sys.stdout.isatty())):
@@ -285,7 +295,7 @@ def main(argv):
     lengths = load_lengths(scenario)
     dates = determine_dates(sys.argv)
     huc12s = find_huc12s(scenario)
-    precip = load_precip(dates)
+    precip = load_precip(dates, huc12s)
     jobs = []
     for huc12 in huc12s:
         jobs.append([scenario, huc12, lengths[huc12], dates, precip[huc12]])
