@@ -1,11 +1,12 @@
 """Place jobs into our DEP queue!"""
 import sys
+import os
 import datetime
 import time
 from io import StringIO
 
 import pika
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconn, logger
 
 YEARS = datetime.date.today().year - 2006
 
@@ -116,6 +117,11 @@ class WeppRun:
 def main(argv):
     """Go main Go."""
     scenario = int(argv[1])
+    log = logger()
+    myhucs = []
+    if os.path.isfile("myhucs.txt"):
+        log.warning("Using myhucs.txt to filter job submission")
+        myhucs = [s.strip() for s in open('myhucs.txt').readlines()]
     idep = get_dbconn('idep')
     icursor = idep.cursor()
 
@@ -130,6 +136,8 @@ def main(argv):
     channel.queue_declare(queue='dep', durable=True)
     sts = datetime.datetime.now()
     for row in icursor:
+        if myhucs and row[0] not in myhucs:
+            continue
         wr = WeppRun(row[0], row[1], row[2], scenario)
         channel.basic_publish(
             exchange='',
@@ -147,15 +155,16 @@ def main(argv):
             queue='dep', durable=True).method.message_count
         done = totaljobs - cnt
         if (cnt / float(totaljobs)) < percentile:
-            print("%s %6i/%s [%.3f /s]" % (
-                now.strftime("%H:%M"), cnt, totaljobs,
-                done / (now - sts).total_seconds()))
+            log.info(
+                "%6i/%s [%.3f /s]", cnt, totaljobs,
+                done / (now - sts).total_seconds()
+            )
             percentile -= 0.1
         if (now - sts).total_seconds() > 36000:
-            print("ERROR, 10 Hour Job Limit Hit")
+            log.error("ERROR, 10 Hour Job Limit Hit")
             break
         if cnt == 0:
-            print("%s Done!" % (now.strftime("%H:%M"), ))
+            log.info("%s Done!", now.strftime("%H:%M"))
             break
         time.sleep(30)
 
