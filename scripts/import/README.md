@@ -15,6 +15,7 @@ is one file per HUC12.
 1. copy `myhucs.txt` up to IEM and run `python clear_files.py`
 1. extract the `dep.tar` file on IEM
 1. On IEM run `cligen/locate_clifile.py`
+1. On IEM run `cligen/make_dirs.py`
 
  insert into huc12
  (states, hu_12_name, huc_8, huc_12, simple_geom, geom, scenario)
