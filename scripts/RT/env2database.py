@@ -298,6 +298,9 @@ def main(argv):
     precip = load_precip(dates, huc12s)
     jobs = []
     for huc12 in huc12s:
+        if huc12 not in precip:
+            LOG.info("Skipping huc12 %s with no precip", huc12)
+            continue
         jobs.append([scenario, huc12, lengths[huc12], dates, precip[huc12]])
 
     # Begin the processing work now!
