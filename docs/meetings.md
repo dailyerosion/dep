@@ -1,3 +1,30 @@
+Daily Erosion Project Meeting Notes
+===================================
+
+21 Aug 2019 :: Minnesota collaborators
+-----
+
+- Drewitz, Vaughn, and Nelson here from MN for two day meetings
+- Millions of dollars are found to fly LIDAR, but not found for upkeep and QC
+- LiDAR companies are only now seeing value in proposing services for this
+- "QLO1" ? getting 20 points per square meter is the best out there.
+- [ ] need to implement a more aggressive backfill of precip when new points
+  are sampled from the 25km first-guess data.
+- [ ] Have the display show precip for HUC12s that are not modelled.
+- Gelder's Edge browser continues to be very slow for the website display
+- [ ] improve one sentence blurb on the website to include Tim's graphic of what
+  we are modelling.
+
+22 Aug 2019 :: Minnesota collaborators Day 2
+------
+
+- [x] provide James SSH access to one of my linux boxes
+- [ ] need to cull HUC12s in MN with low flowpath counts
+- Need to emphasize the need for high quality DEMs for our work
+- as of early August, about 2,749 of the 11,264 available HUC12s have been dl
+- [ ] need to consider geojson schema changes to support wind, gulley etc model
+- [ ] add Iowa label to linechart movie to show what I am actually plotting
+
 11 Jul 2019 - DEP Planning
  Gelder, Cruse, James, Bates, Mellisa, Green, Wang
  - Claude currently has two editors and five counties left to process in IN
