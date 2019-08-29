@@ -34,18 +34,18 @@ Here's a listing of project landuse codes used
   q - Orchards
   v - Vegetables
 """
-from __future__ import print_function
 import os
 import datetime
 import sys
 
 from tqdm import tqdm
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconn, logger
+from pyiem.dep import load_scenarios
 
-SCENARIO = sys.argv[1]
+LOG = logger()
 OVERWRITE = True
 if len(sys.argv) == 2:
-    print("WARNING: This does not overwrite old files!")
+    LOG.info("WARNING: This does not overwrite old files!")
     OVERWRITE = False
 
 PGCONN = get_dbconn('idep')
@@ -65,6 +65,17 @@ WHEAT_PLANT = {
     'IA_NORTH': datetime.date(2000, 5, 23)
     }
 SOYBEAN_PLANT = {
+    59: datetime.date(2000, 4, 15),
+    60: datetime.date(2000, 4, 20),
+    61: datetime.date(2000, 4, 25),
+    62: datetime.date(2000, 4, 30),
+    63: datetime.date(2000, 5, 5),
+    64: datetime.date(2000, 5, 10),
+    65: datetime.date(2000, 5, 15),
+    66: datetime.date(2000, 5, 20),
+    67: datetime.date(2000, 5, 25),
+    68: datetime.date(2000, 5, 30),
+    69: datetime.date(2000, 6, 4),
     'KS_SOUTH': datetime.date(2000, 5, 25),
     'KS_CENTRAL': datetime.date(2000, 5, 25),
     'KS_NORTH': datetime.date(2000, 5, 25),
@@ -73,6 +84,17 @@ SOYBEAN_PLANT = {
     'IA_NORTH': datetime.date(2000, 5, 23)
     }
 CORN_PLANT = {
+    59: datetime.date(2000, 4, 10),
+    60: datetime.date(2000, 4, 15),
+    61: datetime.date(2000, 4, 20),
+    62: datetime.date(2000, 4, 25),
+    63: datetime.date(2000, 4, 30),
+    64: datetime.date(2000, 5, 5),
+    65: datetime.date(2000, 5, 10),
+    66: datetime.date(2000, 5, 15),
+    67: datetime.date(2000, 5, 20),
+    68: datetime.date(2000, 5, 25),
+    69: datetime.date(2000, 5, 30),
     'KS_SOUTH': datetime.date(2000, 4, 20),
     'KS_CENTRAL': datetime.date(2000, 4, 25),
     'KS_NORTH': datetime.date(2000, 4, 30),
@@ -98,10 +120,11 @@ SOYBEAN = {
         }
 
 
-def read_file(zone, code, cfactor, year):
+def read_file(scenario, zone, code, cfactor, year):
     """Read a block file and do replacements
 
     Args:
+      scenario (int): The DEP scenario
       zone (str): The DEP cropping zone
       code (str): the crop code
       cfactor (int): the c-factor for tillage
@@ -120,13 +143,13 @@ def read_file(zone, code, cfactor, year):
     plant = ''
     # We currently only have zone specific files for Corn and Soybean
     if code == 'C':
-        date = CORN_PLANT[zone]
+        date = CORN_PLANT.get(scenario, CORN_PLANT[zone])
         pdate = date.strftime("%m    %d")
         pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
         plant = CORN[zone]
     elif code == 'B':
-        date = SOYBEAN_PLANT[zone]
+        date = SOYBEAN_PLANT.get(scenario, SOYBEAN_PLANT[zone])
         pdate = date.strftime("%m    %d")
         pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
@@ -140,10 +163,11 @@ def read_file(zone, code, cfactor, year):
                    'pdatem10': pdatem10, 'plant': plant}
 
 
-def do_rotation(zone, code, cfactor):
+def do_rotation(scenario, zone, code, cfactor):
     """Create the rotation file
 
     Args:
+      scenario (int): The DEP scenario
       zone (str): The DEP cropping zone
       code (str): the management code string used to identify crops
       cfactor (int): the c-factor at play here
@@ -152,37 +176,41 @@ def do_rotation(zone, code, cfactor):
       None
     """
     # We create a tree of codes to keep directory sizes in check
-    dirname = ("../../prj2wepp/wepp/data/managements/IDEP2/%s/%s/%s"
-               ) % (zone, code[:2], code[2:4])
+    dirname = (
+        "../../prj2wepp/wepp/data/managements/%s/%s/%s/%s"
+    ) % (
+        "IDEP2" if scenario == 0 else 'SCEN%s' % (scenario, ),
+        zone, code[:2], code[2:4]
+    )
     if not os.path.isdir(dirname):
         os.makedirs(dirname)
     fn = "%s/%s-%s.rot" % (dirname, code, cfactor)
     # Don't re-create this file if it already exists and we don't have
     # OVERWRITE set
     if not OVERWRITE and os.path.isfile(fn):
-        return
+        return False
     # Dictionary of values used to fill out the file template below
     data = {}
     data['date'] = datetime.datetime.now()
     data['code'] = code
     data['name'] = "%s-%s" % (code, cfactor)
     data['initcond'] = INITIAL_COND.get(code[0], INITIAL_COND_DEFAULT)
-    data['year1'] = read_file(zone, code[0], cfactor, 1)  # 2007
-    data['year2'] = read_file(zone, code[1], cfactor, 2)  # 2008
-    data['year3'] = read_file(zone, code[2], cfactor, 3)  # 2009
-    data['year4'] = read_file(zone, code[3], cfactor, 4)  # 2010
-    data['year5'] = read_file(zone, code[4], cfactor, 5)  # 2011
-    data['year6'] = read_file(zone, code[5], cfactor, 6)  # 2012
-    data['year7'] = read_file(zone, code[6], cfactor, 7)  # 2013
-    data['year8'] = read_file(zone, code[7], cfactor, 8)  # 2014
-    data['year9'] = read_file(zone, code[8], cfactor, 9)  # 2015
-    data['year10'] = read_file(zone, code[9], cfactor, 10)  # 2016
-    data['year11'] = read_file(zone, code[10], cfactor, 11)  # 2017
-    data['year12'] = read_file(zone, code[11], cfactor, 12)  # 2018
-    data['year13'] = read_file(zone, code[12], cfactor, 13)  # 2019
+    data['year1'] = read_file(scenario, zone, code[0], cfactor, 1)  # 2007
+    data['year2'] = read_file(scenario, zone, code[1], cfactor, 2)  # 2008
+    data['year3'] = read_file(scenario, zone, code[2], cfactor, 3)  # 2009
+    data['year4'] = read_file(scenario, zone, code[3], cfactor, 4)  # 2010
+    data['year5'] = read_file(scenario, zone, code[4], cfactor, 5)  # 2011
+    data['year6'] = read_file(scenario, zone, code[5], cfactor, 6)  # 2012
+    data['year7'] = read_file(scenario, zone, code[6], cfactor, 7)  # 2013
+    data['year8'] = read_file(scenario, zone, code[7], cfactor, 8)  # 2014
+    data['year9'] = read_file(scenario, zone, code[8], cfactor, 9)  # 2015
+    data['year10'] = read_file(scenario, zone, code[9], cfactor, 10)  # 2016
+    data['year11'] = read_file(scenario, zone, code[10], cfactor, 11)  # 2017
+    data['year12'] = read_file(scenario, zone, code[11], cfactor, 12)  # 2018
+    data['year13'] = read_file(scenario, zone, code[12], cfactor, 13)  # 2019
 
-    fp = open(fn, 'w')
-    fp.write("""#
+    with open(fn, 'w') as fh:
+        fh.write("""#
 # WEPP rotation saved on: %(date)s
 #
 # Created with scripts/mangen/build_management.py
@@ -211,7 +239,7 @@ Operations {
 %(year13)s
 }
 """ % data)
-    fp.close()
+    return True
 
 
 def get_zone(latitude):
@@ -228,27 +256,33 @@ def get_zone(latitude):
     return zone
 
 
-def main():
+def main(argv):
     """Our main code entry point"""
+    scenario = int(argv[1])
+    sdf = load_scenarios()
+    flowpath_scenario = int(sdf.at[scenario, 'flowpath_scenario'])
     cursor = PGCONN.cursor()
     cursor.execute("""
-    WITH np as (
-        SELECT ST_ymax(ST_Transform(geom, 4326)) as lat, fid
-        from flowpaths WHERE scenario = %s)
+        WITH np as (
+            SELECT ST_ymax(ST_Transform(geom, 4326)) as lat, fid
+            from flowpaths WHERE scenario = %s)
 
-    SELECT np.lat,
+        SELECT np.lat,
         lu2007 || lu2008 || lu2009 || lu2010 || lu2011 || lu2012 || lu2013
         || lu2014 || lu2015 || lu2016 || lu2017 || lu2018 || lu2019
-        from flowpath_points p, np WHERE p.flowpath = np.fid and
-        scenario = %s
-    """, (SCENARIO, SCENARIO))
+        from flowpath_points p, np WHERE p.flowpath = np.fid
+        and p.scenario = %s
+    """, (flowpath_scenario, flowpath_scenario))
+    added = 0
     for row in tqdm(cursor, total=cursor.rowcount):
         zone = get_zone(row[0])
         if zone is None:
             continue
         for i in (1, 25):  # loop over c-factors
-            do_rotation(zone, row[1], i)
+            if do_rotation(scenario, zone, row[1], i):
+                added += 1
+    LOG.info("Added %s new rotation files", added)
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
