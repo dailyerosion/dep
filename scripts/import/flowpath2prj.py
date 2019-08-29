@@ -8,10 +8,10 @@ from math import atan2, degrees, pi
 
 import psycopg2.extras
 from tqdm import tqdm
-from pyiem.util import get_dbconn
-from pyiem.dep import get_cli_fname
+from pyiem.util import get_dbconn, logger
+from pyiem.dep import load_scenarios
 
-SCENARIO = int(sys.argv[1])
+LOG = logger()
 MISSED_SOILS = {}
 MAX_SLOPE_RATIO = 0.9
 PGCONN = get_dbconn('idep')
@@ -20,15 +20,17 @@ cursor2 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cursor3 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 surgo2file = {}
-cursor.execute("""SELECT surgo, soilfile from xref_surgo""")
+cursor.execute("SELECT surgo, soilfile from xref_surgo")
 for _row in cursor:
     surgo2file[_row[0]] = _row[1]
 
 
-def get_rotation(zone, code, maxmanagement):
+def get_rotation(scenario, zone, code, maxmanagement):
     """ Convert complex things into a simple WEPP management for now """
-    rotfn = "IDEP2/%s/%s/%s/%s-%s.rot" % (zone, code[:2], code[2:4], code,
-                                          "1" if maxmanagement == 1 else "25")
+    rotfn = "%s/%s/%s/%s/%s-%s.rot" % (
+        "IDEP2" if scenario == 0 else "SCEN%s" % (scenario, ),
+        zone, code[:2], code[2:4], code,
+        "1" if maxmanagement == 1 else "25")
     return rotfn
 
 
@@ -117,58 +119,66 @@ def simplify(rows):
 
 def compute_slope(fid):
     """ Compute the simple slope for the fid """
-    cursor2.execute("""SELECT max(elevation), min(elevation), max(length)
-    from flowpath_points where flowpath = %s and length < 9999
-    and scenario = %s""", (fid, SCENARIO))
+    cursor2.execute("""
+        SELECT max(elevation), min(elevation), max(length)
+        from flowpath_points where flowpath = %s and length < 9999
+    """, (fid, ))
     row2 = cursor2.fetchone()
     return (row2[0] - row2[1]) / row2[2]
 
 
 def delete_flowpath(fid):
     """ remove this flowpath as its invalid """
-    cursor3.execute("""DELETE from flowpath_points where flowpath = %s and
-    scenario = %s""", (fid, SCENARIO))
-    cursor3.execute("""DELETE from flowpaths where fid = %s and
-    scenario = %s""", (fid, SCENARIO))
+    cursor3.execute("""
+        DELETE from flowpath_points where flowpath = %s
+    """, (fid, ))
+    cursor3.execute("""
+        DELETE from flowpaths where fid = %s
+    """, (fid, ))
     if cursor3.rowcount != 1:
         print('Whoa, delete_flowpath failed for %s' % (fid,))
 
 
-def do_flowpath(zone, huc_12, fid, fpath):
+def do_flowpath(scenario, zone, metadata):
     """ Process a given flowpathid """
     # slope = compute_slope(fid)
     # I need bad soilfiles so that the length can be computed
-    cursor2.execute("""SELECT segid, elevation, length, f.surgo,
-    slope, management, 'DEP_'||surgo||'.SOL' as soilfile,
-    lu2007 || lu2008 || lu2009 ||
-    lu2010 || lu2011 || lu2012 || lu2013 || lu2014 || lu2015 ||
-    lu2016 || lu2017 || lu2018 || lu2019 as lstring,
-    round(ST_X(ST_Transform(geom,4326))::numeric,2) as x,
-    round(ST_Y(ST_Transform(geom,4326))::numeric,2) as y from
-    flowpath_points f
-    WHERE flowpath = %s and length < 9999 and scenario = %s
-    ORDER by segid ASC""", (fid, SCENARIO))
+    cursor2.execute("""
+        SELECT segid, elevation, length, f.surgo,
+        slope, management, 'DEP_'||surgo||'.SOL' as soilfile,
+        lu2007 || lu2008 || lu2009 ||
+        lu2010 || lu2011 || lu2012 || lu2013 || lu2014 || lu2015 ||
+        lu2016 || lu2017 || lu2018 || lu2019 as lstring,
+        round(ST_X(ST_Transform(geom,4326))::numeric,2) as x,
+        round(ST_Y(ST_Transform(geom,4326))::numeric,2) as y from
+        flowpath_points f
+        WHERE flowpath = %s and length < 9999
+        ORDER by segid ASC
+    """, (metadata['fid'], ))
     rows = []
     x = None
-    y = None
+    # y = None
     maxmanagement = 0
     for row in cursor2:
         if row['slope'] < 0:
-            print('%s,%s had a negative slope, deleting!' % (huc_12, fpath))
-            delete_flowpath(fid)
+            LOG.info(
+                '%s,%s had a negative slope, deleting!', metadata['huc_12'],
+                metadata['fpath']
+            )
+            delete_flowpath(metadata['fid'])
             return None
         if row['soilfile'] == 'DEP_9999.SOL':
             continue
-        if not os.path.isfile("/i/%s/sol_input/%s" % (SCENARIO,
+        if not os.path.isfile("/i/%s/sol_input/%s" % (scenario,
                                                       row['soilfile'])):
             if row['soilfile'] not in MISSED_SOILS:
-                print('Missing soilfile: %s' % (row['soilfile'],))
+                LOG.info('Missing soilfile: %s', row['soilfile'])
                 MISSED_SOILS[row['soilfile']] = 0
             MISSED_SOILS[row['soilfile']] += 1
             continue
         if x is None:
             x = row['x']
-            y = row['y']
+            # y = row['y']
         if row['management'] > maxmanagement:
             maxmanagement = row['management']
         if row['slope'] < 0.00001:
@@ -178,12 +188,16 @@ def do_flowpath(zone, huc_12, fid, fpath):
         rows.append(row)
 
     if x is None:
-        print('%s,%s had no valid soils, deleting' % (huc_12, fpath))
-        delete_flowpath(fid)
+        LOG.info(
+            '%s,%s had no valid soils, deleting', metadata['huc_12'],
+            metadata['fpath'])
+        delete_flowpath(metadata['fid'])
         return None
     if len(rows) < 2:
-        print('%s,%s had only 1 row of data, deleting' % (huc_12, fpath))
-        delete_flowpath(fid)
+        LOG.info(
+            '%s,%s had only 1 row of data, deleting', metadata['huc_12'],
+            metadata['fpath'])
+        delete_flowpath(metadata['fid'])
         return None
     if len(rows) > 19:
         rows = simplify(rows)
@@ -193,51 +207,52 @@ def do_flowpath(zone, huc_12, fid, fpath):
         if row['slope'] > maxslope:
             maxslope = row['slope']
     if maxslope > MAX_SLOPE_RATIO:
-        s = compute_slope(fid)
-        print("Error max-slope>0.3 %s[%3i] max:%4.1f len:%5.1f bulk:%5.1f" % (
-            huc_12, fpath, maxslope, rows[-1]['length'], s))
-        delete_flowpath(fid)
+        s = compute_slope(metadata['fid'])
+        LOG.info(
+            "Error max-slope>0.3 %s[%3i] max:%4.1f len:%5.1f bulk:%5.1f",
+            metadata['huc_12'], metadata['fpath'], maxslope,
+            rows[-1]['length'], s)
+        delete_flowpath(metadata['fid'])
         return None
-    # SLP.write("%s,%.6f\n" % (fid, maxslope))
 
     if rows[-1]['length'] < 1:
-        print('%s,%s has zero length, deleting' % (huc_12, fpath))
-        delete_flowpath(fid)
+        LOG.info(
+            '%s,%s has zero length, deleting', metadata['huc_12'],
+            metadata['fpath'])
+        delete_flowpath(metadata['fid'])
         return None
 
     res = {}
-    # These scenarios use one climate file
-    if SCENARIO in [5, ]:
-        res['clifile'] = get_cli_fname(-96.44, 43.28, SCENARIO)
-    else:
-        res['clifile'] = get_cli_fname(x, y, SCENARIO)
+    res['clifile'] = metadata['climate_file']
 
     # Store climate_file name with flowpath to make life easier
     cursor3.execute("""
         UPDATE flowpaths SET climate_file = %s
         WHERE fid = %s
-    """, (res['clifile'], fid))
+    """, (res['clifile'], metadata['fid']))
     if cursor3.rowcount != 1:
-        print('ERROR Updating climate_file for FID: %s' % (fid,))
+        LOG.info('ERROR Updating climate_file for FID: %s', metadata['fid'])
     # return
-    res['huc8'] = huc_12[:8]
-    res['huc12'] = huc_12
-    res['envfn'] = "/i/%s/env/%s/%s_%s.env" % (SCENARIO,
-                                               res['huc8'], huc_12, fpath)
+    res['huc8'] = metadata['huc_12'][:8]
+    res['huc12'] = metadata['huc_12']
+    res['envfn'] = "/i/%s/env/%s/%s_%s.env" % (
+        scenario, res['huc8'], res['huc12'], metadata['fpath'])
     res['date'] = datetime.datetime.now()
-    res['aspect'] = compute_aspect(rows[0]['x'], rows[0]['y'],
-                                   rows[-1]['x'], rows[-1]['y'])
-    res['prj_fn'] = "/i/%s/prj/%s/%s/%s_%s.prj" % (SCENARIO,
-                                                   res['huc8'], huc_12[-4:],
-                                                   huc_12, fpath)
+    res['aspect'] = compute_aspect(
+        rows[0]['x'], rows[0]['y'], rows[-1]['x'], rows[-1]['y'])
+    res['prj_fn'] = "/i/%s/prj/%s/%s/%s_%s.prj" % (
+        scenario, res['huc8'], res['huc12'][-4:], res['huc12'],
+        metadata['fpath'])
     res['length'] = rows[-1]['length']
     res['slope_points'] = len(rows)
 
     # Iterate over the rows and figure out the slopes and distance fracs
     slpdata = ""
     if rows[0]['length'] != 0:
-        print(('WARNING: HUC12:%s FPATH:%s had missing soil at top of slope'
-               ) % (huc_12, fpath))
+        LOG.info(
+            'WARNING: HUC12:%s FPATH:%s had missing soil at top of slope',
+            metadata['huc_12'], metadata['fpath']
+        )
         slpdata = " 0.000,0.00001"
         res['slope_points'] = len(rows) + 1
     prevsoil = None
@@ -267,7 +282,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
         res['soils'] += """    %s {
         Distance = %.3f
         File = "/i/%s/sol_input/DEP_%s.SOL"
-    }\n""" % (s, d, SCENARIO, s)
+    }\n""" % (s, d, scenario, s)
 
     prevman = None
     lmanstart = 0
@@ -279,15 +294,18 @@ def do_flowpath(zone, huc_12, fid, fpath):
             continue
         if prevman is None or prevman != row['lstring']:
             if prevman is not None:
-                mans.append(get_rotation(zone, prevman, maxmanagement))
+                mans.append(
+                    get_rotation(scenario, zone, prevman, maxmanagement))
                 manlengths.append(row['length'] - lmanstart)
             prevman = row['lstring']
             lmanstart = row['length']
 
     if prevman is None:
-        print('%s,%s has no managements, skipping' % (huc_12, fpath))
+        LOG.info(
+            '%s,%s has no managements, skipping', metadata['huc_12'],
+            metadata['fpath'])
         return
-    mans.append(get_rotation(zone, prevman, maxmanagement))
+    mans.append(get_rotation(scenario, zone, prevman, maxmanagement))
     manlengths.append(res['length'] - lmanstart)
     res['manbreaks'] = len(manlengths) - 1
     res['managements'] = ""
@@ -303,8 +321,6 @@ def do_flowpath(zone, huc_12, fid, fpath):
 
 def write_prj(data):
     """ Create the WEPP prj file """
-    out = open(data['prj_fn'], 'w')
-
     # Profile format
     # [x] The first number is the hillslope aspect,
     # [?] the second is the profile width in meters.
@@ -312,8 +328,8 @@ def write_prj(data):
     # [x] and the total distance in meters.
     # [x] The last line contains the fraction of the distance down the slope
     # [x] and the slope at that point.
-
-    out.write("""#
+    with open(data['prj_fn'], 'w') as fh:
+        fh.write("""#
 # WEPP project written: %(date)s
 #
 Version = 98.6
@@ -352,34 +368,23 @@ RunOptions {
    SmallEventByPass = 1
 }
 """ % data)
-    out.close()
 
 
 def main(argv):
     """ Go main go """
+    scenario = int(argv[1])
+    sdf = load_scenarios()
+    flowpath_scenario = int(sdf.at[scenario, 'flowpath_scenario'])
     myhucs = []
-    if len(argv) == 4:
-        myhucs = [argv[2], ]
-        print("Running for single flowpath HUC_12: %s FPATH: %s" % (argv[2],
-                                                                    argv[3]))
-        cursor.execute("""
-            SELECT fpath, fid, huc_12,
-            ST_ymax(ST_Transform(geom, 4326)) as lat from flowpaths
-            WHERE scenario = %s and huc_12 = %s and fpath = %s
-        """, (SCENARIO, argv[2], int(argv[3])))
-        if cursor.rowcount != 1:
-            print("Error: dbquery found %s rows" % (cursor.rowcount,))
-    else:
-        if os.path.isfile('myhucs.txt'):
-            myhucs = open('myhucs.txt').read().split("\n")
-            print("Only running for HUC_12s in myhucs.txt")
-        cursor.execute("""
-            SELECT ST_ymax(ST_Transform(geom, 4326)) as lat,
-            fpath, fid, huc_12 from flowpaths
-            WHERE scenario = %s and fpath != 0
-        """, (SCENARIO, ))
+    if os.path.isfile('myhucs.txt'):
+        myhucs = open('myhucs.txt').read().split("\n")
+        LOG.info("Only running for HUC_12s in myhucs.txt")
+    cursor.execute("""
+        SELECT ST_ymax(ST_Transform(geom, 4326)) as lat,
+        fpath, fid, huc_12, climate_file from flowpaths
+        WHERE scenario = %s and fpath != 0
+    """, (flowpath_scenario, ))
     for row in tqdm(cursor, total=cursor.rowcount):
-        # SLP.write("%s,%.6f\n" % (row['fid'], compute_slope(row['fid'])))
         # continue
         if myhucs and row['huc_12'] not in myhucs:
             continue
@@ -390,16 +395,14 @@ def main(argv):
             zone = "IA_CENTRAL"
         elif row['lat'] >= 40.5:
             zone = "IA_SOUTH"
-        data = do_flowpath(zone, row['huc_12'], row['fid'], row['fpath'])
+        data = do_flowpath(scenario, zone, row)
         if data is not None:
             write_prj(data)
 
 
 if __name__ == '__main__':
-    # SLP = open('maxslope.txt', 'w')
     main(sys.argv)
     cursor3.close()
     PGCONN.commit()
     for fn in MISSED_SOILS:
         print("%6s %s" % (MISSED_SOILS[fn], fn))
-    # SLP.close()
