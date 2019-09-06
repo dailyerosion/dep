@@ -16,8 +16,8 @@ def main():
     for vname in ['qc_precip', 'avg_delivery']:
         uri = ("http://dailyerosion.local/auto/%s_%s_0_%s.png"
                ) % (yyyymmdd, yyyymmdd, vname)
-        req = requests.get(uri)
-        if req.status_code != 200:
+        req = util.exponential_backoff(requests.get, uri, timeout=120)
+        if req is None or req.status_code != 200:
             print("Download %s failed" % (uri, ))
             continue
         bio = BytesIO()
