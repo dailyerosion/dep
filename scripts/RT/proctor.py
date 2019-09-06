@@ -150,26 +150,17 @@ def realtime_run(config, scenario):
     idep = get_dbconn('idep', user='nobody')
     icursor = idep.cursor()
 
-    cliscenario = "/i/%s/cli/" % (config['climate_scenario'], )
+    # LOGIC here is too brittle
+    # cliscenario = "/i/%s/cli/" % (config['climate_scenario'], )
     icursor.execute("""
         SELECT huc_12, fpath, climate_file
         from flowpaths where scenario = %s
     """ % (config['flowpath_scenario'], ))
     queue = []
 
-    def noop(clifn):
-        """Do we need to make mods?"""
-        return clifn
-
-    def _mod(clifn):
-        """Need to edit it."""
-        tokens = clifn.split("/")
-        return cliscenario + tokens[-2] + "/" + tokens[-1]
-
-    func = _mod if config['flowpath_scenario'] != scenario else noop
     for row in icursor:
         queue.append([
-            row[0], row[1], func(row[2])
+            row[0], row[1], row[2]
         ])
     return queue
 
