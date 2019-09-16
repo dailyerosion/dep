@@ -1,6 +1,21 @@
 Daily Erosion Project Meeting Notes
 ===================================
 
+12 Sep 2019 :: DEP Planning
+-----
+
+- Tim, Wang, Cruse, Gelder, Miller, Bates.
+- Claude noted that they are done with the "ARS2" work
+- She denoted a project differentiation between HUCs12 implemented in ACPF that came from ARS funding vs the DEP umbrella.
+- Discussion on how much it would cost to update ACPF in Iowa and Illinois.
+- The new ARS project seems to be on track.
+- Train sentinel II data for smaller fields so ACPF works in lesser Ag states.
+- Gelder's work continues and will have more MN for me soon.
+- [ ] HUD project report is due the end of this month.
+- [ ] request for Map of slopes that got converted for switchgrass work.
+- Will want to engage some newly funded folks in IL that are doing erosion.
+- [ ] need a tutorial video on the website tools.
+
 21 Aug 2019 :: Minnesota collaborators
 -----
 
