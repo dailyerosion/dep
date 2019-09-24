@@ -1276,6 +1276,8 @@ c
 c
   210       continue
 c
+cdeh   Force output for every timestep also mod sedout.for for precip>0
+            idout = 1
             if ((ioutpt.eq.1.or.isum.eq.1.or.ievt.eq.1.or.lun1.gt.1.or.
      1          ifofe.eq.1).and.idout.eq.1) then
 c

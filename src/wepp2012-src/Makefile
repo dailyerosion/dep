@@ -33,7 +33,7 @@ DEST      = .
 
 #LDFLAGS   = -static /usr/lib/gcc-lib/i686-pc-linux-gnu/4.1.1/libgcc.a /usr/lib/gcc-lib/i686-pc-linux-gnu/4.1.1/libgcc_eh.a /usr/lib/gcc-lib/i686-pc-linux-gnu/4.1.1/libf95.a 
 
-LDFLAGS = -static
+LDFLAGS =
 
 .SUFFIXES: .for .o
 

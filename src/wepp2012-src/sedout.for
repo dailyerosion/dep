@@ -420,7 +420,7 @@ c
      1      1000.0
           endif
           
-          if(ievt.eq.1)
+          if(prcp.gt.0. .or. runt.gt.0.)
      1      write (30,1100) day, mon, year - ibyear + 1, prcp * 1000.0,
      1      runt,
      1      avirdt, avedet, maxdet, ptdet, avedep, maxdep, ptdep,
