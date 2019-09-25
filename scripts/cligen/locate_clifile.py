@@ -12,9 +12,10 @@ def finder(lon, lat):
     x = y = 0
     dx = 0
     dy = -1
-    X = 26
-    Y = 26
-    for _ in range(26**2):
+    # points near the domain edge need to seach a bit further than 0.25deg
+    X = 40
+    Y = 40
+    for _ in range(40**2):
         if (-X/2 < x <= X/2) and (-Y/2 < y <= Y/2):
             newfn = get_cli_fname(lon + x * 0.01, lat + y * 0.01)
             if os.path.isfile(newfn):
