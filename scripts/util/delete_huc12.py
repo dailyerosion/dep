@@ -40,6 +40,8 @@ def do_delete(huc12, scenario):
     for prefix in ['env', 'error', 'man', 'prj', 'run', 'slp', 'sol', 'wb']:
         dirname = "/i/%s/%s/%s/%s" % (scenario, prefix, huc12[:8],
                                       huc12[8:])
+        if not os.path.isdir(dirname):
+            continue
         os.chdir(dirname)
         files = glob.glob("*.*")
         for fn in files:

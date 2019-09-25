@@ -15,6 +15,7 @@ import sys
 
 from tqdm import tqdm
 import geopandas as gpd
+import pandas as pd
 from pyiem.util import get_dbconn
 
 print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")
@@ -131,7 +132,7 @@ def process(cursor, filename, huc12df):
             # gridorder = 4
             # Some optional code here that was used for the grid order work
             gridorder = row['gord_%s' % (huc12, )]
-            if gridorder > TRUNC_GRIDORDER_AT:
+            if gridorder > TRUNC_GRIDORDER_AT or pd.isnull(gridorder):
                 continue
             if dx == 0:
                 slope = 0
@@ -183,27 +184,27 @@ def process(cursor, filename, huc12df):
 
 def main():
     """Our main function, the starting point for code execution"""
-    # track our work
-    fp = open('myhucs.txt', 'w')
-    # Change the working directory to where we have data files
-    os.chdir("../../data/%s" % (sys.argv[2],))
-    # collect up the GeoJSONs in that directory
-    fns = glob.glob("smpl3m*.json")
-    i = 0
     cursor = PGCONN.cursor()
+    # track our work
+    with open('myhucs.txt', 'w') as fp:
+        # Change the working directory to where we have data files
+        os.chdir("../../data/%s" % (sys.argv[2],))
+        # collect up the GeoJSONs in that directory
+        fns = glob.glob("smpl3m*.json")
+        i = 0
 
-    for fn in tqdm(fns):
-        # Save our work every 100 HUC12s, so to keep the database transaction
-        # at a reasonable size
-        if i > 0 and i % 100 == 0:
-            PGCONN.commit()
-            cursor = PGCONN.cursor()
-        df = get_data(fn)
-        huc12 = process(cursor, fn, df)
-        fp.write("%s\n" % (huc12, ))
-        i += 1
+        for fn in tqdm(fns):
+            # Save our work every 100 HUC12s,
+            # so to keep the database transaction
+            # at a reasonable size
+            if i > 0 and i % 100 == 0:
+                PGCONN.commit()
+                cursor = PGCONN.cursor()
+            df = get_data(fn)
+            huc12 = process(cursor, fn, df)
+            fp.write("%s\n" % (huc12, ))
+            i += 1
 
-    fp.close()
     # Commit the database changes
     cursor.close()
     PGCONN.commit()

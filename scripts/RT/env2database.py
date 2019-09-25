@@ -153,8 +153,10 @@ def load_precip(dates, huc12s):
         pcp = np.flipud(np.load(fn))
         # nodata here represents the value that is set to missing within the
         # source dataset!, setting to zero has strange side affects
-        zs = zonal_stats(huc12df['geo'], pcp, affine=PRECIP_AFF, nodata=-1,
-                         all_touched=True)
+        zs = zonal_stats(
+            huc12df['geo'], pcp, affine=PRECIP_AFF, nodata=-1,
+            all_touched=True
+        )
         i = 0
         for huc12, _ in huc12df.itertuples():
             d = res.setdefault(huc12, [])
