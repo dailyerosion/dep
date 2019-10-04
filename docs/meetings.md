@@ -1,6 +1,16 @@
 Daily Erosion Project Meeting Notes
 ===================================
 
+03 Oct 2019 :: MN Wind Erosion
+-----
+
+- Brent, Brian
+- need to know the corners and orientation/rotation of fields
+- settled on using SWEEPS
+- gonna target 2-3 HUC12s in NW Minnesota where things are flatter and open
+- Need hourly sustained wind speeds at the least, but am targetting 15 minute
+- need air density too.
+
 12 Sep 2019 :: DEP Planning
 -----
 

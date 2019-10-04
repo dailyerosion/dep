@@ -7,9 +7,13 @@ import os
 from pyiem.plot import MapPlot
 from pyiem.iemre import daily_offset
 from pyiem.dep import SOUTH, NORTH, EAST, WEST
+from pyiem.util import get_dbconn
 import netCDF4
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+import cartopy.crs as ccrs
+from geopandas import read_postgis
 YS = np.arange(SOUTH, NORTH, 0.01)
 XS = np.arange(WEST, EAST, 0.01)
 SECTOR = 'iowa'
@@ -39,19 +43,53 @@ def do(valid):
 
     yidx = int((43.27 - SOUTH) / 0.01)
     xidx = int((-94.39 - WEST) / 0.01)
-    print(("yidx:%s xidx:%s precip:%.2f stage4: %.2f inqc: %.2f outqc: %.2f "
-           "mul: %.2f"
-           ) % (yidx, xidx, precip[yidx, xidx], stage4[yidx, xidx],
-                inqcprecip[yidx, xidx], outqcprecip[yidx, xidx],
-                multiplier[yidx, xidx]))
+    #print(("yidx:%s xidx:%s precip:%.2f stage4: %.2f inqc: %.2f outqc: %.2f "
+    #       "mul: %.2f"
+    #       ) % (yidx, xidx, precip[yidx, xidx], stage4[yidx, xidx],
+    #            inqcprecip[yidx, xidx], outqcprecip[yidx, xidx],
+    #            multiplier[yidx, xidx]))
+    projection = ccrs.Mercator()
+    pgconn = get_dbconn('idep')
+    df = read_postgis("""
+        SELECT ST_Transform(simple_geom, %s) as geom, huc_12,
+        ST_x(ST_Transform(ST_Centroid(geom), 4326)) as centroid_x,
+        ST_y(ST_Transform(ST_Centroid(geom), 4326)) as centroid_y,
+        hu_12_name
+        from huc12 i WHERE i.scenario = 0 and huc_12 = '071100010901'
+    """, pgconn, params=(projection.proj4_init, ), geom_col='geom',
+                      index_col='huc_12')
 
-    mp = MapPlot(sector=SECTOR, axisbg='white',
-                 title=('%s DEP Quality Controlled Precip Totals'
-                        ) % (valid.strftime("%-d %b %Y"), ))
+    mp = MapPlot(
+        sector='custom', axisbg='white',
+        west=-92., south=40.24, east=-91.69, north=40.4,
+        subtitle='Flowpath numbers are labelled.',
+        title=('%s DEP Quality Controlled Precip Totals for 071100010901'
+               ) % (valid.strftime("%-d %b %Y"), ))
     (lons, lats) = np.meshgrid(XS, YS)
     mp.pcolormesh(lons, lats, precip / 25.4, clevs,
                   units='inch')
     mp.drawcounties()
+    for _huc12, row in df.iterrows():
+        p = Polygon(row['geom'].exterior,
+                    ec='k', fc='None',
+                    zorder=100, lw=2)
+        mp.ax.add_patch(p)
+    df = read_postgis("""
+        SELECT ST_Transform(geom, %s) as geom, fpath
+        from flowpaths WHERE scenario = 0 and huc_12 = '071100010901'
+    """, pgconn, params=(projection.proj4_init, ), geom_col='geom',
+                      index_col='fpath')
+    for fpath, row in df.iterrows():
+        mp.ax.plot(row['geom'].xy[0], row['geom'].xy[1], c='k')
+
+    df = read_postgis("""
+        SELECT ST_Transform(st_pointn(geom, 1), %s) as geom, fpath
+        from flowpaths WHERE scenario = 0 and huc_12 = '071100010901'
+    """, pgconn, params=(projection.proj4_init, ), geom_col='geom',
+                      index_col='fpath')
+    for fpath, row in df.iterrows():
+        mp.ax.text(row['geom'].x, row['geom'].y, str(fpath), fontsize=12)
+
     mp.postprocess(filename='qc.png')
     mp.close()
 
