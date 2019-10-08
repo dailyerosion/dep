@@ -19,6 +19,11 @@ THRESHOLDS = {
     86: 20,
     87: 15,
 }
+PL_THRESHOLDS = {
+    88: 1.,
+    89: 0.9,
+    90: None,
+}
 
 
 def date_diagnostic(scenario, dates):
@@ -32,6 +37,46 @@ def date_diagnostic(scenario, dates):
             fp.write("%s,%s\n" % (date, running))
 
 
+def get_threshold_bypl(scenario, row):
+    """Inspect the soil file for what we need."""
+    fn = "/i/0/sol/%s/%s/%s_%s.sol" % (
+        row["huc_12"][:8], row["huc_12"][8:], row['huc_12'], row['fpath'])
+    # Take the top layer of the first soil, good enough for now.
+    line = open(fn).readlines()[4]
+    tokens = line.strip().split()
+    # depth, sand, clay, OM, CEC, Rock
+    clay = float(tokens[2])
+    om = float(tokens[3])
+    pl = 14.22 + 0.005 * clay**2 + 3.63 * om - 0.048 * clay * om
+    if PL_THRESHOLDS[scenario] is None:
+        line = open(fn).readlines()[3]
+        tokens = line.strip().split()
+        satv = float(tokens[4])
+        satm = satv / 2.65 * (1 - satv)
+        return ((pl / 100. - 0.4 * satm) / 0.6) * 100.
+    return pl * PL_THRESHOLDS[scenario]
+
+
+def compute_tillage_date(scenario, row):
+    """Get the tillage date."""
+    wbfn = "/i/0/wb/%s/%s/%s_%s.wb" % (
+        row["huc_12"][:8], row["huc_12"][8:], row['huc_12'], row['fpath'])
+    wbdf = read_wb(wbfn)
+    wbdf2 = wbdf[(
+        (wbdf['ofe'] == 1) & (wbdf['date'] >= APR15) &
+        (wbdf['date'] <= MAY30))]
+    if scenario in THRESHOLDS:
+        the_threshold = THRESHOLDS[scenario]
+    else:
+        the_threshold = get_threshold_bypl(scenario, row)
+    wbdf3 = wbdf2[wbdf2['sw1'] < the_threshold]
+    if len(wbdf3.index) > 0:
+        tillage_date = wbdf3.iloc[0]['date']
+    else:
+        tillage_date = MAY30
+    return tillage_date
+
+
 def main(argv):
     """Go Main Go."""
     scenario = int(argv[1])
@@ -41,22 +86,11 @@ def main(argv):
         SELECT huc_12, fpath from flowpaths where scenario = %s
     """, dbconn, params=(scenario, ))
     print("Found %s flowpaths" % (len(df.index), ))
-    # dates = {}
-    # for s in range(81, 88):
-    #    dates[s] = []
+    dates = []
     for i, row in tqdm(df.iterrows(), total=len(df.index)):
         # 1. Load up scenario 0 WB file
-        wbfn = "/i/0/wb/%s/%s/%s_%s.wb" % (
-            row["huc_12"][:8], row["huc_12"][8:], row['huc_12'], row['fpath'])
-        wbdf = read_wb(wbfn)
-        wbdf2 = wbdf[(
-            (wbdf['ofe'] == 1) & (wbdf['date'] >= APR15) &
-            (wbdf['date'] <= MAY30))]
-        wbdf3 = wbdf2[wbdf2['sw1'] < THRESHOLDS[scenario]]
-        if len(wbdf3.index) > 0:
-            tillage_date = wbdf3.iloc[0]['date']
-        else:
-            tillage_date = MAY30
+        tillage_date = compute_tillage_date(scenario, row)
+        dates.append(tillage_date)
         # 2. load up prj file, figuring out which .rot file to edit
         prjfn = "/i/59/prj/%s/%s/%s_%s.prj" % (
             row["huc_12"][:8], row["huc_12"][8:], row['huc_12'], row['fpath'])
@@ -100,9 +134,7 @@ def main(argv):
                             fp2.write(line2)
 
     # 6. cry
-    # for s in THRESHOLDS:
-    #    date_diagnostic(s, dates[s])
-
+    date_diagnostic(scenario, dates)
 
 
 if __name__ == '__main__':
