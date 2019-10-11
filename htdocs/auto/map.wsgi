@@ -51,7 +51,7 @@ def make_overviewmap(form):
         ST_y(ST_Transform(ST_Centroid(geom), 4326)) as centroid_y,
         hu_12_name
         from huc12 i WHERE i.scenario = 0 """ + huclimiter + """
-    """, pgconn, params=(projection.proj4_init, ), geom_col='geom',
+    """, pgconn, params=(3857, ), geom_col='geom',
                       index_col='huc_12')
     minx, miny, maxx, maxy = df['geom'].total_bounds
     buf = float(form.get('zoom', 10.)) * 1000.  # 10km
@@ -175,7 +175,7 @@ def make_map(huc, ts, ts2, scenario, v, form):
         ON (i.huc_12 = d.huc_12) WHERE i.scenario = %s
         """ + huclimiter + """
         """, pgconn, params=(scenario, ts.strftime("%m%d"),
-                             ts2.strftime("%m%d"), projection.proj4_init,
+                             ts2.strftime("%m%d"), 3857,
                              V2MULTI[v], 0), geom_col='geom')
 
     else:
@@ -191,7 +191,7 @@ def make_map(huc, ts, ts2, scenario, v, form):
         ON (i.huc_12 = d.huc_12) WHERE i.scenario = %s
         """ + huclimiter + """
         """, pgconn, params=(scenario, ts.strftime("%Y-%m-%d"),
-                             ts2.strftime("%Y-%m-%d"), projection.proj4_init,
+                             ts2.strftime("%Y-%m-%d"), 3857,
                              V2MULTI[v], 0), geom_col='geom')
     minx, miny, maxx, maxy = df['geom'].total_bounds
     buf = 10000.  # 10km
