@@ -1,68 +1,56 @@
-"""Go"""
+"""General HUC12 mapper"""
 from __future__ import print_function
 
+import datetime
+import sys
+
+from pyiem.plot.use_agg import plt
+from pyiem.plot import MapPlot, nwsprecip
+from pyiem.util import get_dbconn
+from geopandas import read_postgis
 from shapely.wkb import loads
 import numpy as np
+import cartopy.crs as ccrs
 from matplotlib.patches import Polygon
 import matplotlib.colors as mpcolors
-import matplotlib
-matplotlib.use('agg')
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-from pyiem.util import get_dbconn
-from pyiem.datatypes import distance
-from pyiem.plot import MapPlot, maue, james2, james
 
 
-def main():
+def main(argv):
+    """Do Great Things"""
     pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
 
-    mp = MapPlot(continentalcolor='white', nologo=True, # sector='custom',
-                 # south=36.8, north=45.0, west=-99.2, east=-88.9,
-                 caption='Daily Erosion Project',
-                 subtitle='HUC12 Areal Averaged',
-                 title=("Est. Hillslope Soil Loss between 12 April "
-                        "2008 and 12 June 2008 (inclusive)"))
+    df = read_postgis("""
+        with obs as (
+            select huc_12, sum(avg_delivery) * 4.163 as loss
+            from results_by_huc12
+            WHERE scenario = 0 and valid between '2014-01-01' and '2015-01-01'
+            GROUP by huc_12
+        )
+        SELECT ST_Transform(simple_geom, 4326) as geom, o.huc_12, o.loss
+        from obs o JOIN huc12 h on (o.huc_12 = h.huc_12)
+        WHERE h.scenario = 0 and states = 'IA' and loss > 25
+    """, pgconn, geom_col='geom',
+                      index_col='huc_12')
+    mp = MapPlot(
+        continentalcolor='#EEEEEE', nologo=True,
+        subtitle=(
+            '%.0f HUC12s exceeded 25 T/a, covering %.1f%% of Iowa'
+        ) % (len(df.index), df['geom'].area.sum() / 15.857 * 100.),
+        nocaption=True,
+        title=('DEP 2014 HUC12 Hillslope Delivery Rates >= 25 T/a'))
 
-    cursor.execute("""
-    with agg as (
-        select huc_12, sum(avg_delivery) * 4.463 as runoff from results_by_huc12
-        WHERE valid >= '2008-04-12' and valid <= '2008-06-12' and scenario = 0
-        GROUP by huc_12)
-
-    SELECT ST_Transform(geom, 4326), h.huc_12,
-    coalesce(a.runoff, 0) as runoff from huc12 h
-    LEFT JOIN agg a on (h.huc_12 = a.huc_12) WHERE h.scenario = 0
-    and h.states ~* 'IA'
-    ORDER by runoff DESC
-    """)
-
-    #bins = np.arange(0, 26, 2)
-    bins = [0.05, 0.25, 0.5, 1, 1.5, 2, 3, 5, 7, 10, 15, 20]
-    cmap = plt.get_cmap("plasma_r")
-    cmap.set_under('white')
-    cmap.set_over('black')
-    norm = mpcolors.BoundaryNorm(bins, cmap.N)
-    for row in cursor:
-        # val = distance(row[2], 'MM').value('IN')
-        val = row[2]
-        if val > 30:
-            print("%s %s" % (row[1], val))
-        multipoly = loads(row[0].decode('hex'))
-        for polygon in multipoly:
-            arr = np.asarray(polygon.exterior)
-            points = mp.ax.projection.transform_points(ccrs.Geodetic(),
-                                                       arr[:, 0], arr[:, 1])
-            color = cmap(norm([val, ]))[0]
-            poly = Polygon(points[:, :2], fc=color, ec='None', zorder=2, lw=.1)
-            mp.ax.add_patch(poly)
-
-    mp.draw_colorbar(bins, cmap, norm, units='tons/acre')
+    for _i, row in df.iterrows():
+        poly = row['geom']
+        arr = np.asarray(poly.exterior)
+        points = mp.ax.projection.transform_points(
+            ccrs.Geodetic(), arr[:, 0], arr[:, 1])
+        p = Polygon(points[:, :2], fc='r', ec='k', zorder=2, lw=0.2)
+        mp.ax.add_patch(p)
 
     mp.drawcounties()
-    plt.savefig('test.pdf')
+    mp.postprocess(filename='test.png')
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
