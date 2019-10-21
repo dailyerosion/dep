@@ -1,6 +1,6 @@
 <?php 
 require_once "../../config/settings.inc.php";
-$dbconn = pg_connect("dbname=idep host=iemdb user=nobody");
+$dbconn = pg_connect("dbname=idep host=iemdb-idep.local user=nobody");
 $rs = pg_query($dbconn, "SELECT value from properties where key = 'last_date_0'");
 $row = pg_fetch_assoc($rs, 0);
 $last_date = $row['value'];

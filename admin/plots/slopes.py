@@ -5,6 +5,8 @@ import cgi
 import memcache
 import glob
 import sys
+from pyiem.util import get_dbconn
+
 
 def read_slope(fn):
     lines = open(fn).readlines()
@@ -37,7 +39,6 @@ def make_plot(scenario, model_twp, huc_12, mc, mckey):
     import matplotlib
     matplotlib.use('agg')
     import matplotlib.pyplot as plt
-    import psycopg2
     import cStringIO
     (fig, ax) = plt.subplots(2,1)
 
@@ -51,7 +52,7 @@ def make_plot(scenario, model_twp, huc_12, mc, mckey):
         ax[0].plot(x, y, color='r', zorder=1)
 
 
-    IDEPDB = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    IDEPDB = get_dbconn('idep')
     cursor = IDEPDB.cursor()
 
     cursor.execute("""SELECT label from scenarios where id = %s""",

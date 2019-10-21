@@ -3,15 +3,16 @@ import cgi
 import cStringIO
 import sys
 import numpy as np
+from pyiem.util import get_dbconn
+
 
 def make_plot(huc_12):
     """ Generate the plot please """
-    import psycopg2
     import matplotlib
     matplotlib.use('agg')
     import matplotlib.pyplot as plt
     (fig, ax) = plt.subplots(2,1, figsize=(7,9))
-    IDEPDB = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    IDEPDB = get_dbconn('idep')
     cursor = IDEPDB.cursor()
 
 

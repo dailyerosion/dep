@@ -1,8 +1,9 @@
-import psycopg2
+
 from pandas.io.sql import read_sql
 import matplotlib.pyplot as plt
+from pyiem.util import get_dbconn
 
-pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+pgconn = get_dbconn('idep')
 df = read_sql("""
     SELECT * from results_by_huc12 where scenario in (0, 7, 9)
     and huc_12 = '102300031504' and valid >= '2008-01-01'

@@ -1,7 +1,8 @@
 import psycopg2
 import sys
 from pandas.io.sql import read_sql
-pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+from pyiem.util import get_dbconn
+pgconn = get_dbconn('idep')
 
 df = read_sql("""
     with yearly as (
@@ -17,7 +18,7 @@ df = read_sql("""
     h.states ~* 'IA' ORDER by avg DESC
     """, pgconn, index_col='huc_12')
 
-pgconn = psycopg2.connect(database='postgis', host='iemdb', user='nobody')
+pgconn = get_dbconn('postgis')
 cursor = pgconn.cursor()
 
 DONE = []

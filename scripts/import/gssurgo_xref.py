@@ -1,8 +1,8 @@
 """ Create table with xref between gssurgo values and file names """
 import dbflib
-import psycopg2
+from pyiem.util import get_dbconn
 
-PGCONN = psycopg2.connect(database='idep', host='iemdb')
+PGCONN = get_dbconn('idep')
 cursor = PGCONN.cursor()
 
 cursor.execute("""DELETE from xref_surgo""")

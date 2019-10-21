@@ -1,13 +1,14 @@
-import psycopg2
+
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
 from pandas.io.sql import read_sql
+from pyiem.util import get_dbconn
 
 years = 8.0
 scenario = int(sys.argv[1])
 varname = sys.argv[2]
-pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+pgconn = get_dbconn('idep')
 
 titles = {'detach': 'Soil Detachment [tons/acre]',
           'delivery': 'Soil Delivery [tons/acre]',

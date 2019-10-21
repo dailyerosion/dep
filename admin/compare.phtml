@@ -1,14 +1,14 @@
 <?php 
-require '../config/settings.inc.php';
-require '../include/myview.php';
+require_once '../config/settings.inc.php';
+require_once '../include/myview.php';
 
 $year = isset($_REQUEST["year"]) ? intval($_REQUEST["year"]) : 2014;
 $model_twp = isset($_REQUEST["model_twp"]) ? $_REQUEST["model_twp"] : "T90NR39W";
 $huc12 = isset($_REQUEST["huc_12"]) ? $_REQUEST["huc_12"] : "102300050105";
 $scenario = isset($_REQUEST["scenario"]) ? intval($_REQUEST["scenario"]): 0;
 
-$wepp_pgconn = pg_connect("dbname=wepp host=iemdb user=nobody");
-$idep_pgconn = pg_connect("dbname=idep host=iemdb user=nobody");
+$wepp_pgconn = pg_connect("dbname=wepp host=iemdb-wepp.local user=nobody");
+$idep_pgconn = pg_connect("dbname=idep host=iemdb-idep.local user=nobody");
 
 /* Yearly Totals */
 $rs = pg_prepare($idep_pgconn, "YRSELECT", "SELECT 

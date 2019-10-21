@@ -2,10 +2,10 @@
 
 The 2007, 2008, and 2009 data looks wonky now, lets just do 2010 thru 2015
 """
-import psycopg2
 import matplotlib.pyplot as plt
 from pandas.io.sql import read_sql
-pgconn = psycopg2.connect(database='wepp', host='iemdb', user='nobody')
+from pyiem.util import get_dbconn
+pgconn = get_dbconn('wepp')
 
 df = read_sql("""
     with sums as (

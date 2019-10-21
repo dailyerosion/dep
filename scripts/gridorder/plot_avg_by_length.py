@@ -6,6 +6,7 @@ from matplotlib.colors import LogNorm
 import sys
 import psycopg2
 from pandas.io.sql import read_sql
+from pyiem.util import get_dbconn
 
 
 def old():
@@ -29,7 +30,7 @@ def old():
 
 
 def main():
-    pgconn = psycopg2.connect(database='wepp', host='iemdb', user='nobody')
+    pgconn = get_dbconn('wepp')
     dfv1 = read_sql("""
     SELECT id,  len * 0.3048 as length from nri
     """, pgconn, index_col='id')

@@ -10,8 +10,8 @@ if ($lon < -96.639706  || $lat < 40.375437 || $lon > -90.140061 || $lat > 43.501
 	echo "ERROR: Point outside of Iowa...";
 	die();
 }
-$dbconn = pg_connect("dbname=idep host=iemdb user=nobody");
-$weppconn = pg_connect("dbname=wepp host=iemdb user=nobody");
+$dbconn = pg_connect("dbname=idep host=iemdb-idep.local user=nobody");
+$weppconn = pg_connect("dbname=wepp host=iemdb-wepp.local user=nobody");
 function timeit($db, $name, $sql){
 	$start = time();
 	$rs = pg_execute($db, $name, $sql);

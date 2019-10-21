@@ -8,15 +8,14 @@
 
 DBS = ['idep',]
 
-import psycopg2
 import os
 import sys
+from pyiem.util import get_dbconn
 
 # Here we go! 
 def run_db(dbname):
     """ Lets do an actual database """
-    dbconn = psycopg2.connect(database='idep',
-                              host='iemdb')
+    dbconn = get_dbconn('idep')
     cursor = dbconn.cursor()
     
     # Step 1: Determine schema version

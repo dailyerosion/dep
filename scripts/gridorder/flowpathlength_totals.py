@@ -10,11 +10,12 @@ import numpy as np
 import psycopg2
 from tqdm import tqdm
 from pyiem import dep as dep_utils
+from pyiem.util import get_dbconn
 
 
 def find_huc12s():
     """yield a listing of huc12s with output!"""
-    pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+    pgconn = get_dbconn('idep')
     cursor = pgconn.cursor()
     cursor.execute("""
         SELECT huc_12 from huc12 WHERE scenario = 0

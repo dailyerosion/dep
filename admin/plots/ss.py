@@ -3,6 +3,7 @@
 import cgi
 import cStringIO
 import sys
+from pyiem.util import get_dbconn
 
 
 def make_plot(huc_12):
@@ -13,7 +14,7 @@ def make_plot(huc_12):
     import matplotlib.pyplot as plt
     (fig, ax) = plt.subplots(1,1)
     
-    IDEPDB = psycopg2.connect(database='idep', host='iemdb')
+    IDEPDB = get_dbconn('idep')
     cursor = IDEPDB.cursor()
 
     res = [[], [], []]

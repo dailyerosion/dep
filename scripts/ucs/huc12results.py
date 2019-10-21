@@ -1,9 +1,10 @@
-import psycopg2
+
 from geopandas import read_postgis
 from pandas.io.sql import read_sql
+from pyiem.util import get_dbconn
 
 years = 8.0
-pgconn = psycopg2.connect(database='idep', host='iemdb', user='nobody')
+pgconn = get_dbconn('idep')
 
 # Get the initial geometries
 df = read_postgis("""
