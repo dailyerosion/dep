@@ -14,7 +14,7 @@ def main(argv):
     cursor.execute("""
         SELECT st_x(st_pointn(st_transform(geom, 4326), 1)),
         st_y(st_pointn(st_transform(geom, 4326), 1)), fid, climate_file
-        from flowpaths WHERE scenario = 0
+        from flowpaths WHERE scenario = %s
     """, (scenario, ))
     ok = wrong = updated = 0
     for row in cursor:
