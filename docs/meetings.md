@@ -1,6 +1,18 @@
 Daily Erosion Project Meeting Notes
 ===================================
 
+25 Oct 2019 :: Iowa Results Discussion
+-----
+
+- Some improved workflows are coming with the tillage data now on Google Earth
+- [ ] we are ready for Tim's tillage work to get moved into production, but
+will wait for new flowpath stuff to settle down.
+- [ ] generate a map of tillage class / NT usage.
+- [x] email James to start generation of FY2019 soils data.
+- [x] email Gelder to update JSON field attributes names to be explicit.
+- Gonna move to the 2018 CDL.
+- [ ] I have a presentation to make on the 31rst.
+
 03 Oct 2019 :: MN Wind Erosion
 -----
 
