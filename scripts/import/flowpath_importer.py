@@ -138,12 +138,12 @@ def process(cursor, filename, huc12df):
                 slope = 0
             else:
                 slope = dy/dx
-            lu = row['CropRotatn'].strip()
+            lu = row['CropRotatn_CY_2017'].strip()
             # Don't allow points without a rotation
             if lu == "":
                 continue
 
-            # OK, be careful here. Presently, the 6 char field covers
+            # OK, be careful here. Presently, the 8 char field covers
             # 2010 thru 2017, so we rotate to cover the first and last years
             # 2007 2011[1]
             # 2008 2010[0]
@@ -152,7 +152,7 @@ def process(cursor, filename, huc12df):
             # 2019 2017[7]
             args = (fid, segid, row['ep3m%s' % (huc12,)]/100.,
                     row['%sLen%s' % (PREFIX, huc12)]/100.,
-                    row['ssurgo'], row['Management'], slope,
+                    row['SOL_FY_2018'], row['Management'], slope,
                     row['geometry'].x,
                     row['geometry'].y, lu[1], lu[0], lu[1], lu[0],
                     lu[1], lu[2], lu[3], lu[4], lu[5], lu[6], lu[7],
