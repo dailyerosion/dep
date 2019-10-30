@@ -19,31 +19,31 @@ def read_data():
             os.chdir(huc12)
             for fn in glob.glob("*.slp"):
                 slp = read_slp(fn)
-                bulk = (slp[-1]['y'][-1]) / slp[-1]['x'][-1]
+                bulk = (slp[-1]["y"][-1]) / slp[-1]["x"][-1]
                 if bulk < -1:
                     print("Greater than 100%% slope, %s %s" % (fn, bulk))
                     continue
-                res.append((0 - bulk) * 100.)
+                res.append((0 - bulk) * 100.0)
             os.chdir("..")
         os.chdir("..")
-    df = pd.DataFrame({'slopes': res})
-    df.to_csv('/tmp/slopes.csv', index=False)
+    df = pd.DataFrame({"slopes": res})
+    df.to_csv("/tmp/slopes.csv", index=False)
 
 
 def main():
     """Go Main Go"""
     read_data()
     fig, ax = plt.subplots(1, 1)
-    df = pd.read_csv('/tmp/slopes.csv')
+    df = pd.read_csv("/tmp/slopes.csv")
     # print(df['slopes'].describe())
-    df['slopes'].plot.hist(bins=100, cumulative=True, normed=1, ax=ax)
+    df["slopes"].plot.hist(bins=100, cumulative=True, normed=1, ax=ax)
     ax.set_yticks(np.arange(0, 1.01, 0.1))
     ax.set_xlim(0, 30)
     ax.grid(True)
     ax.set_title("21 Dec 2017 DEP Bulk Slope Histogram")
     ax.set_xlabel("Slope %")
-    fig.savefig('test.png')
+    fig.savefig("test.png")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

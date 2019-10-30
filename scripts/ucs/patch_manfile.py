@@ -14,7 +14,7 @@ I should replace it with
 import glob
 import os
 
-os.chdir('/i/7/man')
+os.chdir("/i/7/man")
 for huc8 in glob.glob("*"):
     os.chdir(huc8)
     for huc4 in glob.glob("*"):
@@ -23,11 +23,16 @@ for huc8 in glob.glob("*"):
             data = open(manfn).read()
             # Replace bug with Alfalfa
             data = data.replace(
-                ("   184 # perennial plant date --- 7 /3\n"
-                 "   304 # perennial stop growth date --- 10/31"),
-                ("   0 # perennial plant date --- 0 /0\n"
-                 "   304 # perennial stop growth date --- 10/31"))
-            o = open(manfn, 'w')
+                (
+                    "   184 # perennial plant date --- 7 /3\n"
+                    "   304 # perennial stop growth date --- 10/31"
+                ),
+                (
+                    "   0 # perennial plant date --- 0 /0\n"
+                    "   304 # perennial stop growth date --- 10/31"
+                ),
+            )
+            o = open(manfn, "w")
             o.write(data)
             o.close()
         os.chdir("..")

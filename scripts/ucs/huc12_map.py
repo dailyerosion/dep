@@ -9,23 +9,24 @@ from matplotlib.collections import PatchCollection
 import matplotlib.colors as mpcolors
 import matplotlib.pyplot as plt
 
-DBCONN = get_dbconn('idep')
+DBCONN = get_dbconn("idep")
 cursor = DBCONN.cursor()
 
 scenario = int(sys.argv[1])
-titles2 = {10: '4',
-           11: '3',
-           7: '4',
-           9: '3'}
-nt = {10: '(no-till)', 11: '(no-till)'}
+titles2 = {10: "4", 11: "3", 7: "4", 9: "3"}
+nt = {10: "(no-till)", 11: "(no-till)"}
 threshold = 2
-m = MapPlot(sector='iowa', axisbg='white', nologo=True,
-            subtitle='1 Jan 2008 thru 31 Dec 2015',
-            title=('UCS %s Year %s Scenario Change in Soil Delivery '
-                   'from Baseline'
-                   ) % (titles2[scenario], nt.get(scenario, '')))
+m = MapPlot(
+    sector="iowa",
+    axisbg="white",
+    nologo=True,
+    subtitle="1 Jan 2008 thru 31 Dec 2015",
+    title=("UCS %s Year %s Scenario Change in Soil Delivery " "from Baseline")
+    % (titles2[scenario], nt.get(scenario, "")),
+)
 
-cursor.execute("""
+cursor.execute(
+    """
 with baseline as (
     SELECT huc_12, sum(avg_delivery) * 4.463 as loss from results_by_huc12
     where valid between '2008-01-01' and '2016-01-01' and
@@ -43,28 +44,30 @@ agg as (
  from huc12 i JOIN agg d on (d.huc_12 = i.huc_12)
  WHERE i.states ~* 'IA' ORDER by val DESC
 
-""", (scenario, ))
+""",
+    (scenario,),
+)
 
 # bins = np.arange(0, 101, 10)
 bins = [-25, -10, -5, -2, 0, 2, 5, 10, 25]
 cmap = plt.get_cmap("BrBG_r")
-cmap.set_under('purple')
-cmap.set_over('black')
+cmap.set_under("purple")
+cmap.set_over("black")
 norm = mpcolors.BoundaryNorm(bins, cmap.N)
 patches = []
 
 for row in cursor:
     # print "%s,%s" % (row[2], row[1])
-    polygon = loads(row[0].decode('hex'))
+    polygon = loads(row[0].decode("hex"))
     a = np.asarray(polygon.exterior)
     x, y = m.map(a[:, 0], a[:, 1])
     a = zip(x, y)
-    c = cmap(norm([float(row[1]), ]))[0]
-    p = Polygon(a, fc=c, ec='None', zorder=2, lw=.1)
+    c = cmap(norm([float(row[1])]))[0]
+    p = Polygon(a, fc=c, ec="None", zorder=2, lw=0.1)
     patches.append(p)
 
 m.ax.add_collection(PatchCollection(patches, match_original=True))
-m.draw_colorbar(bins, cmap, norm, units='T/a')
+m.draw_colorbar(bins, cmap, norm, units="T/a")
 
 m.drawcounties()
-m.postprocess(filename='test.png')
+m.postprocess(filename="test.png")

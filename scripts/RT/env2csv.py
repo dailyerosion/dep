@@ -14,21 +14,21 @@ from pyiem import dep as dep_utils
 from pyiem.util import get_dbconn, logger
 
 LOG = logger()
-PRECIP_AFF = Affine(0.01, 0., dep_utils.WEST, 0., -0.01, dep_utils.NORTH)
-CONFIG = {'subset': False}
+PRECIP_AFF = Affine(0.01, 0.0, dep_utils.WEST, 0.0, -0.01, dep_utils.NORTH)
+CONFIG = {"subset": False}
 
 
 def find_huc12s(scenario):
     """yield a listing of huc12s with output!"""
     if os.path.isfile("myhucs.txt"):
         LOG.warning("Using myhucs.txt to guide processing...")
-        CONFIG['subset'] = True
-        return [s.strip() for s in open('myhucs.txt').readlines()]
+        CONFIG["subset"] = True
+        return [s.strip() for s in open("myhucs.txt").readlines()]
 
     res = []
-    for huc8 in os.listdir("/i/%s/env" % (scenario, )):
+    for huc8 in os.listdir("/i/%s/env" % (scenario,)):
         for huc12 in os.listdir("/i/%s/env/%s" % (scenario, huc8)):
-            res.append(huc8+huc12)
+            res.append(huc8 + huc12)
     return res
 
 
@@ -40,8 +40,8 @@ def readfile(fn, lengths):
         print("\nABORT: Attempting to read: %s resulted in: %s\n" % (fn, exp))
         return None
     key = int(fn.split("/")[-1].split(".")[0].split("_")[1])
-    df['fpath'] = key
-    df['delivery'] = df['sed_del'] / lengths[key]
+    df["fpath"] = key
+    df["delivery"] = df["sed_del"] / lengths[key]
     return df
 
 
@@ -54,7 +54,7 @@ def determine_dates(argv):
         res.append(today - datetime.timedelta(days=1))
     elif len(argv) == 3:
         # Option 2, we are running for an entire year, gulp
-        if argv[2] == 'all':
+        if argv[2] == "all":
             now = datetime.date(2007, 1, 1)
             ets = datetime.date.today()
         else:
@@ -97,12 +97,17 @@ def load_precip(dates, huc12s):
       dict of [date][huc12]
     """
     # 1. Build GeoPandas DataFrame of HUC12s of interest
-    idep = get_dbconn('idep')
-    huc12df = gpd.GeoDataFrame.from_postgis("""
+    idep = get_dbconn("idep")
+    huc12df = gpd.GeoDataFrame.from_postgis(
+        """
         SELECT huc_12, ST_Transform(simple_geom, 4326) as geo
         from huc12 WHERE scenario = 0
-    """, idep, index_col='huc_12', geom_col='geo')
-    if CONFIG['subset']:
+    """,
+        idep,
+        index_col="huc_12",
+        geom_col="geo",
+    )
+    if CONFIG["subset"]:
         huc12df = huc12df.loc[huc12s]
     # 2. Loop over dates
     res = {}
@@ -118,13 +123,12 @@ def load_precip(dates, huc12s):
         # nodata here represents the value that is set to missing within the
         # source dataset!, setting to zero has strange side affects
         zs = zonal_stats(
-            huc12df['geo'], pcp, affine=PRECIP_AFF, nodata=-1,
-            all_touched=True
+            huc12df["geo"], pcp, affine=PRECIP_AFF, nodata=-1, all_touched=True
         )
         i = 0
         for huc12, _ in huc12df.itertuples():
             d = res.setdefault(huc12, [])
-            d.append(zs[i]['mean'])
+            d.append(zs[i]["mean"])
             i += 1
     return res
 
@@ -132,13 +136,16 @@ def load_precip(dates, huc12s):
 def load_lengths(scenario):
     """Build out our flowpath lengths."""
     sdf = dep_utils.load_scenarios()
-    idep = get_dbconn('idep')
+    idep = get_dbconn("idep")
     icursor = idep.cursor()
     res = {}
-    icursor.execute("""
+    icursor.execute(
+        """
         SELECT huc_12, fpath, ST_Length(geom) from flowpaths where
         scenario = %s
-    """, (int(sdf.loc[scenario, 'flowpath_scenario']),))
+    """,
+        (int(sdf.loc[scenario, "flowpath_scenario"]),),
+    )
     for row in icursor:
         d = res.setdefault(row[0], dict())
         d[row[1]] = row[2]
@@ -150,8 +157,7 @@ def do_huc12(arg):
     scenario, huc12, lengths, dates, _precip = arg
     basedir = "/i/%s/env/%s/%s" % (scenario, huc12[:8], huc12[8:])
     frames = [
-        readfile(basedir+"/"+f, lengths)
-        for f in os.listdir(basedir)
+        readfile(basedir + "/" + f, lengths) for f in os.listdir(basedir)
     ]
     if not frames or any([f is None for f in frames]):
         return huc12, None, None, None
@@ -161,12 +167,16 @@ def do_huc12(arg):
     res = ""
     for _, date in enumerate(dates):
         # df['date'] is datetime64, so need to cast
-        df2 = df[df['date'].dt.date == date]
+        df2 = df[df["date"].dt.date == date]
         for _, row in df2.iterrows():
             # hillslope ID, HUC12 ID, precip, runoff, detachment, soil loss
             res += "%s,%s,%.2f,%.4f,%.4f,%.4f\n" % (
-                row['fpath'], huc12, row['precip'], row['runoff'],
-                row['av_det'], row['delivery']
+                row["fpath"],
+                huc12,
+                row["precip"],
+                row["runoff"],
+                row["av_det"],
+                row["delivery"],
             )
 
     return res
@@ -174,10 +184,13 @@ def do_huc12(arg):
 
 def main(argv):
     """Go Main Go."""
-    csvfp = open("output.csv", 'w')
+    csvfp = open("output.csv", "w")
     csvfp.write(
-        ("hillslope ID, HUC12 ID, precipitation, "
-         "runoff, detachment, soil loss\n"))
+        (
+            "hillslope ID, HUC12 ID, precipitation, "
+            "runoff, detachment, soil loss\n"
+        )
+    )
     scenario = int(argv[1])
     lengths = load_lengths(scenario)
     dates = determine_dates(sys.argv)
@@ -188,18 +201,19 @@ def main(argv):
         if huc12 not in precip:
             LOG.info("Skipping huc12 %s with no precip", huc12)
             continue
-        jobs.append(
-            [scenario, huc12, lengths[huc12], dates, precip[huc12]])
+        jobs.append([scenario, huc12, lengths[huc12], dates, precip[huc12]])
 
     # Begin the processing work now!
     # NB: Usage of a ThreadPool here ended in tears (so slow)
     pool = Pool()
     for res in tqdm(
-            pool.imap_unordered(do_huc12, jobs), total=len(jobs),
-            disable=(not sys.stdout.isatty())):
+        pool.imap_unordered(do_huc12, jobs),
+        total=len(jobs),
+        disable=(not sys.stdout.isatty()),
+    ):
         csvfp.write(res)
     csvfp.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv)

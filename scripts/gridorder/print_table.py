@@ -1,6 +1,7 @@
 """To match requested spreadsheet format"""
 import sys
 import pandas as pd
+
 HUCS = """101702031901
 101702031904
 070600010905
@@ -25,18 +26,23 @@ HUCS = """101702031901
 gridorder = int(sys.argv[1])
 
 df = pd.read_csv("flowpaths%s.csv" % (gridorder,))
-df['huc12'] = df['flowpath'].str.slice(0, 12)
+df["huc12"] = df["flowpath"].str.slice(0, 12)
 for huc in HUCS.split("\n"):
-    df2 = df[df['huc12'] == huc]
+    df2 = df[df["huc12"] == huc]
     res = dict()
-    res['fplen'] = df2['length'].mean()
-    res['delivery'] = df2['delivery'].mean()
-    res['detach'] = df2['avg_det'].mean()
-    df3 = df2[df2['length'] >= 22.1]
-    res['fplen221'] = df3['length'].mean()
-    res['delivery221'] = df3['delivery'].mean()
-    res['detach221'] = df3['avg_det'].mean()
-    res['percent'] = len(df3.index) / float(len(df2.index)) * 100.
+    res["fplen"] = df2["length"].mean()
+    res["delivery"] = df2["delivery"].mean()
+    res["detach"] = df2["avg_det"].mean()
+    df3 = df2[df2["length"] >= 22.1]
+    res["fplen221"] = df3["length"].mean()
+    res["delivery221"] = df3["delivery"].mean()
+    res["detach221"] = df3["avg_det"].mean()
+    res["percent"] = len(df3.index) / float(len(df2.index)) * 100.0
 
-    print(("%(fplen)s,%(fplen221)s,%(delivery)s,%(detach)s,"
-           "%(delivery221)s,%(detach221)s,%(percent)s") % res)
+    print(
+        (
+            "%(fplen)s,%(fplen221)s,%(delivery)s,%(detach)s,"
+            "%(delivery221)s,%(detach221)s,%(percent)s"
+        )
+        % res
+    )

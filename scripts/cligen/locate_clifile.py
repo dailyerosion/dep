@@ -15,24 +15,26 @@ def finder(lon, lat):
     # points near the domain edge need to seach a bit further than 0.25deg
     X = 40
     Y = 40
-    for _ in range(40**2):
-        if (-X/2 < x <= X/2) and (-Y/2 < y <= Y/2):
+    for _ in range(40 ** 2):
+        if (-X / 2 < x <= X / 2) and (-Y / 2 < y <= Y / 2):
             newfn = get_cli_fname(lon + x * 0.01, lat + y * 0.01)
             if os.path.isfile(newfn):
                 return newfn, x, y
-        if x == y or (x < 0 and x == -y) or (x > 0 and x == 1-y):
+        if x == y or (x < 0 and x == -y) or (x > 0 and x == 1 - y):
             dx, dy = -dy, dx
-        x, y = x+dx, y+dy
+        x, y = x + dx, y + dy
     return None, None, None
 
 
 def main():
     """Go Main Go."""
-    pgconn = get_dbconn('idep')
+    pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT climate_file, fid from flowpaths where scenario = 0
-    """)
+    """
+    )
     created = 0
     for row in cursor:
         fn = row[0]
@@ -49,14 +51,14 @@ def main():
             sys.exit()
         print("%s -> %s xoff: %s yoff: %s" % (newfn, fn, xoff, yoff))
         os.system("cp %s %s" % (newfn, fn))
-    print("added %s files" % (created, ))
+    print("added %s files" % (created,))
 
 
 def test_finder():
     """Test what our finder does."""
-    finder(-95., 42.)
+    finder(-95.0, 42.0)
     assert False
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

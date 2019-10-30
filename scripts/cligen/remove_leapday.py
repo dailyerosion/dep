@@ -11,9 +11,10 @@ def main():
             pos2 = data.find("\n1\t3\t2017")
             if pos1 == -1:
                 continue
-            o = open(clifn, 'w')
+            o = open(clifn, "w")
             o.write(data[:pos1] + data[pos2:])
             o.close()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

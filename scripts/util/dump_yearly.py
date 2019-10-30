@@ -177,8 +177,9 @@ HUCS = [x.strip() for x in DATA.split("\n")]
 
 def main():
     """Go Main Go"""
-    pgconn = get_dbconn('idep', user='nobody')
-    df = read_sql("""
+    pgconn = get_dbconn("idep", user="nobody")
+    df = read_sql(
+        """
         SELECT huc_12, extract(year from valid) as year,
         sum(avg_loss) * 4.463 as loss_ton_per_acre,
         sum(avg_delivery) * 4.463 as delivery_ton_per_acre,
@@ -187,22 +188,32 @@ def main():
         from results_by_huc12 WHERE
         scenario = 0 and huc_12 in %s and valid >= '2007-01-01'
         and valid < '2018-01-01' GROUP by huc_12, year
-    """, pgconn, params=(tuple(HUCS), ))
+    """,
+        pgconn,
+        params=(tuple(HUCS),),
+    )
     writer = pd.ExcelWriter(
-        'dep_yearly.xlsx', options={'remove_timezone': True})
-    df.to_excel(writer, 'Yearly Totals', index=False)
-    gdf = df.groupby('huc_12').mean()
-    gdf[['loss_ton_per_acre', 'delivery_ton_per_acre', 'precip_inch',
-         'runoff_inch']].to_excel(writer, 'Yearly Averages')
-    format1 = writer.book.add_format({'num_format': '0.00'})
-    worksheet = writer.sheets['Yearly Totals']
-    worksheet.set_column('A:A', 18)
-    worksheet.set_column('C:F', 20, format1)
-    worksheet = writer.sheets['Yearly Averages']
-    worksheet.set_column('A:A', 18)
-    worksheet.set_column('B:E', 20, format1)
+        "dep_yearly.xlsx", options={"remove_timezone": True}
+    )
+    df.to_excel(writer, "Yearly Totals", index=False)
+    gdf = df.groupby("huc_12").mean()
+    gdf[
+        [
+            "loss_ton_per_acre",
+            "delivery_ton_per_acre",
+            "precip_inch",
+            "runoff_inch",
+        ]
+    ].to_excel(writer, "Yearly Averages")
+    format1 = writer.book.add_format({"num_format": "0.00"})
+    worksheet = writer.sheets["Yearly Totals"]
+    worksheet.set_column("A:A", 18)
+    worksheet.set_column("C:F", 20, format1)
+    worksheet = writer.sheets["Yearly Averages"]
+    worksheet.set_column("A:A", 18)
+    worksheet.set_column("B:E", 20, format1)
     writer.save()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

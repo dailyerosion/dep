@@ -8,25 +8,24 @@ from matplotlib.collections import PatchCollection
 import matplotlib.colors as mpcolors
 import matplotlib.pyplot as plt
 
-DBCONN = get_dbconn('idep')
+DBCONN = get_dbconn("idep")
 cursor = DBCONN.cursor()
 
 scenario1 = int(sys.argv[1])
 scenario2 = int(sys.argv[2])
-titles2 = {0: 4,
-           12: 1,
-           13: 2,
-           14: 3,
-           15: 5,
-           16: 6}
+titles2 = {0: 4, 12: 1, 13: 2, 14: 3, 15: 5, 16: 6}
 threshold = 2
-m = MapPlot(sector='iowa', axisbg='white', nologo=True,
-            subtitle='1 Jan 2007 thru 31 Dec 2016',
-            title=('Grid Order %s minus Grid Order %s '
-                   'Soil Delivery'
-                   ) % (titles2[scenario1], titles2[scenario2]))
+m = MapPlot(
+    sector="iowa",
+    axisbg="white",
+    nologo=True,
+    subtitle="1 Jan 2007 thru 31 Dec 2016",
+    title=("Grid Order %s minus Grid Order %s " "Soil Delivery")
+    % (titles2[scenario1], titles2[scenario2]),
+)
 
-cursor.execute("""
+cursor.execute(
+    """
 with baseline as (
     SELECT huc_12, sum(avg_delivery) * 4.463 as loss from results_by_huc12
     where valid between '2007-01-01' and '2017-01-01' and
@@ -45,28 +44,30 @@ agg as (
  WHERE i.states ~* 'IA' and scenario_loss is not null
  and baseline_loss is not null ORDER by val DESC
 
-""", (scenario2, scenario1))
+""",
+    (scenario2, scenario1),
+)
 
 # bins = np.arange(0, 101, 10)
 bins = [-25, -10, -5, -2, 0, 2, 5, 10, 25]
 cmap = plt.get_cmap("BrBG_r")
-cmap.set_under('purple')
-cmap.set_over('black')
+cmap.set_under("purple")
+cmap.set_over("black")
 norm = mpcolors.BoundaryNorm(bins, cmap.N)
 patches = []
 
 for row in cursor:
     # print "%s,%s" % (row[2], row[1])
-    polygon = loads(row[0].decode('hex'))
+    polygon = loads(row[0].decode("hex"))
     a = np.asarray(polygon.exterior)
     x, y = m.map(a[:, 0], a[:, 1])
     a = zip(x, y)
-    c = cmap(norm([float(row[1]), ]))[0]
-    p = Polygon(a, fc=c, ec='None', zorder=2, lw=.1)
+    c = cmap(norm([float(row[1])]))[0]
+    p = Polygon(a, fc=c, ec="None", zorder=2, lw=0.1)
     patches.append(p)
 
 m.ax.add_collection(PatchCollection(patches, match_original=True))
-m.draw_colorbar(bins, cmap, norm, units='T/a')
+m.draw_colorbar(bins, cmap, norm, units="T/a")
 
 m.drawcounties()
-m.postprocess(filename='test.png')
+m.postprocess(filename="test.png")

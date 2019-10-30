@@ -12,12 +12,12 @@ def main():
         pos = open(fn).read().find(" None ")
         if pos > -1:
             oldata = open(fn).read()
-            fp = open(fn, 'w')
+            fp = open(fn, "w")
             fp.write(oldata.replace(" None ", " 2.000 "))
             fp.close()
             hits += 1
     print("Fixed: %s/%s" % (hits, files))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

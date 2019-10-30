@@ -30,9 +30,9 @@ for line in data.split("\n"):
 
 maxr = 0
 for i in range(1, len(t)):
-    dt = t[i] - t[i-1]
-    dr = r[i] - r[i-1]
-    rate = (dr / dt)
+    dt = t[i] - t[i - 1]
+    dr = r[i] - r[i - 1]
+    rate = dr / dt
     if rate > maxr:
         print("time: %5.2f, rate: %6.2f mm/hr" % (t[i], rate))
         maxr = rate

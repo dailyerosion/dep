@@ -6,11 +6,12 @@ from pandas.io.sql import read_sql
 import matplotlib.pyplot as plt
 from pyiem.util import get_dbconn
 
-PGCONN = get_dbconn('idep')
+PGCONN = get_dbconn("idep")
 
 
 def get_scenario(scenario):
-    df = read_sql("""
+    df = read_sql(
+        """
         WITH yearly as (
             SELECT huc_12, generate_series(2008, 2016) as yr
             from huc12 where states = 'IA' and scenario = 0),
@@ -33,7 +34,11 @@ def get_scenario(scenario):
         avg(delivery) * 4.463 as delivery_ta,
         avg(detachment) * 4.463 as detachment_ta
         from agg GROUP by yr ORDER by yr ASC
-    """, PGCONN, params=(scenario, ), index_col='yr')
+    """,
+        PGCONN,
+        params=(scenario,),
+        index_col="yr",
+    )
     return df
 
 
@@ -43,19 +48,27 @@ def main():
     b25 = get_scenario(25)
     b26 = get_scenario(26)
 
-    delta25 = (b25 - adf)
-    delta26 = (b26 - adf)
+    delta25 = b25 - adf
+    delta26 = b26 - adf
     (fig, ax) = plt.subplots(1, 1)
-    ax.bar(delta25.index.values - 0.2, delta25['delivery_ta'].values,
-           width=0.4, label='HI 0.8')
-    ax.bar(delta26.index.values + 0.2, delta26['delivery_ta'].values,
-           width=0.4, label='HI 0.9')
-    ax.legend(loc='best')
+    ax.bar(
+        delta25.index.values - 0.2,
+        delta25["delivery_ta"].values,
+        width=0.4,
+        label="HI 0.8",
+    )
+    ax.bar(
+        delta26.index.values + 0.2,
+        delta26["delivery_ta"].values,
+        width=0.4,
+        label="HI 0.9",
+    )
+    ax.legend(loc="best")
     ax.grid(True)
     ax.set_title("2008-2016 Change in Delivery vs DEP Baseline")
     ax.set_ylabel("Change [tons/acre]")
-    fig.savefig('test.png')
+    fig.savefig("test.png")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

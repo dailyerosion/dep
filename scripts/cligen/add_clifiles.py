@@ -16,8 +16,8 @@ def missing_logic(scenario, fn):
     if not os.path.isdir(os.path.dirname(fn)):
         os.makedirs(os.path.dirname(fn))
     # So there should be a file at an interval of 0.25
-    lon2 = lon - (lon * 100 % 25) / 100.
-    lat2 = lat - (lat * 100 % 25) / 100.
+    lon2 = lon - (lon * 100 % 25) / 100.0
+    lat2 = lat - (lat * 100 % 25) / 100.0
     testfn = get_cli_fname(lon2, lat2, scenario)
     if not os.path.isfile(testfn):
         print("Whoa, why doesn't %s exist?" % (testfn,))
@@ -29,12 +29,15 @@ def missing_logic(scenario, fn):
 def main(argv):
     """Go Main Go!"""
     scenario = argv[1]
-    pgconn = get_dbconn('idep')
+    pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT distinct climate_file from flowpaths where scenario = %s
         and climate_file is not null
-    """, (scenario, ))
+    """,
+        (scenario,),
+    )
     for row in cursor:
         fn = "/i/%s/%s" % (scenario, row[0])
         if os.path.isfile(fn):
@@ -42,5 +45,5 @@ def main(argv):
         missing_logic(scenario, fn)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv)

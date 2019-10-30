@@ -12,7 +12,7 @@ from tqdm import tqdm
 def editor(arg):
     """Do the editing."""
     fn, scenario, multiplier = arg
-    newfn = fn.replace("/i/0/", "/i/%s/" % (scenario, ))
+    newfn = fn.replace("/i/0/", "/i/%s/" % (scenario,))
     newdir = os.path.dirname(newfn)
     if not os.path.isdir(newdir):
         try:
@@ -20,7 +20,7 @@ def editor(arg):
             os.makedirs(newdir)
         except FileExistsError:
             pass
-    fp = open(newfn, 'w')
+    fp = open(newfn, "w")
     for line in open(fn):
         tokens = line.split()
         if len(tokens) != 2:
@@ -57,5 +57,5 @@ def main(argv):
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv)

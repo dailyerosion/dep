@@ -30,21 +30,21 @@ from pyiem import dep as dep_utils
 from pyiem.util import get_dbconn, logger
 
 LOG = logger()
-PRECIP_AFF = Affine(0.01, 0., dep_utils.WEST, 0., -0.01, dep_utils.NORTH)
-CONFIG = {'subset': False}
+PRECIP_AFF = Affine(0.01, 0.0, dep_utils.WEST, 0.0, -0.01, dep_utils.NORTH)
+CONFIG = {"subset": False}
 
 
 def find_huc12s(scenario):
     """yield a listing of huc12s with output!"""
     if os.path.isfile("myhucs.txt"):
         LOG.warning("Using myhucs.txt to guide processing...")
-        CONFIG['subset'] = True
-        return [s.strip() for s in open('myhucs.txt').readlines()]
+        CONFIG["subset"] = True
+        return [s.strip() for s in open("myhucs.txt").readlines()]
 
     res = []
-    for huc8 in os.listdir("/i/%s/env" % (scenario, )):
+    for huc8 in os.listdir("/i/%s/env" % (scenario,)):
         for huc12 in os.listdir("/i/%s/env/%s" % (scenario, huc8)):
-            res.append(huc8+huc12)
+            res.append(huc8 + huc12)
     return res
 
 
@@ -56,7 +56,7 @@ def readfile(fn, lengths):
         print("\nABORT: Attempting to read: %s resulted in: %s\n" % (fn, exp))
         return None
     key = int(fn.split("/")[-1].split(".")[0].split("_")[1])
-    df['delivery'] = df['sed_del'] / lengths[key]
+    df["delivery"] = df["sed_del"] / lengths[key]
     return df
 
 
@@ -69,7 +69,7 @@ def determine_dates(argv):
         res.append(today - datetime.timedelta(days=1))
     elif len(argv) == 3:
         # Option 2, we are running for an entire year, gulp
-        if argv[2] == 'all':
+        if argv[2] == "all":
             now = datetime.date(2007, 1, 1)
             ets = datetime.date.today()
         else:
@@ -98,25 +98,26 @@ def determine_dates(argv):
 
 def compute_res(df, date, slopes, qc_precip):
     """Compute things"""
-    allhits = (slopes == len(df.index))
+    allhits = slopes == len(df.index)
     slopes = float(slopes)
     # NB: code was added to WEPP to output every precipitation/runoff event,
     # so the average precip here is more accurate than before.
-    return dict(date=date,
-                min_precip=(df.precip.min() if allhits else 0),
-                avg_precip=(df.precip.sum() / slopes),
-                max_precip=df.precip.max(),
-                min_loss=(df.av_det.min() if allhits else 0),
-                avg_loss=(df.av_det.sum() / slopes),
-                max_loss=df.av_det.max(),
-                min_runoff=(df.runoff.min() if allhits else 0),
-                avg_runoff=(df.runoff.sum() / slopes),
-                max_runoff=df.runoff.max(),
-                min_delivery=(df.delivery.min() if allhits else 0),
-                avg_delivery=(df.delivery.sum() / slopes),
-                max_delivery=df.delivery.max(),
-                qc_precip=qc_precip
-                )
+    return dict(
+        date=date,
+        min_precip=(df.precip.min() if allhits else 0),
+        avg_precip=(df.precip.sum() / slopes),
+        max_precip=df.precip.max(),
+        min_loss=(df.av_det.min() if allhits else 0),
+        avg_loss=(df.av_det.sum() / slopes),
+        max_loss=df.av_det.max(),
+        min_runoff=(df.runoff.min() if allhits else 0),
+        avg_runoff=(df.runoff.sum() / slopes),
+        max_runoff=df.runoff.max(),
+        min_delivery=(df.delivery.min() if allhits else 0),
+        avg_delivery=(df.delivery.sum() / slopes),
+        max_delivery=df.delivery.max(),
+        qc_precip=qc_precip,
+    )
 
 
 def load_precip(dates, huc12s):
@@ -135,12 +136,17 @@ def load_precip(dates, huc12s):
       dict of [date][huc12]
     """
     # 1. Build GeoPandas DataFrame of HUC12s of interest
-    idep = get_dbconn('idep')
-    huc12df = gpd.GeoDataFrame.from_postgis("""
+    idep = get_dbconn("idep")
+    huc12df = gpd.GeoDataFrame.from_postgis(
+        """
         SELECT huc_12, ST_Transform(simple_geom, 4326) as geo
         from huc12 WHERE scenario = 0
-    """, idep, index_col='huc_12', geom_col='geo')
-    if CONFIG['subset']:
+    """,
+        idep,
+        index_col="huc_12",
+        geom_col="geo",
+    )
+    if CONFIG["subset"]:
         huc12df = huc12df.loc[huc12s]
     # 2. Loop over dates
     res = {}
@@ -156,13 +162,12 @@ def load_precip(dates, huc12s):
         # nodata here represents the value that is set to missing within the
         # source dataset!, setting to zero has strange side affects
         zs = zonal_stats(
-            huc12df['geo'], pcp, affine=PRECIP_AFF, nodata=-1,
-            all_touched=True
+            huc12df["geo"], pcp, affine=PRECIP_AFF, nodata=-1, all_touched=True
         )
         i = 0
         for huc12, _ in huc12df.itertuples():
             d = res.setdefault(huc12, [])
-            d.append(zs[i]['mean'])
+            d.append(zs[i]["mean"])
             i += 1
     return res
 
@@ -170,13 +175,16 @@ def load_precip(dates, huc12s):
 def load_lengths(scenario):
     """Build out our flowpath lengths."""
     sdf = dep_utils.load_scenarios()
-    idep = get_dbconn('idep')
+    idep = get_dbconn("idep")
     icursor = idep.cursor()
     res = {}
-    icursor.execute("""
+    icursor.execute(
+        """
         SELECT huc_12, fpath, ST_Length(geom) from flowpaths where
         scenario = %s
-    """, (int(sdf.loc[scenario, 'flowpath_scenario']),))
+    """,
+        (int(sdf.loc[scenario, "flowpath_scenario"]),),
+    )
     for row in icursor:
         d = res.setdefault(row[0], dict())
         d[row[1]] = row[2]
@@ -187,15 +195,21 @@ def delete_previous_entries(icursor, scenario, huc12, dates):
     """Remove whatever previous data we have for this huc12 and dates"""
     if len(dates) > 366:
         # Means we are running for 'all'
-        icursor.execute("""
+        icursor.execute(
+            """
             DELETE from results_by_huc12 WHERE
             scenario = %s and huc_12 = %s
-        """, (scenario, huc12))
+        """,
+            (scenario, huc12),
+        )
     else:
-        icursor.execute("""
+        icursor.execute(
+            """
             DELETE from results_by_huc12 WHERE
             valid in %s and scenario = %s and huc_12 = %s
-        """, (tuple(dates), scenario, huc12))
+        """,
+            (tuple(dates), scenario, huc12),
+        )
     return icursor.rowcount
 
 
@@ -206,12 +220,17 @@ def save_results(icursor, scenario, huc12, df, dates):
     for _, row in df.iterrows():
         # We don't care about the output when the follow conditions
         # are not meet
-        if (row.qc_precip < 0.254 and row.avg_loss < 0.01 and
-                row.avg_delivery < 0.01 and row.avg_runoff < 1):
+        if (
+            row.qc_precip < 0.254
+            and row.avg_loss < 0.01
+            and row.avg_delivery < 0.01
+            and row.avg_runoff < 1
+        ):
             skipped += 1
             continue
         inserts += 1
-        icursor.execute("""
+        icursor.execute(
+            """
             INSERT into results_by_huc12
             (huc_12, valid, scenario,
             min_precip, avg_precip, max_precip,
@@ -224,34 +243,60 @@ def save_results(icursor, scenario, huc12, df, dates):
             coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
             coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
             coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0), %s)
-        """, (huc12, row['date'], scenario,
-              row.min_precip, row.avg_precip, row.max_precip,
-              row.min_loss, row.avg_loss, row.max_loss,
-              row.min_runoff, row.avg_runoff, row.max_runoff,
-              row.min_delivery, row.avg_delivery, row.max_delivery,
-              row.qc_precip))
+        """,
+            (
+                huc12,
+                row["date"],
+                scenario,
+                row.min_precip,
+                row.avg_precip,
+                row.max_precip,
+                row.min_loss,
+                row.avg_loss,
+                row.max_loss,
+                row.min_runoff,
+                row.avg_runoff,
+                row.max_runoff,
+                row.min_delivery,
+                row.avg_delivery,
+                row.max_delivery,
+                row.qc_precip,
+            ),
+        )
     return inserts, skipped
 
 
 def update_metadata(scenario, dates):
     """Update database property for this scenario."""
-    pgconn = get_dbconn('idep')
+    pgconn = get_dbconn("idep")
     icursor = pgconn.cursor()
     maxdate = max(dates)
-    icursor.execute("""
+    icursor.execute(
+        """
         SELECT value from properties where
         key = 'last_date_%s'
-    """ % (scenario, ))
+    """
+        % (scenario,)
+    )
     if icursor.rowcount == 0:
-        icursor.execute("""
+        icursor.execute(
+            """
             INSERT into properties(key, value)
             values ('last_date_%s', '%s')
-        """ % (scenario, maxdate.strftime("%Y-%m-%d")))
-    icursor.execute("""
+        """
+            % (scenario, maxdate.strftime("%Y-%m-%d"))
+        )
+    icursor.execute(
+        """
         UPDATE properties
         SET value = '%s' WHERE key = 'last_date_%s' and value < '%s'
-    """ % (maxdate.strftime("%Y-%m-%d"), scenario,
-           maxdate.strftime("%Y-%m-%d")))
+    """
+        % (
+            maxdate.strftime("%Y-%m-%d"),
+            scenario,
+            maxdate.strftime("%Y-%m-%d"),
+        )
+    )
     icursor.close()
     pgconn.commit()
 
@@ -259,12 +304,11 @@ def update_metadata(scenario, dates):
 def do_huc12(arg):
     """Process a huc12's worth of WEPP output files"""
     scenario, huc12, lengths, dates, precip = arg
-    pgconn = get_dbconn('idep')
+    pgconn = get_dbconn("idep")
     icursor = pgconn.cursor()
     basedir = "/i/%s/env/%s/%s" % (scenario, huc12[:8], huc12[8:])
     frames = [
-        readfile(basedir+"/"+f, lengths)
-        for f in os.listdir(basedir)
+        readfile(basedir + "/" + f, lengths) for f in os.listdir(basedir)
     ]
     if not frames or any([f is None for f in frames]):
         return huc12, None, None, None
@@ -276,15 +320,13 @@ def do_huc12(arg):
     deleted = delete_previous_entries(icursor, scenario, huc12, dates)
     for i, date in enumerate(dates):
         # df['date'] is datetime64, so need to cast
-        df2 = df[df['date'].dt.date == date]
+        df2 = df[df["date"].dt.date == date]
         # We have no data, any previous entries were deleted above already
         qc_precip = precip[i]
         if df2.empty and qc_precip == 0:
             continue
         # Do computation
-        rows.append(
-            compute_res(df2, date, hillslopes, qc_precip)
-        )
+        rows.append(compute_res(df2, date, hillslopes, qc_precip))
     if not rows:
         icursor.close()
         pgconn.commit()
@@ -321,32 +363,34 @@ def main(argv):
     totalskipped = 0
     totaldeleted = 0
     for huc12, inserts, skipped, deleted in tqdm(
-            pool.imap_unordered(do_huc12, jobs), total=len(jobs),
-            disable=(not sys.stdout.isatty())):
+        pool.imap_unordered(do_huc12, jobs),
+        total=len(jobs),
+        disable=(not sys.stdout.isatty()),
+    ):
         if inserts is None:
             print("ERROR: huc12 %s returned 0 data" % (huc12,))
             continue
         totalinserts += inserts
         totalskipped += skipped
         totaldeleted += deleted
-    print("env2database.py inserts: %s skips: %s deleted: %s" % (totalinserts,
-                                                                 totalskipped,
-                                                                 totaldeleted))
+    print(
+        "env2database.py inserts: %s skips: %s deleted: %s"
+        % (totalinserts, totalskipped, totaldeleted)
+    )
     update_metadata(scenario, dates)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv)
 
 
 def test_dohuc12():
     """Can we process a huc12"""
     lengths = load_lengths(0)
-    myhuc = '102400130105'
-    res, _, _, _ = do_huc12([
-        0, myhuc, lengths[myhuc],
-        [datetime.date(2014, 9, 9)], [0]
-    ])
+    myhuc = "102400130105"
+    res, _, _, _ = do_huc12(
+        [0, myhuc, lengths[myhuc], [datetime.date(2014, 9, 9)], [0]]
+    )
     assert res == myhuc
 
 

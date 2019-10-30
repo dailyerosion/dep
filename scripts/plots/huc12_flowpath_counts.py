@@ -12,40 +12,53 @@ from pyiem.plot.geoplot import MapPlot
 
 def main():
     """Go Main Go."""
-    pgconn = get_dbconn('idep')
-    df = read_postgis("""
+    pgconn = get_dbconn("idep")
+    df = read_postgis(
+        """
         select f.huc_12, count(*) as fps,
         st_transform(h.simple_geom, 4326) as geo
         from flowpaths f JOIN huc12 h on
         (f.huc_12 = h.huc_12) WHERE f.scenario = 0 and h.scenario = 0
         GROUP by f.huc_12, geo ORDER by fps ASC
-    """, pgconn, index_col=None, geom_col='geo')
+    """,
+        pgconn,
+        index_col=None,
+        geom_col="geo",
+    )
     bins = np.arange(1, 42, 2)
-    cmap = plt.get_cmap('copper')
-    cmap.set_over('white')
-    cmap.set_under('thistle')
+    cmap = plt.get_cmap("copper")
+    cmap.set_over("white")
+    cmap.set_under("thistle")
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
     mp = MapPlot(
-        continentalcolor='thistle', nologo=True,
-        sector='custom',
-        south=36.8, north=45.0, west=-99.2, east=-88.9,
-        subtitle='',
-        title=('DEP HUCs with <40 Flowpaths (%.0f/%.0f %.2f%%)' % (
-            len(df[df['fps'] < 40].index), len(df.index),
-            len(df[df['fps'] < 40].index) / len(df.index) * 100.
-        )))
+        continentalcolor="thistle",
+        nologo=True,
+        sector="custom",
+        south=36.8,
+        north=45.0,
+        west=-99.2,
+        east=-88.9,
+        subtitle="",
+        title=(
+            "DEP HUCs with <40 Flowpaths (%.0f/%.0f %.2f%%)"
+            % (
+                len(df[df["fps"] < 40].index),
+                len(df.index),
+                len(df[df["fps"] < 40].index) / len(df.index) * 100.0,
+            )
+        ),
+    )
     for _i, row in df.iterrows():
-        c = cmap(norm([row['fps'], ]))[0]
-        arr = np.asarray(row['geo'].exterior)
+        c = cmap(norm([row["fps"]]))[0]
+        arr = np.asarray(row["geo"].exterior)
         points = mp.ax.projection.transform_points(
-            ccrs.Geodetic(), arr[:, 0], arr[:, 1])
-        p = Polygon(points[:, :2], fc=c, ec='None', zorder=2, lw=0.1)
+            ccrs.Geodetic(), arr[:, 0], arr[:, 1]
+        )
+        p = Polygon(points[:, :2], fc=c, ec="None", zorder=2, lw=0.1)
         mp.ax.add_patch(p)
     mp.drawcounties()
-    mp.draw_colorbar(
-        bins, cmap, norm,
-        title='Count')
-    mp.postprocess(filename='/tmp/huc12_cnts.png')
+    mp.draw_colorbar(bins, cmap, norm, title="Count")
+    mp.postprocess(filename="/tmp/huc12_cnts.png")
 
     # gdf = df.groupby('fps').count()
     # gdf.columns = ['count', ]
@@ -54,5 +67,5 @@ def main():
     # gdf.to_csv('/tmp/huc12_flowpath_cnts.csv')
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -19,16 +19,20 @@ def update_grid(ax):
             lats.append(float(tokens[1]))
         os.chdir("..")
     ax.scatter(
-        lons, lats, transform=ccrs.PlateCarree(), zorder=1000, marker='+',
-        color='r')
+        lons,
+        lats,
+        transform=ccrs.PlateCarree(),
+        zorder=1000,
+        marker="+",
+        color="r",
+    )
 
 
 def draw_map():
     """make maps, not war."""
-    m = MapPlot(sector='conus',
-                title='4 March 2019 :: DEP Precip Points')
+    m = MapPlot(sector="conus", title="4 March 2019 :: DEP Precip Points")
     update_grid(m.ax)
-    m.postprocess(filename='/tmp/map_clipoints.png')
+    m.postprocess(filename="/tmp/map_clipoints.png")
     m.close()
 
 
@@ -37,5 +41,5 @@ def main():
     draw_map()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

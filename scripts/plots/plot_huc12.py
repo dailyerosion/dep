@@ -17,10 +17,11 @@ import matplotlib.colors as mpcolors
 
 def main(argv):
     """Do Great Things"""
-    pgconn = get_dbconn('idep')
+    pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
 
-    df = read_postgis("""
+    df = read_postgis(
+        """
         with obs as (
             select huc_12, sum(avg_delivery) * 4.163 as loss
             from results_by_huc12
@@ -30,27 +31,32 @@ def main(argv):
         SELECT ST_Transform(simple_geom, 4326) as geom, o.huc_12, o.loss
         from obs o JOIN huc12 h on (o.huc_12 = h.huc_12)
         WHERE h.scenario = 0 and states = 'IA' and loss > 25
-    """, pgconn, geom_col='geom',
-                      index_col='huc_12')
+    """,
+        pgconn,
+        geom_col="geom",
+        index_col="huc_12",
+    )
     mp = MapPlot(
-        continentalcolor='#EEEEEE', nologo=True,
-        subtitle=(
-            '%.0f HUC12s exceeded 25 T/a, covering %.1f%% of Iowa'
-        ) % (len(df.index), df['geom'].area.sum() / 15.857 * 100.),
+        continentalcolor="#EEEEEE",
+        nologo=True,
+        subtitle=("%.0f HUC12s exceeded 25 T/a, covering %.1f%% of Iowa")
+        % (len(df.index), df["geom"].area.sum() / 15.857 * 100.0),
         nocaption=True,
-        title=('DEP 2014 HUC12 Hillslope Delivery Rates >= 25 T/a'))
+        title=("DEP 2014 HUC12 Hillslope Delivery Rates >= 25 T/a"),
+    )
 
     for _i, row in df.iterrows():
-        poly = row['geom']
+        poly = row["geom"]
         arr = np.asarray(poly.exterior)
         points = mp.ax.projection.transform_points(
-            ccrs.Geodetic(), arr[:, 0], arr[:, 1])
-        p = Polygon(points[:, :2], fc='r', ec='k', zorder=2, lw=0.2)
+            ccrs.Geodetic(), arr[:, 0], arr[:, 1]
+        )
+        p = Polygon(points[:, :2], fc="r", ec="k", zorder=2, lw=0.2)
         mp.ax.add_patch(p)
 
     mp.drawcounties()
-    mp.postprocess(filename='test.png')
+    mp.postprocess(filename="test.png")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv)

@@ -14,15 +14,15 @@ from rasterstats import zonal_stats
 from affine import Affine
 from pyiem.util import get_dbconn
 
-PRECIP_AFF = Affine(0.01, 0., dep_utils.WEST, 0., -0.01, dep_utils.NORTH)
+PRECIP_AFF = Affine(0.01, 0.0, dep_utils.WEST, 0.0, -0.01, dep_utils.NORTH)
 
 
 def find_huc12s():
     """yield a listing of huc12s with output!"""
     res = []
-    for huc8 in os.listdir("/i/%s/wb" % (SCENARIO, )):
+    for huc8 in os.listdir("/i/%s/wb" % (SCENARIO,)):
         for huc12 in os.listdir("/i/%s/wb/%s" % (SCENARIO, huc8)):
-            res.append(huc8+huc12)
+            res.append(huc8 + huc12)
     return res
 
 
@@ -45,7 +45,7 @@ def determine_dates(argv):
         res.append(today - datetime.timedelta(days=1))
     elif len(argv) == 3:
         # Option 2, we are running for an entire year, gulp
-        if argv[2] == 'all':
+        if argv[2] == "all":
             now = datetime.date(2007, 1, 1)
             ets = datetime.date.today()
         else:
@@ -74,23 +74,25 @@ def determine_dates(argv):
 
 def compute_res(df, mydate, _huc12, slopes, qc_precip):
     """Compute things"""
-    allhits = (slopes == len(df.index))
+    allhits = slopes == len(df.index)
     slopes = float(slopes)
-    return dict(date=mydate, huc12=_huc12,
-                min_precip=(df.precip.min() if allhits else 0),
-                avg_precip=(df.precip.sum() / slopes),
-                max_precip=df.precip.max(),
-                min_loss=(df.av_det.min() if allhits else 0),
-                avg_loss=(df.av_det.sum() / slopes),
-                max_loss=df.av_det.max(),
-                min_runoff=(df.runoff.min() if allhits else 0),
-                avg_runoff=(df.runoff.sum() / slopes),
-                max_runoff=df.runoff.max(),
-                min_delivery=(df.delivery.min() if allhits else 0),
-                avg_delivery=(df.delivery.sum() / slopes),
-                max_delivery=df.delivery.max(),
-                qc_precip=qc_precip
-                )
+    return dict(
+        date=mydate,
+        huc12=_huc12,
+        min_precip=(df.precip.min() if allhits else 0),
+        avg_precip=(df.precip.sum() / slopes),
+        max_precip=df.precip.max(),
+        min_loss=(df.av_det.min() if allhits else 0),
+        avg_loss=(df.av_det.sum() / slopes),
+        max_loss=df.av_det.max(),
+        min_runoff=(df.runoff.min() if allhits else 0),
+        avg_runoff=(df.runoff.sum() / slopes),
+        max_runoff=df.runoff.max(),
+        min_delivery=(df.delivery.min() if allhits else 0),
+        avg_delivery=(df.delivery.sum() / slopes),
+        max_delivery=df.delivery.max(),
+        qc_precip=qc_precip,
+    )
 
 
 def load_precip():
@@ -105,11 +107,16 @@ def load_precip():
       dict of [date][huc12]
     """
     # 1. Build GeoPandas DataFrame of HUC12s of interest
-    idep = get_dbconn('idep')
-    huc12df = gpd.GeoDataFrame.from_postgis("""
+    idep = get_dbconn("idep")
+    huc12df = gpd.GeoDataFrame.from_postgis(
+        """
         SELECT huc_12, ST_Transform(simple_geom, 4326) as geo
         from huc12 WHERE scenario = 0
-    """, idep, index_col='huc_12', geom_col='geo')
+    """,
+        idep,
+        index_col="huc_12",
+        geom_col="geo",
+    )
     # 2. Loop over dates
     myres = {}
     for mydate in tqdm(DATES, disable=(not sys.stdout.isatty())):
@@ -123,11 +130,12 @@ def load_precip():
         pcp = np.flipud(np.load(fn))
         # nodata here represents the value that is set to missing within the
         # source dataset!, setting to zero has strange side affects
-        zs = zonal_stats(huc12df['geo'], pcp, affine=PRECIP_AFF, nodata=-1,
-                         all_touched=True)
+        zs = zonal_stats(
+            huc12df["geo"], pcp, affine=PRECIP_AFF, nodata=-1, all_touched=True
+        )
         i = 0
         for _huc12, _ in huc12df.itertuples():
-            myres[mydate][_huc12] = zs[i]['mean']
+            myres[mydate][_huc12] = zs[i]["mean"]
             i += 1
     return myres
 
@@ -135,7 +143,7 @@ def load_precip():
 def do_huc12(_huc12):
     """Process a huc12's worth of WEPP output files"""
     basedir = "/i/%s/wb/%s/%s" % (SCENARIO, _huc12[:8], _huc12[8:])
-    frames = [readfile(_huc12, basedir+"/"+f) for f in os.listdir(basedir)]
+    frames = [readfile(_huc12, basedir + "/" + f) for f in os.listdir(basedir)]
     rows = []
     if len(frames) == 0 or any([f is None for f in frames]):
         return rows
@@ -143,12 +151,13 @@ def do_huc12(_huc12):
     df = pd.concat(frames)
     for mydate in DATES:
         df2 = df[df.date == mydate].mean()
-        rows.append([mydate, _huc12, df2['ep'] + df2['es'] + df2['er'],
-                     df2['runoff']])
+        rows.append(
+            [mydate, _huc12, df2["ep"] + df2["es"] + df2["er"], df2["runoff"]]
+        )
     return rows
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # We are ready to do stuff!
     # We need to keep stuff in the global namespace to keep multiprocessing
     # happy, at least I think that is the reason we do this
@@ -162,17 +171,26 @@ if __name__ == '__main__':
     FPS = {}
     for _date in DATES:
         key = _date.strftime("%Y%m%d")
-        FPS[key] = open("%s_wb.csv" % (_date.strftime("%Y%m%d"),), 'w')
+        FPS[key] = open("%s_wb.csv" % (_date.strftime("%Y%m%d"),), "w")
         FPS[key].write("HUC12,VALID,PRECIP_MM,ET_MM,RUNOFF_MM\n")
     for res in tqdm(
-            POOL.imap_unordered(do_huc12, HUC12S), total=len(HUC12S),
-            disable=(not sys.stdout.isatty())):
+        POOL.imap_unordered(do_huc12, HUC12S),
+        total=len(HUC12S),
+        disable=(not sys.stdout.isatty()),
+    ):
         for (date, huc12, et, runoff) in res:
             if et is None or np.isnan(et):
                 continue
             key = date.strftime("%Y%m%d")
-            FPS[key].write(("%s,%s,%.2f,%.2f,%.2f\n"
-                            ) % (huc12, date.strftime("%Y-%m-%d"),
-                                 PRECIP[date][huc12], et, runoff))
+            FPS[key].write(
+                ("%s,%s,%.2f,%.2f,%.2f\n")
+                % (
+                    huc12,
+                    date.strftime("%Y-%m-%d"),
+                    PRECIP[date][huc12],
+                    et,
+                    runoff,
+                )
+            )
     for key in FPS:
         FPS[key].close()

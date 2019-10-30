@@ -19,18 +19,19 @@ def workflow(filename, year):
     lines = open(filename).readlines()
     # Replace the header information denoting years simulated
     years_simulated = (year - 2007) + 1
-    lines[4] = ("    41.53   -93.65         289          %i        2007"
-                "              %i\n"
-                ) % (years_simulated, years_simulated)
+    lines[4] = (
+        "    41.53   -93.65         289          %i        2007"
+        "              %i\n"
+    ) % (years_simulated, years_simulated)
     data = "".join(lines)
     analog = year - 1 if year % 4 != 0 else year - 4
-    if data.find("1\t1\t%s" % (year, )) > 0:
+    if data.find("1\t1\t%s" % (year,)) > 0:
         print("%s already has %s data" % (filename, year))
         return
-    pos = data.find("1\t1\t%s" % (analog, ))
+    pos = data.find("1\t1\t%s" % (analog,))
     pos2 = data.find("1\t1\t%s" % (analog + 1,))
     content = data[pos:pos2] if pos2 > 0 else data[pos:]
-    out = open("/tmp/%s" % (filename,), 'w')
+    out = open("/tmp/%s" % (filename,), "w")
     # careful here to get the line feeds right
     out.write(data + content.replace(str(analog), str(year)))
     out.close()

@@ -1,24 +1,31 @@
-
 from geopandas import read_postgis
 from pandas.io.sql import read_sql
 from pyiem.util import get_dbconn
 
 years = 8.0
-pgconn = get_dbconn('idep')
+pgconn = get_dbconn("idep")
 
 # Get the initial geometries
-df = read_postgis("""
+df = read_postgis(
+    """
     SELECT huc_12, geom from huc12 WHERE states ~* 'IA' and scenario = 0
-    """, pgconn, index_col='huc_12', crs='EPSG:5070')
+    """,
+    pgconn,
+    index_col="huc_12",
+    crs="EPSG:5070",
+)
 
-titles2 = {0: 'base',
-           7: '4yr',
-           9: '3yr',
-           10: '4yrnt',  # notill
-           11: '3yrnt'}  # notill
+titles2 = {
+    0: "base",
+    7: "4yr",
+    9: "3yr",
+    10: "4yrnt",  # notill
+    11: "3yrnt",
+}  # notill
 
 for scenario in titles2.keys():
-    df2 = read_sql("""
+    df2 = read_sql(
+        """
     SELECT r.huc_12,
     sum(avg_loss) * 4.463 / %s as detach,
     sum(avg_delivery) * 4.463 / %s as delivery,
@@ -28,12 +35,18 @@ for scenario in titles2.keys():
     and r.scenario = %s and h.scenario = 0 and r.valid < '2016-01-01'
     and r.valid > '2008-01-01'
     GROUP by r.huc_12
-    """, pgconn, params=(years, years, years, scenario), index_col='huc_12')
+    """,
+        pgconn,
+        params=(years, years, years, scenario),
+        index_col="huc_12",
+    )
     p = titles2[scenario]
-    newcols = {'detach': 'det%s' % (p,),
-               'delivery': 'del%s' % (p,),
-               'runoff': 'run%s' % (p,)}
+    newcols = {
+        "detach": "det%s" % (p,),
+        "delivery": "del%s" % (p,),
+        "runoff": "run%s" % (p,),
+    }
     for key, val in newcols.iteritems():
         df[val] = df2[key]
 
-df.to_file('ucs_results_161031.shp', driver='ESRI Shapefile')
+df.to_file("ucs_results_161031.shp", driver="ESRI Shapefile")

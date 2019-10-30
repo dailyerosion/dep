@@ -4,8 +4,9 @@ import sys
 
 from pyiem.util import get_dbconn, logger
 from pyiem.dep import load_scenarios
+
 LOG = logger()
-PREFIXES = 'crop env man prj run slp sol wb error ofe yld'.split()
+PREFIXES = "crop env man prj run slp sol wb error ofe yld".split()
 
 
 def do_huc12(scenario, huc12):
@@ -24,20 +25,25 @@ def main(argv):
     scenario = int(argv[1])
     sdf = load_scenarios()
     # Go Main Go
-    pgconn = get_dbconn('idep')
+    pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT distinct huc_12 from flowpaths
         WHERE scenario = %s
-    """, (int(sdf.at[scenario, 'huc12_scenario']),))
+    """,
+        (int(sdf.at[scenario, "huc12_scenario"]),),
+    )
     added = 0
     for row in cursor:
         added += do_huc12(scenario, row[0])
     LOG.info(
         "scenario: %s Added %s directories over %s HUC12s",
-        scenario, added, cursor.rowcount
+        scenario,
+        added,
+        cursor.rowcount,
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv)

@@ -16,7 +16,7 @@ def main():
     # We shall use this file, no mater what
     SRC = "/i/0/cli/095x038/095.17x038.13.cli"
     SCENARIO = 0
-    pgconn = get_dbconn('postgis')
+    pgconn = get_dbconn("postgis")
     cursor = pgconn.cursor()
 
     created = 0
@@ -25,15 +25,18 @@ def main():
         for lat in np.arange(SOUTH, NORTH + 0.25, 0.25):
             fn = get_cli_fname(lon, lat, SCENARIO)
             # Ensure this point is on land, in CONUS
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT ugc from ugcs where
                 ST_Contains(geom, ST_GeomFromText('Point(%s %s)',4326))
                 and substr(ugc, 3, 1) = 'C' and end_ts is null
-            """, (lon, lat))
+            """,
+                (lon, lat),
+            )
             if cursor.rowcount == 0:
                 # print("lon: %s lat: %s is not onland" % (lon, lat))
                 if os.path.isfile(fn):
-                    print("Removing %s" % (fn, ))
+                    print("Removing %s" % (fn,))
                     os.unlink(fn)
                     removed += 1
                 continue
@@ -45,8 +48,9 @@ def main():
                 shutil.copyfile(SRC, fn)
 
     print(
-        "We just created %s new files, removed %s files!" % (created, removed))
+        "We just created %s new files, removed %s files!" % (created, removed)
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

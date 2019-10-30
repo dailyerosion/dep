@@ -8,11 +8,12 @@ import os
 import re
 
 SCENARIO = 11
-CLIFILE = re.compile(("File = \"/i/%s/cli/...x.../...\...x(...\...)\.cli"
-                      ) % (SCENARIO,))
+CLIFILE = re.compile(
+    ('File = "/i/%s/cli/...x.../...\...x(...\...)\.cli') % (SCENARIO,)
+)
 LENGTH = re.compile("Length = (\d+\.\d+)")
 # ROTS = ['CSOA', 'OACS', 'SOAC']
-ROTS = ['CSO', 'OCS', 'SOC']
+ROTS = ["CSO", "OCS", "SOC"]
 
 
 def main():
@@ -29,19 +30,22 @@ def main():
                 l = LENGTH.findall(old)
                 res = CLIFILE.findall(old)
                 lat = float(res[0])
-                region = 'southern'
+                region = "southern"
                 if lat > 42.46:
-                    region = 'northern'
+                    region = "northern"
                 elif lat > 41.6:
-                    region = 'central'
+                    region = "central"
                 # using the legacy crops, not region specific
-                rotfn = "IDEP2/UCS/%s_%s.rot" % ("oldcrop2",
-                                                 ROTS[i % len(ROTS)])
+                rotfn = "IDEP2/UCS/%s_%s.rot" % (
+                    "oldcrop2",
+                    ROTS[i % len(ROTS)],
+                )
                 pos1 = old.find("Management {")
                 pos2 = old.find("RunOptions {")
-                o = open(newfn, 'w')
+                o = open(newfn, "w")
                 o.write(old[:pos1])
-                o.write("""Management {
+                o.write(
+                    """Management {
    Breaks = 0
     %s {
         Distance = %s
@@ -49,12 +53,15 @@ def main():
     }
 
 }
-""" % (rotfn, l[0], rotfn))
+"""
+                    % (rotfn, l[0], rotfn)
+                )
                 o.write(old[pos2:])
                 o.close()
                 i += 1
             os.chdir("..")
         os.chdir("..")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -12,9 +12,10 @@ def main(argv):
     """Do What We Wanted"""
     scenario = int(argv[1])
     print("This report covers the inclusive years 2008-2018")
-    pgconn = get_dbconn('idep')
+    pgconn = get_dbconn("idep")
 
-    df = read_sql("""
+    df = read_sql(
+        """
         WITH iahuc12 as (
             SELECT huc_12 from huc12 where states = 'IA' and scenario = 0
         ), agg as (
@@ -32,28 +33,40 @@ def main(argv):
         round((avg(delivery) * 4.463)::numeric, 2) as delivery_ta,
         round((avg(detachment) * 4.463)::numeric, 2) as detachment_ta
         from agg GROUP by yr ORDER by yr
-    """, pgconn, params=(scenario, ), index_col='yr')
+    """,
+        pgconn,
+        params=(scenario,),
+        index_col="yr",
+    )
 
     print(df)
     print(df.mean())
 
     (fig, ax) = plt.subplots(1, 1)
-    ax.bar(df.index.values, df['detachment_ta'].values)
+    ax.bar(df.index.values, df["detachment_ta"].values)
     for year, row in df.iterrows():
-        ax.text(year, row['detachment_ta'] + 0.2,
-                "%.1f" % (row['detachment_ta'], ), ha='center')
-    ax.axhline(df['detachment_ta'].mean(), label='mean', zorder=5,
-               color='k', lw=1.5)
-    ax.legend(loc='best')
+        ax.text(
+            year,
+            row["detachment_ta"] + 0.2,
+            "%.1f" % (row["detachment_ta"],),
+            ha="center",
+        )
+    ax.axhline(
+        df["detachment_ta"].mean(), label="mean", zorder=5, color="k", lw=1.5
+    )
+    ax.legend(loc="best")
     ax.grid(True)
     ax.set_xlim(df.index.values[0] - 0.5, df.index.values[-1] + 0.5)
     ax.set_ylabel("Yearly Detatchment [tons/acre]")
     ax.set_title("Daily Erosion Project Iowa's Yearly Detachment")
-    fig.text(0.01, 0.01,
-             ("Plot generated %s"
-              ) % (datetime.datetime.now().strftime("%d %B %Y"),))
-    fig.savefig('test.png')
+    fig.text(
+        0.01,
+        0.01,
+        ("Plot generated %s")
+        % (datetime.datetime.now().strftime("%d %B %Y"),),
+    )
+    fig.savefig("test.png")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv)
