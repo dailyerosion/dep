@@ -104,6 +104,7 @@ def compute_res(df, date, slopes, qc_precip):
     # so the average precip here is more accurate than before.
     return dict(
         date=date,
+        count=len(df.index),
         min_precip=(df.precip.min() if allhits else 0),
         avg_precip=(df.precip.sum() / slopes),
         max_precip=df.precip.max(),
@@ -218,14 +219,9 @@ def save_results(icursor, scenario, huc12, df, dates):
     inserts = 0
     skipped = len(dates) - len(df.index)
     for _, row in df.iterrows():
-        # We don't care about the output when the follow conditions
-        # are not meet
-        if (
-            row.qc_precip < 0.254
-            and row.avg_loss < 0.01
-            and row.avg_delivery < 0.01
-            and row.avg_runoff < 1
-        ):
+        # test both sides of the coin to see that we can indeed skip dumping
+        # this date to the databse.
+        if row["qc_precip"] < 0.254 and row["count"] == 0:
             skipped += 1
             continue
         inserts += 1
@@ -248,19 +244,19 @@ def save_results(icursor, scenario, huc12, df, dates):
                 huc12,
                 row["date"],
                 scenario,
-                row.min_precip,
-                row.avg_precip,
-                row.max_precip,
-                row.min_loss,
-                row.avg_loss,
-                row.max_loss,
-                row.min_runoff,
-                row.avg_runoff,
-                row.max_runoff,
-                row.min_delivery,
-                row.avg_delivery,
-                row.max_delivery,
-                row.qc_precip,
+                row["min_precip"],
+                row["avg_precip"],
+                row["max_precip"],
+                row["min_loss"],
+                row["avg_loss"],
+                row["max_loss"],
+                row["min_runoff"],
+                row["avg_runoff"],
+                row["max_runoff"],
+                row["min_delivery"],
+                row["avg_delivery"],
+                row["max_delivery"],
+                row["qc_precip"],
             ),
         )
     return inserts, skipped
