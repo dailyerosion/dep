@@ -185,10 +185,17 @@ def load_lengths(scenario):
 
 def delete_previous_entries(icursor, scenario, huc12, dates):
     """Remove whatever previous data we have for this huc12 and dates"""
-    icursor.execute("""
-        DELETE from results_by_huc12 WHERE
-        valid in %s and scenario = %s and huc_12 = %s
-    """, (tuple(dates), scenario, huc12))
+    if len(dates) > 366:
+        # Means we are running for 'all'
+        icursor.execute("""
+            DELETE from results_by_huc12 WHERE
+            scenario = %s and huc_12 = %s
+        """, (scenario, huc12))
+    else:
+        icursor.execute("""
+            DELETE from results_by_huc12 WHERE
+            valid in %s and scenario = %s and huc_12 = %s
+        """, (tuple(dates), scenario, huc12))
     return icursor.rowcount
 
 

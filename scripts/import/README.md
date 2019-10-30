@@ -16,7 +16,7 @@ is one file per HUC12.
 1. Copy laptop database tables `huc12`, `flowpaths` and `flowpath_points` to IEMDB
 1. copy `myhucs.txt` up to IEM and run `python clear_files.py`
 1. extract the `dep.tar` file on IEM
-1. On IEM run `cligen/locate_clifile.py`
+1. On IEM run `cligen/locate_clifile.py <scenario>`
 1. On IEM run `util/make_dirs.py <scenario>`
 
 This query finds any new HUC12s and inserts the geometry into a table.

@@ -209,8 +209,8 @@ def do_flowpath(scenario, zone, metadata):
     if maxslope > MAX_SLOPE_RATIO:
         s = compute_slope(metadata['fid'])
         LOG.info(
-            "Error max-slope>0.3 %s[%3i] max:%4.1f len:%5.1f bulk:%5.1f",
-            metadata['huc_12'], metadata['fpath'], maxslope,
+            "Error max-slope>%s %s[%3i] max:%4.1f len:%5.1f bulk:%5.1f",
+            MAX_SLOPE_RATIO, metadata['huc_12'], metadata['fpath'], maxslope,
             rows[-1]['length'], s)
         delete_flowpath(metadata['fid'])
         return None
