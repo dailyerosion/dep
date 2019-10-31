@@ -1,6 +1,18 @@
 Daily Erosion Project Meeting Notes
 ===================================
 
+31 Oct 2019 :: Illinois Erosion Group Meeting
+-----
+
+- Their project is geared toward interactive querying by stakeholders.
+- Hydrological applications are at least 30m scale and smaller.
+- Unsure how they are going to use LIDAR at a coarser resolution.
+- MIKE-SHE + MIKE 11 hydrological model, it is proprietary, so can't use.
+- ET: Kristen + Jensen?
+- Example Sangamon River HUC10 in IL, 300m grid cell, used WEPP.
+- They have CTIC HUC10 tillage for 2017 and 2018?
+- CSLE, like RUSLE, Chineese Soil Loss Equation.
+
 25 Oct 2019 :: Iowa Results Discussion
 -----
 
