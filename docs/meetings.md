@@ -13,6 +13,11 @@ Daily Erosion Project Meeting Notes
 - They have CTIC HUC10 tillage for 2017 and 2018?
 - CSLE, like RUSLE, Chineese Soil Loss Equation.
 
+30 Oct 2019 :: Discuss Iowa Results some more
+
+- [x] engage Brian about management codes of 0
+- [x] investigate flowpath length changes
+
 25 Oct 2019 :: Iowa Results Discussion
 -----
 
@@ -23,7 +28,7 @@ will wait for new flowpath stuff to settle down.
 - [x] email James to start generation of FY2019 soils data.
 - [x] email Gelder to update JSON field attributes names to be explicit.
 - Gonna move to the 2018 CDL.
-- [ ] I have a presentation to make on the 31rst.
+- [x] I have a presentation to make on the 31rst.
 
 03 Oct 2019 :: MN Wind Erosion
 -----

@@ -363,26 +363,6 @@ def load_precip():
         if os.path.isfile(fn):
             quorum -= 1
             fns.append(fn)
-            # img = Image.open(fn)
-            # --------------------------------------------------
-            # OK, once and for all, 0,0 is the upper left!
-            # units are 0.1mm
-            # imgdata = np.array(img)
-            # sample out and then flip top to bottom!
-            # data = np.flipud(imgdata[top:bottom, left:right])
-            # print now, data[myy, myx]
-            # print np.shape(imgdata), bottom, top, left, right
-            # print now, imgdata[sampley, samplex]
-            # if imgdata[sampley, samplex] > 0:
-            #    import matplotlib.pyplot as plt
-            #    (fig, ax) = plt.subplots(2,1)
-            #    ax[0].imshow(imgdata[0:3000, :])
-            #    ax[1].imshow(data)
-            #    fig.savefig('test.png')
-            #    sys.exit()
-            # Turn 255 (missing) into zeros
-            # PRECIP[:, :, tidx] = np.where(data < 255, data / a2m_divisor, 0)
-
         else:
             fns.append(None)
             print("daily_clifile_editor missing: %s" % (fn,))

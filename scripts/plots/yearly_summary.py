@@ -124,7 +124,6 @@ for i, row in df.iterrows():
     p = Polygon(points[:, :2], fc=c, ec="k", zorder=2, lw=0.1)
     m.ax.add_patch(p)
 
-# print len(patches)
 # m.ax.add_collection(PatchCollection(patches, match_original=True))
 m.drawcounties()
 m.drawcities()

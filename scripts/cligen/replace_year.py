@@ -6,12 +6,13 @@ import os
 
 
 def do(fn):
+    """Do."""
     data = open(fn).read()
     pos1 = data.find("\n1\t1\t2015")
     pos2 = data.find("\n1\t1\t2016")
     pos3 = data.find("\n1\t1\t2017")
 
-    newfp = open("new%s" % (fn,), 'w')
+    newfp = open("new%s" % (fn,), "w")
     # everything up till 1 Jan 2017
     newfp.write(data[:pos3])
     # Then repeat 2015 data, with 2015 replaced
@@ -19,16 +20,19 @@ def do(fn):
     newfp.close()
 
     data = open("new%s" % (fn,)).read()
-    print fn, data.find("31\t12\t2017")
+    print("%s %s" % (fn, data.find("31\t12\t2017")))
     os.rename("new%s" % (fn,), fn)
 
 
 def main():
+    """Go main."""
     os.chdir("i/0/cli")
     for zone in glob.glob("*"):
         os.chdir(zone)
         for fn in glob.glob("*.cli"):
             do(fn)
         os.chdir("..")
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     main()

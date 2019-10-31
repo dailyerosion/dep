@@ -1,3 +1,4 @@
+"""Sequential Replacement."""
 import sys
 
 import numpy as np
@@ -62,7 +63,6 @@ def main():
 
     df = s0.join(s7)
     df.sort_values(by=varname + "_s0", ascending=False, inplace=True)
-    # print df.head(5)
 
     d0 = np.copy(df[varname + "_s0"].values)
     dbaseline = np.copy(df[varname + "_s0"].values)
@@ -73,7 +73,7 @@ def main():
     y = []
     scenario_y = []
     baseline_y = []
-    key = sz / 4
+    # key = sz / 4
     minval = [0, 1000.0]
     for i in range(0, sz):
         d0[i] = d7[i]
@@ -83,10 +83,6 @@ def main():
         y.append(thisy)
         if thisy < minval[1]:
             minval = [i, thisy]
-        # if i == key:
-        #    print '25%', y[0], y[i], (y[0] - y[i]) / y[0] * 100.
-
-    # print minval[0] / float(sz) * 100., (y[0] - minval[1]) / y[0] * 100.
 
     (fig, ax) = plt.subplots(1, 1)
 

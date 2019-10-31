@@ -1,7 +1,8 @@
+import sys
+
 from pyiem.plot import MapPlot
 from pyiem.util import get_dbconn
 from shapely.wkb import loads
-import sys
 import numpy as np
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
@@ -57,7 +58,6 @@ norm = mpcolors.BoundaryNorm(bins, cmap.N)
 patches = []
 
 for row in cursor:
-    # print "%s,%s" % (row[2], row[1])
     polygon = loads(row[0].decode("hex"))
     a = np.asarray(polygon.exterior)
     x, y = m.map(a[:, 0], a[:, 1])

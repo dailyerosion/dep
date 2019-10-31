@@ -59,7 +59,6 @@ def main():
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
 
     for row in cursor:
-        # print "%s,%s" % (row[2], row[1])
         polygon = loads(row[0].decode("hex"))
         arr = np.asarray(polygon.exterior)
         points = mp.ax.projection.transform_points(

@@ -1,21 +1,21 @@
-'''
+"""
 Adjust IDEPv1 climate files to match our reality
-'''
+"""
 import glob
 import os
 import sys
 
 SCENARIO = sys.argv[1]
 
-os.chdir('/i/%s/cli/' % (SCENARIO,))
+os.chdir("/i/%s/cli/" % (SCENARIO,))
 for d in glob.glob("*"):
     os.chdir(d)
     for fn in glob.glob("*.cli"):
-        print 'Modify: %s' % (fn,)
+        print("Modify: %s" % (fn,))
         data = open(fn).readlines()
         if data[4].find(" 1997 ") == 0:
             continue
-        o = open(fn, 'w')
+        o = open(fn, "w")
         newdata = False
         for i, line in enumerate(data):
             if i == 4:

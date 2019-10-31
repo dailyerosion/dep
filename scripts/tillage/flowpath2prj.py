@@ -67,7 +67,6 @@ def simplify(rows):
             and row["lstring"] == lrow["lstring"]
         ):
             continue
-        # print 'Add row %s' % (i,)
         # Recompute slope
         dy = lrow["elevation"] - row["elevation"]
         dx = row["length"] - lrow["length"]
