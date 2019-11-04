@@ -310,6 +310,9 @@ def do_huc12(arg):
         return huc12, None, None, None
     # Push all dataframes into one
     df = pd.concat(frames)
+    if df.empty:
+        print("FAIL huc12: %s resulted in empty data frame" % (huc12,))
+        return huc12, None, None, None
     df.fillna(0, inplace=True)
     hillslopes = len(frames)
     rows = []
