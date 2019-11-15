@@ -59,12 +59,12 @@ def simplify(rows):
     newrows.append(lrow)
     for i, row in enumerate(rows):
         # If they are the 'same', continue
-        if row["lstring"] == "UUUUUUUUUU":
+        if row["landuse"] == "UUUUUUUUUU":
             continue
         if (
             row["management"] == lrow["management"]
             and row["surgo"] == lrow["surgo"]
-            and row["lstring"] == lrow["lstring"]
+            and row["landuse"] == lrow["landuse"]
         ):
             continue
         # Recompute slope
@@ -111,7 +111,7 @@ def simplify(rows):
         for row in rows:
             print(
                 (
-                    "%(segid)s %(length)s %(elevation)s %(lstring)s "
+                    "%(segid)s %(length)s %(elevation)s %(landuse)s "
                     "%(surgo)s %(management)s %(slope)s"
                 )
                 % row
@@ -121,7 +121,7 @@ def simplify(rows):
         for row in newrows:
             print(
                 (
-                    "%(segid)s %(length)s %(elevation)s %(lstring)s "
+                    "%(segid)s %(length)s %(elevation)s %(landuse)s "
                     "%(surgo)s %(management)s %(slope)s"
                 )
                 % row
@@ -150,10 +150,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
     # I need bad soilfiles so that the length can be computed
     cursor2.execute(
         """SELECT segid, elevation, length, f.surgo,
-    slope, management, 'MWDEP_'||surgo||'.SOL' as soilfile,
-    lu2007 || lu2008 || lu2009 ||
-    lu2010 || lu2011 || lu2012 || lu2013 || lu2014 || lu2015 ||
-    lu2016 || lu2017 || lu2018 || lu2019 as lstring,
+    slope, management, 'MWDEP_'||surgo||'.SOL' as soilfile, landuse,
     round(ST_X(ST_Transform(geom,4326))::numeric,2) as x,
     round(ST_Y(ST_Transform(geom,4326))::numeric,2) as y from
     flowpath_points f
@@ -295,13 +292,13 @@ def do_flowpath(zone, huc_12, fid, fpath):
     manlengths = []
 
     for row in rows:
-        if row["lstring"] is None:
+        if row["landuse"] is None:
             continue
-        if prevman is None or prevman != row["lstring"]:
+        if prevman is None or prevman != row["landuse"]:
             if prevman is not None:
                 mans.append(get_rotation(prevman))
                 manlengths.append(row["length"] - lmanstart)
-            prevman = row["lstring"]
+            prevman = row["landuse"]
             lmanstart = row["length"]
 
     if prevman is None:

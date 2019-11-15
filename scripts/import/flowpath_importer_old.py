@@ -28,11 +28,10 @@ PGCONN = get_dbconn("idep")
 INSERT_SQL = """
     INSERT into flowpath_points(flowpath, segid,
     elevation, length,  surgo, management, slope, geom,
-    lu2007, lu2008, lu2009, lu2010, lu2011, lu2012, lu2013,
-    lu2014, lu2015, lu2016, lu2017, lu2018, lu2019, scenario, gridorder)
+    landuse, scenario, gridorder)
     values(%s, %s, %s, %s, %s, %s, %s,
     ST_Transform(ST_Geomfromewkt('SRID=5070;POINT(%s %s)'), 5070),
-    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    %s, %s, %s)
 """
 
 
@@ -174,6 +173,7 @@ def process(cursor, filename, huc12df):
             # 2009 2011[1]
             # 2018 2016[6]
             # 2019 2017[7]
+            full_lu = "%s%s%s%s%s%s" % (lu[1], lu[0], lu[1], lu, lu[6], lu[7])
             args = (
                 fid,
                 segid,
@@ -184,19 +184,7 @@ def process(cursor, filename, huc12df):
                 slope,
                 row["POINT_X"],
                 row["POINT_Y"],
-                lu[1],
-                lu[0],
-                lu[1],
-                lu[0],
-                lu[1],
-                lu[2],
-                lu[3],
-                lu[4],
-                lu[5],
-                lu[6],
-                lu[7],
-                lu[6],
-                lu[7],
+                full_lu,
                 SCENARIO,
                 gridorder,
             )
