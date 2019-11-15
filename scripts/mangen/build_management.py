@@ -277,9 +277,7 @@ def main(argv):
             SELECT ST_ymax(ST_Transform(geom, 4326)) as lat, fid
             from flowpaths WHERE scenario = %s)
 
-        SELECT np.lat,
-        lu2007 || lu2008 || lu2009 || lu2010 || lu2011 || lu2012 || lu2013
-        || lu2014 || lu2015 || lu2016 || lu2017 || lu2018 || lu2019
+        SELECT np.lat, landuse
         from flowpath_points p, np WHERE p.flowpath = np.fid
         and p.scenario = %s
     """,

@@ -46,8 +46,8 @@ def main(argv):
             INSERT into flowpath_points
             SELECT %s, segid, elevation, length, surgo, management, slope,
             lu2007, lu2008, lu2009, lu2010, lu2011, lu2012, geom, %s,
-            lu2013, lu2014, lu2015, lu2016, lu2017, gridorder, lu2018,
-            lu2019 from flowpath_points where scenario = 0 and flowpath = %s
+            gridorder, landuse, management
+            from flowpath_points where scenario = 0 and flowpath = %s
         """,
             (newfid, scenario, fid),
         )

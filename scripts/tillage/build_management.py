@@ -212,8 +212,7 @@ def main():
     cursor.execute(
         """
     SELECT distinct
-        lu2007 || lu2008 || lu2009 || lu2010 || lu2011 || lu2012 || lu2013
-        || lu2014 || lu2015 || lu2016 || lu2017 || lu2018 || lu2019
+        landuse
         from flowpath_points p JOIN flowpaths f on (p.flowpath = f.fid) WHERE
         f.scenario = 0 and huc_12 in
         ('070801050305', '070801070707', '102802010108', '102300020406')
