@@ -1,6 +1,18 @@
 Daily Erosion Project Meeting Notes
 ===================================
 
+14 Nov 2019 :: DEP Planning
+-----
+
+- IL is more doable than before and perhaps we can get one county spun up?
+- The missing data for IL is residue management info.
+- Gelder will have updated IA/MN data for me shortly.
+- [ ] Email Gelder about the number of `P` codes found in rotation strings.
+- [ ] create a histogram of yearly results to show our data spread.
+- [ ] ping Dr Wang on how the tillage timing is going.
+- May have interest from a local grad student in doing her third chapter on DEP
+- Upcoming presentation for Climate Sustainable Ag.
+
 31 Oct 2019 :: Illinois Erosion Group Meeting
 -----
 

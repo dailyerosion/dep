@@ -154,6 +154,7 @@ def process(cursor, filename, huc12df):
                 slope = 0
             else:
                 slope = dy / dx
+
             lu = row["CropRotatn_CY_2017"].strip()
             # Don't allow points without a rotation
             if lu == "":
@@ -223,10 +224,13 @@ def main():
         # Change the working directory to where we have data files
         os.chdir("../../data/%s" % (sys.argv[2],))
         # collect up the GeoJSONs in that directory
-        fns = glob.glob("smpl3m*.json")
+        fns = glob.glob("smpl3m_*.json")
+        fns.sort()
         i = 0
 
-        for fn in tqdm(fns):
+        progress = tqdm(fns)
+        for fn in progress:
+            progress.set_description(fn)
             # Save our work every 100 HUC12s,
             # so to keep the database transaction
             # at a reasonable size
