@@ -121,12 +121,13 @@ SOYBEAN = {
 }
 
 
-def read_file(scenario, zone, code, cfactor, year):
+def read_file(scenario, zone, prevcode, code, cfactor, year):
     """Read a block file and do replacements
 
     Args:
       scenario (int): The DEP scenario
       zone (str): The DEP cropping zone
+      prevcode (str): the previous crop code
       code (str): the crop code
       cfactor (int): the c-factor for tillage
       year (int): the year of this crop
@@ -138,6 +139,12 @@ def read_file(scenario, zone, code, cfactor, year):
     if not os.path.isfile(fn):
         return ""
     data = open(fn, "r").read()
+    # Special consideration for planting alfalfa
+    if code == "P" and prevcode != "P":
+        # Best we can do now is plant it on Apr 15, sigh
+        data = (
+            "4  15 %s  1 Plant-Perennial CropDef.ALFALFA  {0.000000}\n%s"
+        ) % (year, data)
     pdate = ""
     pdatem5 = ""
     pdatem10 = ""
@@ -175,7 +182,7 @@ def do_rotation(scenario, zone, code, cfactor):
     Args:
       scenario (int): The DEP scenario
       zone (str): The DEP cropping zone
-      code (str): the management code string used to identify crops
+      code (char): the management code string used to identify crops
       cfactor (int): the c-factor at play here
 
     Returns:
@@ -201,19 +208,21 @@ def do_rotation(scenario, zone, code, cfactor):
     data["code"] = code
     data["name"] = "%s-%s" % (code, cfactor)
     data["initcond"] = INITIAL_COND.get(code[0], INITIAL_COND_DEFAULT)
-    data["year1"] = read_file(scenario, zone, code[0], cfactor, 1)  # 2007
-    data["year2"] = read_file(scenario, zone, code[1], cfactor, 2)  # 2008
-    data["year3"] = read_file(scenario, zone, code[2], cfactor, 3)  # 2009
-    data["year4"] = read_file(scenario, zone, code[3], cfactor, 4)  # 2010
-    data["year5"] = read_file(scenario, zone, code[4], cfactor, 5)  # 2011
-    data["year6"] = read_file(scenario, zone, code[5], cfactor, 6)  # 2012
-    data["year7"] = read_file(scenario, zone, code[6], cfactor, 7)  # 2013
-    data["year8"] = read_file(scenario, zone, code[7], cfactor, 8)  # 2014
-    data["year9"] = read_file(scenario, zone, code[8], cfactor, 9)  # 2015
-    data["year10"] = read_file(scenario, zone, code[9], cfactor, 10)  # 2016
-    data["year11"] = read_file(scenario, zone, code[10], cfactor, 11)  # 2017
-    data["year12"] = read_file(scenario, zone, code[11], cfactor, 12)  # 2018
-    data["year13"] = read_file(scenario, zone, code[12], cfactor, 13)  # 2019
+    prevcode = "C" if code[0] not in INITIAL_COND else code[0]
+    # 2007
+    data["year1"] = read_file(scenario, zone, prevcode, code[0], cfactor, 1)
+    data["year2"] = read_file(scenario, zone, code[0], code[1], cfactor, 2)
+    data["year3"] = read_file(scenario, zone, code[1], code[2], cfactor, 3)
+    data["year4"] = read_file(scenario, zone, code[2], code[3], cfactor, 4)
+    data["year5"] = read_file(scenario, zone, code[3], code[4], cfactor, 5)
+    data["year6"] = read_file(scenario, zone, code[4], code[5], cfactor, 6)
+    data["year7"] = read_file(scenario, zone, code[5], code[6], cfactor, 7)
+    data["year8"] = read_file(scenario, zone, code[6], code[7], cfactor, 8)
+    data["year9"] = read_file(scenario, zone, code[7], code[8], cfactor, 9)
+    data["year10"] = read_file(scenario, zone, code[8], code[9], cfactor, 10)
+    data["year11"] = read_file(scenario, zone, code[9], code[10], cfactor, 11)
+    data["year12"] = read_file(scenario, zone, code[10], code[11], cfactor, 12)
+    data["year13"] = read_file(scenario, zone, code[11], code[12], cfactor, 13)
 
     with open(fn, "w") as fh:
         fh.write(
