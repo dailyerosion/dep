@@ -6,7 +6,6 @@ is one file per HUC12.
 
 1. `python flowpath_importer.py <scenario> <dirname in ../../data/>`
 1. `python clear_files.py <scenario>`
-1. go to ../mangen and run `python build_management.py <scenario>`
 1. go to ../util and run `python make_dirs.py <scenario>`
 1. cd to ../import and run `python flowpath2prj.py <scenario>`
 1. `python prj2wepp.py <scenario>`

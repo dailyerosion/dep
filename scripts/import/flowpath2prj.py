@@ -1,9 +1,41 @@
-"""Generate the WEPP prj files based on what our database has for us"""
+"""Generate the WEPP prj files based on what our database has for us.
+
+Here's a listing of project landuse codes used
+
+                     No-till (1)   (2-5)
+  B - Soy               B1          B25    IniCropDef.Default
+  F - forest            F1          F25    IniCropDef.Tre_2239
+  G - Sorghum
+  P - Pasture           P1          P25    IniCropDef.gra_3425
+  C - Corn              C1          C25    IniCropDef.Default
+  R - Other crops       R1          R25    IniCropDef.Aft_12889
+  T - Water (could have flooded out for one year, wetlands)
+  U - Developed
+  X - Unclassified
+  I - Idle
+  L - Double Crop  (started previous year)
+  W - Wheat
+  N - Small Grain
+  E - Sugarbeets
+  J - Rice
+  N - Cotton
+  a - Nuts
+  d - Fruit
+  g - Small Grains
+  m - Legumes
+  o - Oilseed
+  p - Grapes
+  q - Orchards
+  v - Vegetables
+
+
+"""
 from __future__ import print_function
 import copy
 import sys
 import os
 import datetime
+from functools import partial
 from math import atan2, degrees, pi
 
 import psycopg2.extras
@@ -24,17 +56,198 @@ cursor.execute("SELECT surgo, soilfile from xref_surgo")
 for _row in cursor:
     surgo2file[_row[0]] = _row[1]
 
+# Note that the default used below is
+INITIAL_COND_DEFAULT = "IniCropDef.Default"
+INITIAL_COND = {
+    "F": "IniCropDef.Tre_2239",
+    "P": "IniCropDef.gra_3425",
+    "R": "IniCropDef.Aft_12889",
+}
+WHEAT_PLANT = {
+    "KS_SOUTH": datetime.date(2000, 5, 25),
+    "KS_CENTRAL": datetime.date(2000, 5, 25),
+    "KS_NORTH": datetime.date(2000, 5, 25),
+    "IA_SOUTH": datetime.date(2000, 5, 12),
+    "IA_CENTRAL": datetime.date(2000, 5, 17),
+    "IA_NORTH": datetime.date(2000, 5, 23),
+}
 
-def get_rotation(scenario, zone, code, maxmanagement):
-    """ Convert complex things into a simple WEPP management for now """
-    rotfn = "%s/%s/%s/%s/%s-%s.rot" % (
-        "IDEP2" if scenario == 0 else "SCEN%s" % (scenario,),
-        zone,
-        code[:2],
-        code[2:4],
-        code,
-        "1" if maxmanagement == 1 else "25",
+SOYBEAN_PLANT = {
+    "KS_SOUTH": datetime.date(2000, 5, 25),
+    "KS_CENTRAL": datetime.date(2000, 5, 25),
+    "KS_NORTH": datetime.date(2000, 5, 25),
+    "IA_SOUTH": datetime.date(2000, 5, 12),
+    "IA_CENTRAL": datetime.date(2000, 5, 17),
+    "IA_NORTH": datetime.date(2000, 5, 23),
+}
+CORN_PLANT = {
+    "KS_SOUTH": datetime.date(2000, 4, 20),
+    "KS_CENTRAL": datetime.date(2000, 4, 25),
+    "KS_NORTH": datetime.date(2000, 4, 30),
+    "IA_SOUTH": datetime.date(2000, 4, 30),
+    "IA_CENTRAL": datetime.date(2000, 5, 5),
+    "IA_NORTH": datetime.date(2000, 5, 10),
+}
+CORN = {
+    "KS_SOUTH": "CropDef.Cor_0964",
+    "KS_CENTRAL": "CropDef.Cor_0964",
+    "KS_NORTH": "CropDef.Cor_0964",
+    "IA_SOUTH": "CropDef.Cor_0965",
+    "IA_CENTRAL": "CropDef.Cor_0966",
+    "IA_NORTH": "CropDef.Cor_0967",
+}
+SOYBEAN = {
+    "KS_SOUTH": "CropDef.Soy_2191",
+    "KS_CENTRAL": "CropDef.Soy_2191",
+    "KS_NORTH": "CropDef.Soy_2191",
+    "IA_SOUTH": "CropDef.Soy_2192",
+    "IA_CENTRAL": "CropDef.Soy_2193",
+    "IA_NORTH": "CropDef.Soy_2194",
+}
+
+
+def read_file(scenario, zone, prevcode, code, cfactor, year):
+    """Read a block file and do replacements
+
+    Args:
+      scenario (int): The DEP scenario
+      zone (str): The DEP cropping zone
+      prevcode (str): the previous crop code
+      code (str): the crop code
+      cfactor (int): the c-factor for tillage
+      year (int): the year of this crop
+
+    Returns:
+      str with the raw data used for the .rot file
+    """
+    cfactor = 25 if cfactor != 1 else 1
+    blockfn = "blocks/%s%s.txt" % (code, cfactor)
+    if not os.path.isfile(blockfn):
+        # LOG.debug("Missing %s", blockfn)
+        return ""
+    data = open(blockfn, "r").read()
+    # Special consideration for planting alfalfa
+    if code == "P" and prevcode != "P":
+        # Best we can do now is plant it on Apr 15, sigh
+        data = (
+            "4  15 %s  1 Plant-Perennial CropDef.ALFALFA  {0.000000}\n%s"
+        ) % (year, data)
+    pdate = ""
+    pdatem5 = ""
+    pdatem10 = ""
+    plant = ""
+    # We currently only have zone specific files for Corn and Soybean
+    if code == "C":
+        date = CORN_PLANT.get(scenario, CORN_PLANT[zone])
+        pdate = date.strftime("%m    %d")
+        pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
+        pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
+        plant = CORN[zone]
+    elif code == "B":
+        date = SOYBEAN_PLANT.get(scenario, SOYBEAN_PLANT[zone])
+        pdate = date.strftime("%m    %d")
+        pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
+        pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
+        plant = SOYBEAN[zone]
+    elif code == "W":
+        date = WHEAT_PLANT[zone]
+        pdate = date.strftime("%m    %d")
+        pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
+        pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
+    return data % {
+        "yr": year,
+        "pdate": pdate,
+        "pdatem5": pdatem5,
+        "pdatem10": pdatem10,
+        "plant": plant,
+    }
+
+
+def do_rotation(scenario, zone, rotfn, landuse, management):
+    """Create the rotation file.
+
+    Args:
+      scenario (int): The DEP scenario
+      zone (str): The DEP cropping zone
+      rotfn (str): The rotation file to generate.
+      landuse (str): the landuse rotation string.
+      management (str): the management rotation string.
+
+    Returns:
+      None
+    """
+    # Dictionary of values used to fill out the file template below
+    data = {}
+    data["date"] = datetime.datetime.now()
+    data["name"] = "%s-%s" % (landuse, management)
+    data["initcond"] = INITIAL_COND.get(landuse[0], INITIAL_COND_DEFAULT)
+    prevcode = "C" if landuse[0] not in INITIAL_COND else landuse[0]
+    f = partial(read_file, scenario, zone)
+    # 2007
+    data["year1"] = f(prevcode, landuse[0], int(management[0]), 1)
+    for i in range(1, 13):
+        data["year%s" % (i + 1,)] = f(
+            landuse[i - 1], landuse[i], int(management[i]), i + 1
+        )
+
+    with open(rotfn, "w") as fh:
+        fh.write(
+            """#
+# WEPP rotation saved on: %(date)s
+#
+# Created with scripts/import/flowpath2prj.py
+#
+Version = 98.7
+Name = %(name)s
+Description {
+}
+Color = 0 255 0
+LandUse = 1
+InitialConditions = %(initcond)s
+
+Operations {
+%(year1)s
+%(year2)s
+%(year3)s
+%(year4)s
+%(year5)s
+%(year6)s
+%(year7)s
+%(year8)s
+%(year9)s
+%(year10)s
+%(year11)s
+%(year12)s
+%(year13)s
+}
+"""
+            % data
+        )
+    return True
+
+
+def rotation_magic(scenario, zone, seqnum, row, metadata):
+    """Rotation Magic happens here.
+
+    Generates the needed prj2wepp rotation file and then returns the name of
+    that file.
+
+    Args:
+      scenario (int): The DEP scenario we are on.
+      zone (str): the cropping zone we are in.
+      seqnum (int): the sequential number of this .rot file we generate
+      row (dict): the database info for this row.
+    """
+    rotfn = "/i/%s/rot/%s/%s/%s_%s_%s.rot" % (
+        scenario,
+        metadata["huc_12"][:8],
+        metadata["huc_12"][8:],
+        metadata["huc_12"],
+        metadata["fpath"],
+        seqnum,
     )
+    # Oh my cats, we are about to create the .rot file here
+    do_rotation(scenario, zone, rotfn, row["landuse"], row["management"])
     return rotfn
 
 
@@ -106,8 +319,6 @@ def simplify(rows):
         newrows = copy.deepcopy(newrows2)
         threshold += 0.01
 
-    # TODO: recompute the slopes
-
     if len(newrows) > 19:
         print("Length of old: %s" % (len(rows),))
         for row in rows:
@@ -149,18 +360,8 @@ def compute_slope(fid):
 
 def delete_flowpath(fid):
     """ remove this flowpath as its invalid """
-    cursor3.execute(
-        """
-        DELETE from flowpath_points where flowpath = %s
-    """,
-        (fid,),
-    )
-    cursor3.execute(
-        """
-        DELETE from flowpaths where fid = %s
-    """,
-        (fid,),
-    )
+    cursor3.execute("DELETE from flowpath_points where flowpath = %s", (fid,))
+    cursor3.execute("DELETE from flowpaths where fid = %s", (fid,))
     if cursor3.rowcount != 1:
         print("Whoa, delete_flowpath failed for %s" % (fid,))
 
@@ -183,8 +384,6 @@ def do_flowpath(scenario, zone, metadata):
     )
     rows = []
     x = None
-    # y = None
-    maxmanagement = 0
     for row in cursor2:
         if row["slope"] < 0:
             LOG.info(
@@ -206,14 +405,8 @@ def do_flowpath(scenario, zone, metadata):
             continue
         if x is None:
             x = row["x"]
-            # y = row['y']
-        # TODO since the codes are the same for now, this is OK
-        if int(row["management"][0]) > maxmanagement:
-            maxmanagement = int(row["management"][0])
         if row["slope"] < 0.00001:
             row["slope"] = 0.00001
-        # hard coded...
-        # row['slope'] = slope
         rows.append(row)
 
     if x is None:
@@ -264,18 +457,6 @@ def do_flowpath(scenario, zone, metadata):
 
     res = {}
     res["clifile"] = metadata["climate_file"]
-
-    # Store climate_file name with flowpath to make life easier
-    cursor3.execute(
-        """
-        UPDATE flowpaths SET climate_file = %s
-        WHERE fid = %s
-    """,
-        (res["clifile"], metadata["fid"]),
-    )
-    if cursor3.rowcount != 1:
-        LOG.info("ERROR Updating climate_file for FID: %s", metadata["fid"])
-    # return
     res["huc8"] = metadata["huc_12"][:8]
     res["huc12"] = metadata["huc_12"]
     res["envfn"] = "/i/%s/env/%s/%s_%s.env" % (
@@ -308,23 +489,19 @@ def do_flowpath(scenario, zone, metadata):
         )
         slpdata = " 0.000,0.00001"
         res["slope_points"] = len(rows) + 1
-    prevsoil = None
-    lsoilstart = 0
+
+    soil = rows[0]["surgo"]
+    soilstart = 0
     soils = []
     soillengths = []
 
-    for row in rows:
-        if prevsoil != row["surgo"]:
-            if prevsoil is not None:
-                soils.append(prevsoil)
-                soillengths.append(row["length"] - lsoilstart)
-            prevsoil = row["surgo"]
-            lsoilstart = row["length"]
-        if res["length"] == 0:
-            continue
+    for i, row in enumerate(rows):
+        if soil != row["surgo"] or i == (len(rows) - 1):
+            soils.append(soil)
+            soillengths.append(row["length"] - soilstart)
+            soil = row["surgo"]
+            soilstart = row["length"]
         slpdata += " %.3f,%.5f" % (row["length"] / res["length"], row["slope"])
-    soils.append(prevsoil)
-    soillengths.append(res["length"] - lsoilstart)
 
     res["soilbreaks"] = len(soillengths) - 1
     res["soils"] = ""
@@ -343,32 +520,36 @@ def do_flowpath(scenario, zone, metadata):
             s,
         )
 
-    prevman = None
-    lmanstart = 0
+    prev_landuse = rows[0]["landuse"]
+    manstart = 0
+    prev_man = rows[0]["management"]
     mans = []
     manlengths = []
 
-    for row in rows:
-        if row["landuse"] is None:
+    # Figure out our landuse situation
+    for i, row in enumerate(rows):
+        if (
+            prev_landuse == row["landuse"]
+            and prev_man == row["management"]
+            and i != (len(rows) - 1)
+        ):
             continue
-        if prevman is None or prevman != row["landuse"]:
-            if prevman is not None:
-                mans.append(
-                    get_rotation(scenario, zone, prevman, maxmanagement)
-                )
-                manlengths.append(row["length"] - lmanstart)
-            prevman = row["landuse"]
-            lmanstart = row["length"]
+        # Management has changed, write out the old row
+        mans.append(
+            rotation_magic(scenario, zone, len(mans), rows[i - 1], metadata)
+        )
+        manlengths.append(row["length"] - manstart)
+        prev_landuse = row["landuse"]
+        prev_man = row["management"]
+        manstart = row["length"]
 
-    if prevman is None:
+    if not mans:
         LOG.info(
             "%s,%s has no managements, skipping",
             metadata["huc_12"],
             metadata["fpath"],
         )
         return
-    mans.append(get_rotation(scenario, zone, prevman, maxmanagement))
-    manlengths.append(res["length"] - lmanstart)
     res["manbreaks"] = len(manlengths) - 1
     res["managements"] = ""
 
@@ -458,10 +639,12 @@ def main(argv):
     """,
         (flowpath_scenario,),
     )
-    for row in tqdm(cursor, total=cursor.rowcount):
+    progress = tqdm(cursor, total=cursor.rowcount)
+    for row in progress:
         # continue
         if myhucs and row["huc_12"] not in myhucs:
             continue
+        progress.set_description("%s %4s" % (row[3], row[1]))
         zone = "KS_NORTH"
         if row["lat"] >= 42.5:
             zone = "IA_NORTH"

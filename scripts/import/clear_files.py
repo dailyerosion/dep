@@ -21,6 +21,7 @@ def main(argv):
             "wb",
             "yld",
             "env",
+            "rot",
         ]:
             mydir = "/i/%s/%s/%s/%s" % (scenario, subdir, huc12[:8], huc12[8:])
             if not os.path.isdir(mydir):
