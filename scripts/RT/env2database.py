@@ -319,7 +319,7 @@ def do_huc12(arg):
     deleted = delete_previous_entries(icursor, scenario, huc12, dates)
     for i, date in enumerate(dates):
         # df['date'] is datetime64, so need to cast
-        df2 = df[df["date"].dt.date == date]
+        df2 = df[df["date"] == pd.Timestamp(date)]
         # We have no data, any previous entries were deleted above already
         qc_precip = precip[i]
         if df2.empty and qc_precip == 0:
