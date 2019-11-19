@@ -35,7 +35,7 @@ Daily Erosion Project Meeting Notes
 
 - Some improved workflows are coming with the tillage data now on Google Earth
 - [ ] we are ready for Tim's tillage work to get moved into production, but
-will wait for new flowpath stuff to settle down.
+will wait for new flowpath stuff to settle down. #74
 - [ ] generate a map of tillage class / NT usage.
 - [x] email James to start generation of FY2019 soils data.
 - [x] email Gelder to update JSON field attributes names to be explicit.
