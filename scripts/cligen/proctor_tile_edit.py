@@ -5,12 +5,23 @@ Usage:
 """
 import sys
 import os
+import stat
 import datetime
 import subprocess
+import time
 from multiprocessing.pool import ThreadPool
 
 import numpy as np
 from pyiem.dep import SOUTH, NORTH, EAST, WEST
+from pyiem.util import logger
+
+LOG = logger()
+DATADIR = "/mnt/idep2/data/dailyprecip"
+
+
+def get_fn(date):
+    """Return the filename for this date."""
+    return "%s/%s/%s.npy" % (DATADIR, date.year, date.strftime("%Y%m%d"))
 
 
 def assemble_grids(tilesz, date):
@@ -18,7 +29,7 @@ def assemble_grids(tilesz, date):
     YS = int((NORTH - SOUTH) * 100.0)
     XS = int((EAST - WEST) * 100.0)
     res = np.zeros((YS, XS))
-    basedir = "/mnt/idep2/data/dailyprecip/%s" % (date.year,)
+    basedir = "%s/%s" % (DATADIR, date.year)
     for i, _lon in enumerate(np.arange(WEST, EAST, tilesz)):
         for j, _lat in enumerate(np.arange(SOUTH, NORTH, tilesz)):
             fn = "%s/%s.tile_%s_%s.npy" % (
@@ -34,7 +45,7 @@ def assemble_grids(tilesz, date):
             res[yslice, xslice] = np.load(fn)
             os.unlink(fn)
 
-    np.save("%s/%s.npy" % (basedir, date.strftime("%Y%m%d")), res)
+    np.save(get_fn(date), res)
 
 
 def myjob(cmd):
@@ -44,7 +55,7 @@ def myjob(cmd):
     )
     stdout, stderr = proc.communicate()
     if stdout != b"" or stderr != b"":
-        print("CMD: %s\nSTDOUT: %s\nSTDERR: %s" % (cmd, stdout, stderr))
+        LOG.info("CMD: %s\nSTDOUT: %s\nSTDERR: %s", cmd, stdout, stderr)
 
 
 def main(argv):
@@ -52,6 +63,10 @@ def main(argv):
     tilesz = 5
     scenario = argv[1]
     date = datetime.date(int(argv[2]), int(argv[3]), int(argv[4]))
+    fn = get_fn(date)
+    if os.path.isfile(fn):
+        filets = os.stat(fn)[stat.ST_MTIME]
+        LOG.info("%s was last processed on %s", date, time.ctime(filets))
     pool = ThreadPool(4)
     for i, _lon in enumerate(np.arange(WEST, EAST, tilesz)):
         for j, _lat in enumerate(np.arange(SOUTH, NORTH, tilesz)):
