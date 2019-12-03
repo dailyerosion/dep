@@ -14,4 +14,4 @@ cd cligen
 python proctor_tile_edit.py 0 $(date --date '16 hours ago' +'%Y %m %d')
 
 cd ../RT
-python enqueue_jobs.py 0 && python env2database.py 0 && python harvest2database.py 0 && python spam_twitter.py
+python enqueue_jobs.py 0 && python env2database.py -s 0 --date $(date --date '16 hours ago' +'%Y-%m-%d') && python harvest2database.py 0 && python spam_twitter.py

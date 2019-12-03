@@ -3,23 +3,16 @@
 The arguments to call me require the SCENARIO to be provided, but you can
 also do any of the following:
 
-    # default to yesterday
-    python env2database.py 0
-    # reprocess all of 2015
-    python env2database.py 0 2015
-    # reprocess all of Feb 2015
-    python env2database.py 0 2015 02
-    # reprocess 21 Feb 2015
-    python env2database.py 0 2015 02 21
-    # reprocess it all
-    python env2database.py 0 all
-
+    # See usage
+    python env2database.py -h
 """
-from __future__ import print_function
 import os
+import re
+import argparse
 import datetime
 from multiprocessing import Pool
 import sys
+
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -53,46 +46,44 @@ def readfile(fn, lengths):
     try:
         df = dep_utils.read_env(fn)
     except Exception as exp:
-        print("\nABORT: Attempting to read: %s resulted in: %s\n" % (fn, exp))
+        LOG.info("ABORT: Attempting to read: %s resulted in: %s", fn, exp)
         return None
     key = int(fn.split("/")[-1].split(".")[0].split("_")[1])
     df["delivery"] = df["sed_del"] / lengths[key]
     return df
 
 
-def determine_dates(argv):
-    """Figure out which dates we are interested in processing"""
+def determine_dates(args):
+    """Convert what `argparser` provided us into a list of dates."""
     res = []
-    today = datetime.date.today()
-    if len(argv) == 2:
-        # Option 1, we have no arguments, so we assume yesterday
-        res.append(today - datetime.timedelta(days=1))
-    elif len(argv) == 3:
-        # Option 2, we are running for an entire year, gulp
-        if argv[2] == "all":
-            now = datetime.date(2007, 1, 1)
-            ets = datetime.date.today()
-        else:
-            now = datetime.date(int(argv[2]), 1, 1)
-            ets = datetime.date(int(argv[2]) + 1, 1, 1)
-        while now < ets:
-            if now >= today:
-                break
-            res.append(now)
-            now += datetime.timedelta(days=1)
-    elif len(argv) == 4:
-        # Option 3, we are running for a month
-        now = datetime.date(int(argv[2]), int(argv[3]), 1)
-        ets = now + datetime.timedelta(days=35)
-        ets = ets.replace(day=1)
-        while now < ets:
-            if now >= today:
-                break
-            res.append(now)
-            now += datetime.timedelta(days=1)
-    elif len(argv) == 5:
-        # Option 4, we are running for one date
-        res.append(datetime.date(int(argv[2]), int(argv[3]), int(argv[4])))
+    dateformat = re.compile("^(?P<yr>[0-9]{4})-(?P<mo>[0-9]+)-(?P<dy>[0-9]+)$")
+    monthformat = re.compile("^(?P<yr>[0-9]{4})-(?P<mo>[0-9]+)$")
+    lastdate = datetime.date.today() - datetime.timedelta(days=1)
+    for date in args.date:
+        # Option 1: YYYY-m-d
+        m = dateformat.match(date)
+        if m:
+            d = m.groupdict()
+            res.append(
+                pd.Timestamp(
+                    year=int(d["yr"]), month=int(d["mo"]), day=int(d["dy"])
+                )
+            )
+            LOG.debug("conv %s to %s", date, res[-1])
+            continue
+        # Option 2: all
+        if date == "all":
+            res.extend(pd.date_range("2007/01/01", lastdate))
+            LOG.debug("all dates size %s", len(res))
+            continue
+        # Option 3: A month's worth
+        m = monthformat.match(date)
+        if m:
+            d = m.groupdict()
+            sts = datetime.date(int(d["yr"]), int(d["mo"]), 1)
+            ets = sts + datetime.timedelta(days=35)
+            ets = ets.replace(day=1) - datetime.timedelta(days=1)
+            res.extend(pd.date_range(sts, min([lastdate, ets])))
     return res
 
 
@@ -130,7 +121,7 @@ def load_precip(dates, huc12s):
     events.
 
     Args:
-      dates (list): the dates we need precip data for
+      dates (list<pd.Timestamp>): the dates we need precip data for
       huc12s (list): listing of huc12s of interest, use if CONFIG['subset']
 
     Returns:
@@ -151,10 +142,12 @@ def load_precip(dates, huc12s):
         huc12df = huc12df.loc[huc12s]
     # 2. Loop over dates
     res = {}
-    for date in tqdm(dates, disable=(not sys.stdout.isatty())):
+    progress = tqdm(dates, disable=(not sys.stdout.isatty()))
+    for date in progress:
+        progress.set_description(date.strftime("%Y-%m-%d"))
         fn = date.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.npy")
         if not os.path.isfile(fn):
-            print("Missing precip: %s" % (fn,))
+            LOG.info("Missing precip: %s", fn)
             for huc12 in huc12df.index.values:
                 d = res.setdefault(huc12, [])
                 d.append(0)
@@ -311,7 +304,7 @@ def do_huc12(arg):
     # Push all dataframes into one
     df = pd.concat(frames)
     if df.empty:
-        print("FAIL huc12: %s resulted in empty data frame" % (huc12,))
+        LOG.info("FAIL huc12: %s resulted in empty data frame", huc12)
         return huc12, None, None, None
     df.fillna(0, inplace=True)
     hillslopes = len(frames)
@@ -341,19 +334,30 @@ def do_huc12(arg):
     return huc12, inserts, skipped, deleted
 
 
+def usage():
+    """Create the argparse instance."""
+    parser = argparse.ArgumentParser("Send WEPP env info to the database")
+    parser.add_argument("-s", "--scenario", required=True, type=int)
+    parser.add_argument("-d", "--date", required=True, action="append")
+    return parser
+
+
 def main(argv):
     """Go Main Go."""
-    scenario = int(argv[1])
-    lengths = load_lengths(scenario)
-    dates = determine_dates(sys.argv)
-    huc12s = find_huc12s(scenario)
+    parser = usage()
+    args = parser.parse_args(argv[1:])
+    lengths = load_lengths(args.scenario)
+    dates = determine_dates(args)
+    huc12s = find_huc12s(args.scenario)
     precip = load_precip(dates, huc12s)
     jobs = []
     for huc12 in huc12s:
         if huc12 not in precip:
             LOG.info("Skipping huc12 %s with no precip", huc12)
             continue
-        jobs.append([scenario, huc12, lengths[huc12], dates, precip[huc12]])
+        jobs.append(
+            [args.scenario, huc12, lengths[huc12], dates, precip[huc12]]
+        )
 
     # Begin the processing work now!
     # NB: Usage of a ThreadPool here ended in tears (so slow)
@@ -367,16 +371,18 @@ def main(argv):
         disable=(not sys.stdout.isatty()),
     ):
         if inserts is None:
-            print("ERROR: huc12 %s returned 0 data" % (huc12,))
+            LOG.info("ERROR: huc12 %s returned 0 data", huc12)
             continue
         totalinserts += inserts
         totalskipped += skipped
         totaldeleted += deleted
-    print(
-        "env2database.py inserts: %s skips: %s deleted: %s"
-        % (totalinserts, totalskipped, totaldeleted)
+    LOG.info(
+        "env2database.py inserts: %s skips: %s deleted: %s",
+        totalinserts,
+        totalskipped,
+        totaldeleted,
     )
-    update_metadata(scenario, dates)
+    update_metadata(args.scenario, dates)
 
 
 if __name__ == "__main__":
@@ -393,13 +399,28 @@ def test_dohuc12():
     assert res == myhuc
 
 
-def test_dates():
-    """ Make sure we can properly parse dates """
-    dates = determine_dates([None, 0])
+def test_one_date():
+    """Can we properly parse dates."""
+    parser = usage()
+    args = parser.parse_args(["-s", "0", "--date", "2019-12-03"])
+    dates = determine_dates(args)
     assert len(dates) == 1
-    dates = determine_dates([None, 0, "2012"])
-    assert len(dates) == 366
-    dates = determine_dates([None, 0, "2015", "02"])
-    assert len(dates) == 28
-    dates = determine_dates([None, 0, "2015", "02", "01"])
-    assert dates[0] == datetime.date(2015, 2, 1)
+
+
+def test_one_month():
+    """Can we properly one month."""
+    parser = usage()
+    args = parser.parse_args(["-s", "0", "--date", "2019-11"])
+    dates = determine_dates(args)
+    assert len(dates) == 30
+    assert dates[0] == pd.Timestamp("2019/11/01")
+    assert dates[-1] == pd.Timestamp("2019/11/30")
+
+
+def test_all_dates():
+    """Can we properly do all."""
+    parser = usage()
+    args = parser.parse_args(["-s", "0", "--date", "all"])
+    dates = determine_dates(args)
+    assert len(dates) > 600  # arb
+    assert dates[0] == pd.Timestamp("2007/01/01")
