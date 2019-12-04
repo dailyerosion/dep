@@ -81,6 +81,10 @@ class WeppRun:
         """Filename to be used for crop output."""
         return self._getfn("crop")
 
+    def get_graphics_fn(self):
+        """Filename to be used for crop output."""
+        return self._getfn("grph")
+
     def make_runfile(self):
         """ Create a runfile for our runs """
         out = StringIO()
@@ -98,7 +102,11 @@ class WeppRun:
         # out.write("%s\n" % (self.get_crop_fn(),))  # crop output file
         out.write("No\n")  # soil output
         out.write("No\n")  # distance and sed output
-        out.write("No\n")  # large graphics output
+        if self.huc12 in ["090201081101", "090201081102", "090201060605"]:
+            out.write("Yes\n")  # large graphics output
+            out.write("%s\n" % (self.get_graphics_fn(),))
+        else:
+            out.write("No\n")  # large graphics output
         out.write("Yes\n")  # event by event output
         out.write("%s\n" % (self.get_env_fn(),))  # event file output
         out.write("No\n")  # element output

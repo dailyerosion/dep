@@ -6,7 +6,10 @@ from pyiem.util import get_dbconn, logger
 from pyiem.dep import load_scenarios
 
 LOG = logger()
-PREFIXES = "crop env man prj run slp sol wb error ofe yld rot".split()
+PREFIXES = (
+    "crop env man prj run slp sol wb error ofe yld rot grph "
+    "sweepin sweepout"
+).split()
 
 
 def do_huc12(scenario, huc12):
