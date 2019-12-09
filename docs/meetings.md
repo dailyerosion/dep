@@ -1,6 +1,16 @@
 Daily Erosion Project Meeting Notes
 ===================================
 
+26 Nov 2019 :: Iowa Soybean Association
+-----
+
+- Software engineer there said best to use Vector Tiles, yes I hope to!
+- [ ] units on the multi-year dynamic plot are confusion
+- [ ] color ramp on multi-year plot is not good
+- Can we provide a 'worse case' and how much better we are doing than some
+baseline?
+- Expressing the need in terms of profitability is key.
+
 14 Nov 2019 :: DEP Planning
 -----
 
