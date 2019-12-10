@@ -2,6 +2,7 @@
 
 See dailyerosion/dep#36 for generally more details.
 """
+import argparse
 import sys
 import datetime
 import shutil
@@ -104,22 +105,32 @@ def workflow(arg):
     return idx, erosion
 
 
-def main():
+def usage():
+    """Create the argparse instance."""
+    parser = argparse.ArgumentParser("Send WEPP env info to the database")
+    parser.add_argument("-s", "--scenario", required=True, type=int)
+    parser.add_argument("-d", "--date", required=True)
+    return parser
+
+
+def main(argv):
     """Go Main Go."""
+    parser = usage()
+    args = parser.parse_args(argv[1:])
     pgconn = get_dbconn("idep")
     df = read_sql(
         """
         SELECT huc_12, fpath, scenario,
         ST_x(ST_Transform(ST_PointN(geom, 1), 4326)) as lon,
         ST_y(ST_Transform(ST_PointN(geom, 1), 4326)) as lat
-        from flowpaths where scenario = 0
-        and huc_12 in %s LIMIT 50
+        from flowpaths where scenario = %s
+        and huc_12 in %s
     """,
         pgconn,
-        params=(tuple(HUC12S),),
+        params=(args.scenario, tuple(HUC12S)),
         index_col=None,
     )
-    date = datetime.date.today() - datetime.timedelta(days=1)
+    date = datetime.datetime.strptime(args.date, "%Y-%m-%d")
     df["date"] = pd.Timestamp(date)
     LOG.debug("found %s flowpaths to run for %s", len(df.index), date)
     jobs = list(df.iterrows())
@@ -136,4 +147,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
