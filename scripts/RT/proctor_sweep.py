@@ -79,10 +79,11 @@ def workflow(arg):
     with open(sweepinfn, "w") as fh:
         fh.write("".join(lines))
     # 2. Run Rscript to replace grph file content
-    cmd = "Rscript --vanilla magic.R %s %s %s %s >& /dev/null" % (
+    cmd = "Rscript --vanilla magic.R %s %s %s %s %s >& /dev/null" % (
         sweepinfn,
         sweepinfn.replace("sweepin", "grph"),
         sweepinfn.replace("sweepin", "sol"),
+        row["date"].year,
         row["date"].strftime("%j"),
     )
     subprocess.call(

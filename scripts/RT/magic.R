@@ -17,13 +17,15 @@ if (length(args) == 0) {
   generic_template_in <- 'WEPStest';
   weppgraphfile <- 'grph_0.txt';
   weppsoilfile <- 'p0.sol';
+  Year <- 2019;
   DayofYear <- 365;
 } else {
   # get arguments from the command line
   generic_template_in=args[1];
   weppgraphfile=args[2];
   weppsoilfile=args[3];
-  DayofYear=args[4];
+  Year=strtoi(args[4]);
+  DayofYear=strtoi(args[5]);
 }
 generic_template_in.in<-paste(generic_template_in, ".in", sep="")
 print(paste('Template File In: ', generic_template_in.in, sep=""))
@@ -35,6 +37,7 @@ print(paste('Creating SWEEP file for day: ', DayofYear, sep = ""))
 # print (dir4)
 
 require(readr)
+require(dplyr)
 #require(readtext)
 
 # directory/file information here (shouldn't need to change script anywhere else)
@@ -59,7 +62,7 @@ dir3<- generic_template_in ###for version to pass to DH
 
 #*******************shouldn't be any user input required down here*************
 # colnames from commented portion of grph_0.txt
-colnames<-c("Day","Precip_in","AvDet_t-a","MxDet_t-a","DetPt_ft","AvDepo_t-a","MxDepo_t-a","DepoPt_ft","SedLving_lb-ft",
+colnames<-c("year","Day","Precip_in","AvDet_t-a","MxDet_t-a","DetPt_ft","AvDepo_t-a","MxDepo_t-a","DepoPt_ft","SedLving_lb-ft",
             "5d_avMntmp_F","5d_avMxtmp_F","dlyMntmp_F","dlyMxtmp_F","IrrDpth_in","IrrVol_in","Runoff_in","IntRillNetLoss_t-a","CnpyHt_ft","CnpyCov",
             "LAI","IntRillCover","RillCover","AbvGrndliveBiom_t-a","LiveRootMass_t-a","LRM_0-15cm_t-a","LRM_15-30cm_t-a","LRM_30-60cm_t-a","Rtdepth_in","StndngDeadBiom_t-a",
             "Rsd_t-a","PrevRsd_t-a","OldRsd_t-a","SbmRsd_t-a","PrevSbmRsu_t-a","OldSbmRsd_t-a","DeadRoot_t-a","PrevRoot_t-a","OldRoot_t-a","Porosity%",
@@ -72,10 +75,11 @@ colnames<-c("Day","Precip_in","AvDet_t-a","MxDet_t-a","DetPt_ft","AvDepo_t-a","M
             "FrzH2OLyr6","FrzH2OLyr7","FrzH2OLyr8","FrzH2OLyr9","FrzH2OLyr10")
 
 # set colwidths vector to read "grph_0.txt" as a fixed width file
-colwidths<-c(6,rep(11,83),rep(3,7),rep(11,13))
+colwidths<-c(4,6,rep(11,83),rep(3,7),rep(11,13))
 colwidths<-as.integer(colwidths) #changes from numeric to integer
-WEPPout<- read_fwf(dir1, comment = "#", skip = 121, n_max = 365, col_positions = fwf_widths(colwidths, col_names = colnames),
-  col_types = "idddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddiiiiiiiddddddddddddd")
+WEPPoutAll<- read_fwf(dir1, comment = "#", skip = 121, col_positions = fwf_widths(colwidths, col_names = colnames),
+  col_types = "iidddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddiiiiiiiddddddddddddd")
+WEPPout <- dplyr::filter(WEPPoutAll, year == Year)
 WEPPout$Precip_mm<-WEPPout$Precip_in*25.4
 WEPPout$IrrDpth_mm<-WEPPout$IrrDpth_in*25.4
 WEPPout$SnwMeltWater_mm<-WEPPout$SnwMeltWater_in*25.4
@@ -122,7 +126,7 @@ CaCO3pct<-0.00 #based on soils data for WAUKON FSL in WEPS model for comparison 
 #Extract daily data from "grph_0.txt", write WEPS.in file and run SWEEP 
 
 #####*****old section for running the WEPPgraph file as a loop.  Should be able to delete this
-for (i in 1:365){
+for (i in 1:nrow(WEPPout)){
 
 print(i)
 
