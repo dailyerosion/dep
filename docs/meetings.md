@@ -1,6 +1,40 @@
 Daily Erosion Project Meeting Notes
 ===================================
 
+12 Dec 2019 :: DEP Planning
+-----
+
+- Wang, Gelder, Cruse, Miller, Bates, Green.
+- LIDAR data is in good shape now for NE, so updates forthcoming.
+- Need to look into what Tim was doing for HUD reporting.
+- Discussion on HUD spending issues for watersheds having trouble with getting
+projects approved.
+- There was an ACPF planning meeting in Madison that went well.
+- Would like to have a national ACPF center here at ISU.
+- Brian will have surface curvature data forthcoming for tillage erosion work.
+- Dr Miller's group may have some summit position code that would be useful.
+- There is a STRIPS presentation next month for internal show and tell.
+- FSA proposal deliverables are needed.
+- [ ] need some sort of timelapse of our erosion around lakes.
+- KS resampling may be about done and MO is not far behind either.
+- Vicky is scouting some datasets for a possible global DEP.
+- Upcoming SWCS talk deadline.
+
+11 Dec 2019 :: Minnesota DEP Group Meeting
+-----
+
+- MN government is more focused on climate change issues than ever before.
+- MNGeo won't be able to deliver a custom web interface in time.
+- Mentioning summarizing data by seven Ag Districts in the state?
+- They have a bunch of observed 2017 data that they would like to focus on.
+- We'll have updated MN data in about 2-3 weeks after DEM reprocessing happens.
+- Noted that they had lots of prevent plant acres in the state.
+- Interesting work with Sentinel I data in Google Earth Engine.
+- "SWEEP" is a standalone version of WEPS that runs for a single day.
+- [ ] Engage Brent about the test runs that showed results to compare the
+input files.  Maybe something we have is borked.
+- Very interested in using forecast data to drive any wind erosion estimates.
+
 26 Nov 2019 :: Iowa Soybean Association
 -----
 
