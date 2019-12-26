@@ -64,11 +64,11 @@ def determine_dates(args):
         m = dateformat.match(date)
         if m:
             d = m.groupdict()
-            res.append(
-                pd.Timestamp(
-                    year=int(d["yr"]), month=int(d["mo"]), day=int(d["dy"])
-                )
+            dt = pd.Timestamp(
+                year=int(d["yr"]), month=int(d["mo"]), day=int(d["dy"])
             )
+            if dt not in res:
+                res.append(dt)
             LOG.debug("conv %s to %s", date, res[-1])
             continue
         # Option 2: all
@@ -403,6 +403,16 @@ def test_one_date():
     """Can we properly parse dates."""
     parser = usage()
     args = parser.parse_args(["-s", "0", "--date", "2019-12-03"])
+    dates = determine_dates(args)
+    assert len(dates) == 1
+
+
+def test_dup_date():
+    """Can we properly parse dates."""
+    parser = usage()
+    args = parser.parse_args(
+        ["-s", "0", "--date", "2019-12-03", "--date", "2019-12-03"]
+    )
     dates = determine_dates(args)
     assert len(dates) == 1
 
