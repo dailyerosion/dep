@@ -1,6 +1,27 @@
 Daily Erosion Project Meeting Notes
 ===================================
 
+16 Jan 2020 :: DEP Planning
+-----
+
+- Wang, Enhung, Vicky, Kelly, Cruse, Gelder, James, Bates, Miller.
+- new PhD student working in strips and FSA project.
+- Enhung leaves the end of January.
+- James mentioned some ongoing state border HUC12 issues that Green is fixing.
+- KS appears to be the next to have updated HUC12 sampling for me to grind.
+- Punting on MN update until mid February now, lots of processing fun up there.
+- James expects to have updated soil information now too for when all this
+  gets updated.
+- ACPF is getting 97 watersheds in Arkansas, but none of these are likely DEP
+  candidates as they are all laser leveled fields.
+- Working on a HUD project extension for 2021.
+- MN wants to run a DEP story in mid March.
+- Need to prioritize getting Enhung's tillage work out the door and published.
+- James has thoughts on how to compute curvature for tillage erosion work.
+- need to find a USDA forest road mask for the erosion work.
+- Vicky presented on her empermal gully work, should be exciting.
+- Have a meeting in march, can we discuss global DEP work by then?
+
 12 Dec 2019 :: DEP Planning
 -----
 
