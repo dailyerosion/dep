@@ -23,17 +23,17 @@ ID | Name | Status
 67 | May 20 Tillage, Constant Climate | done
 68 | May 25 Tillage, Constant Climate | done
 69 | May 30 Tillage, Constant Climate | done
-70 | April 10 Tillage, Local Climate | done
-71 | April 15 Tillage, Local Climate | done
-72 | April 20 Tillage, Local Climate | done
-73 | April 25 Tillage, Local Climate | done
-74 | April 30 Tillage, Local Climate | done
-75 | May 5 Tillage, Local Climate | done
-76 | May 10 Tillage, Local Climate | done
-77 | May 15 Tillage, Local Climate | done
-78 | May 20 Tillage, Local Climate | done
-79 | May 25 Tillage, Local Climate | done
-80 | May 30 Tillage, Local Climate | done
+70 | April 10 Tillage, Local Climate | no wb
+71 | April 15 Tillage, Local Climate | no wb
+72 | April 20 Tillage, Local Climate | no wb
+73 | April 25 Tillage, Local Climate | no wb
+74 | April 30 Tillage, Local Climate | no wb
+75 | May 5 Tillage, Local Climate | no wb
+76 | May 10 Tillage, Local Climate | no wb
+77 | May 15 Tillage, Local Climate | no wb
+78 | May 20 Tillage, Local Climate | no wb
+79 | May 25 Tillage, Local Climate | no wb
+80 | May 30 Tillage, Local Climate | no wb
 81 | Dynamic Tillage April 15 after 45% | done
 82 | Dynamic Tillage April 15 after 40% | done
 83 | Dynamic Tillage April 15 after 35% | done
@@ -44,3 +44,17 @@ ID | Name | Status
 88 | Dynamic Tillage April 15 after Plastic Limit 1.0 | done
 89 | Dynamic Tillage April 15 after Plastic Limit 0.9 | done
 90 | Dynamic Tillage April 15 after Plastic Limit Fx | done
+
+21 Jan 2020 Meeting Notes
+------
+
+- [x] plot averaged 5 day precipitation for the 30 HUC12s
+- [x] plot showing how anticedent and after precip changes by date
+- [ ] Water content on days of tillage for 1a and 1b
+- [ ] Am I plotting gravimetric or VWC for soil moisture?
+- [ ] seperate each MLRA and tillage run
+- [ ] yikes, do dynamic tillage runs for every year
+- [ ] how to compute vulernability windows
+- [ ] can I plot LAI with time and see what WEPP does here
+- [ ] can the window of vulnerability be isolated by date of year?
+- [ ] clarify that dates are generally planting date, not tillage.
