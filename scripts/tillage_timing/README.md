@@ -55,6 +55,6 @@ ID | Name | Status
 - [ ] seperate each MLRA and tillage run
 - [ ] yikes, do dynamic tillage runs for every year
 - [ ] how to compute vulernability windows
-- [ ] can I plot LAI with time and see what WEPP does here
+- [x] can I plot LAI with time and see what WEPP does here
 - [ ] can the window of vulnerability be isolated by date of year?
 - [ ] clarify that dates are generally planting date, not tillage.
