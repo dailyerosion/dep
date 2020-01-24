@@ -50,11 +50,18 @@ ID | Name | Status
 
 - [x] plot averaged 5 day precipitation for the 30 HUC12s
 - [x] plot showing how anticedent and after precip changes by date
-- [ ] Water content on days of tillage for 1a and 1b
+- Water content on days of tillage for 1a and 1b
 - [ ] Am I plotting gravimetric or VWC for soil moisture?
-- [ ] seperate each MLRA and tillage run
-- [ ] yikes, do dynamic tillage runs for every year
-- [ ] how to compute vulernability windows
+- seperate each MLRA and tillage run
+- yikes, do dynamic tillage runs for every year
+- how to compute vulernability windows
 - [x] can I plot LAI with time and see what WEPP does here
-- [ ] can the window of vulnerability be isolated by date of year?
+- can the window of vulnerability be isolated by date of year?
 - [ ] clarify that dates are generally planting date, not tillage.
+
+24 Jan 2020 Meeting Notes
+-----
+
+- [ ] Dataset 1 with MLRA averages by plant date by 5 day bin
+- [ ] Dataset 2 with daily MLRA values of 0-10cm, precip, etc
+- [ ] Dataset 3 with the matric of threshold planting by date

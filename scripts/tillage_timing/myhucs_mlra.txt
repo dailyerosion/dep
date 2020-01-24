@@ -1,0 +1,37 @@
+MLRA|HUC12|NAME
+     188 | 071000080801 | Iowa and Missouri Heavy Till Plain
+     187 | 071000081102 | Illinois and Iowa Deep Loess and Drift, Western Part
+     188 | 071000090304 | Iowa and Missouri Heavy Till Plain
+     186 | 071000090501 | Illinois and Iowa Deep Loess and Drift, West-Central Part
+     186 | 071000090501 | Illinois and Iowa Deep Loess and Drift, West-Central Part
+     175 | 101702032202 | Loess Uplands
+     175 | 101702040703 | Loess Uplands
+     175 | 101702040805 | Loess Uplands
+     178 | 070600040309 | Northern Mississippi Valley Loess Hills
+     178 | 070600040608 | Northern Mississippi Valley Loess Hills
+     182 | 102300010505 | Iowa and Missouri Deep Loess Hills
+     181 | 102300020307 | Iowa and Minnesota Loess Hills
+     181 | 102300020307 | Iowa and Minnesota Loess Hills
+     176 | 102300030106 | Central Iowa and Minnesota Till Prairies
+     178 | 070600061004 | Northern Mississippi Valley Loess Hills
+     204 | 070801010401 | Central Mississippi Valley Wooded Slopes, Northern Part
+     186 | 070801010403 | Illinois and Iowa Deep Loess and Drift, West-Central Part
+     186 | 070801010403 | Illinois and Iowa Deep Loess and Drift, West-Central Part
+     177 | 070801020403 | Eastern Iowa and Minnesota Till Prairies
+     181 | 102300030703 | Iowa and Minnesota Loess Hills
+     181 | 102300030703 | Iowa and Minnesota Loess Hills
+     181 | 102300031004 | Iowa and Minnesota Loess Hills
+     181 | 102300031004 | Iowa and Minnesota Loess Hills
+     204 | 070801030607 | Central Mississippi Valley Wooded Slopes, Northern Part
+     182 | 102300070209 | Iowa and Missouri Deep Loess Hills
+     182 | 102300070403 | Iowa and Missouri Deep Loess Hills
+     187 | 102400090102 | Illinois and Iowa Deep Loess and Drift, Western Part
+     177 | 070802040604 | Eastern Iowa and Minnesota Till Prairies
+     177 | 070802050803 | Eastern Iowa and Minnesota Till Prairies
+     188 | 102801020801 | Iowa and Missouri Heavy Till Plain
+     186 | 070802090402 | Illinois and Iowa Deep Loess and Drift, West-Central Part
+     186 | 070802090402 | Illinois and Iowa Deep Loess and Drift, West-Central Part
+     204 | 070802091102 | Central Mississippi Valley Wooded Slopes, Northern Part
+     176 | 071000040902 | Central Iowa and Minnesota Till Prairies
+     176 | 071000060304 | Central Iowa and Minnesota Till Prairies
+     187 | 071000070904 | Illinois and Iowa Deep Loess and Drift, Western Part
