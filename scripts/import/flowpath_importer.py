@@ -167,14 +167,26 @@ def process(cursor, filename, huc12df):
             # 2009 2011[1]
             # 2018 2016[6]
             # 2019 2017[7]
-            full_lu = "%s%s%s%s%s%s" % (lu[1], lu[0], lu[1], lu, lu[6], lu[7])
+            # 2020 2018[6]
+            full_lu = "%s%s%s%s%s%s%s" % (
+                lu[1],
+                lu[0],
+                lu[1],
+                lu,
+                lu[6],
+                lu[7],
+                lu[6],
+            )
+            # Careful here too, need to spread out the management as above
+            m = row["Management_CY_2017"].strip()
+            full_m = "%s%s%s%s%s%s%s" % (m[1], m[0], m[1], m, m[6], m[7], m[6])
             args = (
                 fid,
                 segid,
                 row["ep3m%s" % (huc12,)] / 100.0,
                 row["%sLen%s" % (PREFIX, huc12)] / 100.0,
                 row["SOL_FY_2018"],
-                row["Management_CY_2017"],
+                full_m,
                 slope,
                 row["geometry"].x,
                 row["geometry"].y,
