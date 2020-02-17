@@ -9,7 +9,7 @@ import stat
 import datetime
 import subprocess
 import time
-from multiprocessing.pool import ThreadPool
+from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
 from pyiem.dep import SOUTH, NORTH, EAST, WEST
@@ -55,7 +55,14 @@ def myjob(cmd):
     )
     stdout, stderr = proc.communicate()
     if stdout != b"" or stderr != b"":
-        LOG.info("CMD: %s\nSTDOUT: %s\nSTDERR: %s", cmd, stdout, stderr)
+        LOG.info(
+            "CMD: %s\nSTDOUT: %s\nSTDERR: %s",
+            cmd,
+            stdout.decode("ascii", "ignore"),
+            stderr.decode("ascii", "ignore"),
+        )
+        return False
+    return True
 
 
 def main(argv):
@@ -67,7 +74,7 @@ def main(argv):
     if os.path.isfile(fn):
         filets = os.stat(fn)[stat.ST_MTIME]
         LOG.info("%s was last processed on %s", date, time.ctime(filets))
-    pool = ThreadPool(4)
+    jobs = []
     for i, _lon in enumerate(np.arange(WEST, EAST, tilesz)):
         for j, _lat in enumerate(np.arange(SOUTH, NORTH, tilesz)):
             cmd = "python daily_clifile_editor.py %s %s %s %s %s" % (
@@ -77,10 +84,12 @@ def main(argv):
                 scenario,
                 date.strftime("%Y %m %d"),
             )
-            pool.apply_async(myjob, (cmd,))
+            jobs.append(cmd)
+    with ProcessPoolExecutor(max_workers=4) as executor:
+        for job, res in zip(jobs, executor.map(myjob, jobs)):
+            if not res:
+                LOG.info("job: %s returned false", job)
 
-    pool.close()
-    pool.join()
     assemble_grids(tilesz, date)
 
 
