@@ -391,14 +391,14 @@ def load_precip():
         PRECIP[:, :, tidx] = np.where(data < 255, data / a2m_divisor, 0)
 
     printt("load_precip() starting %s threads to read a2m" % (CPUCOUNT,))
-    pool = ThreadPool(CPUCOUNT)
-    for tidx, fn in enumerate(fns):
-        # we ignore an hour for CDT->CST, meh
-        if tidx >= ts:
-            continue
-        pool.apply_async(_reader, (tidx, fn), callback=_cb)
-    pool.close()
-    pool.join()
+    with ThreadPool(CPUCOUNT) as pool:
+        for tidx, fn in enumerate(fns):
+            # we ignore an hour for CDT->CST, meh
+            if tidx >= ts:
+                continue
+            pool.apply_async(_reader, (tidx, fn), callback=_cb)
+        pool.close()
+        pool.join()
     printt("load_precip() finished...")
 
 
