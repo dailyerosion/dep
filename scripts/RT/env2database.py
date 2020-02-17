@@ -361,21 +361,21 @@ def main(argv):
 
     # Begin the processing work now!
     # NB: Usage of a ThreadPool here ended in tears (so slow)
-    pool = Pool()
     totalinserts = 0
     totalskipped = 0
     totaldeleted = 0
-    for huc12, inserts, skipped, deleted in tqdm(
-        pool.imap_unordered(do_huc12, jobs),
-        total=len(jobs),
-        disable=(not sys.stdout.isatty()),
-    ):
-        if inserts is None:
-            LOG.info("ERROR: huc12 %s returned 0 data", huc12)
-            continue
-        totalinserts += inserts
-        totalskipped += skipped
-        totaldeleted += deleted
+    with Pool() as pool:
+        for huc12, inserts, skipped, deleted in tqdm(
+            pool.imap_unordered(do_huc12, jobs),
+            total=len(jobs),
+            disable=(not sys.stdout.isatty()),
+        ):
+            if inserts is None:
+                LOG.info("ERROR: huc12 %s returned 0 data", huc12)
+                continue
+            totalinserts += inserts
+            totalskipped += skipped
+            totaldeleted += deleted
     LOG.info(
         "env2database.py inserts: %s skips: %s deleted: %s",
         totalinserts,
