@@ -600,7 +600,7 @@ Profile {
 }
 Climate {
    # Unused anyway, so just fake it
-   File = "/i/0/cli/096x040/096.01x039.88.cli"
+   File = "/i/0/cli/096x040/096.01x040.60.cli"
 }
 Soil {
    Breaks = %(soilbreaks)s
