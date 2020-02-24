@@ -26,14 +26,15 @@ def finder(lon, lat):
     return None, None, None
 
 
-def main():
+def main(argv):
     """Go Main Go."""
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     cursor.execute(
         """
-        SELECT climate_file, fid from flowpaths where scenario = 0
-    """
+        SELECT climate_file, fid from flowpaths where scenario = %s
+    """,
+        (0 if len(argv) == 1 else int(argv[1]),),
     )
     created = 0
     for row in cursor:
@@ -61,4 +62,4 @@ def test_finder():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
