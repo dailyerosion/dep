@@ -20,7 +20,6 @@ from multiprocessing.pool import ThreadPool
 
 import numpy as np
 import pytz
-import netCDF4
 from scipy.interpolate import NearestNDInterpolator
 from PIL import Image
 from pyiem import iemre
@@ -106,45 +105,49 @@ def load_iemre():
     if not os.path.isfile(fn):
         printt("Missing %s for load_solar, aborting" % (fn,))
         sys.exit()
-    nc = netCDF4.Dataset(fn, "r")
-    offset = iemre.daily_offset(VALID)
-    lats = nc.variables["lat"][:]
-    lons = nc.variables["lon"][:]
-    lons, lats = np.meshgrid(lons, lats)
+    with ncopen(fn) as nc:
+        offset = iemre.daily_offset(VALID)
+        lats = nc.variables["lat"][:]
+        lons = nc.variables["lon"][:]
+        lons, lats = np.meshgrid(lons, lats)
 
-    # Storage is W m-2, we want langleys per day
-    data = nc.variables["rsds"][offset, :, :] * 86400.0 / 1000000.0 * 23.9
-    # Default to a value of 300 when this data is missing, for some reason
-    nn = NearestNDInterpolator(
-        (np.ravel(lons), np.ravel(lats)), np.ravel(data)
-    )
-    SOLAR[:] = iemre_bounds_check("rsds", nn(xi, yi), 0, 1000)
+        # Storage is W m-2, we want langleys per day
+        data = nc.variables["rsds"][offset, :, :] * 86400.0 / 1000000.0 * 23.9
+        # Default to a value of 300 when this data is missing, for some reason
+        nn = NearestNDInterpolator(
+            (np.ravel(lons), np.ravel(lats)), np.ravel(data)
+        )
+        SOLAR[:] = iemre_bounds_check("rsds", nn(xi, yi), 0, 1000)
 
-    data = temperature(nc.variables["high_tmpk"][offset, :, :], "K").value("C")
-    nn = NearestNDInterpolator(
-        (np.ravel(lons), np.ravel(lats)), np.ravel(data)
-    )
-    HIGH_TEMP[:] = iemre_bounds_check("high_tmpk", nn(xi, yi), -60, 60)
+        data = temperature(nc.variables["high_tmpk"][offset, :, :], "K").value(
+            "C"
+        )
+        nn = NearestNDInterpolator(
+            (np.ravel(lons), np.ravel(lats)), np.ravel(data)
+        )
+        HIGH_TEMP[:] = iemre_bounds_check("high_tmpk", nn(xi, yi), -60, 60)
 
-    data = temperature(nc.variables["low_tmpk"][offset, :, :], "K").value("C")
-    nn = NearestNDInterpolator(
-        (np.ravel(lons), np.ravel(lats)), np.ravel(data)
-    )
-    LOW_TEMP[:] = iemre_bounds_check("low_tmpk", nn(xi, yi), -60, 60)
+        data = temperature(nc.variables["low_tmpk"][offset, :, :], "K").value(
+            "C"
+        )
+        nn = NearestNDInterpolator(
+            (np.ravel(lons), np.ravel(lats)), np.ravel(data)
+        )
+        LOW_TEMP[:] = iemre_bounds_check("low_tmpk", nn(xi, yi), -60, 60)
 
-    data = temperature(nc.variables["avg_dwpk"][offset, :, :], "K").value("C")
-    nn = NearestNDInterpolator(
-        (np.ravel(lons), np.ravel(lats)), np.ravel(data)
-    )
-    DEWPOINT[:] = iemre_bounds_check("avg_dwpk", nn(xi, yi), -60, 60)
+        data = temperature(nc.variables["avg_dwpk"][offset, :, :], "K").value(
+            "C"
+        )
+        nn = NearestNDInterpolator(
+            (np.ravel(lons), np.ravel(lats)), np.ravel(data)
+        )
+        DEWPOINT[:] = iemre_bounds_check("avg_dwpk", nn(xi, yi), -60, 60)
 
-    data = nc.variables["wind_speed"][offset, :, :]
-    nn = NearestNDInterpolator(
-        (np.ravel(lons), np.ravel(lats)), np.ravel(data)
-    )
-    WIND[:] = iemre_bounds_check("wind_speed", nn(xi, yi), 0, 30)
-
-    nc.close()
+        data = nc.variables["wind_speed"][offset, :, :]
+        nn = NearestNDInterpolator(
+            (np.ravel(lons), np.ravel(lats)), np.ravel(data)
+        )
+        WIND[:] = iemre_bounds_check("wind_speed", nn(xi, yi), 0, 30)
     printt("load_iemre() finished")
 
 
