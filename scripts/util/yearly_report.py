@@ -6,18 +6,20 @@ import datetime
 import matplotlib.pyplot as plt
 from pandas.io.sql import read_sql
 from pyiem.util import get_dbconn
+from pyiem.reference import state_names
 
 
 def main(argv):
     """Do What We Wanted"""
     scenario = int(argv[1])
-    print("This report covers the inclusive years 2008-2018")
+    state = argv[2]
+    print("This report covers the inclusive years 2008-2019 for %s" % (state,))
     pgconn = get_dbconn("idep")
 
     df = read_sql(
         """
         WITH iahuc12 as (
-            SELECT huc_12 from huc12 where states = 'IA' and scenario = 0
+            SELECT huc_12 from huc12 where states = %s and scenario = 0
         ), agg as (
             SELECT r.huc_12, extract(year from valid)::int as yr,
             sum(qc_precip) as precip, sum(avg_runoff) as runoff,
@@ -25,7 +27,7 @@ def main(argv):
             sum(avg_loss) as detachment from results_by_huc12 r JOIN iahuc12 i
             on (r.huc_12 = i.huc_12) WHERE r.scenario = %s
             and r.valid >= '2008-01-01'
-            and r.valid < '2019-01-01' GROUP by r.huc_12, yr
+            and r.valid < '2020-01-01' GROUP by r.huc_12, yr
         )
 
         SELECT yr, round((avg(precip) / 25.4)::numeric, 2) as precip_in,
@@ -35,7 +37,7 @@ def main(argv):
         from agg GROUP by yr ORDER by yr
     """,
         pgconn,
-        params=(scenario,),
+        params=(state, scenario),
         index_col="yr",
     )
 
@@ -58,7 +60,10 @@ def main(argv):
     ax.grid(True)
     ax.set_xlim(df.index.values[0] - 0.5, df.index.values[-1] + 0.5)
     ax.set_ylabel("Yearly Detatchment [tons/acre]")
-    ax.set_title("Daily Erosion Project Iowa's Yearly Detachment")
+    ax.set_title(
+        "%s Daily Erosion Project Iowa's Yearly Detachment"
+        % (state_names[state],)
+    )
     fig.text(
         0.01,
         0.01,
