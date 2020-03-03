@@ -135,14 +135,14 @@ def main(argv):
     df["date"] = pd.Timestamp(date)
     LOG.debug("found %s flowpaths to run for %s", len(df.index), date)
     jobs = list(df.iterrows())
-    pool = Pool()
-    progress = tqdm(
-        pool.imap_unordered(workflow, jobs),
-        total=len(df.index),
-        disable=not sys.stdout.isatty(),
-    )
-    for idx, erosion in progress:
-        df.at[idx, "erosion"] = erosion
+    with Pool() as pool:
+        progress = tqdm(
+            pool.imap_unordered(workflow, jobs),
+            total=len(df.index),
+            disable=not sys.stdout.isatty(),
+        )
+        for idx, erosion in progress:
+            df.at[idx, "erosion"] = erosion
 
     print(df[["huc_12", "erosion"]].groupby("huc_12").describe())
 
