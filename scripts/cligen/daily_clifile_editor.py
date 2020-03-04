@@ -46,6 +46,7 @@ SOLAR = np.zeros((YS, XS), np.float16)
 # continuous memory
 PRECIP = np.zeros((YS, XS, 30 * 24), np.float16)
 STAGE4 = np.zeros((YS, XS), np.float16)
+ST4PATH = "/mesonet/data/stage4"
 
 # used for breakpoint logic
 ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
@@ -165,24 +166,22 @@ def load_stage4():
         ets_tidx,
         tomorrow,
     )
-    nc = ncopen("/mesonet/data/stage4/%s_stage4_hourly.nc" % (VALID.year,))
-    p01m = nc.variables["p01m"]
-
-    lats = nc.variables["lat"][:]
-    lons = nc.variables["lon"][:]
-    # crossing jan 1
-    if ets_tidx < sts_tidx:
-        LOG.debug("Exercise special stageIV logic for jan1!")
-        totals = np.sum(p01m[sts_tidx:, :, :], axis=0)
-        nc.close()
-        nc = ncopen(
-            "/mesonet/data/stage4/%s_stage4_hourly.nc" % (tomorrow.year,)
-        )
+    with ncopen("%s/%s_stage4_hourly.nc" % (ST4PATH, VALID.year)) as nc:
         p01m = nc.variables["p01m"]
-        totals += np.sum(p01m[:ets_tidx, :, :], axis=0)
-    else:
-        totals = np.sum(p01m[sts_tidx:ets_tidx, :, :], axis=0)
-    nc.close()
+
+        lats = nc.variables["lat"][:]
+        lons = nc.variables["lon"][:]
+        # crossing jan 1
+        if ets_tidx < sts_tidx:
+            LOG.debug("Exercise special stageIV logic for jan1!")
+            totals = np.sum(p01m[sts_tidx:, :, :], axis=0)
+            with ncopen(
+                "%s/%s_stage4_hourly.nc" % (ST4PATH, tomorrow.year)
+            ) as nc2:
+                p01m = nc2.variables["p01m"]
+                totals += np.sum(p01m[:ets_tidx, :, :], axis=0)
+        else:
+            totals = np.sum(p01m[sts_tidx:ets_tidx, :, :], axis=0)
 
     if np.ma.max(totals) > 0:
         pass
@@ -287,9 +286,11 @@ def load_precip_legacy():
         now += datetime.timedelta(minutes=5)
         tidx += 1
 
-    pool = Pool()
-    for tidx, data in pool.imap_unordered(_reader, zip(indices, filenames)):
-        m5[tidx, :, :] = data
+    with Pool() as pool:
+        for tidx, data in pool.imap_unordered(
+            _reader, zip(indices, filenames)
+        ):
+            m5[tidx, :, :] = data
     LOG.debug("load_precip_legacy() finished loading N0R Composites")
     m5 = np.transpose(m5, (1, 2, 0)).copy()
     LOG.debug("load_precip_legacy() transposed the data!")
@@ -496,9 +497,8 @@ def myjob(row):
         "\n" if bpdata else "",
     )
 
-    fp = open(fn, "w")
-    fp.write(data[:pos] + thisday + data[(pos + pos2) :])
-    fp.close()
+    with open(fn, "w") as fh:
+        fh.write(data[:pos] + thisday + data[(pos + pos2) :])
     return True
 
 
@@ -567,33 +567,33 @@ def workflow():
             queue.append([xidx, yidx])
 
     LOG.debug("starting pool")
-    pool = Pool(CPUCOUNT)
     sz = len(queue)
     sts = datetime.datetime.now()
     success = 0
     lsuccess = 0
-    for i, res in enumerate(pool.imap_unordered(myjob, queue), 1):
-        if res:
-            success += 1
-        if success > 0 and success % 20000 == 0 and lsuccess != success:
-            delta = datetime.datetime.now() - sts
-            secs = delta.microseconds / 1000000.0 + delta.seconds
-            rate = success / secs
-            remaining = ((sz - i) / rate) / 3600.0
-            LOG.debug(
-                (
-                    "%5.2fh Processed %6s/%6s/%6s [%.2f /sec] "
-                    "remaining: %5.2fh"
-                ),
-                secs / 3600.0,
-                success,
-                i,
-                sz,
-                rate,
-                remaining,
-            )
-            lsuccess = success
-    del pool
+    with Pool(CPUCOUNT) as pool:
+        for i, res in enumerate(pool.imap_unordered(myjob, queue), 1):
+            if res:
+                success += 1
+            if success > 0 and success % 20000 == 0 and lsuccess != success:
+                delta = datetime.datetime.now() - sts
+                secs = delta.microseconds / 1000000.0 + delta.seconds
+                rate = success / secs
+                remaining = ((sz - i) / rate) / 3600.0
+                LOG.debug(
+                    (
+                        "%5.2fh Processed %6s/%6s/%6s [%.2f /sec] "
+                        "remaining: %5.2fh"
+                    ),
+                    secs / 3600.0,
+                    success,
+                    i,
+                    sz,
+                    rate,
+                    remaining,
+                )
+                lsuccess = success
+
     LOG.debug("daily_clifile_editor edited %s files...", success)
 
 
