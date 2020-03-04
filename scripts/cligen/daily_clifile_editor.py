@@ -9,12 +9,10 @@ Where tiles start in the lower left corner and are 2x2 deg in size, TODO
 development laptop has data for 3 March 2019, 23 May 2009, and 8 Jun 2009
 
 """
-from __future__ import print_function
 import datetime
 import sys
 import os
 import unittest
-import logging
 from multiprocessing import Pool, cpu_count
 from multiprocessing.pool import ThreadPool
 
@@ -25,12 +23,9 @@ from PIL import Image
 from pyiem import iemre
 from pyiem.datatypes import temperature
 from pyiem.dep import SOUTH, WEST, NORTH, EAST, get_cli_fname
-from pyiem.util import ncopen
+from pyiem.util import ncopen, logger
 
-logging.basicConfig(format="%(asctime)-15s %(message)s")
-LOG = logging.getLogger()
-LOG.setLevel(logging.INFO)
-
+LOG = logger()
 XTILE = int(sys.argv[1])
 YTILE = int(sys.argv[2])
 # Tilesize was arrived at thru non-scientific testing
@@ -60,17 +55,6 @@ CPUCOUNT = max([4, int(cpu_count() / 4)])
 MEMORY = {"stamp": datetime.datetime.now()}
 
 
-def printt(msg):
-    """Print a message with a timestamp included"""
-    if sys.stdout.isatty():
-        delta = (datetime.datetime.now() - MEMORY["stamp"]).total_seconds()
-        MEMORY["stamp"] = datetime.datetime.now()
-        print(
-            ("%7.3f %s %s")
-            % (delta, datetime.datetime.now().strftime("%H:%M:%S"), msg)
-        )
-
-
 def get_xy_from_lonlat(lon, lat):
     """Get the grid position"""
     xidx = int((lon - MYWEST) * 100.0)
@@ -83,9 +67,13 @@ def iemre_bounds_check(name, val, lower, upper):
     minval = np.nanmin(val)
     maxval = np.nanmax(val)
     if np.ma.is_masked(minval) or minval < lower or maxval > upper:
-        print(
-            ("FATAL: iemre failure %s %.3f to %.3f [%.3f to %.3f]")
-            % (name, minval, maxval, lower, upper)
+        LOG.info(
+            "FATAL: iemre failure %s %.3f to %.3f [%.3f to %.3f]",
+            name,
+            minval,
+            maxval,
+            lower,
+            upper,
         )
         sys.exit()
     return val
@@ -96,14 +84,14 @@ def load_iemre():
 
     24km product is smoothed down to the 0.01 degree grid
     """
-    printt("load_iemre() called")
+    LOG.debug("load_iemre() called")
     xaxis = np.arange(MYWEST, MYEAST, 0.01)
     yaxis = np.arange(MYSOUTH, MYNORTH, 0.01)
     xi, yi = np.meshgrid(xaxis, yaxis)
 
     fn = iemre.get_daily_ncname(VALID.year)
     if not os.path.isfile(fn):
-        printt("Missing %s for load_solar, aborting" % (fn,))
+        LOG.debug("Missing %s for load_solar, aborting", fn)
         sys.exit()
     with ncopen(fn) as nc:
         offset = iemre.daily_offset(VALID)
@@ -148,7 +136,7 @@ def load_iemre():
             (np.ravel(lons), np.ravel(lats)), np.ravel(data)
         )
         WIND[:] = iemre_bounds_check("wind_speed", nn(xi, yi), 0, 30)
-    printt("load_iemre() finished")
+    LOG.debug("load_iemre() finished")
 
 
 def load_stage4():
@@ -157,7 +145,7 @@ def load_stage4():
     1) Wind Farms
     2) Over-estimates
     """
-    printt("load_stage4() called...")
+    LOG.debug("load_stage4() called...")
     # The stage4 files store precip in the rears, so compute 1 AM
     one_am = datetime.datetime(VALID.year, VALID.month, VALID.day, 12, 0)
     one_am = one_am.replace(tzinfo=pytz.timezone("UTC"))
@@ -170,9 +158,12 @@ def load_stage4():
 
     sts_tidx = iemre.hourly_offset(one_am)
     ets_tidx = iemre.hourly_offset(tomorrow)
-    printt(
-        ("stage4 sts_tidx:%s[%s] ets_tidx:%s[%s]")
-        % (sts_tidx, one_am, ets_tidx, tomorrow)
+    LOG.debug(
+        "stage4 sts_tidx:%s[%s] ets_tidx:%s[%s]",
+        sts_tidx,
+        one_am,
+        ets_tidx,
+        tomorrow,
     )
     nc = ncopen("/mesonet/data/stage4/%s_stage4_hourly.nc" % (VALID.year,))
     p01m = nc.variables["p01m"]
@@ -181,7 +172,7 @@ def load_stage4():
     lons = nc.variables["lon"][:]
     # crossing jan 1
     if ets_tidx < sts_tidx:
-        printt("Exercise special stageIV logic for jan1!")
+        LOG.debug("Exercise special stageIV logic for jan1!")
         totals = np.sum(p01m[sts_tidx:, :, :], axis=0)
         nc.close()
         nc = ncopen(
@@ -196,7 +187,7 @@ def load_stage4():
     if np.ma.max(totals) > 0:
         pass
     else:
-        print("No StageIV data found, aborting...")
+        LOG.info("No StageIV data found, aborting...")
         sys.exit()
     # set a small non-zero number to keep things non-zero
     totals = np.where(totals > 0.001, totals, 0.001)
@@ -209,7 +200,7 @@ def load_stage4():
     )
     STAGE4[:] = nn(xi, yi)
     write_grid(STAGE4, "stage4")
-    printt("load_stage4() finished...")
+    LOG.debug("load_stage4() finished...")
 
 
 def qc_precip():
@@ -219,27 +210,27 @@ def qc_precip():
     Stage IV, then we consider it good.  If not, then we apply a multiplier to
     bring it to near the stage IV value.
     """
-    printt("qc_precip() called...")
+    LOG.debug("qc_precip() called...")
     hires_total = np.sum(PRECIP, 2)
-    printt("qc_precip() computed hires_total")
+    LOG.debug("qc_precip() computed hires_total")
     # prevent zeros
     hires_total = np.where(hires_total < 0.01, 0.01, hires_total)
-    printt("qc_precip() computed hires total and floored it to 0.01")
+    LOG.debug("qc_precip() computed hires total and floored it to 0.01")
     write_grid(hires_total, "inqcprecip")
     multiplier = STAGE4 / hires_total
-    printt("qc_precip() computed the multiplier")
+    LOG.debug("qc_precip() computed the multiplier")
 
     # Anything close to 1, set it to 1
     multiplier = np.where(
         np.logical_and(multiplier > 0.67, multiplier < 1.33), 1.0, multiplier
     )
     write_grid(multiplier, "multiplier")
-    printt("qc_precip() bounded the multiplier")
+    LOG.debug("qc_precip() bounded the multiplier")
     PRECIP[:] *= multiplier[:, :, None]
-    printt("qc_precip() 4 done")
+    LOG.debug("qc_precip() 4 done")
     PRECIP[np.isnan(PRECIP)] = 0.0
     write_grid(np.sum(PRECIP, 2), "outqcprecip")
-    printt("qc_precip() finished...")
+    LOG.debug("qc_precip() finished...")
 
 
 def _reader(arr):
@@ -262,7 +253,7 @@ def _reader(arr):
 
 def load_precip_legacy():
     """ Compute a Legacy Precip product for dates prior to 1 Jan 2014"""
-    printt("load_precip_legacy() called...")
+    LOG.debug("load_precip_legacy() called...")
     ts = 12 * 24  # 5 minute
 
     midnight = datetime.datetime(VALID.year, VALID.month, VALID.day, 12, 0)
@@ -291,7 +282,7 @@ def load_precip_legacy():
             filenames.append(fn)
             indices.append(tidx)
         else:
-            print("daily_clifile_editor missing: %s" % (fn,))
+            LOG.info("daily_clifile_editor missing: %s", fn)
 
         now += datetime.timedelta(minutes=5)
         tidx += 1
@@ -299,13 +290,13 @@ def load_precip_legacy():
     pool = Pool()
     for tidx, data in pool.imap_unordered(_reader, zip(indices, filenames)):
         m5[tidx, :, :] = data
-    printt("load_precip_legacy() finished loading N0R Composites")
+    LOG.debug("load_precip_legacy() finished loading N0R Composites")
     m5 = np.transpose(m5, (1, 2, 0)).copy()
-    printt("load_precip_legacy() transposed the data!")
+    LOG.debug("load_precip_legacy() transposed the data!")
     m5total = np.sum(m5, 2)
-    printt("load_precip_legacy() computed sum(m5)")
+    LOG.debug("load_precip_legacy() computed sum(m5)")
     wm5 = m5 / m5total[:, :, None]
-    printt("load_precip_legacy() computed weights of m5")
+    LOG.debug("load_precip_legacy() computed weights of m5")
 
     minute2 = np.arange(0, 60 * 24, 2)
     minute5 = np.arange(0, 60 * 24, 5)
@@ -326,12 +317,12 @@ def load_precip_legacy():
         for y in range(YS):
             _compute(y, x)
 
-    printt("load_precip_legacy() finished precip calculation")
+    LOG.debug("load_precip_legacy() finished precip calculation")
 
 
 def load_precip():
     """ Load the 5 minute precipitation data into our ginormus grid """
-    printt("load_precip() called...")
+    LOG.debug("load_precip() called...")
     ts = 30 * 24  # 2 minute
 
     midnight = datetime.datetime(VALID.year, VALID.month, VALID.day, 12, 0)
@@ -368,13 +359,12 @@ def load_precip():
             fns.append(fn)
         else:
             fns.append(None)
-            print("daily_clifile_editor missing: %s" % (fn,))
+            LOG.info("daily_clifile_editor missing: %s", fn)
 
         now += datetime.timedelta(minutes=2)
     if quorum > 0:
-        print(
-            ("WARNING: Failed quorum with MRMS a2m %.1f, loading legacy")
-            % (quorum,)
+        LOG.info(
+            "WARNING: Failed quorum with MRMS a2m %.1f, loading legacy", quorum
         )
         PRECIP[:] = 0
         load_precip_legacy()
@@ -393,7 +383,7 @@ def load_precip():
         tidx, data = args
         PRECIP[:, :, tidx] = np.where(data < 255, data / a2m_divisor, 0)
 
-    printt("load_precip() starting %s threads to read a2m" % (CPUCOUNT,))
+    LOG.debug("load_precip() starting %s threads to read a2m", CPUCOUNT)
     with ThreadPool(CPUCOUNT) as pool:
         for tidx, fn in enumerate(fns):
             # we ignore an hour for CDT->CST, meh
@@ -402,7 +392,7 @@ def load_precip():
             pool.apply_async(_reader, (tidx, fn), callback=_cb)
         pool.close()
         pool.join()
-    printt("load_precip() finished...")
+    LOG.debug("load_precip() finished...")
 
 
 def bpstr(ts, accum):
@@ -452,8 +442,6 @@ def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
                 ts = ZEROHOUR + datetime.timedelta(minutes=((i + 1) * 2))
             bp.append(bpstr(ts, accum))
     if accum != lastaccum:
-        # print("accum: %.5f lastaccum: %.5f lasti: %s" % (accum, lastaccum,
-        #                                                 lasti))
         if (lasti + 1) == len(ar):
             ts = ZEROHOUR.replace(hour=23, minute=59)
         else:
@@ -477,14 +465,14 @@ def myjob(row):
     data = open(fn, "r").read()
     pos = data.find(VALID.strftime("%-d\t%-m\t%Y"))
     if pos == -1:
-        print("Date find failure for %s" % (fn,))
+        LOG.info("Date find failure for %s", fn)
         return False
 
     pos2 = data[pos:].find(
         (VALID + datetime.timedelta(days=1)).strftime("%-d\t%-m\t%Y")
     )
     if pos2 == -1:
-        print("Date2 find failure for %s" % (fn,))
+        LOG.info("Date2 find failure for %s", fn)
         return False
 
     bpdata = compute_breakpoint(PRECIP[yidx, xidx, :])
@@ -516,9 +504,9 @@ def myjob(row):
 
 def write_grid(grid, fnadd=""):
     """Save off the daily precip totals for usage later in computing huc_12"""
-    printt("write_grid() called...")
+    LOG.debug("write_grid() called...")
     if fnadd != "" and not sys.stdout.isatty():
-        printt("not writting extra grid to disk")
+        LOG.debug("not writting extra grid to disk")
         return
     basedir = "/mnt/idep2/data/dailyprecip/%s" % (VALID.year,)
     if not os.path.isdir(basedir):
@@ -528,7 +516,7 @@ def write_grid(grid, fnadd=""):
         % (basedir, VALID.strftime("%Y%m%d"), fnadd, XTILE, YTILE),
         grid,
     )
-    printt("write_grid() finished...")
+    LOG.debug("write_grid() finished...")
 
 
 def precip_workflow():
@@ -555,9 +543,12 @@ def precip_workflow():
 
 def workflow():
     """ The workflow to get the weather data variables we want! """
-    printt(
-        "Domain south: %s north: %s west: %s east: %s"
-        % (MYSOUTH, MYNORTH, MYWEST, MYEAST)
+    LOG.debug(
+        "Domain south: %s north: %s west: %s east: %s",
+        MYSOUTH,
+        MYNORTH,
+        MYWEST,
+        MYEAST,
     )
     # 1. Max Temp C
     # 2. Min Temp C
@@ -569,13 +560,13 @@ def workflow():
     # 7. breakpoint precip mm
     precip_workflow()
 
-    printt("building queue")
+    LOG.debug("building queue")
     queue = []
     for yidx in range(YS):
         for xidx in range(XS):
             queue.append([xidx, yidx])
 
-    printt("starting pool")
+    LOG.debug("starting pool")
     pool = Pool(CPUCOUNT)
     sz = len(queue)
     sts = datetime.datetime.now()
@@ -589,16 +580,21 @@ def workflow():
             secs = delta.microseconds / 1000000.0 + delta.seconds
             rate = success / secs
             remaining = ((sz - i) / rate) / 3600.0
-            printt(
+            LOG.debug(
                 (
                     "%5.2fh Processed %6s/%6s/%6s [%.2f /sec] "
                     "remaining: %5.2fh"
-                )
-                % (secs / 3600.0, success, i, sz, rate, remaining)
+                ),
+                secs / 3600.0,
+                success,
+                i,
+                sz,
+                rate,
+                remaining,
             )
             lsuccess = success
     del pool
-    printt("daily_clifile_editor edited %s files..." % (success,))
+    LOG.debug("daily_clifile_editor edited %s files...", success)
 
 
 if __name__ == "__main__":
@@ -620,9 +616,10 @@ class test(unittest.TestCase):
         myjob(get_xy_from_lonlat(-91.44, 41.28))
         ets = datetime.datetime.now()
         delta = (ets - sts).total_seconds()
-        print(
-            ("Processed 1 file in %.5f secs, %.0f files per sec")
-            % (delta, 1.0 / delta)
+        LOG.info(
+            "Processed 1 file in %.5f secs, %.0f files per sec",
+            delta,
+            1.0 / delta,
         )
         self.assertTrue(1 == 0)
 
@@ -653,8 +650,8 @@ class test(unittest.TestCase):
             for b in bp:
                 tokens = b.split()
                 if float(tokens[0]) <= lastts or float(tokens[1]) <= lastaccum:
-                    print(data)
-                    print(bp)
+                    LOG.info(data)
+                    LOG.info(bp)
                     self.assertTrue(1 == 0)
                 lastts = float(tokens[0])
                 lastaccum = float(tokens[1])
