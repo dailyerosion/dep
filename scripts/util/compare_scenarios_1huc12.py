@@ -52,7 +52,7 @@ def main():
                 fpath = int(fn.split("/")[-1].split(".")[0].split("_")[1])
                 df = dep_utils.read_env(fn)
                 df["fpath"] = fpath
-                df["av_det"] = df["av_det"] * 4.163
+                df["av_det"] = df["av_det"] * 4.463
                 df["scenario"] = scenario
                 dfs.append(df)
         df = pd.concat(dfs)

@@ -26,8 +26,8 @@ def main():
     df2 = read_sql(
         """WITH data as (
     SELECT r.huc_12,
-    sum(avg_loss) * 4.163 / %s as detach,
-    sum(avg_delivery) * 4.163 / %s as delivery,
+    sum(avg_loss) * 4.463 / %s as detach,
+    sum(avg_delivery) * 4.463 / %s as delivery,
     sum(avg_runoff) / 25.4 / %s as runoff
     from results_by_huc12 r
     , huc12 h WHERE r.huc_12 = h.huc_12 and h.states ~* 'IA'

@@ -23,7 +23,7 @@ def main(argv):
     df = read_postgis(
         """
         with obs as (
-            select huc_12, sum(avg_delivery) * 4.163 as loss
+            select huc_12, sum(avg_delivery) * 4.463 as loss
             from results_by_huc12
             WHERE scenario = 0 and valid between '2014-01-01' and '2015-01-01'
             GROUP by huc_12
