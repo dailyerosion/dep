@@ -46,6 +46,7 @@ from pyiem.dep import load_scenarios
 LOG = logger()
 MISSED_SOILS = {}
 MAX_SLOPE_RATIO = 0.9
+MIN_SLOPE = 0.003
 PGCONN = get_dbconn("idep")
 cursor = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cursor2 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -263,9 +264,10 @@ def compute_aspect(x0, y0, x1, y1):
 
 def non_zero(dy, dx):
     """ Make sure slope is slightly non-zero """
-    if dx == 0:
-        return 0.00001
-    return max(0.00001, dy / dx)
+    # NB we used to have a check here that dx was non-zero, but this should
+    # never happen now.
+    # dailyerosion/dep#79 denotes some limits on WEPP precision
+    return max(MIN_SLOPE, dy / dx)
 
 
 def simplify(rows):
@@ -406,8 +408,8 @@ def do_flowpath(scenario, zone, metadata):
             continue
         if x is None:
             x = row["x"]
-        if row["slope"] < 0.00001:
-            row["slope"] = 0.00001
+        if row["slope"] < MIN_SLOPE:
+            row["slope"] = MIN_SLOPE
         rows.append(row)
 
     if x is None:
@@ -502,7 +504,9 @@ def do_flowpath(scenario, zone, metadata):
             soillengths.append(row["length"] - soilstart)
             soil = row["surgo"]
             soilstart = row["length"]
-        slpdata += " %.3f,%.5f" % (row["length"] / res["length"], row["slope"])
+        # NEED lots of precision to get grid rectifying right
+        # see dailyerosion/dep#79
+        slpdata += " %s,%.5f" % (row["length"] / res["length"], row["slope"])
 
     res["soilbreaks"] = len(soillengths) - 1
     res["soils"] = ""
