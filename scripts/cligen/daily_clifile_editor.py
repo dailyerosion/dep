@@ -76,7 +76,7 @@ def iemre_bounds_check(name, val, lower, upper):
             lower,
             upper,
         )
-        sys.exit()
+        sys.exit(3)
     return val
 
 
@@ -93,7 +93,7 @@ def load_iemre():
     fn = iemre.get_daily_ncname(VALID.year)
     if not os.path.isfile(fn):
         LOG.debug("Missing %s for load_solar, aborting", fn)
-        sys.exit()
+        sys.exit(3)
     with ncopen(fn) as nc:
         offset = iemre.daily_offset(VALID)
         lats = nc.variables["lat"][:]
@@ -187,7 +187,7 @@ def load_stage4():
         pass
     else:
         LOG.info("No StageIV data found, aborting...")
-        sys.exit()
+        sys.exit(3)
     # set a small non-zero number to keep things non-zero
     totals = np.where(totals > 0.001, totals, 0.001)
 

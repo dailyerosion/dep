@@ -58,11 +58,10 @@ def myjob(cmd):
         LOG.info(
             "CMD: %s\nSTDOUT: %s\nSTDERR: %s",
             cmd,
-            stdout.decode("ascii", "ignore"),
-            stderr.decode("ascii", "ignore"),
+            stdout.decode("ascii", "ignore").strip(),
+            stderr.decode("ascii", "ignore").strip(),
         )
-        return False
-    return True
+    return proc.returncode
 
 
 def main(argv):
@@ -85,10 +84,15 @@ def main(argv):
                 date.strftime("%Y %m %d"),
             )
             jobs.append(cmd)
+    failed = False
     with ProcessPoolExecutor(max_workers=4) as executor:
         for job, res in zip(jobs, executor.map(myjob, jobs)):
-            if not res:
-                LOG.info("job: %s returned false", job)
+            if res != 0:
+                failed = True
+                LOG.info("job: %s exited with status code %s", job, res)
+    if failed:
+        LOG.info("Aborting due to job failures")
+        sys.exit(3)
 
     assemble_grids(tilesz, date)
 
