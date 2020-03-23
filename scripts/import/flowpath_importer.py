@@ -138,6 +138,10 @@ def process_flowpath(cursor, huc12, db_fid, df):
             row2 = df.iloc[segid - 1]
         else:
             row2 = df.iloc[segid + 1]
+            if pd.isna(row2[lencolname]):
+                print("Null fpLen")
+                print(row2)
+                sys.exit()
         dy = abs(row[elevcolname] - row2[elevcolname])
         elev_change += dy
         dx = abs(row2[lencolname] - row[lencolname])
