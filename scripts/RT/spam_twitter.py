@@ -14,7 +14,7 @@ def main():
     yyyymmdd = yesterday.strftime("%Y%m%d")
     media_ids = []
     for vname in ["qc_precip", "avg_delivery"]:
-        uri = ("http://dailyerosion.local/auto/%s_%s_0_%s.png") % (
+        uri = ("http://depbackend.local/auto/%s_%s_0_%s.png") % (
             yyyymmdd,
             yyyymmdd,
             vname,

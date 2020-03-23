@@ -101,7 +101,7 @@ def workflow(hucs):
         if huc not in df.index.values:
             print("Huc: %s is unknown to DEP" % (huc,))
             continue
-        uri = "http://dailyerosion.local/auto/huc12report.py?huc=%s" % (huc,)
+        uri = "http://depbackend.local/auto/huc12report.py?huc=%s" % (huc,)
         req = requests.get(uri)
         if req.status_code != 200:
             print("Uri: %s failed with: %s" % (uri, req.status_code))
