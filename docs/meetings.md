@@ -1,6 +1,28 @@
 Daily Erosion Project Meeting Notes
 ===================================
 
+12 Mar 2020 :: DEP Planning
+-----
+
+- Dr Flanagan joined the call to provide updates and such.
+- He mentioned providing us a newer version of the WEPP source code, but it
+  turns out that it does not work the version of management files we have.
+- We discussed the cover crop issues we have seen and provided an example file.
+- IL DEM processing continues to progress
+- Will have a new set of tillage estimates for Iowa soon
+- Dr Vicky presented some excellent grid order work she is doing
+
+27 Feb 2020 :: DEP Planning
+-----
+
+- Update from Dr Sheshukow on K State activities in the gulley erosion space.
+- Gelder is progressing on pit filling, having some troubles in NE and KS.
+- Should have updated KS data for me later today or tomorrow.
+- James will have 2019 landuse data available within a few weeks.
+- May be doing more emphemerial gulley work sooner than later.
+- ACPF is chunking along and maybe some more stable funding coming to support.
+- Tillage erosion work is getting close to having empherical estimate.
+
 16 Jan 2020 :: DEP Planning
 -----
 
