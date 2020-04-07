@@ -29,7 +29,7 @@ def plot():
     )
     minx, miny, maxx, maxy = df["geom"].total_bounds
     colname = "rfactor_yr_avg"
-    df2[colname] = df2[colname] * 0.0242
+    df2[colname] = df2[colname] * 0.05876
     mp = MapPlot(
         title="DEP 2007-2019 Average R Factor Yearly Total by HUC12",
         subtitle="Min: %.1f Mean: %.1f Max: %.1f, based on daily R factor"
@@ -47,10 +47,10 @@ def plot():
         west=minx,
         east=maxx,
         projection=ccrs.PlateCarree(),
-        nocaption=True,
+        caption="Daily Erosion Project",
     )
     cmap = plt.get_cmap("YlGnBu")
-    clevs = np.arange(0, 120.1, 20.0)
+    clevs = np.arange(0, 300.1, 25.0)
     # clevs = np.arange(0, 6000.1, 1000.0)
     # clevs = np.arange(2007, 2020.1, 1)
     norm = mpcolors.BoundaryNorm(clevs, cmap.N)
@@ -64,7 +64,7 @@ def plot():
         cmap,
         norm,
         extend="neither",
-        units="ft tonf inches per acre per hour",
+        units="hundred ft tonf inches per acre per hour",
     )
     mp.postprocess(filename="test.png")
 
