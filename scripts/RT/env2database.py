@@ -26,6 +26,9 @@ LOG = logger()
 PRECIP_AFF = Affine(0.01, 0.0, dep_utils.WEST, 0.0, -0.01, dep_utils.NORTH)
 CONFIG = {"subset": False}
 
+# Maximum precip value allowed, will alert otherwise, see dailyerosion/dep#65
+PRECIP_CEILING = 750.0
+
 
 def find_huc12s(scenario):
     """yield a listing of huc12s with output!"""
@@ -161,6 +164,9 @@ def load_precip(dates, huc12s):
         i = 0
         for huc12, _ in huc12df.itertuples():
             d = res.setdefault(huc12, [])
+            if zs[i]["mean"] > PRECIP_CEILING:
+                LOG.info("%s precip %.2f > QC, zeroing", huc12, zs[i]["mean"])
+                zs[i]["mean"] = 0.0
             d.append(zs[i]["mean"])
             i += 1
     return res
