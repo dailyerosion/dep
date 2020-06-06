@@ -8,7 +8,6 @@ to.
     python flowpath_importer.py <scenario> <path to geojsons in ../../data/>
 
 """
-from __future__ import print_function
 import glob
 import os
 import sys
@@ -16,8 +15,9 @@ import sys
 from tqdm import tqdm
 import geopandas as gpd
 import pandas as pd
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconn, logger
 
+LOG = logger()
 print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")
 print(" * VERIFY that the GeoJSON is the 5070 grid value")
 print(" * This will generate a `myhucs.txt` file with found HUCs")
@@ -145,6 +145,8 @@ def process_flowpath(cursor, huc12, db_fid, df):
         dy = abs(row[elevcolname] - row2[elevcolname])
         elev_change += dy
         dx = abs(row2[lencolname] - row[lencolname])
+        if dx == 0:
+            raise Exception(f"dx is zero at segid: {segid} {row} {row2}")
         x_change += dx
         gridorder = row[gordcolname]
         if gridorder > TRUNC_GRIDORDER_AT or pd.isnull(gridorder):
@@ -209,6 +211,13 @@ def process(cursor, filename, huc12df):
     """
     # We get the huc12 code based on the filename
     huc12 = filename.split(".")[0].split("_")[-1]
+    # lencolname = "%sLen%s" % (PREFIX, huc12)
+    # res = huc12df[huc12df[lencolname] == 0].groupby(
+    #   "%s%s" % (PREFIX, huc12)).count()
+    # for _, row in res[res[lencolname] > 1].iterrows():
+    #    print(row)
+    # return
+
     delete_previous(cursor, huc12)
     # the inbound dataframe has lots of data, one row per flowpath point
     # We group the dataframe by the column which uses a PREFIX and the huc8
@@ -218,7 +227,13 @@ def process(cursor, filename, huc12df):
             continue
         # Get or create the flowpathid from the database
         db_fid = get_flowpath(cursor, huc12, flowpath_num)
-        process_flowpath(cursor, huc12, db_fid, df)
+        try:
+            process_flowpath(cursor, huc12, db_fid, df)
+        except Exception as exp:
+            LOG.info("flowpath_num: %s hit exception", flowpath_num)
+            LOG.exception(exp)
+            print(df)
+            sys.exit()
     return huc12
 
 
