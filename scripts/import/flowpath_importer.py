@@ -192,10 +192,13 @@ def process_flowpath(cursor, huc12, db_fid, df):
         cursor.execute(sql)
     else:
         # Cull our work above if this flowpath is too short
-        cursor.execute(
-            "DELETE from flowpath_points where flowpath = %s", (db_fid,)
-        )
-        cursor.execute("DELETE from flowpaths where fid = %s", (db_fid,))
+        delete_flowpath(cursor, db_fid)
+
+
+def delete_flowpath(cursor, fid):
+    """Delete the flowpath."""
+    cursor.execute("DELETE from flowpath_points where flowpath = %s", (fid,))
+    cursor.execute("DELETE from flowpaths where fid = %s", (fid,))
 
 
 def process(cursor, filename, huc12df):
@@ -232,8 +235,9 @@ def process(cursor, filename, huc12df):
         except Exception as exp:
             LOG.info("flowpath_num: %s hit exception", flowpath_num)
             LOG.exception(exp)
-            print(df)
-            sys.exit()
+            delete_flowpath(cursor, db_fid)
+            # print(df)
+            # sys.exit()
     return huc12
 
 
