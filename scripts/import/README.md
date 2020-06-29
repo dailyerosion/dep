@@ -27,6 +27,14 @@ This query finds any new HUC12s and inserts the geometry into a table.
     (select distinct huc_12 from flowpaths where huc_12 not in
     (select huc_12 from huc12 where scenario = 0) and scenario = 0);
 
+    insert into huc12
+    (states, hu_12_name, huc_8, huc_12, simple_geom, geom, scenario)
+    select states, name, substr(huc12, 1, 8), huc12,
+    ST_Transform(st_geometryn(simple_geom, 1), 5070),
+    ST_Transform(geom, 5070), 0 from wbd_huc12 where huc12 in
+    (select distinct huc_12 from flowpaths where huc_12 not in
+    (select huc_12 from huc12 where scenario = 0) and scenario = 0);
+
 We should also check that we don't have unknown tables.
 
     select distinct huc_12 from flowpaths where scenario = 0 and huc_12 not in (select huc_12 from huc12 where scenario = 0) ORDER by huc_12;
