@@ -1,14 +1,32 @@
 """Do some diagnostics on what the raw DEP files are telling us"""
-from __future__ import print_function
+import datetime
 import sys
 import glob
 
 import pandas as pd
+from pandas.io.sql import read_sql
 from pyiem import dep
+from pyiem.util import get_dbconn
+
+YEARS = datetime.date.today().year - 2007 + 1
+CONV = 4.463
+
+
+def get_lengths(huc12, scenario):
+    """Figure out our slope lengths."""
+    pgconn = get_dbconn("idep")
+    return read_sql(
+        "SELECT fpath, ST_Length(geom) as length from flowpaths "
+        "where scenario = %s and huc_12 = %s",
+        pgconn,
+        params=(scenario, huc12),
+        index_col="fpath",
+    )
 
 
 def summarize_hillslopes(huc12, scenario):
     """Print out top hillslopes"""
+    lengths = get_lengths(huc12, scenario)
     envs = glob.glob(
         "/i/%s/env/%s/%s/*.env" % (scenario, huc12[:8], huc12[8:])
     )
@@ -18,15 +36,26 @@ def summarize_hillslopes(huc12, scenario):
         df["flowpath"] = int(env.split("/")[-1].split("_")[1][:-4])
         dfs.append(df)
     df = pd.concat(dfs)
+    df = df.join(lengths, on="flowpath")
+    df["delivery_ta"] = df["sed_del"] / df["length"] * CONV / YEARS
+    flowpath = 424  # df2.index[0]
+    print(
+        df[df["flowpath"] == flowpath]
+        .groupby("year")
+        .sum()
+        .sort_index(ascending=True)
+    )
     df2 = (
-        df[["sed_del", "flowpath"]]
+        df[["delivery_ta", "flowpath"]]
         .groupby("flowpath")
         .sum()
-        .sort_values("sed_del", ascending=False)
+        .sort_values("delivery_ta", ascending=False)
     )
     print("==== TOP 5 HIGHEST SEDIMENT DELIVERY TOTALS")
     print(df2.head())
-    flowpath = df2.index[0]
+    print("==== TOP 5 LOWEST SEDIMENT DELIVERY TOTALS")
+    print(df2.tail())
+    print(df2.loc[flowpath])
     df2 = df[df["flowpath"] == flowpath].sort_values(
         "sed_del", ascending=False
     )
