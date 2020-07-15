@@ -1,4 +1,4 @@
-"""Diagnostic on HUC12 flowpath counts."""
+"""Diagnostic on HUC12 rowcrop counts."""
 
 import numpy as np
 import cartopy.crs as ccrs
@@ -15,18 +15,23 @@ def main():
     pgconn = get_dbconn("idep")
     df = read_postgis(
         """
-        select f.huc_12, count(*) as fps,
-        st_transform(h.simple_geom, 4326) as geo
-        from flowpaths f JOIN huc12 h on
-        (f.huc_12 = h.huc_12) WHERE f.scenario = 0 and h.scenario = 0 and
-        h.states ~* 'MN'
-        GROUP by f.huc_12, geo ORDER by fps ASC
+        with data as (
+            select huc_12, fpath, substr(management, 12, 1)::int as datum from
+            flowpaths f JOIN flowpath_points p on (f.fid = p.flowpath)
+            WHERE f.scenario = 0),
+        agg as (
+            select huc_12,
+            mode() WITHIN GROUP (ORDER by datum ASC) as val
+            from data GROUP by huc_12)
+        select a.huc_12, a.val as mode_management,
+        ST_Transform(h.simple_geom, 4326) as geo from agg a JOIN huc12 h on
+        (a.huc_12 = h.huc_12) where h.scenario = 0 and h.states = 'MN'
     """,
         pgconn,
-        index_col=None,
+        index_col="huc_12",
         geom_col="geo",
     )
-    bins = [1, 5, 10, 15, 20, 25, 30, 35, 40]
+    bins = [0, 1, 2, 3, 4, 5]
     cmap = plt.get_cmap("copper")
     cmap.set_over("white")
     cmap.set_under("thistle")
@@ -37,18 +42,18 @@ def main():
         sector="state",
         state="MN",
         caption="Daily Erosion Project",
-        title="Minnesota DEP HUC12 Flowpath Counts",
-        subtitle=(
-            "Number of HUC12s with <40 Flowpaths (%.0f/%.0f %.2f%%)"
-            % (
-                len(df[df["fps"] < 40].index),
-                len(df.index),
-                len(df[df["fps"] < 40].index) / len(df.index) * 100.0,
-            )
-        ),
+        title="Minnesota DEP HUC12 Mode of Tillage Class",
+        # subtitle=(
+        #    "Number of HUC12s with <40%% Row Crop (%.0f/%.0f %.2f%%)"
+        #    % (
+        #        len(df[df["ag"] < 40].index),
+        #        len(df.index),
+        #        len(df[df["ag"] < 40].index) / len(df.index) * 100.0,
+        #    )
+        # ),
     )
     for _i, row in df.iterrows():
-        c = cmap(norm([row["fps"]]))[0]
+        c = cmap(norm([row["mode_management"]]))[0]
         arr = np.asarray(row["geo"].exterior)
         points = mp.ax.projection.transform_points(
             ccrs.Geodetic(), arr[:, 0], arr[:, 1]
@@ -56,8 +61,8 @@ def main():
         p = Polygon(points[:, :2], fc=c, ec="None", zorder=2, lw=0.1)
         mp.ax.add_patch(p)
     mp.drawcounties()
-    mp.draw_colorbar(bins, cmap, norm, extend="max", title="Count")
-    mp.postprocess(filename="/tmp/huc12_cnts.png")
+    mp.draw_colorbar(bins, cmap, norm, extend="neither", title="Class")
+    mp.postprocess(filename="/tmp/huc12_tillage.png")
 
     # gdf = df.groupby('fps').count()
     # gdf.columns = ['count', ]
