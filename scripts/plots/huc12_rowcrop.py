@@ -6,6 +6,7 @@ from matplotlib.patches import Polygon
 import matplotlib.colors as mpcolors
 from geopandas import read_postgis
 from pyiem.util import get_dbconn
+from pyiem.plot import get_cmap
 from pyiem.plot.use_agg import plt
 from pyiem.plot.geoplot import MapPlot
 
@@ -32,7 +33,7 @@ def main():
         geom_col="geo",
     )
     bins = [1, 10, 25, 50, 75, 90, 100]
-    cmap = plt.get_cmap("copper")
+    cmap = get_cmap("copper")
     cmap.set_over("red")
     cmap.set_under("thistle")
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
@@ -61,7 +62,7 @@ def main():
         p = Polygon(points[:, :2], fc=c, ec="None", zorder=2, lw=0.1)
         mp.ax.add_patch(p)
     mp.drawcounties()
-    mp.draw_colorbar(bins, cmap, norm, extend="max", title="Count")
+    mp.draw_colorbar(bins, cmap, norm, extend="max", title="Percent")
     mp.postprocess(filename="/tmp/huc12_agland.png")
 
     # gdf = df.groupby('fps').count()
