@@ -53,14 +53,18 @@ def main():
         genv2019 = (
             env2019.groupby(by=["key", "month"]).sum().groupby("month").mean()
         )
-        for month in range(1, 10):  # ran on Oct 6th
+        for month in range(1, 13):
+            if month not in genv2019.index.values:
+                continue
             mdf = genv2019.loc[month]
+            label = month_abbr[month].lower()
             for col in ["delivery", "precip", "runoff"]:
-                res[f"{col}_{year}_{month_abbr[month]}"] = float(mdf[col])
+                res[f"{col}_{year}_{label}"] = float(mdf[col])
         result.append(res)
 
     # Dump out
     df = pd.DataFrame(result)
+    df = df.fillna(0)
     df.to_csv("dep_data.csv", index=False, float_format="%.4f")
 
 
