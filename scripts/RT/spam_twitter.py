@@ -2,12 +2,17 @@
 import datetime
 from io import BytesIO
 
-import requests
 from pyiem import util
+import requests
+
+LOG = util.logger()
 
 
 def main():
     """Do Wonderful things"""
+    if datetime.date.today().month < 4 or datetime.date.today().month > 10:
+        LOG.info("Tweeting disabled Nov-Mar")
+        return
     twitter = util.get_twitter("dailyerosion")
     # assume we run for yesterday
     yesterday = datetime.date.today() - datetime.timedelta(days=1)
