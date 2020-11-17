@@ -74,7 +74,7 @@ def get_data(filename):
     """
     df = gpd.read_file(filename, index="OBJECTID")
     snapdf = gpd.read_file(
-        filename.replace("smpl3m", "snaps3m"), index="OBJECTID"
+        filename.replace("smpldef3m", "snaps3m"), index="OBJECTID"
     )
     # Compute full rotation string
     # OK, be careful here. Presently, the 8 char field covers
@@ -116,7 +116,7 @@ def delete_previous(cursor, huc12):
     )
 
 
-def truncation_logic(df, snappt, lencolname):
+def truncation_logic(df, snappt, lencolname, gordcolname, elevcolname):
     """Figure out where to stop this flowpath."""
     df["distance"] = df["geometry"].distance(snappt["geometry"])
     # 91 gully head
@@ -125,6 +125,12 @@ def truncation_logic(df, snappt, lencolname):
     # 100 Gulley Head -20m
     # 101 Gulley Head +20m
     offsets = {91: 0, 98: -10, 99: 10, 100: -20, 101: 20}
+    # 93 Gorder 2
+    # 94 Gorder 3
+    # 95 Gorder 4
+    # 96 Gorder 5
+    # 97 Gorder 6
+    gords = {93: 2, 94: 3, 95: 4, 96: 5, 97: 6}
     if SCENARIO in offsets:
         # Find Gulley head row
         gulleyhead = df[df["distance"] < 0.01].iloc[0]
@@ -132,19 +138,28 @@ def truncation_logic(df, snappt, lencolname):
         # What's the threshold this scenario mandates (in cm)
         fplen = gulleyhead[lencolname] + offsets[SCENARIO] * 100.0
         df = df[df[lencolname] <= fplen]
-        # This could be less than zero, gasp!
-        if df.empty:
-            print("TODO: account for truncation before flowpath")
-            print(df)
-            sys.exit()
-
+    elif SCENARIO in gords:
+        df = df[df["grid_order"] < gords[SCENARIO]]
     # 92 Dynamic 3-4
-    # 93 Gorder 2
-    # 94 Gorder 3
-    # 95 Gorder 4
-    # 96 Gorder 5
-    # 97 Gorder 6
+    elif SCENARIO == 92:
+        # Check the slope at the GORDER 3 to 4 transition, if > 10% stop
+        # else go to GORDER 4
+        df2 = df[df[gordcolname] < 3]
+        # A quick jumper to 3
+        if len(df2.index) == 1:
+            df2 = df.iloc[:2]
+        dx = df2[lencolname].values[-1] - df2[lencolname].values[-2]
+        dy = df2[elevcolname].values[-2] - df2[elevcolname].values[-1]
+        slope = dy / dx
+        if slope < 0.1:
+            df = df[df[gordcolname] < 4]
+        else:
+            df = df2
 
+    if df.empty:
+        print("TODO: account for truncation before flowpath")
+        print(df)
+        sys.exit()
     return df
 
 
@@ -165,7 +180,9 @@ def process_flowpath(cursor, huc12, db_fid, df, snappt):
     maxslope = 0
     elev_change = 0
     x_change = 0
-    truncated_df = truncation_logic(df, snappt, lencolname)
+    truncated_df = truncation_logic(
+        df, snappt, lencolname, gordcolname, elevcolname
+    )
     for segid, (_, row) in enumerate(truncated_df.iterrows()):
         if (segid + 1) == sz:  # Last row!
             # This effectively repeats the slope of the previous point
@@ -257,7 +274,6 @@ def process(cursor, filename, huc12df, snapdf):
     # the inbound dataframe has lots of data, one row per flowpath point
     # We group the dataframe by the column which uses a PREFIX and the huc8
     for flowpath_num, df in huc12df.groupby("%s%s" % (PREFIX, huc12)):
-        print(flowpath_num)
         snappt = snapdf[snapdf["grid_code"] == flowpath_num].iloc[0]
         # These are upstream errors I should ignore
         if flowpath_num == 0 or len(df.index) < 2:
@@ -283,7 +299,7 @@ def main():
         # Change the working directory to where we have data files
         os.chdir("../../data/%s" % (sys.argv[2],))
         # collect up the GeoJSONs in that directory
-        fns = glob.glob("smpl3m_*.json")
+        fns = glob.glob("smpldef3m_*.json")
         fns.sort()
         i = 0
 
