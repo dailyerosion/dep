@@ -2,11 +2,13 @@
 import os
 import sys
 
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconn, logger
 from pyiem.dep import get_cli_fname
 
+LOG = logger()
 
-def finder(lon, lat):
+
+def finder(lon, lat, clscenario):
     """The logic of finding a file."""
     # https://stackoverflow.com/questions/398299/looping-in-a-spiral
     x = y = 0
@@ -17,7 +19,7 @@ def finder(lon, lat):
     Y = 40
     for _ in range(40 ** 2):
         if (-X / 2 < x <= X / 2) and (-Y / 2 < y <= Y / 2):
-            newfn = get_cli_fname(lon + x * 0.01, lat + y * 0.01)
+            newfn = get_cli_fname(lon + x * 0.01, lat + y * 0.01, clscenario)
             if os.path.isfile(newfn):
                 return newfn, x, y
         if x == y or (x < 0 and x == -y) or (x > 0 and x == 1 - y):
@@ -28,17 +30,26 @@ def finder(lon, lat):
 
 def main(argv):
     """Go Main Go."""
+    scenario = 0 if len(argv) == 1 else int(argv[1])
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
+    # This given scenario may use a different climate scenario's files.
     cursor.execute(
-        """
-        SELECT climate_file, fid from flowpaths where scenario = %s
-    """,
-        (0 if len(argv) == 1 else int(argv[1]),),
+        "SELECT climate_scenario from scenarios where id = %s", (scenario,)
+    )
+    clscenario = cursor.fetchone()[0]
+    LOG.info("DEP scenario: %s uses clscenario: %s", scenario, clscenario)
+
+    cursor.execute(
+        "SELECT climate_file, fid from flowpaths where scenario = %s",
+        (scenario,),
     )
     created = 0
     for row in cursor:
         fn = row[0]
+        if fn is None:
+            LOG.error("FATAL, found null climate_file, run assign first")
+            return
         if os.path.isfile(fn):
             continue
         created += 1
@@ -46,18 +57,21 @@ def main(argv):
         lon, lat = fn.split("/")[-1][:-4].split("x")
         lon = 0 - float(lon)
         lat = float(lat)
-        newfn, xoff, yoff = finder(lon, lat)
-        if newfn is None:
-            print("missing %s for fid: %s " % (fn, row[1]))
+        copyfn, xoff, yoff = finder(lon, lat, clscenario)
+        if copyfn is None:
+            LOG.info("missing %s for fid: %s ", fn, row[1])
             sys.exit()
-        print("%s -> %s xoff: %s yoff: %s" % (newfn, fn, xoff, yoff))
-        os.system("cp %s %s" % (newfn, fn))
-    print("added %s files" % (created,))
+        LOG.info("%s -> %s xoff: %s yoff: %s", copyfn, fn, xoff, yoff)
+        mydir = os.path.basename(fn)
+        if not os.path.isdir(mydir):
+            os.makedirs(mydir)
+        os.system("cp %s %s" % (copyfn, fn))
+    LOG.info("added %s files", created)
 
 
 def test_finder():
     """Test what our finder does."""
-    finder(-95.0, 42.0)
+    finder(-95.0, 42.0, 0)
     assert False
 
 
