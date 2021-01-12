@@ -87,11 +87,25 @@ def get_data(filename):
     # 2020 2018[6]
     s = df["CropRotatn_CY_2017"]
     df["landuse"] = (
-        s.str[1] + s.str[0] + s.str[1] + s + s.str[6] + s.str[7] + s.str[6]
+        s.str[1]
+        + s.str[0]
+        + s.str[1]
+        + s
+        + s.str[6]
+        + s.str[7]
+        + s.str[6]
+        + s.str[7]
     )
     s = df["Management_CY_2017"]
     df["management"] = (
-        s.str[1] + s.str[0] + s.str[1] + s + s.str[6] + s.str[7] + s.str[6]
+        s.str[1]
+        + s.str[0]
+        + s.str[1]
+        + s
+        + s.str[6]
+        + s.str[7]
+        + s.str[6]
+        + s.str[7]
     )
     return df, snapdf
 
@@ -132,8 +146,14 @@ def truncation_logic(df, snappt, lencolname, gordcolname, elevcolname):
     # 97 Gorder 6
     gords = {93: 2, 94: 3, 95: 4, 96: 5, 97: 6}
     if SCENARIO in offsets:
-        # Find Gulley head row
-        gulleyhead = df[df["distance"] < 0.01].iloc[0]
+        # Find Gulley head row, the value 9 is arb to account for a quirk
+        # with one of the HUC12s
+        df2 = df[df["distance"] < 9]
+        if df2.empty:
+            print(f"Min distance is {df['distance'].min()}")
+            raise Exception("failed to find closest point to flowpath")
+        df2 = df2.sort_values("distance", ascending=True)
+        gulleyhead = df2.iloc[0]
         # What is the distance along the flowpath this is
         # What's the threshold this scenario mandates (in cm)
         fplen = gulleyhead[lencolname] + offsets[SCENARIO] * 100.0
@@ -183,7 +203,7 @@ def process_flowpath(cursor, huc12, db_fid, df, snappt):
     truncated_df = truncation_logic(
         df, snappt, lencolname, gordcolname, elevcolname
     )
-    for segid, (_, row) in enumerate(truncated_df.iterrows()):
+    for segid, (idx, row) in enumerate(truncated_df.iterrows()):
         if (segid + 1) == sz:  # Last row!
             # This effectively repeats the slope of the previous point
             row2 = df.iloc[segid - 1]
@@ -197,7 +217,11 @@ def process_flowpath(cursor, huc12, db_fid, df, snappt):
         elev_change += dy
         dx = abs(row2[lencolname] - row[lencolname])
         if dx == 0:
-            raise Exception(f"dx is zero at segid: {segid}\n\n{row}\n\n{row2}")
+            print(huc12)
+            print(
+                df[["OBJECTID", elevcolname, lencolname, gordcolname]].head(10)
+            )
+            sys.exit()
         x_change += dx
         gridorder = row[gordcolname]
         slope = dy / dx
@@ -283,11 +307,13 @@ def process(cursor, filename, huc12df, snapdf):
         try:
             process_flowpath(cursor, huc12, db_fid, df, snappt)
         except Exception as exp:
-            LOG.info("flowpath_num: %s hit exception", flowpath_num)
+            LOG.info(
+                "huc12: %s flowpath_num: %s hit exception", huc12, flowpath_num
+            )
             LOG.exception(exp)
             delete_flowpath(cursor, db_fid)
             print(df)
-            sys.exit()
+            # sys.exit()
     return huc12
 
 
