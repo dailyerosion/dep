@@ -186,7 +186,7 @@ def do_rotation(scenario, zone, rotfn, landuse, management):
     f = partial(read_file, scenario, zone)
     # 2007
     data["year1"] = f(prevcode, landuse[0], int(management[0]), 1)
-    for i in range(1, 14):
+    for i in range(1, 15):
         data["year%s" % (i + 1,)] = f(
             landuse[i - 1], landuse[i], int(management[i]), i + 1
         )
@@ -221,6 +221,7 @@ Operations {
 %(year12)s
 %(year13)s
 %(year14)s
+%(year15)s
 }
 """
             % data
@@ -619,7 +620,7 @@ RunOptions {
    SoilLossOutputType = 1
    EventFile = "%(envfn)s"
    WaterBalanceFile = "test.wb"
-   SimulationYears = 14
+   SimulationYears = 15
    SmallEventByPass = 1
 }
 """

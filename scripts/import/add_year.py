@@ -12,9 +12,9 @@ def main():
     cursor.execute(
         """
         UPDATE flowpath_points SET
-        landuse = landuse || substr(landuse, 12, 1),
-        management = management || substr(management, 12, 1)
-        where length(landuse) = 13
+        landuse = landuse || substr(landuse, 13, 1),
+        management = management || substr(management, 13, 1)
+        where length(landuse) = 14
     """
     )
     LOG.info("updated %s rows", cursor.rowcount)

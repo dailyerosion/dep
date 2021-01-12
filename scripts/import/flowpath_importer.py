@@ -86,11 +86,25 @@ def get_data(filename):
     # 2020 2018[6]
     s = df["CropRotatn_CY_2017"]
     df["landuse"] = (
-        s.str[1] + s.str[0] + s.str[1] + s + s.str[6] + s.str[7] + s.str[6]
+        s.str[1]
+        + s.str[0]
+        + s.str[1]
+        + s
+        + s.str[6]
+        + s.str[7]
+        + s.str[6]
+        + s.str[7]
     )
     s = df["Management_CY_2017"]
     df["management"] = (
-        s.str[1] + s.str[0] + s.str[1] + s + s.str[6] + s.str[7] + s.str[6]
+        s.str[1]
+        + s.str[0]
+        + s.str[1]
+        + s
+        + s.str[6]
+        + s.str[7]
+        + s.str[6]
+        + s.str[7]
     )
     return df
 
