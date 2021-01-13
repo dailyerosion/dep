@@ -160,19 +160,19 @@ def realtime_run(config, scenario):
     idep = get_dbconn("idep", user="nobody")
     icursor = idep.cursor()
 
-    # LOGIC here is too brittle
-    # cliscenario = "/i/%s/cli/" % (config['climate_scenario'], )
     icursor.execute(
-        """
-        SELECT huc_12, fpath, climate_file
-        from flowpaths where scenario = %s
-    """
-        % (config["flowpath_scenario"],)
+        "SELECT huc_12, fpath, climate_file from flowpaths "
+        "where scenario = %s",
+        (int(config["flowpath_scenario"]),),
     )
     queue = []
 
+    clscenario = int(config["climate_scenario"])
     for row in icursor:
-        queue.append([row[0], row[1], row[2]])
+        clifile = row[2]
+        if clscenario != 0:
+            clifile = clifile.replace("/0/", f"/{clscenario}/")
+        queue.append([row[0], row[1], clifile])
     return queue
 
 
