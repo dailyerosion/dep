@@ -34,7 +34,7 @@ def get_wind_obs(date, lon, lat):
     hourly = []
     for entry in res["data"]:
         try:
-            vel = (entry["uwnd"] ** 2 + entry["vwnd"] ** 2) ** 0.5
+            vel = (entry["uwnd_mps"] ** 2 + entry["vwnd_mps"] ** 2) ** 0.5
         except Exception:
             vel = 1.0
         hourly.append(vel)
