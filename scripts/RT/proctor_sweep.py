@@ -1,6 +1,13 @@
 """Proctor script for running the SWEEP model.
 
 See dailyerosion/dep#36 for generally more details.
+
+I looked at the measured data again, and realized that a better date would
+be June 1 or June 2, 2018; or potentially June 10, 2018.
+
+The lat-long for the site is:
+Latitude: 46.78
+Longitude: -100.95
 """
 import argparse
 import sys
@@ -73,7 +80,7 @@ def workflow(arg):
             for i in range(4):
                 sl = slice(i * 6, (i + 1) * 6)
                 lines[linenum + i] = (
-                    " ".join([str(x) for x in windobs[sl]]) + "\n"
+                    " ".join([str(round(x, 2)) for x in windobs[sl]]) + "\n"
                 )
             break
     with open(sweepinfn, "w") as fh:

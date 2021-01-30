@@ -159,7 +159,15 @@ def truncation_logic(df, snappt, lencolname, gordcolname, elevcolname):
         fplen = gulleyhead[lencolname] + offsets[SCENARIO] * 100.0
         df = df[df[lencolname] <= fplen]
     elif SCENARIO in gords:
-        df = df[df["grid_order"] < gords[SCENARIO]]
+        if df[gordcolname].min() != 1:
+            LOG.info(
+                "%s flowpath %s gridorder min is not 1, but %s, aborting",
+                elevcolname.replace("ep3m", ""),
+                df[elevcolname.replace("ep3m", "fp")].values[0],
+                df[gordcolname].min(),
+            )
+            sys.exit()
+        df = df[df[gordcolname] < gords[SCENARIO]]
     # 92 Dynamic 3-4
     elif SCENARIO == 92:
         # Check the slope at the GORDER 3 to 4 transition, if > 10% stop
@@ -203,7 +211,7 @@ def process_flowpath(cursor, huc12, db_fid, df, snappt):
     truncated_df = truncation_logic(
         df, snappt, lencolname, gordcolname, elevcolname
     )
-    for segid, (idx, row) in enumerate(truncated_df.iterrows()):
+    for segid, (_idx, row) in enumerate(truncated_df.iterrows()):
         if (segid + 1) == sz:  # Last row!
             # This effectively repeats the slope of the previous point
             row2 = df.iloc[segid - 1]
@@ -286,7 +294,7 @@ def process(cursor, filename, huc12df, snapdf):
       None
     """
     # We get the huc12 code based on the filename
-    huc12 = filename.split(".")[0].split("_")[-1]
+    huc12 = filename.split(".")[0].split("_")[-1][-12:]
     # lencolname = "%sLen%s" % (PREFIX, huc12)
     # res = huc12df[huc12df[lencolname] == 0].groupby(
     #   "%s%s" % (PREFIX, huc12)).count()
@@ -297,7 +305,7 @@ def process(cursor, filename, huc12df, snapdf):
     delete_previous(cursor, huc12)
     # the inbound dataframe has lots of data, one row per flowpath point
     # We group the dataframe by the column which uses a PREFIX and the huc8
-    for flowpath_num, df in huc12df.groupby("%s%s" % (PREFIX, huc12)):
+    for flowpath_num, df in huc12df.groupby(f"fp{huc12}"):
         snappt = snapdf[snapdf["grid_code"] == flowpath_num].iloc[0]
         # These are upstream errors I should ignore
         if flowpath_num == 0 or len(df.index) < 2:
@@ -313,7 +321,8 @@ def process(cursor, filename, huc12df, snapdf):
             LOG.exception(exp)
             delete_flowpath(cursor, db_fid)
             print(df)
-            # sys.exit()
+            print(df[[f"gord_{huc12}", f"fpLen{huc12}"]])
+            sys.exit()
     return huc12
 
 
@@ -344,6 +353,7 @@ def main():
     # Commit the database changes
     cursor.close()
     PGCONN.commit()
+    LOG.info("Complete.")
 
 
 if __name__ == "__main__":
