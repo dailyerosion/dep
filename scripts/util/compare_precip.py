@@ -1,12 +1,12 @@
+"""Something precip related."""
 import datetime
 
 import pandas as pd
 from pandas.io.sql import read_sql
 import matplotlib.pyplot as plt
-from pyiem.datatypes import distance
 from pyiem.network import Table as NetworkTable
 from pyiem.plot import MapPlot
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconn, mm2inch
 
 
 def two(year):
@@ -55,17 +55,15 @@ def two(year):
         val = icursor.fetchone()[0]
         if val is None:
             continue
-        iprecip = distance(val, "MM").value("IN")
         rows.append(
             dict(
                 station=station,
                 precip=precip,
-                iprecip=iprecip,
+                iprecip=mm2inch(val),
                 lat=lat,
                 lon=lon,
             )
         )
-        # print("%s %s %5.2f %5.2f" % (station, huc12, precip, iprecip))
     df = pd.DataFrame(rows)
     df["diff"] = df["iprecip"] - df["precip"]
     bias = df["diff"].mean()
@@ -75,9 +73,7 @@ def two(year):
     )
     m = MapPlot(
         title=("%s IDEP Precipitation minus IEM Climodat (inch)") % (year,),
-        subtitle=(
-            "HUC12 Average minus point observation, " "Overall bias: %.2f"
-        )
+        subtitle=("HUC12 Average minus point observation, Overall bias: %.2f")
         % (bias,),
         axisbg="white",
     )
@@ -98,6 +94,7 @@ def two(year):
 
 
 def one():
+    """One."""
     iem = get_dbconn("iem")
 
     idep = get_dbconn("idep")
@@ -117,8 +114,7 @@ def one():
     # Get idep
     # Due to join issues, we hardcode the huc12 count
     icursor.execute(
-        """SELECT count(*) from huc12 where states = 'IA'
-    and scenario =0"""
+        "SELECT count(*) from huc12 where states = 'IA' and scenario =0"
     )
     huccount = icursor.fetchone()[0]
     df2 = read_sql(

@@ -1,26 +1,18 @@
 """General HUC12 mapper"""
-from __future__ import print_function
-
-import datetime
-import sys
-
-from pyiem.plot.use_agg import plt
-from pyiem.plot import MapPlot, nwsprecip
+# third party
+from pyiem.plot import MapPlot
 from pyiem.util import get_dbconn
 from geopandas import read_postgis
-from shapely.wkb import loads
 import numpy as np
 import cartopy.crs as ccrs
 from matplotlib.patches import Polygon
-import matplotlib.colors as mpcolors
 
 MYHUCS = [x.strip() for x in open("myhucs.txt").readlines()]
 
 
-def main(argv):
+def main():
     """Do Great Things"""
     pgconn = get_dbconn("idep")
-    cursor = pgconn.cursor()
 
     mp = MapPlot(
         continentalcolor="#EEEEEE",
@@ -51,10 +43,8 @@ def main(argv):
             mp.ax.add_patch(p)
 
     df = read_postgis(
-        """
-        select huc_12, ST_transform(geom, 4326) as geom from huc12
-        where huc_12 in %s and scenario = 0
-    """,
+        "select huc_12, ST_transform(geom, 4326) as geom from huc12 "
+        "where huc_12 in %s and scenario = 0",
         pgconn,
         params=(tuple(MYHUCS),),
         geom_col="geom",
@@ -73,4 +63,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()

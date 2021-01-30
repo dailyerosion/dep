@@ -1,11 +1,12 @@
 """Suck in the yield data!"""
-from __future__ import print_function
+# stdlib
 import sys
 import datetime
 import os
 import multiprocessing
 from io import StringIO
 
+# third party
 import pandas as pd
 from tqdm import tqdm
 from pyiem.dep import read_yld
@@ -79,10 +80,8 @@ def main(argv):
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     cursor.execute(
-        """
-        DELETE from harvest WHERE scenario = %s
-        and valid >= %s and valid <= %s
-    """,
+        "DELETE from harvest WHERE scenario = %s "
+        "and valid >= %s and valid <= %s",
         (scenario, datetime.date(year, 1, 1), datetime.date(year, 12, 31)),
     )
     print("  + Deleted %s rows" % (cursor.rowcount,))

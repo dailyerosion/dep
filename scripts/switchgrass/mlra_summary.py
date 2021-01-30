@@ -1,11 +1,8 @@
 """Summarize for MLRA, somehow"""
-import sys
 
+# third party
 from pandas.io.sql import read_sql
-import matplotlib
-
-matplotlib.use("agg")
-import matplotlib.pyplot as plt
+from pyiem.plot.use_agg import plt
 from pyiem.util import get_dbconn
 
 LABELS = {
@@ -23,9 +20,7 @@ def main(argv):
     fig, ax = plt.subplots(3, 3, figsize=(12, 6))
 
     mlraxref = read_sql(
-        """
-    select distinct mlra_id, mlra_name from mlra
-    """,
+        "select distinct mlra_id, mlra_name from mlra",
         pgconn,
         index_col="mlra_id",
     )

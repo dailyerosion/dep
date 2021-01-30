@@ -31,10 +31,7 @@ def main(argv):
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     cursor.execute(
-        """
-        SELECT distinct huc_12 from flowpaths
-        WHERE scenario = %s
-    """,
+        "SELECT distinct huc_12 from flowpaths WHERE scenario = %s",
         (int(sdf.at[scenario, "huc12_scenario"]),),
     )
     added = 0

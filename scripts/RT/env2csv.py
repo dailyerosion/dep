@@ -1,9 +1,11 @@
 """Dump a days worth of output to file."""
-from __future__ import print_function
+# stdlib
 import os
 import datetime
 from multiprocessing import Pool
 import sys
+
+# third party
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -140,10 +142,8 @@ def load_lengths(scenario):
     icursor = idep.cursor()
     res = {}
     icursor.execute(
-        """
-        SELECT huc_12, fpath, ST_Length(geom) from flowpaths where
-        scenario = %s
-    """,
+        "SELECT huc_12, fpath, ST_Length(geom) from flowpaths where "
+        "scenario = %s",
         (int(sdf.loc[scenario, "flowpath_scenario"]),),
     )
     for row in icursor:

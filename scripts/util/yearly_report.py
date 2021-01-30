@@ -1,5 +1,4 @@
 """Generate a report for the yearly DEP totals"""
-from __future__ import print_function
 import sys
 import datetime
 

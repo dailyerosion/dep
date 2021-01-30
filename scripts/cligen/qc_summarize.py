@@ -1,5 +1,4 @@
 """Need something that prints diagnostics of our climate file"""
-from __future__ import print_function
 import sys
 import datetime
 
@@ -8,9 +7,9 @@ import netCDF4
 import pytz
 import pandas as pd
 import requests
-from pyiem.datatypes import distance, temperature
 from pyiem.dep import read_cli
 from pyiem.iemre import hourly_offset
+from pyiem.util import c2f, mm2inch
 
 
 def compute_stage4(lon, lat, year):
@@ -24,7 +23,7 @@ def compute_stage4(lon, lat, year):
         ("Computed stage4 nclon:%.2f nclat:%.2f yidx:%s xidx:%s ")
         % (lons[yidx, xidx], lats[yidx, xidx], yidx, xidx)
     )
-    p01i = distance(nc.variables["p01m"][:, yidx, xidx], "MM").value("IN")
+    p01i = mm2inch(nc.variables["p01m"][:, yidx, xidx])
     nc.close()
     df = pd.DataFrame(
         {"precip": 0.0},
@@ -72,9 +71,9 @@ def do_qc(fn, df, year):
             ("%s | %6.2f | %7.2f | %7.2f | %6i | %6i | %6.0f")
             % (
                 _year,
-                distance(gdf["pcpn"].sum(), "MM").value("IN"),
-                distance(gdf["maxr"].max(), "MM").value("IN"),
-                distance(gdf["pcpn"].max(), "MM").value("IN"),
+                mm2inch(gdf["pcpn"].sum()),
+                mm2inch(gdf["maxr"].max()),
+                mm2inch(gdf["pcpn"].max()),
                 len(gdf[gdf["pcpn"] > 0].index),
                 len(gdf[gdf["maxr"] > 25.4].index),
                 gdf["rad"].mean(),
@@ -93,15 +92,15 @@ def do_qc(fn, df, year):
             ("%s | %6.2f | %6.2f | %3i")
             % (
                 _year,
-                temperature(gdf["tmax"].mean(), "C").value("F"),
-                temperature(gdf["tmin"].mean(), "C").value("F"),
+                c2f(gdf["tmax"].mean()),
+                c2f(gdf["tmin"].mean()),
                 len(gdf[gdf["tmax"] > 37.7].index),
             )
         )
 
     monthly = df[df.index.year == year]["pcpn"].resample("M").sum().copy()
     monthly = pd.DataFrame(
-        {"dep": distance(monthly.values, "MM").value("IN")}, index=range(1, 13)
+        {"dep": mm2inch(monthly.values)}, index=range(1, 13)
     )
 
     # Get prism, for a bulk comparison
@@ -222,7 +221,7 @@ def main(argv):
     fn = argv[1]
     year = int(argv[2])
     df = read_cli(fn)
-    df["pcpn_in"] = distance(df["pcpn"].values, "MM").value("IN")
+    df["pcpn_in"] = mm2inch(df["pcpn"].values)
     do_qc(fn, df, year)
 
 

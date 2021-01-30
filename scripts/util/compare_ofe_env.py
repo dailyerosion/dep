@@ -1,5 +1,4 @@
 """Get some things straight in my head about these OFE files"""
-from __future__ import print_function
 from pyiem.dep import read_env, read_ofe
 
 

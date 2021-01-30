@@ -2,7 +2,6 @@
 
 See work related to github issue akrherz/dep#41
 """
-from __future__ import print_function
 import os
 
 

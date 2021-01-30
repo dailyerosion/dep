@@ -48,18 +48,14 @@ def get_flowpath(cursor, huc12, fpath):
       int the value of this huc12 flowpath
     """
     cursor.execute(
-        """
-        SELECT fid from flowpaths where huc_12 = %s and fpath = %s
-        and scenario = %s
-    """,
+        "SELECT fid from flowpaths where huc_12 = %s and fpath = %s "
+        "and scenario = %s",
         (huc12, fpath, SCENARIO),
     )
     if cursor.rowcount == 0:
         cursor.execute(
-            """
-            INSERT into flowpaths(huc_12, fpath, scenario)
-            values (%s, %s, %s) RETURNING fid
-        """,
+            "INSERT into flowpaths(huc_12, fpath, scenario) "
+            "values (%s, %s, %s) RETURNING fid",
             (huc12, fpath, SCENARIO),
         )
     return cursor.fetchone()[0]
@@ -110,8 +106,7 @@ def get_data(filename):
 
 
 def delete_previous(cursor, huc12):
-    """This file is the authority for the HUC12, so we cull previous content.
-    """
+    """This file is the authority for the HUC12, so we cull previous content."""
     cursor.execute(
         """
         DELETE from flowpath_points p USING flowpaths f WHERE
@@ -121,10 +116,7 @@ def delete_previous(cursor, huc12):
         (SCENARIO, huc12, SCENARIO),
     )
     cursor.execute(
-        """
-        DELETE from flowpaths WHERE
-        scenario = %s and huc_12 = %s
-    """,
+        "DELETE from flowpaths WHERE scenario = %s and huc_12 = %s",
         (SCENARIO, huc12),
     )
 

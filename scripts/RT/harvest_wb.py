@@ -1,5 +1,4 @@
 """Collect the water balance for a given today"""
-from __future__ import print_function
 import os
 import datetime
 import multiprocessing

@@ -1,5 +1,4 @@
 """Dump some monthly data"""
-from __future__ import print_function
 
 from pandas.io.sql import read_sql
 from pyiem.util import get_dbconn

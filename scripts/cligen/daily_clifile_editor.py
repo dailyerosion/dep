@@ -21,9 +21,8 @@ import pytz
 from scipy.interpolate import NearestNDInterpolator
 from PIL import Image
 from pyiem import iemre
-from pyiem.datatypes import temperature
 from pyiem.dep import SOUTH, WEST, NORTH, EAST, get_cli_fname
-from pyiem.util import ncopen, logger
+from pyiem.util import ncopen, logger, convert_value
 
 LOG = logger()
 XTILE = int(sys.argv[1])
@@ -108,24 +107,24 @@ def load_iemre():
         )
         SOLAR[:] = iemre_bounds_check("rsds", nn(xi, yi), 0, 1000)
 
-        data = temperature(nc.variables["high_tmpk"][offset, :, :], "K").value(
-            "C"
+        data = convert_value(
+            nc.variables["high_tmpk"][offset, :, :], "degK", "degC"
         )
         nn = NearestNDInterpolator(
             (np.ravel(lons), np.ravel(lats)), np.ravel(data)
         )
         HIGH_TEMP[:] = iemre_bounds_check("high_tmpk", nn(xi, yi), -60, 60)
 
-        data = temperature(nc.variables["low_tmpk"][offset, :, :], "K").value(
-            "C"
+        data = convert_value(
+            nc.variables["low_tmpk"][offset, :, :], "degK", "degC"
         )
         nn = NearestNDInterpolator(
             (np.ravel(lons), np.ravel(lats)), np.ravel(data)
         )
         LOW_TEMP[:] = iemre_bounds_check("low_tmpk", nn(xi, yi), -60, 60)
 
-        data = temperature(nc.variables["avg_dwpk"][offset, :, :], "K").value(
-            "C"
+        data = convert_value(
+            nc.variables["avg_dwpk"][offset, :, :], "degK", "degC"
         )
         nn = NearestNDInterpolator(
             (np.ravel(lons), np.ravel(lats)), np.ravel(data)
@@ -141,7 +140,7 @@ def load_iemre():
 
 
 def load_stage4():
-    """ It sucks, but we need to load the stage IV data to give us something
+    """It sucks, but we need to load the stage IV data to give us something
     to benchmark the MRMS data against, to account for two things:
     1) Wind Farms
     2) Over-estimates
@@ -402,7 +401,7 @@ def bpstr(ts, accum):
 
 
 def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
-    """ Compute the breakpoint data based on this array of data!
+    """Compute the breakpoint data based on this array of data!
 
     To prevent massive ASCII text files, we do some simplification to the
     precipitation dataset.  We want to retain the significant rates though.
