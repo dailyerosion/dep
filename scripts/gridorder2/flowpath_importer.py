@@ -14,6 +14,7 @@ import sys
 
 import geopandas as gpd
 import pandas as pd
+import numpy as np
 from pyiem.util import get_dbconn, logger
 
 LOG = logger()
@@ -63,6 +64,46 @@ def get_flowpath(cursor, huc12, fpath):
     return cursor.fetchone()[0]
 
 
+def run_checks(df):
+    """Do some sanity checks."""
+    # Find flowpath column
+    fpcol = [x for x in df.columns if x.startswith("fp")][0]
+    gordcol = [x for x in df.columns if x.startswith("gord")][0]
+    fplencol = [x for x in df.columns if x.startswith("fpLen")][0]
+    gdf = df.groupby(fpcol).agg([np.min, np.max])
+    # collapse multiindex
+    gdf.columns = list(map("".join, gdf.columns.values))
+    # Check that grid order starts at 1 and goes to at least 5
+    df2 = gdf[(gdf[f"{gordcol}amin"] > 1) | (gdf[f"{gordcol}amax"] < 5)]
+    cull = []
+    if not df2.empty:
+        for fpath, row in df2.iterrows():
+            print(
+                "GORDER_CHECK FAIL %s %s min:%s max:%s, culling"
+                % (
+                    gordcol,
+                    fpath,
+                    row[f"{gordcol}amin"],
+                    row[f"{gordcol}amax"],
+                )
+            )
+            cull.append(fpath)
+    # Check that fpLen is monotonic
+    for fpath, gdf in df.groupby(fpcol):
+        res = gdf[fplencol].values[1:] - gdf[fplencol].values[:-1]
+        if not all(res > 0):
+            print(
+                "FPLEN %s for %s not monotonic, culling %s"
+                % (fplencol, fpath, min(res))
+            )
+            cull.append(fpath)
+
+    if cull:
+        print("culling %s" % (cull,))
+        df = df[~df[fpcol].isin(cull)]
+    return df
+
+
 def get_data(filename):
     """Converts a GeoJSON file into a pandas dataframe
 
@@ -73,6 +114,11 @@ def get_data(filename):
       gpd.DataFrame with the geojson data included.
     """
     df = gpd.read_file(filename, index="OBJECTID")
+    # Sort along the length column, which orders the points from top
+    # to bottom
+    fplencol = [x for x in df.columns if x.startswith("fpLen")][0]
+    df = df.sort_values(fplencol, ascending=True)
+    df = run_checks(df)
     snapdf = gpd.read_file(
         filename.replace("smpldef3m", "snaps3m"), index="OBJECTID"
     )
@@ -111,8 +157,7 @@ def get_data(filename):
 
 
 def delete_previous(cursor, huc12):
-    """This file is the authority for the HUC12, so we cull previous content.
-    """
+    """This file is the authority for the HUC12, so we cull previous content."""
     cursor.execute(
         """
         DELETE from flowpath_points p USING flowpaths f WHERE
@@ -196,9 +241,6 @@ def process_flowpath(cursor, huc12, db_fid, df, snappt):
     lencolname = "%sLen%s" % (PREFIX, huc12)
     elevcolname = "ep3m%s" % (huc12,)
     gordcolname = "gord_%s" % (huc12,)
-    # Sort along the length column, which orders the points from top
-    # to bottom
-    df = df.sort_values(lencolname, ascending=True)
     # Remove any previous data for this flowpath
     cursor.execute(
         "DELETE from flowpath_points WHERE flowpath = %s", (db_fid,)
@@ -322,7 +364,7 @@ def process(cursor, filename, huc12df, snapdf):
             delete_flowpath(cursor, db_fid)
             print(df)
             print(df[[f"gord_{huc12}", f"fpLen{huc12}"]])
-            sys.exit()
+            # sys.exit()
     return huc12
 
 
