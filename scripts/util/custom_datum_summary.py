@@ -43,23 +43,28 @@ def main():
         envdf["month"] = envdf["date"].dt.month
         # HUC 12 Annual Soils Loss, Precipitation and RunOff for 2008-2019
         genvdf = envdf.groupby(by=["key", "year"]).sum().groupby("year").mean()
-        for year in range(2008, 2020):
+        for year in range(2017, 2021):
             ydf = genvdf.loc[year]
             for col in ["delivery", "precip", "runoff"]:
                 res[f"{col}_{year}"] = float(ydf[col])
-        # HUC 12 and headwater lake catchments monthly Soils Loss,
-        # Precipitation and RunOff for 2019
-        env2019 = envdf[envdf["year"] == 2019]
-        genv2019 = (
-            env2019.groupby(by=["key", "month"]).sum().groupby("month").mean()
-        )
-        for month in range(1, 13):
-            if month not in genv2019.index.values:
-                continue
-            mdf = genv2019.loc[month]
-            label = month_abbr[month].lower()
-            for col in ["delivery", "precip", "runoff"]:
-                res[f"{col}_{year}_{label}"] = float(mdf[col])
+            envy = envdf[envdf["year"] == year]
+            genv = (
+                envy.groupby(by=["key", "month"]).sum().groupby("month").mean()
+            )
+            # 1, 2, 3 inch events
+            counts = [[0] * 13, [0] * 13, [0] * 13]
+            for i, level in enumerate([25, 50, 75]):
+                for dt in envy.loc[envy["precip"] >= level]["date"].unique():
+                    counts[i][pd.to_datetime(dt).month] += 1
+            for month in range(1, 13):
+                label = month_abbr[month].lower()
+                for i, level in enumerate([25, 50, 75]):
+                    res[f"{level}mmdays_{year}_{label}"] = counts[i][month]
+                if month not in genv.index.values:
+                    continue
+                mdf = genv.loc[month]
+                for col in ["delivery", "precip", "runoff"]:
+                    res[f"{col}_{year}_{label}"] = float(mdf[col])
         result.append(res)
 
     # Dump out
