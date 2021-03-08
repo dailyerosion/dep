@@ -27,7 +27,7 @@ XREF = {
 
 def get_flowpath_lengths(pgconn):
     """Load some metadata."""
-    return read_sql(
+    df = read_sql(
         "SELECT scenario, huc_12, fpath, bulk_slope,"
         "ST_LENGTH(geom) as len from flowpaths "
         "WHERE scenario >= 91 and scenario <= 101 and huc_12 in %s"
@@ -36,6 +36,15 @@ def get_flowpath_lengths(pgconn):
         params=(tuple(HUCS),),
         index_col=None,
     )
+    df["useme"] = False
+    # We only want flowpaths that existed in all scenarios, unsure of the
+    # most efficient way to do this, so here we are.
+    gdf = df.groupby(["huc_12", "fpath"]).count()
+    good = gdf[gdf["bulk_slope"] == 11].index.values.tolist()
+    for idx, row in df.iterrows():
+        df.at[idx, "useme"] = (row["huc_12"], row["fpath"]) in good
+    df = df[df["useme"]]
+    return df
 
 
 def compute_yearly(df, bymax=False, individual=False):
@@ -80,15 +89,16 @@ def main():
     """Do great things."""
     pgconn = get_dbconn("idep")
     df = get_flowpath_lengths(pgconn)
-    # df221 = df[df['len'] > 22.1]
-    # avg_len_full = df.groupby(["scenario", "huc_12"]).mean()
-    # avg_len_221 = df221.groupby(["scenario", "huc_12"]).mean()
-    # flowpath_counts_full = df.groupby(["scenario", "huc_12"]).count()
-    # flowpath_counts_221 = df221.groupby(["scenario", "huc_12"]).count()
+    df221 = df[df["len"] > 22.1]
+    avg_len_full = df.groupby(["scenario", "huc_12"]).mean()
+    avg_len_221 = df221.groupby(["scenario", "huc_12"]).mean()
+    flowpath_counts_full = df.groupby(["scenario", "huc_12"]).count()
+    flowpath_counts_221 = df221.groupby(["scenario", "huc_12"]).count()
     # For all hillslopes
-    result_full = compute_yearly(df, bymax=True, individual=True)
+    opts = dict(bymax=False, individual=False)
+    result_full = compute_yearly(df, **opts)
     # Only those over > 22.1m
-    # result_221 = compute_yearly(df[df['len'] > 22.1], individual=True)
+    result_221 = compute_yearly(df[df["len"] > 22.1], **opts)
 
     # Result time
     rows = []
@@ -97,60 +107,61 @@ def main():
             fdf = df[(df["huc_12"] == huc_12) & (df["scenario"] == scenario)]
             for flowpath in fdf["fpath"].values:
                 for year in range(2011, 2021):
-                    key = (scenario, huc_12, flowpath, year)
+                    key = (scenario, huc_12, year)
                     if key not in result_full.index:
                         print(key)
                         continue
                     rows.append(
                         {
-                            "Flowpath ID": flowpath,
+                            # "Flowpath ID": flowpath,
                             "HUC12": huc_12,
                             "Situation": XREF[scenario],
-                            # "Year": year,
+                            "Year": year,
                             # "Date for daily max rainfall": result_full.at[
-                            #    (scenario, huc_12, year), "date"],
-                            "Date for daily max rainfall": result_full.at[
-                                key, "date"
+                            #    key, "date"],
+                            # "Date for daily max rainfall": result_full.at[
+                            #    key, "date"
+                            # ],
+                            "Number of flowpath": flowpath_counts_full.at[
+                                (scenario, huc_12), "len"
                             ],
-                            "Flowpath length(m)": float(
-                                fdf[(fdf["fpath"] == flowpath)]["len"]
-                            ),
-                            "Daily Rainfall (mm)": result_full.at[
+                            "Avg Flowpath Length(m)": avg_len_full.at[
+                                (scenario, huc_12), "len"
+                            ],
+                            # "Flowpath length(m)": float(
+                            #    fdf[(fdf["fpath"] == flowpath)]["len"]
+                            # ),
+                            "Yearly Rainfall (mm)": result_full.at[
                                 key, "precip"
                             ],
-                            "Daily Runoff (mm)": result_full.at[key, "runoff"],
-                            "Daily Delivery (kg/ha)": result_full.at[
+                            "Yearly Runoff (mm)": result_full.at[
+                                key, "runoff"
+                            ],
+                            "Yearly Delivery (kg/m2)": result_full.at[
                                 key, "delivery"
                             ],
-                            "Daily Detachment (kg/ha)": result_full.at[
+                            "Yearly Detachment (kg/m2)": result_full.at[
                                 key, "av_det"
                             ],
-                            "Slope Gradient(%)": float(
-                                fdf[(fdf["fpath"] == flowpath)]["bulk_slope"]
-                            )
-                            * 100.0,
-                            # "Number of flowpath": flowpath_counts_full.at[
-                            #    (scenario, huc_12), 'len'],
-                            # "Avg Flowpath Length(m)": avg_len_full.at[
-                            #    (scenario, huc_12), "len"],
-                            # "Daily Rainfall (mm)": result_full.at[
-                            #    (scenario, huc_12, year), "precip"],
-                            # "Daily Runoff (mm)": result_full.at[
-                            #    (scenario, huc_12, year), "runoff"],
-                            # "Daily Delivery (kg/ha)": result_full.at[
-                            #    (scenario, huc_12, year), "delivery"],
-                            # "Daily Detachment (kg/ha)": result_full.at[
-                            #    (scenario, huc_12, year), "av_det"],
-                            # "Number of flowpath >22.1": flowpath_counts_221.at[
-                            #    (scenario, huc_12), 'len'],
-                            # "Avg Flowpath Length(m) >22.1": avg_len_221.at[
-                            #    (scenario, huc_12), "len"],
-                            # "Daily Runoff (mm) >22.1": result_221.at[
-                            #    (scenario, huc_12, year), "runoff"],
-                            # "Daily Delivery (kg/ha) >22.1": result_221.at[
-                            #    (scenario, huc_12, year), "delivery"],
-                            # "Daily Detachment (kg/ha) >22.1": result_221.at[
-                            #    (scenario, huc_12, year), "av_det"],
+                            # "Slope Gradient(%)": float(
+                            #    fdf[(fdf["fpath"] == flowpath)]["bulk_slope"]
+                            # )
+                            # * 100.0,
+                            "Number of flowpath >22.1": flowpath_counts_221.at[
+                                (scenario, huc_12), "len"
+                            ],
+                            "Avg Flowpath Length(m) >22.1": avg_len_221.at[
+                                (scenario, huc_12), "len"
+                            ],
+                            "Yearly Runoff (mm) >22.1": result_221.at[
+                                key, "runoff"
+                            ],
+                            "Yearly Delivery (kg/m2) >22.1": result_221.at[
+                                key, "delivery"
+                            ],
+                            "Yearly Detachment (kg/m2) >22.1": result_221.at[
+                                key, "av_det"
+                            ],
                         }
                     )
     resdf = pd.DataFrame(rows)
