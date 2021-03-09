@@ -95,7 +95,7 @@ def main():
     flowpath_counts_full = df.groupby(["scenario", "huc_12"]).count()
     flowpath_counts_221 = df221.groupby(["scenario", "huc_12"]).count()
     # For all hillslopes
-    opts = dict(bymax=False, individual=False)
+    opts = dict(bymax=True, individual=False)
     result_full = compute_yearly(df, **opts)
     # Only those over > 22.1m
     result_221 = compute_yearly(df[df["len"] > 22.1], **opts)
@@ -105,7 +105,13 @@ def main():
     for huc_12 in tqdm(HUCS):
         for scenario in XREF:
             fdf = df[(df["huc_12"] == huc_12) & (df["scenario"] == scenario)]
-            for flowpath in fdf["fpath"].values:
+            # keep the below from overlooping
+            fpaths = [
+                0,
+            ]
+            if opts["individual"]:
+                fpaths = fdf["fpath"].values
+            for flowpath in fpaths:
                 for year in range(2011, 2021):
                     key = (scenario, huc_12, year)
                     if key not in result_full.index:
@@ -116,12 +122,10 @@ def main():
                             # "Flowpath ID": flowpath,
                             "HUC12": huc_12,
                             "Situation": XREF[scenario],
-                            "Year": year,
-                            # "Date for daily max rainfall": result_full.at[
-                            #    key, "date"],
-                            # "Date for daily max rainfall": result_full.at[
-                            #    key, "date"
-                            # ],
+                            # "Year": year,
+                            "Date for daily max rainfall": result_full.at[
+                                key, "date"
+                            ],
                             "Number of flowpath": flowpath_counts_full.at[
                                 (scenario, huc_12), "len"
                             ],
