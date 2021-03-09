@@ -230,9 +230,7 @@ def truncation_logic(df, snappt, lencolname, gordcolname, elevcolname):
             df = df2
 
     if df.empty:
-        print("TODO: account for truncation before flowpath")
-        print(df)
-        sys.exit()
+        raise Exception("truncation resulted in empty flowpath.")
     return df
 
 
