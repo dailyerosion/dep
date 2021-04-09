@@ -8,6 +8,14 @@ be June 1 or June 2, 2018; or potentially June 10, 2018.
 The lat-long for the site is:
 Latitude: 46.78
 Longitude: -100.95
+
+Output fields (kg/m2)
+-------------
+  - total soil loss
+  - saltation/creep soil loss
+  - suspended soil loss
+  - PM10 soil loss
+  - PM2.5 soil loss
 """
 import argparse
 import sys
@@ -24,11 +32,13 @@ from pandas.io.sql import read_sql
 
 HUC12S = ["090201081101", "090201081102", "090201060605"]
 LOG = logger()
+IEMRE = "http://mesonet.agron.iastate.edu/iemre/hourly"
 
 
 def get_wind_obs(date, lon, lat):
     """Get what we need from IEMRE."""
-    uri = "http://iem.local/iemre/hourly/%s/%.2f/%.2f/json" % (
+    uri = "%s/%s/%.2f/%.2f/json" % (
+        IEMRE,
         date.strftime("%Y-%m-%d"),
         lat,
         lon,
