@@ -3,118 +3,32 @@
 from pandas.io.sql import read_sql
 from pyiem.util import get_dbconn
 
-# English River
-HUCS = [
-    "070802090302",
-    "070802090401",
-    "070802090403",
-    "070802090301",
-    "070802090406",
-    "070802090405",
-    "070802090404",
-    "070802090407",
-    "070802090407",
-    "070802090502",
-    "070802090501",
-    "070802090402",
-    "070802090503",
-    "070802090504",
-    "070802090408",
-]
-# Middle Cedar
-DATA = """ 070802050101
- 070802050102
- 070802050103
- 070802050201
- 070802050202
- 070802050203
- 070802050204
- 070802050301
- 070802050302
- 070802050303
- 070802050304
- 070802050401
- 070802050402
- 070802050403
- 070802050501
- 070802050502
- 070802050503
- 070802050504
- 070802050505
- 070802050601
- 070802050602
- 070802050701
- 070802050702
- 070802050703
- 070802050801
- 070802050802
- 070802050803
- 070802050804
- 070802050805
- 070802050806
- 070802050807
- 070802050808
- 070802050809
- 070802050901
- 070802050902
- 070802050903
- 070802050904
- 070802050905
- 070802050906
- 070802050907
- 070802051001
- 070802051002
- 070802051003
- 070802051004
- 070802051005
- 070802051101
- 070802051102
- 070802051103
- 070802051104
- 070802051105
- 070802051201
- 070802051202
- 070802051203
- 070802051204
- 070802051301
- 070802051302
- 070802051401
- 070802051402
- 070802051403
- 070802051404
- 070802051405
- 070802051501
- 070802051502
- 070802051503
- 070802051504
- 070802051505
- 070802051506
- 070802051507"""
-# Clear Creek
-DATA = """070802090101
-070802090102
-070802090103"""
-HUCS = [x.strip() for x in DATA.split("\n")]
-
 
 def main():
     """Go Main Go"""
-    pgconn = get_dbconn("idep", user="nobody")
+    pgconn = get_dbconn("idep")
     df = read_sql(
         """
-    SELECT huc_12, date_trunc('month', valid)::date as date,
+    SELECT r.huc_12, to_char(valid, 'YYYYmm') as date,
     sum(qc_precip) as precip_mm,
     sum(avg_loss) as detach_kgm2,
     sum(avg_delivery) as delivery_kgm2,
-    sum(avg_runoff) as runoff_mm from results_by_huc12
-    WHERE scenario = 0 and huc_12 in %s
-    and valid >= '2008-01-01' and valid < '2019-01-01'
-    GROUP by huc_12, date ORDER by huc_12, date
+    sum(avg_runoff) as runoff_mm from results_by_huc12 r JOIN huc12 h on
+    (r.huc_12 = h.huc_12 and r.scenario = h.scenario)
+    WHERE r.scenario = 0 and h.states ~* 'MN' and
+    valid >= '2017-01-01' and valid < '2021-01-01'
+    GROUP by r.huc_12, date ORDER by huc_12, date
     """,
         pgconn,
-        params=(tuple(HUCS),),
     )
-    df.to_csv("clear_creek.csv", index=False)
+    df = df.pivot(
+        index="huc_12",
+        columns="date",
+        values=["precip_mm", "detach_kgm2", "delivery_kgm2", "runoff_mm"],
+    )
+    df.columns = df.columns.to_flat_index()
+    df.columns = ["_".join(tup) for tup in df.columns.values]
+    df.to_csv("mn_dep.csv", index=True)
 
 
 if __name__ == "__main__":
