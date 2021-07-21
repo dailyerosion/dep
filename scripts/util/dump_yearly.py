@@ -1,5 +1,4 @@
 """Dump some monthly data"""
-from __future__ import print_function
 
 import pandas as pd
 from pandas.io.sql import read_sql
@@ -177,7 +176,7 @@ HUCS = [x.strip() for x in DATA.split("\n")]
 
 def main():
     """Go Main Go"""
-    pgconn = get_dbconn("idep", user="nobody")
+    pgconn = get_dbconn("idep")
     df = read_sql(
         """
         SELECT huc_12, extract(year from valid) as year,

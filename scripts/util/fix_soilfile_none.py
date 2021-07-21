@@ -1,5 +1,4 @@
 """We have Nones in our soil files, lets squash until fixed upstream"""
-from __future__ import print_function
 import glob
 
 

@@ -70,12 +70,12 @@ def do_delete(huc12, scenario):
     pgconn.commit()
 
 
-def main():
+def main(argv):
     """Go Main Go"""
-    huc12 = sys.argv[1]
-    scenario = int(sys.argv[2])
+    huc12 = argv[1]
+    scenario = int(argv[2])
     do_delete(huc12, scenario)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)

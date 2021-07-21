@@ -72,10 +72,8 @@ def main():
         ax.scatter(pc1[-1], pc2[-1], s=40, marker="s", color="b", zorder=3)
     ax.grid(True)
     ax.set_title(
-        (
-            "95th Percentile and Higher Yearly Soil Delivery\n"
-            "Max value shown by dot"
-        )
+        "95th Percentile and Higher Yearly Soil Delivery\n"
+        "Max value shown by dot"
     )
     ax.set_xlabel("Production Yearly Soil Delivery T/a")
     ax.set_ylabel("New Flowpaths Yearly Soil Delivery T/a")

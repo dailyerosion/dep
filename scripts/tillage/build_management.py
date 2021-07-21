@@ -8,36 +8,10 @@ used by prj2wepp to generate the .man files.
 
 Here's a listing of project landuse codes used
 
-                     No-till (1)   (2-5)
-  B - Soy               B1          B25    IniCropDef.Default
-  F - forest            F1          F25    IniCropDef.Tre_2239
-  G - Sorghum
-  P - Pasture           P1          P25    IniCropDef.gra_3425
-  C - Corn              C1          C25    IniCropDef.Default
-  R - Other crops       R1          R25    IniCropDef.Aft_12889
-  T - Water (could have flooded out for one year, wetlands)
-  U - Developed
-  X - Unclassified
-  I - Idle
-  L - Double Crop  (started previous year)
-  W - Wheat
-  N - Small Grain
-  E - Sugarbeets
-  J - Rice
-  N - Cotton
-  a - Nuts
-  d - Fruit
-  g - Small Grains
-  m - Legumes
-  o - Oilseed
-  p - Grapes
-  q - Orchards
-  v - Vegetables
+See import/flowpath2prj.py
 """
-from __future__ import print_function
 import os
 import datetime
-import sys
 
 from tqdm import tqdm
 from pyiem.util import get_dbconn

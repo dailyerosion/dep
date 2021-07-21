@@ -1,5 +1,4 @@
 """Copy the scenario 0 run files and make some mods"""
-from __future__ import print_function
 import sys
 import os
 import glob

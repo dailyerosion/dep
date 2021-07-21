@@ -31,14 +31,12 @@ def do_delete(huc12, fpath, scenario):
     fid = cursor.fetchone()[0]
     # Delete flowpath points
     cursor.execute(
-        """DELETE from flowpath_points where flowpath = %s
-    and scenario = %s""",
+        "DELETE from flowpath_points where flowpath = %s and scenario = %s",
         (fid, scenario),
     )
     # Delete flowpath
     cursor.execute(
-        """DELETE from flowpaths where fid = %s
-    and scenario = %s""",
+        "DELETE from flowpaths where fid = %s and scenario = %s",
         (fid, scenario),
     )
 
@@ -63,13 +61,13 @@ def do_delete(huc12, fpath, scenario):
     pgconn.commit()
 
 
-def main():
+def main(argv):
     """Go Main Go"""
-    huc12 = sys.argv[1]
-    fpath = sys.argv[2]
-    scenario = sys.argv[3]
+    huc12 = argv[1]
+    fpath = argv[2]
+    scenario = argv[3]
     do_delete(huc12, fpath, scenario)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)

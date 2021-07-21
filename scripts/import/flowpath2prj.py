@@ -8,7 +8,7 @@ Here's a listing of project landuse codes used
   G - Sorghum
   P - Pasture           P1          P25    IniCropDef.gra_3425
   C - Corn              C1          C25    IniCropDef.Default
-  R - Other crops       R1          R25    IniCropDef.Aft_12889
+  R - Other crops (Barley?)  R1          R25    IniCropDef.Aft_12889
   T - Water (could have flooded out for one year, wetlands)
   U - Developed
   X - Unclassified
@@ -254,7 +254,7 @@ def rotation_magic(scenario, zone, seqnum, row, metadata):
 
 
 def compute_aspect(x0, y0, x1, y1):
-    """ Compute the aspect angle between two points """
+    """Compute the aspect angle between two points"""
     dx = x1 - x0
     dy = y1 - y0
     rads = atan2(-dy, dx)
@@ -263,7 +263,7 @@ def compute_aspect(x0, y0, x1, y1):
 
 
 def non_zero(dy, dx):
-    """ Make sure slope is slightly non-zero """
+    """Make sure slope is slightly non-zero"""
     # NB we used to have a check here that dx was non-zero, but this should
     # never happen now.
     # dailyerosion/dep#79 denotes some limits on WEPP precision
@@ -271,7 +271,7 @@ def non_zero(dy, dx):
 
 
 def simplify(rows):
-    """ WEPP can only handle 20 slope points it seems, so we must simplify """
+    """WEPP can only handle 20 slope points it seems, so we must simplify"""
     newrows = []
     lrow = rows[0]
     newrows.append(lrow)
@@ -349,7 +349,7 @@ def simplify(rows):
 
 
 def compute_slope(fid):
-    """ Compute the simple slope for the fid """
+    """Compute the simple slope for the fid"""
     cursor2.execute(
         """
         SELECT max(elevation), min(elevation), max(length)
@@ -362,7 +362,7 @@ def compute_slope(fid):
 
 
 def delete_flowpath(fid):
-    """ remove this flowpath as its invalid """
+    """remove this flowpath as its invalid"""
     cursor3.execute("DELETE from flowpath_points where flowpath = %s", (fid,))
     cursor3.execute("DELETE from flowpaths where fid = %s", (fid,))
     if cursor3.rowcount != 1:
@@ -370,7 +370,7 @@ def delete_flowpath(fid):
 
 
 def do_flowpath(scenario, zone, metadata):
-    """ Process a given flowpathid """
+    """Process a given flowpathid"""
     # slope = compute_slope(fid)
     # I need bad soilfiles so that the length can be computed
     cursor2.execute(
@@ -574,7 +574,7 @@ def do_flowpath(scenario, zone, metadata):
 
 
 def write_prj(data):
-    """ Create the WEPP prj file """
+    """Create the WEPP prj file"""
     # Profile format
     # [x] The first number is the hillslope aspect,
     # [?] the second is the profile width in meters.
@@ -628,7 +628,7 @@ RunOptions {
 
 
 def main(argv):
-    """ Go main go """
+    """Go main go"""
     scenario = int(argv[1])
     sdf = load_scenarios()
     flowpath_scenario = int(sdf.at[scenario, "flowpath_scenario"])

@@ -19,9 +19,9 @@ def main():
         frames.append(df)
     df = pd.concat(frames)
     rows = []
-    for year in range(2016, 2019):
+    for year in range(2016, 2021):
         for day in pd.date_range(
-            f"{year}/03/01", f"{year}/07/01", closed="left"
+            f"{year}/03/01", f"{year}/12/01", closed="left"
         ):
             row = df[df["date"] == day].mean()
             row["date"] = day
