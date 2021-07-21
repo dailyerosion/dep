@@ -1,5 +1,4 @@
 """Summarize the OFE files"""
-from __future__ import print_function
 import os
 import datetime
 
@@ -7,23 +6,9 @@ import pandas as pd
 from tqdm import tqdm
 from pyiem.dep import read_ofe, read_man, read_slp
 
-""""
-                     No-till (1)   (2-5)
-  B - Soy               B1          B25    IniCropDef.Default
-  F - forest            F1          F25    IniCropDef.Tre_2239
-  G - Sorghum
-  P - Pasture           P1          P25    IniCropDef.gra_3425
-  C - Corn              C1          C25    IniCropDef.Default
-  R - Other crops       R1          R25    IniCropDef.Aft_12889
-  T - Water
-  U - Developed
-  X - Unclassified
-  I - Idle
-  L - Double Crop  (started previous year)
-  W - Wheat
-  N - ???  *see 27 Sep 2016 email from dave, it is unused, so treat as I*
-"""
+# See import/flowpath2prj for table about these codes.
 LABEL2CODE = {
+    "ALFALFA": "P",
     "soybean2": "B",
     "Soy_2191": "B",
     "Soy_2192": "B",
@@ -36,10 +21,10 @@ LABEL2CODE = {
     "Cor_0964": "C",
     "Tre_2932": "I",
     "bromegr1": "P",
-    "Bar_8319": "W",
+    "Bar_8319": "R",
 }
 # 2007 is skipped
-YEARS = (2017 - 2008) + 1
+YEARS = 2021 - 2008
 
 
 def get_rotation_string(manres, ofe):
@@ -48,7 +33,7 @@ def get_rotation_string(manres, ofe):
     for rot in manres["rotations"]:
         idx = rot[ofe - 1]["yearindex"]
         ntype = manres["scens"][idx - 1]["ntype"]
-        codes.append(LABEL2CODE[manres["crops"][ntype - 1]["crpnam"]])
+        codes.append(LABEL2CODE.get(manres["crops"][ntype - 1]["crpnam"], "_"))
     return "".join(codes)
 
 
@@ -88,8 +73,8 @@ def main():
             ofedf = read_ofe("%s/%s" % (root, filename))
             # Drop any 2007 or 2018+ data
             ofedf = ofedf[
-                (ofedf["date"] < datetime.date(2018, 1, 1))
-                & (ofedf["date"] >= datetime.date(2008, 1, 1))
+                (ofedf["date"] < datetime.datetime(2021, 1, 1))
+                & (ofedf["date"] >= datetime.datetime(2008, 1, 1))
             ]
             # Figure out the crop string
             man = "%s/%s" % (
