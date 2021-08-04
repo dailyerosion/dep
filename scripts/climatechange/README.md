@@ -4,9 +4,9 @@ Covered by dep/dailyerosion#39.
 
 ## References from Dr Flanagan
 
-- [ ] Zhang, X.C. 2005. Simulating regional impacts of climate changes on water resource, erosion, and wheat production using CLIGEN and WEPP models. World Resource Review 17(3): 335-349.
-- [ ] Zhang, X.C. 2006. Spatial sensitivity of predicted soil erosion and runoff to climate change at regional scales. J. of Soil and Water Conservation. 61(2) 58-64.
-- [ ] Zhang, X.C. 2007. A comparison of explicit and implicit spatial downscaling of GCM output for soil erosion and crop production assessments. Climatic Change. 84: 337-363.
+- Zhang, X.C. 2005. Simulating regional impacts of climate changes on water resource, erosion, and wheat production using CLIGEN and WEPP models. World Resource Review 17(3): 335-349.
+- [x] Zhang, X.C. 2006. Spatial sensitivity of predicted soil erosion and runoff to climate change at regional scales. J. of Soil and Water Conservation. 61(2) 58-64.
+- [x] Zhang, X.C. 2007. A comparison of explicit and implicit spatial downscaling of GCM output for soil erosion and crop production assessments. Climatic Change. 84: 337-363.
 - [ ] Zhang, X.C., W.Z. Liu, Z. Li, and F.L. Zheng. 2009. Simulating site-specific impacts of climate change on soil erosion and surface hydrology in southern Loess Plateau of China. Catena. 79: 237-242.
 - [ ] Li, Z., W.Z. Liu, X.C. Zhang. 2010. Assessing the site-specific impacts of climate change on hydrology, soil erosion and crop yields in the Loess Plateau of China. Climatic Change. https://doi.org/10.1007/s10584-010-9875-9
 - [x] Zhang, X.C., W.Z. Liu, Z. Li, and J. Chen. 2011. Trend and uncertainty analysis of climate change impacts using multi-GCMs, multi-scenarios and WEPP model. Agric. For. Meteorology 151: 1297-1304.
