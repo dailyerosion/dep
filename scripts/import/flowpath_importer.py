@@ -27,13 +27,6 @@ PREFIX = "fp"
 TRUNC_GRIDORDER_AT = 4
 
 PGCONN = get_dbconn("idep")
-INSERT_SQL = """
-    INSERT into flowpath_points(flowpath, segid,
-    elevation, length,  surgo, management, slope, geom,
-    landuse, scenario, gridorder)
-    values(%s, %s, %s, %s, %s, %s, %s, 'SRID=5070;POINT(%s %s)',
-    %s, %s, %s)
-"""
 
 
 def get_flowpath(cursor, huc12, fpath):
@@ -106,7 +99,7 @@ def get_data(filename):
 
 
 def delete_previous(cursor, huc12):
-    """This file is the authority for the HUC12, so we cull previous content."""
+    """This file is the authority, so we cull previous content."""
     cursor.execute(
         """
         DELETE from flowpath_points p USING flowpaths f WHERE
@@ -175,7 +168,13 @@ def process_flowpath(cursor, huc12, db_fid, df):
             SCENARIO,
             gridorder,
         )
-        cursor.execute(INSERT_SQL, args)
+        cursor.execute(
+            "INSERT into flowpath_points(flowpath, segid, elevation, length, "
+            "surgo, management, slope, geom, landuse, scenario, gridorder) "
+            "values(%s, %s, %s, %s, %s, %s, %s, 'SRID=5070;POINT(%s %s)', "
+            "%s, %s, %s)",
+            args,
+        )
 
         linestring.append("%s %s" % (row["geometry"].x, row["geometry"].y))
 

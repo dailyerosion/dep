@@ -10,8 +10,8 @@ from pyiem.util import logger
 
 LOG = logger()
 PROJDIR = "/opt/dep/prj2wepp"
-EXE = "%s/prj2wepp" % (PROJDIR,)
-WEPP = "%s/wepp" % (PROJDIR,)
+EXE = f"{PROJDIR}/prj2wepp"
+WEPP = f"{PROJDIR}/wepp"
 
 
 def main(argv):

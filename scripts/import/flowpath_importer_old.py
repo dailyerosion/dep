@@ -6,7 +6,6 @@ consumes those dbf files and places them in the database.
     python flowpath_importer.py <scenario> <path to dbf files in ../../data/>
 
 """
-from __future__ import print_function
 import glob
 import os
 import sys
@@ -85,8 +84,7 @@ def get_data(filename):
 
 
 def delete_previous(cursor, huc12):
-    """This file is the authority for the HUC12, so we cull previous content.
-    """
+    """This file is the authority for the HUC12, so we cull previous content."""
     cursor.execute(
         """
         DELETE from flowpath_points p USING flowpaths f WHERE
@@ -195,7 +193,7 @@ def process(cursor, filename, huc12df):
         # Line string must have at least 2 points
         if len(linestring) > 1:
             sql = """
-                UPDATE flowpaths SET geom = 
+                UPDATE flowpaths SET geom =
                 ST_Transform(ST_GeomFromeWkt('SRID=4326;LINESTRING(%s)'), 5070)
                 WHERE fid = %s and scenario = %s
             """ % (

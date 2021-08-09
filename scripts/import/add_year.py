@@ -10,12 +10,10 @@ def main():
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     cursor.execute(
-        """
-        UPDATE flowpath_points SET
-        landuse = landuse || substr(landuse, 13, 1),
-        management = management || substr(management, 13, 1)
-        where length(landuse) = 14
-    """
+        "UPDATE flowpath_points SET "
+        "landuse = landuse || substr(landuse, 13, 1), "
+        "management = management || substr(management, 13, 1) "
+        "where length(landuse) = 14"
     )
     LOG.info("updated %s rows", cursor.rowcount)
     cursor.close()

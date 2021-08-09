@@ -13,8 +13,9 @@ Here's a listing of project landuse codes used
   U - Developed
   X - Unclassified
   I - Idle
-  L - Double Crop  (started previous year)
+  L - Double Crop  (started previous year) (winter wheat + soybea)
   W - Wheat
+  S - Durum/Spring Wheat
   N - Small Grain
   E - Sugarbeets
   J - Rice
