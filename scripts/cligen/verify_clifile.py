@@ -28,12 +28,16 @@ def main(argv):
             sys.exit()
         yesterday = thisdate
         lastprecip = -1
+        lasttime = ""
         for _ in range(int(tokens[3])):
             linenum += 1
             tokens = lines[linenum].split()
             if len(tokens) != 2:
                 print("linenum: %s has bad token count" % (linenum,))
                 sys.exit()
+            if tokens[0] == lasttime:
+                print(f"linenum: {linenum} has duplicated time")
+            lasttime = tokens[0]
             tm = float(tokens[0])
             if tm < 0 or tm >= 24:
                 print("linenum: %s has bad time: %s" % (linenum, tokens[0]))
