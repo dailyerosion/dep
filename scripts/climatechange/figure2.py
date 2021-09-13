@@ -40,14 +40,13 @@ def main():
     ax.bar(range(-14, 15), [x * 100 for x in DATA])
     ax.grid(True)
     ax.set_title(
-        "Iowa DEP Future Precipitation Scenarios\n"
-        "Change in Hill Slope Soil Delivery by -/+ 14 Day Shift in Timing"
+        "Change in Hillslope Soil Loss by -/+ 14 Day Precipitation Shift"
     )
     ax.set_xlabel("Shift in Days (negative is earlier)")
-    ax.set_ylabel("Change in Soil Delivery [%] (baseline: 3.5 T/a)")
+    ax.set_ylabel("Percent Change in Soil Loss (baseline: 7.8 $t$ $ha^{-1}$)")
     ax.set_ylim(-12, 12)
     ax.axhline(0, color="k")
-    fig.savefig("test.png")
+    fig.savefig("figure2.png")
 
 
 if __name__ == "__main__":

@@ -1,11 +1,7 @@
 """A plot of the deltas for erosion between scenarios."""
-import os
-import sys
 
-from pyiem.dep import read_env
 from pyiem.plot.use_agg import plt
-from pyiem.util import logger, get_dbconn
-from tqdm import tqdm
+from pyiem.util import logger
 import numpy as np
 
 LOG = logger()
@@ -28,18 +24,26 @@ def main():
     """Plot."""
     fig, ax = plt.subplots(1, 1)
     ax.set_title(
-        "Iowa DEP Future Precipitation Scenarios\n"
-        "Change in Hill Slope Delivery[%] with Additional 25 mm/hr Events"
+        "Change in Hillslope Soil Loss with Additional 25 $mm$ $h^{-1}$ Events"
     )
     y = np.array(DATA) * 100.0
     ax.bar(np.arange(1, 11), y)
     for i, val in enumerate(y):
-        ax.text(i + 1, val + 1, f"{val:.1f}%", ha="center")
-    ax.set_xlabel("Additional 25 mm/hr Storms per Spring Season per Year")
+        ax.text(
+            i + 1,
+            val + 3,
+            f"{val:.0f}%",
+            ha="center",
+            bbox=dict(color="white", boxstyle="square,pad=0"),
+        )
+    ax.set_xlabel(
+        "Additional 25 $mm$ $h^{-1}$ Storms per Spring Season each Year"
+    )
     ax.set_ylim(0, 110)
-    ax.set_ylabel("Change in Detachment over Baseline [%]")
+    ax.set_ylabel(r"Percent Change in Soil Loss (baseline: 7.8 $t$ $ha^{-1}$)")
+    ax.set_xticks(range(1, 11))
     ax.grid(True)
-    fig.savefig("test.png")
+    fig.savefig("figure3.png")
 
 
 if __name__ == "__main__":

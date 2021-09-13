@@ -9,16 +9,24 @@ def main():
     (fig, ax) = plt.subplots(1, 1)
     ax.bar(range(len(DATA)), DATA)
     for i, val in enumerate(DATA):
-        delta = -3 if val < 0 else 3
-        ax.text(i, val + delta, "%i%%" % (val,), ha="center", va="center")
+        delta = -5 if val < 0 else 5
+        if val == 0:
+            continue
+        ax.text(
+            i,
+            val + delta,
+            "%i%%" % (val,),
+            ha="center",
+            va="center",
+            bbox=dict(color="white"),
+        )
     ax.grid(True)
     ax.set_xticks(range(len(DATA)))
     ax.set_title(
-        "Iowa DEP Future Precipitation Scenarios\n"
-        "Change in Hill Slope Soil Delivery by Linear Precipitation Adjustment"
+        "Change in Hillslope Soil Loss by Precipitation Intensity Adjustment"
     )
-    ax.set_xlabel(r"Precipitation Total Adjustment (baseline: 970 $mm$)")
-    ax.set_ylabel("Change in Soil Delivery (baseline: 3.5 T/a)")
+    ax.set_xlabel("Precipitation Intensity Adjustment")
+    ax.set_ylabel(r"Percent Change in Soil Loss (baseline: 7.8 $t$ $ha^{-1}$)")
     ax.set_xticklabels(
         [
             "-20%",
@@ -26,7 +34,7 @@ def main():
             "-12%",
             "-8%",
             "-4%",
-            "Base",
+            "",
             "4%",
             "8%",
             "12%",
@@ -37,7 +45,7 @@ def main():
     ax.grid(True)
     ax.set_ylim(-70, 70)
     ax.axhline(0, color="k")
-    fig.savefig("test.png")
+    fig.savefig("figure1.png")
 
 
 if __name__ == "__main__":
