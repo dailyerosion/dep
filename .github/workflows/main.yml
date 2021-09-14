@@ -28,7 +28,4 @@ jobs:
         cd database; sh bootstrap.sh
         python schema_manager.py
         cd ..
-
-    - name: Run Tests
-      run: |
         pytest scripts/cligen/daily_clifile_editor.py
