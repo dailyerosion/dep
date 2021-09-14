@@ -1,4 +1,13 @@
 """Simple plot of data."""
+from matplotlib import rcParams
+
+rcParams.update(
+    {
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Liberation Sans"],
+    }
+)
+# rcParams['font.sans-serif'] = ['Tahoma']
 from pyiem.plot.use_agg import plt
 
 DATA = [
@@ -37,7 +46,7 @@ DATA = [
 def main():
     """Go Main Go."""
     (fig, ax) = plt.subplots(1, 1)
-    ax.bar(range(-14, 15), [x * 100 for x in DATA])
+    ax.bar(range(-14, 15), [x * 100 for x in DATA], color="gray")
     ax.grid(True)
     ax.set_title(
         "Change in Hillslope Soil Loss by -/+ 14 Day Precipitation Shift"
@@ -46,7 +55,7 @@ def main():
     ax.set_ylabel("Percent Change in Soil Loss (baseline: 7.8 $t$ $ha^{-1}$)")
     ax.set_ylim(-12, 12)
     ax.axhline(0, color="k")
-    fig.savefig("figure2.png")
+    fig.savefig("figure2.png", dpi=600)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,12 @@
 """A plot of the deltas for erosion between scenarios."""
+from matplotlib import rcParams
 
+rcParams.update(
+    {
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Liberation Sans"],
+    }
+)
 from pyiem.plot.use_agg import plt
 from pyiem.util import logger
 import numpy as np
@@ -27,7 +34,7 @@ def main():
         "Change in Hillslope Soil Loss with Additional 25 $mm$ $h^{-1}$ Events"
     )
     y = np.array(DATA) * 100.0
-    ax.bar(np.arange(1, 11), y)
+    ax.bar(np.arange(1, 11), y, color="gray")
     for i, val in enumerate(y):
         ax.text(
             i + 1,
@@ -43,7 +50,7 @@ def main():
     ax.set_ylabel(r"Percent Change in Soil Loss (baseline: 7.8 $t$ $ha^{-1}$)")
     ax.set_xticks(range(1, 11))
     ax.grid(True)
-    fig.savefig("figure3.png")
+    fig.savefig("figure3.png", dpi=600)
 
 
 if __name__ == "__main__":
