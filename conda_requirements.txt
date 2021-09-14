@@ -1,6 +1,14 @@
 pyshp
 tqdm
 pandas
+# image work
+pillow
 psycopg2
+# my hacky
+pyiem
+# For testing
+pytest
+# interpolation
+scipy
 twython
 reportlab

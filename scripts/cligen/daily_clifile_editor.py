@@ -12,7 +12,6 @@ development laptop has data for 3 March 2019, 23 May 2009, and 8 Jun 2009
 import datetime
 import sys
 import os
-import unittest
 from multiprocessing import Pool, cpu_count
 from multiprocessing.pool import ThreadPool
 
@@ -25,11 +24,18 @@ from pyiem.dep import SOUTH, WEST, NORTH, EAST, get_cli_fname
 from pyiem.util import ncopen, logger, convert_value
 
 LOG = logger()
-XTILE = int(sys.argv[1])
-YTILE = int(sys.argv[2])
-# Tilesize was arrived at thru non-scientific testing
-TILESIZE = int(sys.argv[3])
-SCENARIO = int(sys.argv[4])
+if len(sys.argv) > 4:
+    XTILE = int(sys.argv[1])
+    YTILE = int(sys.argv[2])
+    # Tilesize was arrived at thru non-scientific testing
+    TILESIZE = int(sys.argv[3])
+    SCENARIO = int(sys.argv[4])
+else:
+    # HACK
+    XTILE = 0
+    YTILE = 0
+    TILESIZE = 5
+    SCENARIO = 0
 MYSOUTH = SOUTH + YTILE * TILESIZE
 MYNORTH = min([MYSOUTH + TILESIZE, NORTH])
 MYWEST = WEST + XTILE * TILESIZE
@@ -397,7 +403,8 @@ def load_precip():
 
 def bpstr(ts, accum):
     """Make a string representation of this breakpoint and accumulation"""
-    return "%02i.%02i  %6.2f" % (ts.hour, ts.minute / 60.0 * 100.0, accum)
+    # Need four decimals for accurate reproduction
+    return "%02i.%04i %.2f" % (ts.hour, ts.minute / 60.0 * 10000.0, accum)
 
 
 def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
@@ -446,10 +453,7 @@ def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
             ts = ZEROHOUR.replace(hour=23, minute=59)
         else:
             ts = ZEROHOUR + datetime.timedelta(minutes=((lasti + 1) * 2))
-        # Need four decimals to have higher fidelity back conversion to minutes
-        bp.append(
-            "%02i.%04i  %6.2f" % (ts.hour, ts.minute / 60.0 * 10000.0, accum)
-        )
+        bp.append(bpstr(ts, accum))
     return bp
 
 
@@ -604,54 +608,50 @@ if __name__ == "__main__":
     workflow()
 
 
-class test(unittest.TestCase):
-    """Some tests are better than no tests?"""
+def _test_speed():
+    """Test the speed of the processing"""
+    global SCENARIO, VALID
+    SCENARIO = 0
+    VALID = datetime.date(2014, 10, 10)
+    sts = datetime.datetime.now()
+    myjob(get_xy_from_lonlat(-91.44, 41.28))
+    ets = datetime.datetime.now()
+    delta = (ets - sts).total_seconds()
+    LOG.info(
+        "Processed 1 file in %.5f secs, %.0f files per sec",
+        delta,
+        1.0 / delta,
+    )
 
-    def test_speed(self):
-        """Test the speed of the processing"""
-        global SCENARIO, VALID
-        SCENARIO = 0
-        VALID = datetime.date(2014, 10, 10)
-        sts = datetime.datetime.now()
-        myjob(get_xy_from_lonlat(-91.44, 41.28))
-        ets = datetime.datetime.now()
-        delta = (ets - sts).total_seconds()
-        LOG.info(
-            "Processed 1 file in %.5f secs, %.0f files per sec",
-            delta,
-            1.0 / delta,
-        )
-        self.assertTrue(1 == 0)
 
-    def test_bp(self):
-        """issue #6 invalid time"""
-        data = np.zeros([30 * 24])
-        data[0] = 3.2
+def test_bp():
+    """issue #6 invalid time"""
+    data = np.zeros([30 * 24])
+    data[0] = 3.2
+    bp = compute_breakpoint(data)
+    assert bp[0] == "00.0000 0.00"
+    assert bp[1] == "00.0333 3.20"
+    data[0] = 0
+    data[24 * 30 - 1] = 9.99
+    bp = compute_breakpoint(data)
+    assert bp[0] == "23.9666 0.00"
+    assert bp[1] == "23.9833 9.99"
+
+    data[24 * 30 - 1] = 10.99
+    bp = compute_breakpoint(data)
+    assert bp[0] == "23.9666 0.00"
+    assert bp[1] == "23.9833 10.99"
+
+    # Do some random futzing
+    for _ in range(1000):
+        data = np.random.randint(20, size=(30 * 24,))
         bp = compute_breakpoint(data)
-        self.assertEqual(bp[0], "00.00    0.00")
-        self.assertEqual(bp[1], "00.03    3.20")
-        data[0] = 0
-        data[24 * 30 - 1] = 9.99
-        bp = compute_breakpoint(data)
-        self.assertEqual(bp[0], "23.96    0.00")
-        self.assertEqual(bp[1], "23.98    9.99")
-
-        data[24 * 30 - 1] = 10.99
-        bp = compute_breakpoint(data)
-        self.assertEqual(bp[0], "23.96    0.00")
-        self.assertEqual(bp[1], "23.98   10.99")
-
-        # Do some random futzing
-        for _ in range(1000):
-            data = np.random.randint(20, size=(30 * 24,))
-            bp = compute_breakpoint(data)
-            lastts = -1
-            lastaccum = -1
-            for b in bp:
-                tokens = b.split()
-                if float(tokens[0]) <= lastts or float(tokens[1]) <= lastaccum:
-                    LOG.info(data)
-                    LOG.info(bp)
-                    self.assertTrue(1 == 0)
-                lastts = float(tokens[0])
-                lastaccum = float(tokens[1])
+        lastts = -1
+        lastaccum = -1
+        for b in bp:
+            tokens = b.split()
+            if float(tokens[0]) <= lastts or float(tokens[1]) <= lastaccum:
+                LOG.info(data)
+                LOG.info(bp)
+            lastts = float(tokens[0])
+            lastaccum = float(tokens[1])
