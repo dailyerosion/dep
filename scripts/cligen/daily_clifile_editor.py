@@ -250,7 +250,7 @@ def _reader(arr):
 
 
 def load_precip_legacy():
-    """ Compute a Legacy Precip product for dates prior to 1 Jan 2014"""
+    """Compute a Legacy Precip product for dates prior to 1 Jan 2014"""
     LOG.debug("load_precip_legacy() called...")
     ts = 12 * 24  # 5 minute
 
@@ -321,7 +321,7 @@ def load_precip_legacy():
 
 
 def load_precip():
-    """ Load the 5 minute precipitation data into our ginormus grid """
+    """Load the 5 minute precipitation data into our ginormus grid"""
     LOG.debug("load_precip() called...")
     ts = 30 * 24  # 2 minute
 
@@ -446,14 +446,15 @@ def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
             ts = ZEROHOUR.replace(hour=23, minute=59)
         else:
             ts = ZEROHOUR + datetime.timedelta(minutes=((lasti + 1) * 2))
+        # Need four decimals to have higher fidelity back conversion to minutes
         bp.append(
-            "%02i.%02i  %6.2f" % (ts.hour, ts.minute / 60.0 * 100.0, accum)
+            "%02i.%04i  %6.2f" % (ts.hour, ts.minute / 60.0 * 10000.0, accum)
         )
     return bp
 
 
 def myjob(row):
-    """ Thread job, yo """
+    """Thread job, yo"""
     [xidx, yidx] = row
     lon = MYWEST + xidx * 0.01
     lat = MYSOUTH + yidx * 0.01
@@ -541,7 +542,7 @@ def precip_workflow():
 
 
 def workflow():
-    """ The workflow to get the weather data variables we want! """
+    """The workflow to get the weather data variables we want!"""
     LOG.debug(
         "Domain south: %s north: %s west: %s east: %s",
         MYSOUTH,
@@ -623,7 +624,7 @@ class test(unittest.TestCase):
         self.assertTrue(1 == 0)
 
     def test_bp(self):
-        """ issue #6 invalid time """
+        """issue #6 invalid time"""
         data = np.zeros([30 * 24])
         data[0] = 3.2
         bp = compute_breakpoint(data)
