@@ -61,7 +61,8 @@ c       condtion L2
         if ((hour.ge.wnttim) .and. (hour.lt.(wnttim+wntdur))) then
 c
 c       condition L3
-        if (vercli .ne. 0) then
+c       DEH: an impossible condition we should never hit
+        if (vercli .lt. 0) then
 c       No observed dew point temperature
 c
 c         density of new falling snow
