@@ -16,3 +16,4 @@ prj2wepp/wepp/data/managements
 scripts/import/myhucs.txt
 prj2wepp/wepp/runs/temprun.txt
 prj2wepp/wepp/runs/p0*
+.coverage
