@@ -1,7 +1,7 @@
 """DEP WEPP cli editor. One "tile" at a time.
 
 Usage:
-    python daily_climate_editor.py <xtile> <ytile> <tilesz> \
+    python daily_climate_editor.py <xtile> <ytile> <tilesz>
         <scenario> <YYYY> <mm> <dd>
 
 Where tiles start in the lower left corner and are 5x5 deg in size
@@ -52,72 +52,65 @@ def iemre_bounds_check(name, val, lower, upper):
     return val
 
 
-def load_iemre(data, valid, tile_bounds):
+def load_iemre(nc, data, valid):
     """Use IEM Reanalysis for non-precip data
 
     24km product is smoothed down to the 0.01 degree grid
     """
     LOG.debug("called")
 
-    fn = iemre.get_daily_ncname(valid.year)
-    if not os.path.isfile(fn):
-        LOG.debug("Missing %s for load_solar, aborting", fn)
-        sys.exit(3)
-    with ncopen(fn) as nc:
-        offset = iemre.daily_offset(valid)
-        lats = nc.variables["lat"][:]
-        lons = nc.variables["lon"][:]
-        lons, lats = np.meshgrid(lons, lats)
+    offset = iemre.daily_offset(valid)
+    lats = nc.variables["lat"][:]
+    lons = nc.variables["lon"][:]
+    lons, lats = np.meshgrid(lons, lats)
 
-        # Storage is W m-2, we want langleys per day
-        ncdata = (
-            nc.variables["rsds"][offset, :, :] * 86400.0 / 1000000.0 * 23.9
-        )
-        # Default to a value of 300 when this data is missing, for some reason
-        nn = NearestNDInterpolator(
-            (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
-        )
-        data["solar"][:] = iemre_bounds_check(
-            "rsds", nn(data["lon"], data["lat"]), 0, 1000
-        )
+    # Storage is W m-2, we want langleys per day
+    ncdata = nc.variables["rsds"][offset, :, :] * 86400.0 / 1000000.0 * 23.9
+    # Default to a value of 300 when this data is missing, for some reason
+    nn = NearestNDInterpolator(
+        (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
+    )
+    data["solar"][:] = iemre_bounds_check(
+        "rsds", nn(data["lon"], data["lat"]), 0, 1000
+    )
 
-        ncdata = convert_value(
-            nc.variables["high_tmpk"][offset, :, :], "degK", "degC"
-        )
-        nn = NearestNDInterpolator(
-            (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
-        )
-        data["high"][:] = iemre_bounds_check(
-            "high_tmpk", nn(data["lon"], data["lat"]), -60, 60
-        )
+    ncdata = convert_value(
+        nc.variables["high_tmpk"][offset, :, :], "degK", "degC"
+    )
+    nn = NearestNDInterpolator(
+        (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
+    )
+    data["high"][:] = iemre_bounds_check(
+        "high_tmpk", nn(data["lon"], data["lat"]), -60, 60
+    )
 
-        ncdata = convert_value(
-            nc.variables["low_tmpk"][offset, :, :], "degK", "degC"
-        )
-        nn = NearestNDInterpolator(
-            (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
-        )
-        data["low"][:] = iemre_bounds_check(
-            "low_tmpk", nn(data["lon"], data["lat"]), -60, 60
-        )
+    ncdata = convert_value(
+        nc.variables["low_tmpk"][offset, :, :], "degK", "degC"
+    )
+    nn = NearestNDInterpolator(
+        (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
+    )
+    data["low"][:] = iemre_bounds_check(
+        "low_tmpk", nn(data["lon"], data["lat"]), -60, 60
+    )
 
-        ncdata = convert_value(
-            nc.variables["avg_dwpk"][offset, :, :], "degK", "degC"
-        )
-        nn = NearestNDInterpolator(
-            (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
-        )
-        data["dwpt"][:] = iemre_bounds_check(
-            "avg_dwpk", nn(data["lon"], data["lat"]), -60, 60
-        )
+    ncdata = convert_value(
+        nc.variables["avg_dwpk"][offset, :, :], "degK", "degC"
+    )
+    nn = NearestNDInterpolator(
+        (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
+    )
+    data["dwpt"][:] = iemre_bounds_check(
+        "avg_dwpk", nn(data["lon"], data["lat"]), -60, 60
+    )
 
-        ncdata = nc.variables["wind_speed"][offset, :, :]
-        nn = NearestNDInterpolator(
-            (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
-        )
-        data["wind"][:] = iemre_bounds_check(
-            "wind_speed", nn(data["lon"], data["lat"]), 0, 30
-        )
+    ncdata = nc.variables["wind_speed"][offset, :, :]
+    nn = NearestNDInterpolator(
+        (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
+    )
+    data["wind"][:] = iemre_bounds_check(
+        "wind_speed", nn(data["lon"], data["lat"]), 0, 30
+    )
     LOG.debug("finished")
 
 
@@ -419,7 +412,7 @@ def write_grid(grid, valid, xtile, ytile, fnadd=""):
     if fnadd != "" and not sys.stdout.isatty():
         LOG.debug("not writting extra grid to disk")
         return
-    basedir = "/mnt/idep2/data/dailyprecip/%s" % (valid.year,)
+    basedir = f"/mnt/idep2/data/dailyprecip/{valid.year}"
     if not os.path.isdir(basedir):
         os.makedirs(basedir)
     np.save(
@@ -431,9 +424,6 @@ def write_grid(grid, valid, xtile, ytile, fnadd=""):
 
 def precip_workflow(data, valid, xtile, ytile, tile_bounds):
     """Drive the precipitation workflow"""
-    # zero out precip in the case of rerunning this code segment, really?
-    data["precip"][:] = 0
-    data["stage4"][:] = 0
     load_stage4(data, valid, xtile, ytile)
     # We have MRMS a2m RASTER files prior to 1 Jan 2015, but these files used
     # a very poor choice of data interval of 0.1mm, which is not large enough
@@ -447,8 +437,8 @@ def precip_workflow(data, valid, xtile, ytile, tile_bounds):
     write_grid(np.sum(data["precip"], 2), valid, xtile, ytile)
 
 
-def myjob(xidx, yidx, clifn, data, valid):
-    """Thread job, yo"""
+def edit_clifile(xidx, yidx, clifn, data, valid):
+    """Edit the climate file, run from thread."""
     # Okay we have work to do
     clidata = open(clifn, "r").read()
     pos = clidata.find(valid.strftime("%-d\t%-m\t%Y"))
@@ -536,7 +526,8 @@ def main(argv):
     # 3. Radiation l/d
     # 4. wind mps
     # 6. Mean dewpoint C
-    load_iemre(data, valid, tile_bounds)
+    with ncopen(iemre.get_daily_ncname(valid.year)) as nc:
+        load_iemre(nc, data, valid)
     # 5. wind direction (always zero)
     # 7. breakpoint precip mm
     precip_workflow(data, valid, xtile, ytile, tile_bounds)
@@ -562,9 +553,9 @@ def main(argv):
         LOG.exception(exp)
 
     with ThreadPool(CPUCOUNT) as pool:
-        for i, (xidx, yidx, clifn) in enumerate(queue, 1):
+        for i, (xidx, yidx, clifn) in enumerate(queue):
             pool.apply_async(
-                myjob,
+                edit_clifile,
                 (xidx, yidx, clifn, data, valid),
                 callback=_callback,
                 error_callback=_errorback,
@@ -576,6 +567,12 @@ def main(argv):
 if __name__ == "__main__":
     # Go Main Go
     main(sys.argv)
+
+
+def test_compute_tilebounds():
+    """Test that computing tilebounds works."""
+    res = compute_tile_bounds(5, 5, 5)
+    assert abs(res.south - 60.0) < 0.01
 
 
 def test_bp():
@@ -597,7 +594,7 @@ def test_bp():
     assert bp[1] == "23.9833 10.99"
 
     # Do some random futzing
-    for _ in range(1000):
+    for _ in range(100):
         data = np.random.randint(20, size=(30 * 24,))
         bp = compute_breakpoint(data)
         lastts = -1
@@ -605,7 +602,8 @@ def test_bp():
         for b in bp:
             tokens = b.split()
             if float(tokens[0]) <= lastts or float(tokens[1]) <= lastaccum:
-                LOG.info(data)
-                LOG.info(bp)
+                print(data)
+                print(bp)
+                assert False
             lastts = float(tokens[0])
             lastaccum = float(tokens[1])
