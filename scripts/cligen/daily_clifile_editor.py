@@ -9,6 +9,10 @@ Where tiles start in the lower left corner and are 5x5 deg in size
 development laptop has data for 3 March 2019, 23 May 2009, and 8 Jun 2009
 
 """
+try:
+    from zoneinfo import ZoneInfo  # type: ignore
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 from collections import namedtuple
 import datetime
 import sys
@@ -18,7 +22,6 @@ from multiprocessing.pool import ThreadPool
 
 from tqdm import tqdm
 import numpy as np
-import pytz
 from scipy.interpolate import NearestNDInterpolator
 from PIL import Image
 from pyiem import iemre
@@ -26,6 +29,8 @@ from pyiem.dep import SOUTH, WEST, NORTH, EAST, get_cli_fname
 from pyiem.util import ncopen, logger, convert_value, utc
 
 LOG = logger()
+CENTRAL = ZoneInfo("America/Chicago")
+UTC = datetime.timezone.utc
 ST4PATH = "/mesonet/data/stage4"
 # used for breakpoint logic
 ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
@@ -33,6 +38,32 @@ ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
 CPUCOUNT = max([4, int(cpu_count() / 4)])
 MEMORY = {"stamp": datetime.datetime.now()}
 BOUNDS = namedtuple("Bounds", ["south", "north", "east", "west"])
+
+
+def get_sts_ets_at_localhour(date, local_hour):
+    """Return a Day Interval in UTC for the given date at CST/CDT hour."""
+    # ZoneInfo is supposed to get this right at instanciation
+    sts = datetime.datetime(
+        date.year,
+        date.month,
+        date.day,
+        local_hour,
+        tzinfo=CENTRAL,
+    )
+    date2 = datetime.date(
+        date.year, date.month, date.day
+    ) + datetime.timedelta(days=1)
+    ets = datetime.datetime(
+        date2.year,
+        date2.month,
+        date2.day,
+        local_hour,
+        tzinfo=CENTRAL,
+    )
+    return (
+        sts.replace(hour=local_hour).astimezone(UTC),
+        ets.replace(hour=local_hour).astimezone(UTC),
+    )
 
 
 def iemre_bounds_check(name, val, lower, upper):
@@ -122,13 +153,7 @@ def load_stage4(data, valid, xtile, ytile):
     """
     LOG.debug("called")
     # The stage4 files store precip in the rears, so compute 1 AM
-    one_am = utc(valid.year, valid.month, valid.day, 12)
-    one_am = one_am.astimezone(pytz.timezone("America/Chicago"))
-    # stage4 data is stored in the rears, so 1am
-    one_am = one_am.replace(hour=1, minute=0, second=0)
-    # clever hack for CST/CDT
-    tomorrow = one_am + datetime.timedelta(hours=36)
-    tomorrow = tomorrow.replace(hour=1)
+    one_am, tomorrow = get_sts_ets_at_localhour(valid, 1)
 
     sts_tidx = iemre.hourly_offset(one_am)
     ets_tidx = iemre.hourly_offset(tomorrow)
@@ -214,12 +239,7 @@ def load_precip_legacy(data, valid, tile_bounds):
     LOG.debug("called")
     ts = 12 * 24  # 5 minute
 
-    midnight = utc(valid.year, valid.month, valid.day, 12)
-    midnight = midnight.astimezone(pytz.timezone("America/Chicago"))
-    midnight = midnight.replace(hour=0, minute=0, second=0)
-    # clever hack for CST/CDT
-    tomorrow = midnight + datetime.timedelta(hours=36)
-    tomorrow = tomorrow.replace(hour=0)
+    midnight, tomorrow = get_sts_ets_at_localhour(valid, 0)
 
     now = midnight
     m5 = np.zeros((ts, *data["solar"].shape), np.float16)
@@ -228,7 +248,7 @@ def load_precip_legacy(data, valid, tile_bounds):
     indices = []
     # Load up the n0r data, every 5 minutes
     while now < tomorrow:
-        utcvalid = now.astimezone(pytz.timezone("UTC"))
+        utcvalid = now.astimezone(UTC)
         fn = utcvalid.strftime(
             "/mesonet/ARCHIVE/data/%Y/%m/%d/GIS/uscomp/n0r_%Y%m%d%H%M.png"
         )
@@ -281,12 +301,7 @@ def load_precip(data, valid, tile_bounds):
     LOG.debug("called")
     ts = 30 * 24  # 2 minute
 
-    midnight = utc(valid.year, valid.month, valid.day)
-    midnight = midnight.astimezone(pytz.timezone("America/Chicago"))
-    midnight = midnight.replace(hour=0, minute=0, second=0)
-    # clever hack for CST/CDT
-    tomorrow = midnight + datetime.timedelta(hours=36)
-    tomorrow = tomorrow.replace(hour=0)
+    midnight, tomorrow = get_sts_ets_at_localhour(valid, 0)
 
     top = int((55.0 - tile_bounds.north) * 100.0)
     bottom = int((55.0 - tile_bounds.south) * 100.0)
@@ -299,11 +314,10 @@ def load_precip(data, valid, tile_bounds):
 
     now = midnight
     # Require at least 75% data coverage, if not, we will abort back to legacy
-    quorum = 720 * 0.75
+    quorum = ts * 0.75
     fns = []
     while now < tomorrow:
-        utcvalid = now.astimezone(pytz.UTC)
-        fn = utcvalid.strftime(
+        fn = now.astimezone(UTC).strftime(
             "/mesonet/ARCHIVE/data/%Y/%m/%d/GIS/mrms/a2m_%Y%m%d%H%M.png"
         )
         if os.path.isfile(fn):
@@ -311,15 +325,16 @@ def load_precip(data, valid, tile_bounds):
             fns.append(fn)
         else:
             fns.append(None)
-            LOG.info("daily_clifile_editor missing: %s", fn)
+            LOG.info("missing: %s", fn)
 
         now += datetime.timedelta(minutes=2)
     if quorum > 0:
         LOG.info(
-            "WARNING: Failed quorum with MRMS a2m %.1f, loading legacy", quorum
+            "Failed 75% quorum with MRMS a2m %.1f, loading legacy", quorum
         )
-        data["precip"][:] = 0
         load_precip_legacy(data, valid, tile_bounds)
+        return
+    LOG.debug("fns[0]: %s fns[-1]: %s", fns[0], fns[-1])
 
     def _reader(tidx, fn):
         """Reader."""
@@ -567,6 +582,13 @@ def main(argv):
 if __name__ == "__main__":
     # Go Main Go
     main(sys.argv)
+
+
+def test_get_sts_ets_at_localhour():
+    """Test that we properly deal with fall back in this logic."""
+    sts, ets = get_sts_ets_at_localhour(datetime.date(2021, 11, 7), 1)
+    assert sts == utc(2021, 11, 7, 6)
+    assert ets == utc(2021, 11, 8, 7)
 
 
 def test_compute_tilebounds():
