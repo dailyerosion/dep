@@ -1,11 +1,10 @@
 """Plot what was saved from daily_clifile_editor processing"""
-from __future__ import print_function
 import sys
 import datetime
 import os
 
 from pyiem.plot import MapPlot
-from pyiem.iemre import daily_offset
+from pyiem.iemre import daily_offset, get_daily_mrms_ncname
 from pyiem.dep import SOUTH, NORTH, EAST, WEST
 from pyiem.util import get_dbconn
 import netCDF4
@@ -21,7 +20,7 @@ SECTOR = "iowa"
 
 
 def load_precip(date, extra=""):
-    """Load up our QC'd daily precip dataset """
+    """Load up our QC'd daily precip dataset"""
     fn = date.strftime(
         "/mnt/idep2/data/dailyprecip/%Y/%Y%m%d" + extra + ".npy"
     )
@@ -192,14 +191,14 @@ def do(valid):
     mp.close()
 
     # Go MRMS
-    ncfn = "/mesonet/data/iemre/%s_mw_mrms_daily.nc" % (valid.year,)
+    ncfn = get_daily_mrms_ncname(valid.year)
     if not os.path.isfile(ncfn):
         return
     nc = netCDF4.Dataset(ncfn, "r")
     xidx = int((WEST - nc.variables["lon"][0]) * 100.0)
     yidx = int((SOUTH - nc.variables["lat"][0]) * 100.0)
     idx = daily_offset(valid)
-    mrms = nc.variables["p01d"][idx, yidx : (yidx + 800), xidx : (xidx + 921)]
+    nc.variables["p01d"][idx, yidx : (yidx + 800), xidx : (xidx + 921)]
     nc.close()
 
 
