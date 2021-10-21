@@ -1,5 +1,4 @@
 """Plot a histogram of slopes used in DEP"""
-from __future__ import print_function
 import os
 import glob
 

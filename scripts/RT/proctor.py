@@ -2,7 +2,6 @@
 
     $ python proctor.py <scenario>
 """
-from __future__ import print_function
 import sys
 import os
 import subprocess
@@ -29,7 +28,7 @@ class WeppRun(object):
         """We initialize with a huc12 identifier and a flowpath id"""
         self.huc12 = huc12
         self.huc8 = huc12[:8]
-        self.subdir = "%s/%s" % (huc12[:8], huc12[8:])
+        self.subdir = f"{huc12[:8]}/{huc12[8:]}"
         self.fpid = fpid
         self.clifile = clifile
         self.scenario = scenario
@@ -95,7 +94,7 @@ class WeppRun(object):
 
     def make_runfile(self):
         """Create a runfile for our runs"""
-        out = open(self.get_runfile_fn(), "w")
+        out = open(self.get_runfile_fn(), "w", encoding="utf8")
         out.write("E\n")  # English units
         out.write("Yes\n")  # Run Hillslope
         out.write("1\n")  # Continuous simulation

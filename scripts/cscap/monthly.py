@@ -1,5 +1,5 @@
 """Make plots of monthly values or differences"""
-from __future__ import print_function
+import calendar
 
 from pandas.io.sql import read_sql
 import matplotlib.pyplot as plt

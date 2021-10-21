@@ -7,7 +7,6 @@
  5) OFE positions along this path
  6) Generic properties, perhaps can ignore?
 """
-from __future__ import print_function
 
 import psycopg2
 import numpy as np

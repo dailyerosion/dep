@@ -1,12 +1,9 @@
 """Examination of erosion totals vs flowpath length"""
-from __future__ import print_function
 import os
-import datetime
 import multiprocessing
 import sys
 
 import pandas as pd
-import numpy as np
 import psycopg2
 from tqdm import tqdm
 from pyiem import dep as dep_utils
@@ -30,9 +27,10 @@ def find_huc12s():
 
 
 def readfile(huc12, fn):
+    """Read the file."""
     try:
         df = dep_utils.read_env(fn)
-    except:
+    except Exception:
         return None
     key = "%s_%s" % (huc12, int(fn.split("/")[-1].split(".")[0].split("_")[1]))
     df["delivery"] = df["sed_del"] / lengths[key]

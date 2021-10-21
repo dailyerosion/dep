@@ -1,5 +1,4 @@
 """Generate the WEPP prj files based on what our database has for us"""
-from __future__ import print_function
 import copy
 import sys
 import os

@@ -1,5 +1,4 @@
 """Edit the prj files to set the tillage class in each to 1"""
-from __future__ import print_function
 import os
 
 

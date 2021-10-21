@@ -1,6 +1,4 @@
 """Make plots of monthly values or differences"""
-from __future__ import print_function
-import calendar
 
 from pandas.io.sql import read_sql
 import matplotlib.pyplot as plt
@@ -10,6 +8,7 @@ PGCONN = get_dbconn("idep")
 
 
 def get_scenario(scenario):
+    """get a scenario."""
     df = read_sql(
         """
         WITH yearly as (

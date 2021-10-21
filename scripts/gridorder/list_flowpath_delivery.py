@@ -1,5 +1,4 @@
 """List out the results for each flowpath within a HUC12"""
-from __future__ import print_function
 import sys
 import datetime
 
