@@ -35,7 +35,7 @@ def load_lengths(hucs):
         (tuple(hucs),),
     )
     for row in icursor:
-        d = res.setdefault(row[0], dict())
+        d = res.setdefault(row[0], {})
         d[row[1]] = row[2]
     return res
 
