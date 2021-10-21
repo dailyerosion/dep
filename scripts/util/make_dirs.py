@@ -13,7 +13,7 @@ PREFIXES = (
 
 
 def do_huc12(scenario, huc12):
-    """ Directory creator! """
+    """Directory creator!"""
     created = 0
     for prefix in PREFIXES:
         newdir = "/i/%s/%s/%s/%s" % (scenario, prefix, huc12[:8], huc12[8:])

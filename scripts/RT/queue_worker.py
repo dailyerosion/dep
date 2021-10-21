@@ -18,7 +18,7 @@ FILENAME_RE = re.compile(
 
 
 def run(rundata):
-    """ Actually run wepp for this event """
+    """Actually run wepp for this event"""
     proc = subprocess.Popen(
         ["wepp"],
         stderr=subprocess.PIPE,
