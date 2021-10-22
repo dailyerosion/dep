@@ -1,12 +1,6 @@
 """Summarize for MLRA, somehow"""
-from __future__ import print_function
-import sys
 
 from pandas.io.sql import read_sql
-import matplotlib
-
-matplotlib.use("agg")
-import matplotlib.pyplot as plt
 from pyiem.util import get_dbconn
 
 LABELS = {

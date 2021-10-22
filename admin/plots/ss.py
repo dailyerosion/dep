@@ -7,7 +7,7 @@ from pyiem.util import get_dbconn
 
 
 def make_plot(huc_12):
-    """ Generate the plot please """
+    """Generate the plot please"""
     import psycopg2
     import matplotlib
 

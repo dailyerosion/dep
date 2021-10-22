@@ -1,5 +1,4 @@
 """Period of record plot summaries"""
-from __future__ import print_function
 import datetime
 import sys
 

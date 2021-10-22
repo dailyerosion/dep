@@ -18,7 +18,7 @@ class WeppRun:
     """
 
     def __init__(self, huc12, fpid, clifile, scenario):
-        """ We initialize with a huc12 identifier and a flowpath id """
+        """We initialize with a huc12 identifier and a flowpath id"""
         self.huc12 = huc12
         self.huc8 = huc12[:8]
         self.subdir = "%s/%s" % (huc12[:8], huc12[8:])
@@ -38,35 +38,35 @@ class WeppRun:
         )
 
     def get_wb_fn(self):
-        """ Return the water balance filename for this run """
+        """Return the water balance filename for this run"""
         return self._getfn("wb")
 
     def get_env_fn(self):
-        """ Return the event filename for this run """
+        """Return the event filename for this run"""
         return self._getfn("env")
 
     def get_ofe_fn(self):
-        """ Return the filename used for OFE output """
+        """Return the filename used for OFE output"""
         return self._getfn("ofe")
 
     def get_man_fn(self):
-        """ Return the management filename for this run """
+        """Return the management filename for this run"""
         return self._getfn("man")
 
     def get_slope_fn(self):
-        """ Return the slope filename for this run """
+        """Return the slope filename for this run"""
         return self._getfn("slp")
 
     def get_soil_fn(self):
-        """ Return the soil filename for this run """
+        """Return the soil filename for this run"""
         return self._getfn("sol")
 
     def get_clifile_fn(self):
-        """ Return the climate filename for this run """
+        """Return the climate filename for this run"""
         return self.clifile
 
     def get_runfile_fn(self):
-        """ Return the run filename for this run """
+        """Return the run filename for this run"""
         return self._getfn("run")
 
     def get_yield_fn(self):
@@ -86,7 +86,7 @@ class WeppRun:
         return self._getfn("grph")
 
     def make_runfile(self):
-        """ Create a runfile for our runs """
+        """Create a runfile for our runs"""
         out = StringIO()
         out.write("E\n")  # English units
         out.write("Yes\n")  # Run Hillslope

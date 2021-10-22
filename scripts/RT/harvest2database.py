@@ -33,7 +33,7 @@ def find_huc12s(scenario):
 
 
 def do_huc12(basedir):
-    """"Process this path's worth of data"""
+    """ "Process this path's worth of data"""
     huc12 = "".join(basedir.split("/")[-2:])
     frames = [readfile(huc12, basedir + "/" + f) for f in os.listdir(basedir)]
     if not frames or all([f is None for f in frames]):

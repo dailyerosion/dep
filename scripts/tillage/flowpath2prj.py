@@ -1,5 +1,4 @@
 """Generate the WEPP prj files based on what our database has for us"""
-from __future__ import print_function
 import copy
 import sys
 import os
@@ -26,7 +25,7 @@ for _row in cursor:
 
 
 def get_rotation(code):
-    """ Convert complex things into a simple WEPP management for now """
+    """Convert complex things into a simple WEPP management for now"""
     rotfn = "tillage_issue63/IA_CENTRAL/%s/%s/%s-%s.rot" % (
         code[:2],
         code[2:4],
@@ -37,7 +36,7 @@ def get_rotation(code):
 
 
 def compute_aspect(x0, y0, x1, y1):
-    """ Compute the aspect angle between two points """
+    """Compute the aspect angle between two points"""
     dx = x1 - x0
     dy = y1 - y0
     rads = atan2(-dy, dx)
@@ -46,14 +45,14 @@ def compute_aspect(x0, y0, x1, y1):
 
 
 def non_zero(dy, dx):
-    """ Make sure slope is slightly non-zero """
+    """Make sure slope is slightly non-zero"""
     if dx == 0:
         return 0.00001
     return max(0.00001, dy / dx)
 
 
 def simplify(rows):
-    """ WEPP can only handle 20 slope points it seems, so we must simplify """
+    """WEPP can only handle 20 slope points it seems, so we must simplify"""
     newrows = []
     lrow = rows[0]
     newrows.append(lrow)
@@ -133,7 +132,7 @@ def simplify(rows):
 
 
 def compute_slope(fid):
-    """ Compute the simple slope for the fid """
+    """Compute the simple slope for the fid"""
     cursor2.execute(
         """SELECT max(elevation), min(elevation), max(length)
     from flowpath_points where flowpath = %s and length < 9999
@@ -145,7 +144,7 @@ def compute_slope(fid):
 
 
 def do_flowpath(zone, huc_12, fid, fpath):
-    """ Process a given flowpathid """
+    """Process a given flowpathid"""
     # slope = compute_slope(fid)
     # I need bad soilfiles so that the length can be computed
     cursor2.execute(
@@ -325,7 +324,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
 
 
 def write_prj(data):
-    """ Create the WEPP prj file """
+    """Create the WEPP prj file"""
     out = open(data["prj_fn"], "w")
 
     # Profile format
@@ -382,7 +381,7 @@ RunOptions {
 
 
 def main(argv):
-    """ Go main go """
+    """Go main go"""
     cursor.execute(
         """
         WITH scenario0 as (

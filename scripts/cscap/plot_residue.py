@@ -1,8 +1,8 @@
 """
 Utility to plot some residue values from WEPP crop output
 """
-from __future__ import print_function
 import datetime
+
 import pandas as pd
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt

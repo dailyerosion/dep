@@ -186,7 +186,7 @@ def load_lengths(scenario):
         (int(sdf.loc[scenario, "flowpath_scenario"]),),
     )
     for row in icursor:
-        d = res.setdefault(row[0], dict())
+        d = res.setdefault(row[0], {})
         d[row[1]] = row[2]
     return res
 

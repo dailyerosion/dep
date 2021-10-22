@@ -35,7 +35,7 @@ def read_slope(fn):
 
 
 def make_plot(huc_12):
-    """ Generate the plot please """
+    """Generate the plot please"""
 
     import matplotlib
 

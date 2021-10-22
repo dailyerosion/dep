@@ -1,5 +1,4 @@
 """Diagnose some Water Balance stuff"""
-from __future__ import print_function
 import sys
 import glob
 import datetime

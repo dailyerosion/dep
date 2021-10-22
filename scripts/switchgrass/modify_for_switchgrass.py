@@ -2,7 +2,6 @@
 
 IDEP2/CSCAP/SWITCHGRASS.rot
 """
-from __future__ import print_function
 import os
 import sys
 import glob

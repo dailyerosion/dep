@@ -29,7 +29,7 @@ df = pd.read_csv("flowpaths%s.csv" % (gridorder,))
 df["huc12"] = df["flowpath"].str.slice(0, 12)
 for huc in HUCS.split("\n"):
     df2 = df[df["huc12"] == huc]
-    res = dict()
+    res = {}
     res["fplen"] = df2["length"].mean()
     res["delivery"] = df2["delivery"].mean()
     res["detach"] = df2["avg_det"].mean()

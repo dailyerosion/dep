@@ -9,7 +9,7 @@ from pandas import Series
 
 
 def get_data(fn):
-    """ Load a DBF file into a pandas DF """
+    """Load a DBF file into a pandas DF"""
     rows = []
     dbf = dbflib.open(fn)
     for i in range(dbf.record_count()):
@@ -19,7 +19,7 @@ def get_data(fn):
 
 
 def main():
-    """ Lets go main go """
+    """Lets go main go"""
     os.chdir("../../data/dbfsGo4")
     fns = glob.glob("*.dbf")
     for fn in fns:

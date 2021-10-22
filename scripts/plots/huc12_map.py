@@ -1,20 +1,14 @@
 """General HUC12 mapper"""
-from __future__ import print_function
-
-import datetime
 import sys
 
-import matplotlib
-
-matplotlib.use("agg")
-import matplotlib.pyplot as plt
-from pyiem.plot import MapPlot, nwsprecip
+from pyiem.plot.use_agg import plt
+from pyiem.plot import MapPlot
+from pyiem.util import get_dbconn
 from shapely.wkb import loads
 import numpy as np
 import cartopy.crs as ccrs
 from matplotlib.patches import Polygon
 import matplotlib.colors as mpcolors
-from pyiem.util import get_dbconn
 
 MYHUCS = [
     "071000060202",

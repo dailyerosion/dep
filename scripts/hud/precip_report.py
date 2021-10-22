@@ -1,5 +1,4 @@
 """Generate a precip report for the HUD project"""
-from __future__ import print_function
 
 import matplotlib.pyplot as plt
 from pandas.io.sql import read_sql
