@@ -299,7 +299,7 @@ def update_metadata(scenario, dates):
 def do_huc12(arg):
     """Process a huc12's worth of WEPP output files"""
     scenario, huc12, lengths, dates, precip = arg
-    pgconn = get_dbconn("idep", connect_timeout=60, allow_failover=False)
+    pgconn = get_dbconn("idep")
     icursor = pgconn.cursor()
     basedir = "/i/%s/env/%s/%s" % (scenario, huc12[:8], huc12[8:])
     frames = [
