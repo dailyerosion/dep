@@ -19,14 +19,12 @@ def main():
     yyyymmdd = yesterday.strftime("%Y%m%d")
     media_ids = []
     for vname in ["qc_precip", "avg_delivery"]:
-        uri = ("http://depbackend.local/auto/%s_%s_0_%s.png") % (
-            yyyymmdd,
-            yyyymmdd,
-            vname,
+        uri = (
+            f"http://depbackend.local/auto/{yyyymmdd}_{yyyymmdd}_0_{vname}.png"
         )
         req = util.exponential_backoff(requests.get, uri, timeout=120)
         if req is None or req.status_code != 200:
-            print("Download %s failed" % (uri,))
+            LOG.info("Download %s failed", uri)
             continue
         bio = BytesIO()
         bio.write(req.content)
@@ -36,14 +34,13 @@ def main():
         media_ids.append(response["media_id"])
 
     status = (
-        "Daily Erosion output for %s is available "
-        "https://dailyerosion.org/map/#%s//qc_precip"
-    ) % (yesterday.strftime("%B %-d, %Y"), yyyymmdd)
+        "Daily Erosion output for {yesterday:%B %-d %Y} is available "
+        f"https://dailyerosion.org/map/#{yyyymmdd}//qc_precip"
+    )
 
     res = twitter.update_status(status=status, media_ids=media_ids)
-    print(
-        ("Posted https://twitter.com/dailyerosion/status/%s")
-        % (res["id_str"],)
+    LOG.info(
+        "Posted https://twitter.com/dailyerosion/status/%s", res["id_str"]
     )
 
 

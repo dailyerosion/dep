@@ -13,6 +13,7 @@ import os
 import sys
 
 from tqdm import tqdm
+from shapely.geometry import LineString
 import geopandas as gpd
 import pandas as pd
 from pyiem.util import get_dbconn, logger
@@ -22,14 +23,13 @@ print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")
 print(" * VERIFY that the GeoJSON is the 5070 grid value")
 print(" * This will generate a `myhucs.txt` file with found HUCs")
 
-SCENARIO = int(sys.argv[1])
 PREFIX = "fp"
 TRUNC_GRIDORDER_AT = 4
 
 PGCONN = get_dbconn("idep")
 
 
-def get_flowpath(cursor, huc12, fpath):
+def get_flowpath(cursor, scenario, huc12, fpath):
     """Get or create a database flowpath identifier
 
     Args:
@@ -43,13 +43,13 @@ def get_flowpath(cursor, huc12, fpath):
     cursor.execute(
         "SELECT fid from flowpaths where huc_12 = %s and fpath = %s "
         "and scenario = %s",
-        (huc12, fpath, SCENARIO),
+        (huc12, fpath, scenario),
     )
     if cursor.rowcount == 0:
         cursor.execute(
             "INSERT into flowpaths(huc_12, fpath, scenario) "
             "values (%s, %s, %s) RETURNING fid",
-            (huc12, fpath, SCENARIO),
+            (huc12, fpath, scenario),
         )
     return cursor.fetchone()[0]
 
@@ -65,60 +65,35 @@ def get_data(filename):
     """
     df = gpd.read_file(filename, index="OBJECTID")
     # Compute full rotation string
-    # OK, be careful here. Presently, the 8 char field covers
-    # 2010 thru 2017, so we rotate to cover the first and last years
-    # 2007 2011[1]
-    # 2008 2010[0]
-    # 2009 2011[1]
-    # 2018 2016[6]
-    # 2019 2017[7]
-    # 2020 2018[6]
-    s = df["CropRotatn_CY_2017"]
+    # TODO - wrong label, 2010-2020 period
+    s = df["CropRotatn_CY_2019"]
     df["landuse"] = (
-        s.str[1]
-        + s.str[0]
-        + s.str[1]
-        + s
-        + s.str[6]
-        + s.str[7]
-        + s.str[6]
-        + s.str[7]
+        s.str[1] + s.str[0] + s.str[1] + s + s.str[-2]  # 2010  # 2021
     )
-    s = df["Management_CY_2017"]
-    df["management"] = (
-        s.str[1]
-        + s.str[0]
-        + s.str[1]
-        + s
-        + s.str[6]
-        + s.str[7]
-        + s.str[6]
-        + s.str[7]
-    )
+    s = df["Management_CY_2020"]
+    df["management"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2]  # 2010
     return df
 
 
-def delete_previous(cursor, huc12):
+def delete_previous(cursor, scenario, huc12):
     """This file is the authority, so we cull previous content."""
     cursor.execute(
-        """
-        DELETE from flowpath_points p USING flowpaths f WHERE
-        p.scenario = %s and p.flowpath = f.fid and f.huc_12 = %s
-        and f.scenario = %s
-    """,
-        (SCENARIO, huc12, SCENARIO),
+        "DELETE from flowpath_points p USING flowpaths f WHERE "
+        "p.scenario = %s and p.flowpath = f.fid and f.huc_12 = %s "
+        "and f.scenario = %s",
+        (scenario, huc12, scenario),
     )
     cursor.execute(
         "DELETE from flowpaths WHERE scenario = %s and huc_12 = %s",
-        (SCENARIO, huc12),
+        (scenario, huc12),
     )
 
 
-def process_flowpath(cursor, huc12, db_fid, df):
+def process_flowpath(cursor, scenario, huc12, db_fid, df):
     """Do one flowpath please."""
-    lencolname = "%sLen%s" % (PREFIX, huc12)
-    elevcolname = "ep3m%s" % (huc12,)
-    gordcolname = "gord_%s" % (huc12,)
+    lencolname = f"{PREFIX}Len{huc12}"
+    elevcolname = f"ep3m{huc12}"
+    gordcolname = f"gord_{huc12}"
     # Sort along the length column, which orders the points from top
     # to bottom
     df = df.sort_values(lencolname, ascending=True)
@@ -126,7 +101,7 @@ def process_flowpath(cursor, huc12, db_fid, df):
     cursor.execute(
         "DELETE from flowpath_points WHERE flowpath = %s", (db_fid,)
     )
-    linestring = []
+    points = []
     sz = len(df.index)
     maxslope = 0
     elev_change = 0
@@ -159,13 +134,13 @@ def process_flowpath(cursor, huc12, db_fid, df):
             segid,
             row[elevcolname] / 100.0,
             row[lencolname] / 100.0,
-            row["SOL_FY_2018"],
+            row["SOL_FY_2020"],
             row["management"],
             slope,
             row["geometry"].x,
             row["geometry"].y,
             row["landuse"],
-            SCENARIO,
+            scenario,
             gridorder,
         )
         cursor.execute(
@@ -176,25 +151,21 @@ def process_flowpath(cursor, huc12, db_fid, df):
             args,
         )
 
-        linestring.append("%s %s" % (row["geometry"].x, row["geometry"].y))
+        points.append((row["geometry"].x, row["geometry"].y))
 
     # Line string must have at least 2 points
-    if len(linestring) > 1:
+    if len(points) > 1:
+        ls = LineString(points)
+        assert ls.is_valid
         if x_change == 0:
-            print()
+            print("x_change equals 0, abort")
             print(df)
             sys.exit()
-        sql = """
-            UPDATE flowpaths SET geom = 'SRID=5070;LINESTRING(%s)',
-            max_slope = %s, bulk_slope = %s
-            WHERE fid = %s
-        """ % (
-            ",".join(linestring),
-            maxslope,
-            elev_change / x_change,
-            db_fid,
+        cursor.execute(
+            "UPDATE flowpaths SET geom = %s, "
+            "max_slope = %s, bulk_slope = %s WHERE fid = %s",
+            (f"SRID=5070;{ls.wkt}", maxslope, elev_change / x_change, db_fid),
         )
-        cursor.execute(sql)
     else:
         # Cull our work above if this flowpath is too short
         delete_flowpath(cursor, db_fid)
@@ -206,37 +177,37 @@ def delete_flowpath(cursor, fid):
     cursor.execute("DELETE from flowpaths where fid = %s", (fid,))
 
 
-def process(cursor, filename, huc12df):
+def process(cursor, scenario, huc12df):
     """Processing of a HUC12's data into the database
 
     Args:
       cursor (psycopg2.cursor): database cursor
-      filename (str): the geojson filename
+        scenario (int): the scenario to process
       huc12df (pd.DataFrame): the dataframe containing the data
 
     Returns:
       None
     """
-    # We get the huc12 code based on the filename
-    huc12 = filename.split(".")[0].split("_")[-1]
-    # lencolname = "%sLen%s" % (PREFIX, huc12)
-    # res = huc12df[huc12df[lencolname] == 0].groupby(
-    #   "%s%s" % (PREFIX, huc12)).count()
-    # for _, row in res[res[lencolname] > 1].iterrows():
-    #    print(row)
-    # return
+    # Hack compute the huc12 by finding the fp field name
+    huc12 = None
+    for col in huc12df.columns:
+        if col.startswith(PREFIX):
+            huc12 = col[len(PREFIX) :]
+            break
+    if huc12 is None:
+        raise Exception(f"Could not find huc12 from {huc12df.columns}")
 
-    delete_previous(cursor, huc12)
+    delete_previous(cursor, scenario, huc12)
     # the inbound dataframe has lots of data, one row per flowpath point
     # We group the dataframe by the column which uses a PREFIX and the huc8
-    for flowpath_num, df in huc12df.groupby("%s%s" % (PREFIX, huc12)):
+    for flowpath_num, df in huc12df.groupby(f"{PREFIX}{huc12}"):
         # These are upstream errors I should ignore
         if flowpath_num == 0 or len(df.index) < 2:
             continue
         # Get or create the flowpathid from the database
-        db_fid = get_flowpath(cursor, huc12, flowpath_num)
+        db_fid = get_flowpath(cursor, scenario, huc12, flowpath_num)
         try:
-            process_flowpath(cursor, huc12, db_fid, df)
+            process_flowpath(cursor, scenario, huc12, db_fid, df)
         except Exception as exp:
             LOG.info("flowpath_num: %s hit exception", flowpath_num)
             LOG.exception(exp)
@@ -246,21 +217,21 @@ def process(cursor, filename, huc12df):
     return huc12
 
 
-def main():
+def main(argv):
     """Our main function, the starting point for code execution"""
     cursor = PGCONN.cursor()
+    scenario = int(argv[1])
     # track our work
-    with open("myhucs.txt", "w") as fh:
-        # Change the working directory to where we have data files
-        os.chdir("../../data/%s" % (sys.argv[2],))
+    with open("myhucs.txt", "w", encoding="utf8") as fh:
+        datadir = os.path.join("..", "..", "data", argv[2])
         # collect up the GeoJSONs in that directory
-        fns = glob.glob("smpl3m_*.json")
+        fns = glob.glob(f"{datadir}/smpl3m_*.json")
         fns.sort()
         i = 0
 
         progress = tqdm(fns)
         for fn in progress:
-            progress.set_description(fn)
+            progress.set_description(os.path.basename(fn))
             # Save our work every 100 HUC12s,
             # so to keep the database transaction
             # at a reasonable size
@@ -268,8 +239,8 @@ def main():
                 PGCONN.commit()
                 cursor = PGCONN.cursor()
             df = get_data(fn)
-            huc12 = process(cursor, fn, df)
-            fh.write("%s\n" % (huc12,))
+            huc12 = process(cursor, scenario, df)
+            fh.write(f"{huc12}\n")
             i += 1
 
     # Commit the database changes
@@ -278,4 +249,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
