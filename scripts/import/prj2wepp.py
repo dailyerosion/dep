@@ -17,10 +17,11 @@ WEPP = f"{PROJDIR}/wepp"
 def main(argv):
     """Go Main Go."""
     scenario = int(argv[1])
-    basedir = "/i/%s/prj" % (scenario,)
+    basedir = f"/i/{scenario}/prj"
     myhucs = []
     if os.path.isfile("myhucs.txt"):
-        myhucs = open("myhucs.txt").read().split("\n")
+        with open("myhucs.txt", encoding="utf8") as fh:
+            myhucs = fh.read().split("\n")
         LOG.info("using HUC12s found in myhucs.txt...")
     os.chdir(basedir)
     huc8s = glob.glob("*")
@@ -28,7 +29,7 @@ def main(argv):
     for huc8 in tqdm(huc8s):
         os.chdir(huc8)
         for huc4 in glob.glob("*"):
-            huc12 = "%s%s" % (huc8, huc4)
+            huc12 = f"{huc8}{huc4}"
             if myhucs and huc12 not in myhucs:
                 continue
             os.chdir(huc4)
@@ -36,13 +37,8 @@ def main(argv):
                 # Run prj2wepp in its install dir so that the local userdb
                 # is used
                 os.chdir(PROJDIR)
-                fullfn = "/i/%s/prj/%s/%s/%s" % (scenario, huc8, huc4, pfile)
-                # A shortcircuit
-                # if os.path.isfile(("/i/%s/man/%s/%s/%s.man"
-                #                   ) % (SCENARIO, huc8, huc4, pfile[:-4])):
-                #    os.chdir("%s/%s/%s" % (BASEDIR, huc8, huc4))
-                #    continue
-                cmd = "%s %s test %s no" % (EXE, fullfn, WEPP)
+                fullfn = f"/i/{scenario}/prj/{huc8}/{huc4}/{pfile}"
+                cmd = f"{EXE} {fullfn} test {WEPP} no"
                 proc = subprocess.Popen(
                     cmd,
                     shell=True,
@@ -63,21 +59,23 @@ def main(argv):
                     if errors > 10:
                         LOG.info("Aborting due to errors...")
                         sys.exit()
-                    os.chdir("%s/%s/%s" % (basedir, huc8, huc4))
+                    os.chdir(os.path.join(basedir, huc8, huc4))
                     continue
                 # This generates .cli, .man, .run, .slp, .sol
                 # We need the .man , .slp , .sol from this process
                 for suffix in ["man", "slp", "sol"]:
                     shutil.copyfile(
-                        "test.%s" % (suffix,),
-                        ("/i/%s/%s/%s/%s/%s.%s")
-                        % (scenario, suffix, huc8, huc4, pfile[:-4], suffix),
+                        f"test.{suffix}",
+                        (
+                            f"/i/{scenario}/{suffix}/{huc8}/{huc4}/"
+                            f"{pfile[:-4]}.{suffix}"
+                        ),
                     )
 
                 for suffix in ["cli", "man", "run", "slp", "sol"]:
-                    if os.path.isfile("test.%s" % (suffix,)):
-                        os.unlink("test.%s" % (suffix,))
-                os.chdir("%s/%s/%s" % (basedir, huc8, huc4))
+                    if os.path.isfile(f"test.{suffix}"):
+                        os.unlink(f"test.{suffix}")
+                os.chdir(os.path.join(basedir, huc8, huc4))
             os.chdir("..")
         os.chdir("..")
 
