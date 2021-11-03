@@ -18,14 +18,19 @@ def main(argv):
     scenario = int(argv[1])
     basedir = f"/i/{scenario}/slp"
     with open("myhucs.txt", encoding="utf8") as fh:
-        myhucs = fh.read().split("\n")
+        myhucs = [x.strip() for x in fh]
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
+    total_ofes = 0
+    updates = 0
+    total_flowpaths = 0
     for huc12 in tqdm(myhucs):
         for slpfn in glob.glob(f"{basedir}/{huc12[:8]}/{huc12[8:]}/*.slp"):
+            total_flowpaths += 1
             fpath = os.path.basename(slpfn).split(".")[0].split("_")[1]
             slp = read_slp(slpfn)
             for i, ofe in enumerate(slp):
+                total_ofes += 1
                 cursor.execute(
                     "UPDATE flowpath_points p SET ofe = %s FROM flowpaths f "
                     "where p.flowpath = f.fid and p.scenario = %s and "
@@ -33,11 +38,18 @@ def main(argv):
                     "p.length < %s",
                     (i, scenario, huc12, fpath, ofe["x"][0], ofe["x"][-1]),
                 )
+                updates += cursor.rowcount
                 if cursor.rowcount == 0:
                     LOG.info("no points updated %s %s", i, slpfn)
                     return
     cursor.close()
     pgconn.commit()
+    LOG.info(
+        "Assigned %s OFEs to %s flowpaths over %s points",
+        total_ofes,
+        total_flowpaths,
+        updates,
+    )
 
 
 if __name__ == "__main__":

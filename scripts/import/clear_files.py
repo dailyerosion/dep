@@ -2,24 +2,24 @@
 import os
 import sys
 
+TARGETS = "crop error man ofe prj run slp sol wb yld env rot".split()
+
 
 def main(argv):
     """Go Main Go."""
     scenario = int(argv[1])
-    for line in open("myhucs.txt"):
-        huc12 = line.strip()
+    myhucs = [x.strip() for x in open("myhucs.txt", encoding="utf8")]
+    for huc12 in myhucs:
         removed = 0
-        for (
-            subdir
-        ) in "crop error man ofe prj run slp sol wb yld env rot".split():
-            mydir = "/i/%s/%s/%s/%s" % (scenario, subdir, huc12[:8], huc12[8:])
+        for subdir in TARGETS:
+            mydir = f"/i/{scenario}/{subdir}/{huc12[:8]}/{huc12[8:]}"
             if not os.path.isdir(mydir):
                 continue
             for _, _, fns in os.walk(mydir):
                 for fn in fns:
-                    os.unlink("%s/%s" % (mydir, fn))
+                    os.unlink(os.path.join(mydir, fn))
                     removed += 1
-        print("    %s removed %s files" % (huc12, removed))
+        print(f"    {huc12} removed {removed:5.0f} files")
 
 
 if __name__ == "__main__":
