@@ -65,12 +65,14 @@ def get_data(filename):
     df = gpd.read_file(filename, index="OBJECTID")
     # Compute full rotation string
     # TODO - wrong label, 2010-2020 period
+    # 2021 is repeating -2 (2019)
+    # 2022 is repeating -1 (2020)
     s = df["CropRotatn_CY_2019"]
-    df["landuse"] = (
-        s.str[1] + s.str[0] + s.str[1] + s + s.str[-2]  # 2010  # 2021
-    )
+    df["landuse"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
     s = df["Management_CY_2020"]
-    df["management"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2]  # 2010
+    df["management"] = (
+        s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
+    )
     return df
 
 
