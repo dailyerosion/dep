@@ -25,8 +25,7 @@ print(" * This will generate a `myhucs.txt` file with found HUCs")
 
 PREFIX = "fp"
 TRUNC_GRIDORDER_AT = 4
-
-PGCONN = get_dbconn("idep")
+GENLU_CODES = {}
 
 
 def get_flowpath(cursor, scenario, huc12, fpath):
@@ -89,6 +88,28 @@ def delete_previous(cursor, scenario, huc12):
     )
 
 
+def load_genlu_codes(cursor):
+    """Populate dict."""
+    cursor.execute("SELECT id, label from general_landuse")
+    for row in cursor:
+        GENLU_CODES[row[1]] = row[0]
+
+
+def get_genlu_code(cursor, label):
+    """Find or create the code for this label."""
+    if label not in GENLU_CODES:
+        cursor.execute("SELECT max(id) from general_landuse")
+        row = cursor.fetchone()
+        newval = 0 if row[0] is None else row[0] + 1
+        LOG.debug("Inserting new general landuse code: %s [%s]", newval, label)
+        cursor.execute(
+            "INSERT into general_landuse(id, label) values (%s, %s)",
+            (newval, label),
+        )
+        GENLU_CODES[label] = newval
+    return GENLU_CODES[label]
+
+
 def process_flowpath(cursor, scenario, huc12, db_fid, df):
     """Do one flowpath please."""
     lencolname = f"{PREFIX}Len{huc12}"
@@ -142,12 +163,15 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df):
             row["landuse"],
             scenario,
             gridorder,
+            get_genlu_code(cursor, row["GenLU"]),
+            row["FBndID"].split("_")[1],
         )
         cursor.execute(
             "INSERT into flowpath_points(flowpath, segid, elevation, length, "
-            "surgo, management, slope, geom, landuse, scenario, gridorder) "
+            "surgo, management, slope, geom, landuse, scenario, gridorder, "
+            "genlu, fbndid) "
             "values(%s, %s, %s, %s, %s, %s, %s, 'SRID=5070;POINT(%s %s)', "
-            "%s, %s, %s)",
+            "%s, %s, %s, %s, %s)",
             args,
         )
 
@@ -219,7 +243,9 @@ def process(cursor, scenario, huc12df):
 
 def main(argv):
     """Our main function, the starting point for code execution"""
-    cursor = PGCONN.cursor()
+    pgconn = get_dbconn("idep")
+    cursor = pgconn.cursor()
+    load_genlu_codes(cursor)
     scenario = int(argv[1])
     # track our work
     with open("myhucs.txt", "w", encoding="utf8") as fh:
@@ -236,8 +262,8 @@ def main(argv):
             # so to keep the database transaction
             # at a reasonable size
             if i > 0 and i % 100 == 0:
-                PGCONN.commit()
-                cursor = PGCONN.cursor()
+                pgconn.commit()
+                cursor = pgconn.cursor()
             df = get_data(fn)
             huc12 = process(cursor, scenario, df)
             fh.write(f"{huc12}\n")
@@ -245,7 +271,7 @@ def main(argv):
 
     # Commit the database changes
     cursor.close()
-    PGCONN.commit()
+    pgconn.commit()
 
 
 if __name__ == "__main__":
