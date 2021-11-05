@@ -1,24 +1,29 @@
 """Update the database storage to add another value."""
+import sys
 
 from pyiem.util import get_dbconn, logger
 
 LOG = logger()
 
 
-def main():
+def main(argv):
     """Go Main Go."""
+    newyear = int(argv[1])
+    length_to_fix = int(newyear - 2007)
+    LOG.info("For %s fixing length of %s", newyear, length_to_fix)
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     cursor.execute(
         "UPDATE flowpath_points SET "
-        "landuse = landuse || substr(landuse, 13, 1), "
-        "management = management || substr(management, 13, 1) "
-        "where length(landuse) = 14"
+        "landuse = landuse || substr(landuse, %s, 1), "
+        "management = management || substr(management, %s, 1) "
+        "where length(landuse) = %s",
+        (length_to_fix - 1, length_to_fix - 1, length_to_fix),
     )
-    LOG.info("updated %s rows", cursor.rowcount)
+    LOG.info("%s updated %s rows", newyear, cursor.rowcount)
     cursor.close()
     pgconn.commit()
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)

@@ -10,5 +10,7 @@ pyiem
 pytest
 # interpolation
 scipy
+# GIS work
+shapely
 twython
 reportlab

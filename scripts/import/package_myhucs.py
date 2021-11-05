@@ -12,14 +12,14 @@ LOG = logger()
 def main(argv):
     """Go main Go."""
     scenario = int(argv[1])
-    myhucs = [s.strip() for s in open("myhucs.txt").readlines()]
+    myhucs = [s.strip() for s in open("myhucs.txt", encoding="utf8")]
     LOG.info("Packaging %s huc12s for delivery", len(myhucs))
-    os.chdir("/i/%s" % (scenario,))
+    os.chdir(f"/i/{scenario}")
     if os.path.isfile("dep.tar"):
         LOG.info("removed old dep.tar file")
         os.unlink("dep.tar")
     for huc in tqdm(myhucs):
-        cmd = "tar -uf dep.tar {man,slp,sol}/%s/%s" % (huc[:8], huc[8:])
+        cmd = f"tar -uf dep.tar {{man,slp,sol}}/{huc[:8]}/{huc[8:]}"
         subprocess.call(cmd, shell=True)
 
 

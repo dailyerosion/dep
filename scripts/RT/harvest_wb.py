@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from pyiem import dep as dep_utils
+from pyiem.util import get_dbconn
 import geopandas as gpd
 from rasterstats import zonal_stats
 from affine import Affine
-from pyiem.util import get_dbconn
 
 PRECIP_AFF = Affine(0.01, 0.0, dep_utils.WEST, 0.0, -0.01, dep_utils.NORTH)
 

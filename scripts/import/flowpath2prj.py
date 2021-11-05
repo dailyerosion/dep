@@ -31,15 +31,14 @@ Here's a listing of project landuse codes used
 
 
 """
-import copy
 import sys
 import os
 import datetime
 from functools import partial
 from math import atan2, degrees, pi
 
-import psycopg2.extras
 from tqdm import tqdm
+from pandas.io.sql import read_sql
 from pyiem.util import get_dbconn, logger
 from pyiem.dep import load_scenarios
 
@@ -47,15 +46,8 @@ LOG = logger()
 MISSED_SOILS = {}
 MAX_SLOPE_RATIO = 0.9
 MIN_SLOPE = 0.003
-PGCONN = get_dbconn("idep")
-cursor = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
-cursor2 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
-cursor3 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-surgo2file = {}
-cursor.execute("SELECT surgo, soilfile from xref_surgo")
-for _row in cursor:
-    surgo2file[_row[0]] = _row[1]
+SURGO2FILE = {}
 
 # Note that the default used below is
 INITIAL_COND_DEFAULT = "IniCropDef.Default"
@@ -107,6 +99,13 @@ SOYBEAN = {
 }
 
 
+def load_surgo2file(cursor):
+    """Populate"""
+    cursor.execute("SELECT surgo, soilfile from xref_surgo")
+    for row in cursor:
+        SURGO2FILE[row[0]] = row[1]
+
+
 def read_file(scenario, zone, prevcode, code, cfactor, year):
     """Read a block file and do replacements
 
@@ -122,17 +121,18 @@ def read_file(scenario, zone, prevcode, code, cfactor, year):
       str with the raw data used for the .rot file
     """
     cfactor = 25 if cfactor != 1 else 1
-    blockfn = "blocks/%s%s.txt" % (code, cfactor)
+    blockfn = f"blocks/{code}{cfactor}.txt"
     if not os.path.isfile(blockfn):
         # LOG.debug("Missing %s", blockfn)
         return ""
-    data = open(blockfn, "r").read()
+    data = open(blockfn, "r", encoding="utf8").read()
     # Special consideration for planting alfalfa
     if code == "P" and prevcode != "P":
         # Best we can do now is plant it on Apr 15, sigh
         data = (
-            "4  15 %s  1 Plant-Perennial CropDef.ALFALFA  {0.000000}\n%s"
-        ) % (year, data)
+            f"4  15 {year} 1 Plant-Perennial CropDef.ALFALFA  {{0.000000}}\n"
+            f"{data}"
+        )
     pdate = ""
     pdatem5 = ""
     pdatem10 = ""
@@ -179,52 +179,51 @@ def do_rotation(scenario, zone, rotfn, landuse, management):
     """
     # Dictionary of values used to fill out the file template below
     data = {}
-    data["date"] = datetime.datetime.now()
-    data["name"] = "%s-%s" % (landuse, management)
+    data["name"] = f"{landuse}-{management}"
     data["initcond"] = INITIAL_COND.get(landuse[0], INITIAL_COND_DEFAULT)
     prevcode = "C" if landuse[0] not in INITIAL_COND else landuse[0]
     f = partial(read_file, scenario, zone)
     # 2007
     data["year1"] = f(prevcode, landuse[0], int(management[0]), 1)
-    for i in range(1, 15):
-        data["year%s" % (i + 1,)] = f(
+    for i in range(1, 16):
+        data[f"year{i + 1}"] = f(
             landuse[i - 1], landuse[i], int(management[i]), i + 1
         )
 
-    with open(rotfn, "w") as fh:
+    with open(rotfn, "w", encoding="utf8") as fh:
         fh.write(
-            """#
-# WEPP rotation saved on: %(date)s
+            f"""#
+# WEPP rotation saved on: {datetime.datetime.now()}
 #
 # Created with scripts/import/flowpath2prj.py
 #
 Version = 98.7
 Name = %(name)s
-Description {
-}
+Description {{
+}}
 Color = 0 255 0
 LandUse = 1
-InitialConditions = %(initcond)s
+InitialConditions = {data['initcond']}
 
-Operations {
-%(year1)s
-%(year2)s
-%(year3)s
-%(year4)s
-%(year5)s
-%(year6)s
-%(year7)s
-%(year8)s
-%(year9)s
-%(year10)s
-%(year11)s
-%(year12)s
-%(year13)s
-%(year14)s
-%(year15)s
-}
+Operations {{
+{data['year1']}
+{data['year2']}
+{data['year3']}
+{data['year4']}
+{data['year5']}
+{data['year6']}
+{data['year7']}
+{data['year8']}
+{data['year9']}
+{data['year10']}
+{data['year11']}
+{data['year12']}
+{data['year13']}
+{data['year14']}
+{data['year15']}
+{data['year16']}
+}}
 """
-            % data
         )
     return True
 
@@ -241,13 +240,9 @@ def rotation_magic(scenario, zone, seqnum, row, metadata):
       seqnum (int): the sequential number of this .rot file we generate
       row (dict): the database info for this row.
     """
-    rotfn = "/i/%s/rot/%s/%s/%s_%s_%s.rot" % (
-        scenario,
-        metadata["huc_12"][:8],
-        metadata["huc_12"][8:],
-        metadata["huc_12"],
-        metadata["fpath"],
-        seqnum,
+    rotfn = (
+        f"/i/{scenario}/rot/{metadata['huc_12'][:8]}/{metadata['huc_12'][8:]}"
+        f"/{metadata['huc_12']}_{metadata['fpath']}_{seqnum}.rot"
     )
     # Oh my cats, we are about to create the .rot file here
     do_rotation(scenario, zone, rotfn, row["landuse"], row["management"])
@@ -271,110 +266,71 @@ def non_zero(dy, dx):
     return max(MIN_SLOPE, dy / dx)
 
 
-def simplify(rows):
+def simplify(df):
     """WEPP can only handle 20 slope points it seems, so we must simplify"""
-    newrows = []
-    lrow = rows[0]
-    newrows.append(lrow)
-    for i, row in enumerate(rows):
-        # Throw out points that have Urban landuse in at least 3 years
-        if row["landuse"].count("U") > 2:
-            continue
-        if (
-            row["management"] == lrow["management"]
-            and row["surgo"] == lrow["surgo"]
-            and row["landuse"] == lrow["landuse"]
-        ):
-            continue
-        # Recompute slope
-        dy = lrow["elevation"] - row["elevation"]
-        dx = row["length"] - lrow["length"]
-        row["slope"] = non_zero(dy, dx)
-        newrows.append(copy.deepcopy(row))
-        lrow = row
-
-    if newrows[-1]["segid"] != rows[-1]["segid"]:
-        # Recompute slope
-        dy = newrows[-1]["elevation"] - rows[-1]["elevation"]
-        dx = rows[-1]["length"] - newrows[-1]["length"]
-        newrows.append(copy.deepcopy(rows[-1]))
-        newrows[-1]["slope"] = non_zero(dy, dx)
-
-    if len(newrows) < 20:
-        return newrows
-
-    # Brute force!
-    threshold = 0.01
-    while len(newrows) > 19:
-        if threshold > 0.1:
-            print(
-                ("threshold: %.2f len(newrows): %s")
-                % (threshold, len(newrows))
-            )
-            for row in newrows:
-                print(len(row))
-            return newrows[:20]
-        newrows2 = []
-        newrows2.append(copy.deepcopy(newrows[0]))
-        for i in range(1, len(newrows) - 1):
-            if newrows[i]["slope"] > threshold:
-                newrows2.append(copy.deepcopy(newrows[i]))
-        newrows2.append(copy.deepcopy(newrows[-1]))
-        newrows = copy.deepcopy(newrows2)
-        threshold += 0.01
-
-    if len(newrows) > 19:
-        print("Length of old: %s" % (len(rows),))
-        for row in rows:
-            print(
-                (
-                    "%(segid)s %(length)s %(elevation)s %(landuse)s "
-                    "%(surgo)s %(management)s %(slope)s"
-                )
-                % row
-            )
-
-        print("Length of new: %s" % (len(newrows),))
-        for row in newrows:
-            print(
-                (
-                    "%(segid)s %(length)s %(elevation)s %(landuse)s "
-                    "%(surgo)s %(management)s %(slope)s"
-                )
-                % row
-            )
-
-        sys.exit()
-
-    return newrows
+    df["useme"] = False
+    # Any hack is a good hack here, take the first and last point
+    df.iat[0, df.columns.get_loc("useme")] = True
+    df.iat[-1, df.columns.get_loc("useme")] = True
+    # Take the top 18 values by slope
+    df.at[df.sort_values("slope", ascending=False).index[:18], "useme"] = True
+    df = df[df["useme"]].copy()
+    # We need to recompute slope values to keep elevation values correct,
+    # the value is ahead down the hill
+    df["dx"] = df["length"].shift(-1) - df["length"]
+    df["dy"] = df["elevation"] - df["elevation"].shift(-1)
+    df["slope"] = df["dy"] / df["dx"]
+    # Repeat the last value as good enough
+    slpidx = df.columns.get_loc("slope")
+    df.iat[-1, slpidx] = df.iat[-2, slpidx]
+    return df
 
 
-def compute_slope(fid):
+def compute_slope(cursor, fid):
     """Compute the simple slope for the fid"""
-    cursor2.execute(
-        """
-        SELECT max(elevation), min(elevation), max(length)
-        from flowpath_points where flowpath = %s and length < 9999
-    """,
+    cursor.execute(
+        "SELECT max(elevation), min(elevation), max(length) "
+        "from flowpath_points where flowpath = %s and length < 9999",
         (fid,),
     )
-    row2 = cursor2.fetchone()
+    row2 = cursor.fetchone()
     return (row2[0] - row2[1]) / row2[2]
 
 
-def delete_flowpath(fid):
+def delete_flowpath(cursor, fid):
     """remove this flowpath as its invalid"""
-    cursor3.execute("DELETE from flowpath_points where flowpath = %s", (fid,))
-    cursor3.execute("DELETE from flowpaths where fid = %s", (fid,))
-    if cursor3.rowcount != 1:
-        print("Whoa, delete_flowpath failed for %s" % (fid,))
+    cursor.execute("DELETE from flowpath_points where flowpath = %s", (fid,))
+    cursor.execute("DELETE from flowpaths where fid = %s", (fid,))
+    if cursor.rowcount != 1:
+        print(f"Whoa, delete_flowpath failed for {fid}")
 
 
-def do_flowpath(scenario, zone, metadata):
+def filter_soils_slopes(df, scenario):
+    """Remove things we can't deal with"""
+    df["useme"] = False
+    if df["slope"].min() < 0:
+        return None
+    for idx, row in df.iterrows():
+        if row["soilfile"] == "DEP_9999.SOL":
+            continue
+        if not os.path.isfile(f"/i/{scenario}/sol_input/{row['soilfile']}"):
+            if row["soilfile"] not in MISSED_SOILS:
+                LOG.info("Missing soilfile: %s", row["soilfile"])
+                MISSED_SOILS[row["soilfile"]] = 0
+            MISSED_SOILS[row["soilfile"]] += 1
+            continue
+        if row["slope"] < MIN_SLOPE:
+            df.at[idx, "slope"] = MIN_SLOPE
+        df.at[idx, "useme"] = True
+
+    return df[df["useme"]].copy()
+
+
+def do_flowpath(pgconn, cursor, scenario, zone, metadata):
     """Process a given flowpathid"""
     # slope = compute_slope(fid)
     # I need bad soilfiles so that the length can be computed
-    cursor2.execute(
+    df = read_sql(
         """
         SELECT segid, elevation, length, f.surgo,
         slope, management, 'DEP_'||surgo||'.SOL' as soilfile, landuse,
@@ -384,130 +340,80 @@ def do_flowpath(scenario, zone, metadata):
         WHERE flowpath = %s and length < 9999
         ORDER by segid ASC
     """,
-        (metadata["fid"],),
+        pgconn,
+        params=(metadata["fid"],),
     )
-    rows = []
-    x = None
-    for row in cursor2:
-        if row["slope"] < 0:
-            LOG.info(
-                "%s,%s had a negative slope, deleting!",
-                metadata["huc_12"],
-                metadata["fpath"],
-            )
-            delete_flowpath(metadata["fid"])
-            return None
-        if row["soilfile"] == "DEP_9999.SOL":
-            continue
-        if not os.path.isfile(
-            "/i/%s/sol_input/%s" % (scenario, row["soilfile"])
-        ):
-            if row["soilfile"] not in MISSED_SOILS:
-                LOG.info("Missing soilfile: %s", row["soilfile"])
-                MISSED_SOILS[row["soilfile"]] = 0
-            MISSED_SOILS[row["soilfile"]] += 1
-            continue
-        if x is None:
-            x = row["x"]
-        if row["slope"] < MIN_SLOPE:
-            row["slope"] = MIN_SLOPE
-        rows.append(row)
-
-    if x is None:
+    df = filter_soils_slopes(df, scenario)
+    if df is None or len(df.index) < 2:
         LOG.info(
-            "%s,%s had no valid soils, deleting",
+            "deleting %s,%s as failed filter_soil_slopes",
             metadata["huc_12"],
             metadata["fpath"],
         )
-        delete_flowpath(metadata["fid"])
+        delete_flowpath(cursor, metadata["fid"])
         return None
-    if len(rows) < 2:
-        LOG.info(
-            "%s,%s had only 1 row of data, deleting",
-            metadata["huc_12"],
-            metadata["fpath"],
-        )
-        delete_flowpath(metadata["fid"])
-        return None
-    if len(rows) > 19:
-        rows = simplify(rows)
+    if len(df.index) > 19:
+        df = simplify(df)
 
-    maxslope = 0
-    for row in rows:
-        if row["slope"] > maxslope:
-            maxslope = row["slope"]
+    maxslope = df["slope"].max()
     if maxslope > MAX_SLOPE_RATIO:
-        s = compute_slope(metadata["fid"])
+        s = compute_slope(cursor, metadata["fid"])
         LOG.info(
             "Error max-slope>%s %s[%3i] max:%4.1f len:%5.1f bulk:%5.1f",
             MAX_SLOPE_RATIO,
             metadata["huc_12"],
             metadata["fpath"],
             maxslope,
-            rows[-1]["length"],
+            df.iloc[-1]["length"],
             s,
         )
-        delete_flowpath(metadata["fid"])
-        return None
-
-    if rows[-1]["length"] < 1:
-        LOG.info(
-            "%s,%s has zero length, deleting",
-            metadata["huc_12"],
-            metadata["fpath"],
-        )
-        delete_flowpath(metadata["fid"])
+        delete_flowpath(cursor, metadata["fid"])
         return None
 
     res = {}
     res["clifile"] = metadata["climate_file"]
     res["huc8"] = metadata["huc_12"][:8]
     res["huc12"] = metadata["huc_12"]
-    res["envfn"] = "/i/%s/env/%s/%s_%s.env" % (
-        scenario,
-        res["huc8"],
-        res["huc12"],
-        metadata["fpath"],
+    res["envfn"] = (
+        f"/i/{scenario}/env/{res['huc8']}/"
+        f"{res['huc12']}_{metadata['fpath']}.env"
     )
     res["date"] = datetime.datetime.now()
     res["aspect"] = compute_aspect(
-        rows[0]["x"], rows[0]["y"], rows[-1]["x"], rows[-1]["y"]
+        df.iloc[0]["x"], df.iloc[0]["y"], df.iloc[-1]["x"], df.iloc[-1]["y"]
     )
-    res["prj_fn"] = "/i/%s/prj/%s/%s/%s_%s.prj" % (
-        scenario,
-        res["huc8"],
-        res["huc12"][-4:],
-        res["huc12"],
-        metadata["fpath"],
+    res["prj_fn"] = (
+        f"/i/{scenario}/prj/{res['huc8']}/{res['huc12'][-4:]}/"
+        f"{res['huc12']}_{metadata['fpath']}.prj"
     )
-    res["length"] = rows[-1]["length"]
-    res["slope_points"] = len(rows)
+    res["length"] = df.iloc[-1]["length"]
+    res["slope_points"] = len(df.index)
 
     # Iterate over the rows and figure out the slopes and distance fracs
     slpdata = ""
-    if rows[0]["length"] != 0:
+    if df.iloc[0]["length"] != 0:
         LOG.info(
             "WARNING: HUC12:%s FPATH:%s had missing soil at top of slope",
             metadata["huc_12"],
             metadata["fpath"],
         )
         slpdata = " 0.000,0.00001"
-        res["slope_points"] = len(rows) + 1
+        res["slope_points"] = len(df.index) + 1
 
-    soil = rows[0]["surgo"]
+    soil = df.iloc[0]["surgo"]
     soilstart = 0
     soils = []
     soillengths = []
 
-    for i, row in enumerate(rows):
-        if soil != row["surgo"] or i == (len(rows) - 1):
+    for idx, row in df.iterrows():
+        if soil != row["surgo"] or idx == df.index[-1]:
             soils.append(soil)
             soillengths.append(row["length"] - soilstart)
             soil = row["surgo"]
             soilstart = row["length"]
         # NEED lots of precision to get grid rectifying right
         # see dailyerosion/dep#79
-        slpdata += " %s,%.5f" % (row["length"] / res["length"], row["slope"])
+        slpdata += f" {row['length'] / res['length']},{row['slope']:5f}"
 
     res["soilbreaks"] = len(soillengths) - 1
     res["soils"] = ""
@@ -516,33 +422,28 @@ def do_flowpath(scenario, zone, metadata):
     for d, s in zip(soillengths, soils):
         res[
             "soils"
-        ] += """    %s {
-        Distance = %.3f
-        File = "/i/%s/sol_input/DEP_%s.SOL"
-    }\n""" % (
-            s,
-            d,
-            scenario,
-            s,
-        )
+        ] += f"""    {s} {{
+        Distance = {d:.3f}
+        File = "/i/{scenario}/sol_input/DEP_{s}.SOL"
+    }}\n"""
 
-    prev_landuse = rows[0]["landuse"]
+    prev_landuse = df.iloc[0]["landuse"]
     manstart = 0
-    prev_man = rows[0]["management"]
+    prev_man = df.iloc[0]["management"]
     mans = []
     manlengths = []
 
     # Figure out our landuse situation
-    for i, row in enumerate(rows):
+    for idx, row in df.iterrows():
         if (
             prev_landuse == row["landuse"]
             and prev_man == row["management"]
-            and i != (len(rows) - 1)
+            and idx != df.index[-1]
         ):
             continue
         # Management has changed, write out the old row
         mans.append(
-            rotation_magic(scenario, zone, len(mans), rows[i - 1], metadata)
+            rotation_magic(scenario, zone, len(mans), df.loc[idx], metadata)
         )
         manlengths.append(row["length"] - manstart)
         prev_landuse = row["landuse"]
@@ -555,21 +456,17 @@ def do_flowpath(scenario, zone, metadata):
             metadata["huc_12"],
             metadata["fpath"],
         )
-        return
+        return None
     res["manbreaks"] = len(manlengths) - 1
     res["managements"] = ""
 
     for d, s in zip(manlengths, mans):
         res[
             "managements"
-        ] += """    %s {
-        Distance = %.3f
-        File = "%s"
-    }\n""" % (
-            s,
-            d,
-            s,
-        )
+        ] += f"""    {s} {{
+        Distance = {d:.3f}
+        File = "{s}"
+    }}\n"""
 
     return res
 
@@ -583,7 +480,8 @@ def write_prj(data):
     # [x] and the total distance in meters.
     # [x] The last line contains the fraction of the distance down the slope
     # [x] and the slope at that point.
-    with open(data["prj_fn"], "w") as fh:
+    with open(data["prj_fn"], "w", encoding="utf8") as fh:
+        # pylint: disable=consider-using-f-string
         fh.write(
             """#
 # WEPP project written: %(date)s
@@ -628,29 +526,34 @@ RunOptions {
         )
 
 
+def get_flowpath_scenario(scenario):
+    """internal accounting."""
+    sdf = load_scenarios()
+    return int(sdf.at[scenario, "flowpath_scenario"])
+
+
 def main(argv):
     """Go main go"""
     scenario = int(argv[1])
-    sdf = load_scenarios()
-    flowpath_scenario = int(sdf.at[scenario, "flowpath_scenario"])
-    myhucs = []
-    if os.path.isfile("myhucs.txt"):
-        myhucs = open("myhucs.txt").read().split("\n")
-        LOG.info("Only running for HUC_12s in myhucs.txt")
-    cursor.execute(
-        """
-        SELECT ST_ymax(ST_Transform(geom, 4326)) as lat,
-        fpath, fid, huc_12, climate_file from flowpaths
-        WHERE scenario = %s and fpath != 0
-    """,
-        (flowpath_scenario,),
+    pgconn = get_dbconn("idep")
+    cursor = pgconn.cursor()
+    load_surgo2file(cursor)
+    df = read_sql(
+        "SELECT ST_ymax(ST_Transform(geom, 4326)) as lat, fpath, fid, huc_12, "
+        "climate_file from flowpaths WHERE scenario = %s and fpath != 0 "
+        "ORDER by huc_12 ASC",
+        pgconn,
+        params=(get_flowpath_scenario(scenario),),
     )
-    progress = tqdm(cursor, total=cursor.rowcount)
-    for row in progress:
-        # continue
-        if myhucs and row["huc_12"] not in myhucs:
-            continue
-        progress.set_description("%s %4s" % (row[3], row[1]))
+    if os.path.isfile("myhucs.txt"):
+        myhucs = []
+        with open("myhucs.txt", encoding="utf8") as fh:
+            myhucs = fh.read().split("\n")
+        LOG.info("Only running for HUC_12s in myhucs.txt")
+        df = df[df["huc_12"].isin(myhucs)]
+    progress = tqdm(df.iterrows(), total=len(df.index))
+    for _idx, row in progress:
+        progress.set_description(f"{row['huc_12']} {row['fpath']:04.0f}")
         zone = "KS_NORTH"
         if row["lat"] >= 42.5:
             zone = "IA_NORTH"
@@ -658,14 +561,14 @@ def main(argv):
             zone = "IA_CENTRAL"
         elif row["lat"] >= 40.5:
             zone = "IA_SOUTH"
-        data = do_flowpath(scenario, zone, row)
+        data = do_flowpath(pgconn, cursor, scenario, zone, row)
         if data is not None:
             write_prj(data)
+    cursor.close()
+    pgconn.commit()
+    for fn, sn in MISSED_SOILS.items():
+        print(f"{sn:6s} {fn}")
 
 
 if __name__ == "__main__":
     main(sys.argv)
-    cursor3.close()
-    PGCONN.commit()
-    for fn in MISSED_SOILS:
-        print("%6s %s" % (MISSED_SOILS[fn], fn))
