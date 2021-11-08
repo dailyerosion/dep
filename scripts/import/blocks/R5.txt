@@ -1,0 +1,9 @@
+4  1  %(yr)s  1 Tillage	OpCropDef.FIEL0001	{0.050000, 2}
+4  3  %(yr)s  1 Tillage	OpCropDef.FIEL0001	{0.050000, 2}
+4  3  %(yr)s  1 Tillage	OpCropDef.HASPTCT	{0.050000, 2}
+4  5  %(yr)s  1 Tillage	OpCropDef.ANHYDROS	{0.050000, 2}
+4  5  %(yr)s  1 Tillage	OpCropDef.HASPTCT	{0.050000, 2}
+4  10  %(yr)s  1 Tillage	OpCropDef.DRDDO	{0.050000, 2}
+4  10  %(yr)s  1 Plant-Annual	CropDef.Bar_8319	 {1.200000}
+8  15  %(yr)s  1 Harvest-Annual	CropDef.Bar_8319	{}
+10  15  %(yr)s  1 Tillage	OpCropDef.CHISCOST	{0.050000, 2}
