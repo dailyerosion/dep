@@ -120,12 +120,12 @@ def read_file(scenario, zone, prevcode, code, cfactor, year):
     Returns:
       str with the raw data used for the .rot file
     """
-    cfactor = 25 if cfactor != 1 else 1
     blockfn = f"blocks/{code}{cfactor}.txt"
     if not os.path.isfile(blockfn):
         # LOG.debug("Missing %s", blockfn)
         return ""
-    data = open(blockfn, "r", encoding="utf8").read()
+    with open(blockfn, "r", encoding="utf8") as fh:
+        data = fh.read()
     # Special consideration for planting alfalfa
     if code == "P" and prevcode != "P":
         # Best we can do now is plant it on Apr 15, sigh
