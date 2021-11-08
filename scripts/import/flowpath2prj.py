@@ -326,6 +326,36 @@ def filter_soils_slopes(df, scenario):
     return df[df["useme"]].copy()
 
 
+def rewrite_flowpath(cursor, scenario, flowpath_id, df):
+    """Rewrite the flowpath with the new slope values"""
+    cursor.execute(
+        "DELETE from flowpath_points where flowpath = %s",
+        (flowpath_id,),
+    )
+    for _idx, row in df.iterrows():
+        cursor.execute(
+            "INSERT INTO flowpath_points (flowpath, segid, elevation, length, "
+            "surgo, slope, geom, scenario, gridorder, landuse, management, "
+            "fbndid, genlu) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (
+                flowpath_id,
+                row["segid"],
+                row["elevation"],
+                row["length"],
+                row["surgo"],
+                row["slope"],
+                f"SRID=5070;POINT({row['xx']} {row['yy']})",
+                scenario,
+                row["gridorder"],
+                row["landuse"],
+                row["management"],
+                row["fbndid"],
+                row["genlu"],
+            ),
+        )
+
+
 def do_flowpath(pgconn, cursor, scenario, zone, metadata):
     """Process a given flowpathid"""
     # slope = compute_slope(fid)
@@ -334,6 +364,7 @@ def do_flowpath(pgconn, cursor, scenario, zone, metadata):
         """
         SELECT segid, elevation, length, f.surgo,
         slope, management, 'DEP_'||surgo||'.SOL' as soilfile, landuse,
+        ST_x(geom) as xx, ST_y(geom) as yy, fbndid, genlu, gridorder,
         round(ST_X(ST_Transform(geom,4326))::numeric,2) as x,
         round(ST_Y(ST_Transform(geom,4326))::numeric,2) as y from
         flowpath_points f
@@ -343,6 +374,7 @@ def do_flowpath(pgconn, cursor, scenario, zone, metadata):
         pgconn,
         params=(metadata["fid"],),
     )
+    origsize = len(df.index)
     df = filter_soils_slopes(df, scenario)
     if df is None or len(df.index) < 2:
         LOG.info(
@@ -354,6 +386,9 @@ def do_flowpath(pgconn, cursor, scenario, zone, metadata):
         return None
     if len(df.index) > 19:
         df = simplify(df)
+    # If the size changed, we need to rewrite this flowpath to database
+    if origsize != len(df.index):
+        rewrite_flowpath(cursor, scenario, metadata["fid"], df)
 
     maxslope = df["slope"].max()
     if maxslope > MAX_SLOPE_RATIO:
