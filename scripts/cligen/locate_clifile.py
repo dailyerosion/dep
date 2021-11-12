@@ -1,5 +1,6 @@
 """Find an available precip file after we do expansion."""
 import os
+import subprocess
 import sys
 
 from pyiem.util import get_dbconn, logger
@@ -65,7 +66,7 @@ def main(argv):
         mydir = os.path.basename(fn)
         if not os.path.isdir(mydir):
             os.makedirs(mydir)
-        os.system("cp %s %s" % (copyfn, fn))
+        subprocess.call(["cp", copyfn, fn])
     LOG.info("added %s files", created)
 
 
