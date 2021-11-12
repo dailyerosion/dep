@@ -23,7 +23,7 @@ from multiprocessing.pool import ThreadPool
 from tqdm import tqdm
 import numpy as np
 from scipy.interpolate import NearestNDInterpolator
-from PIL import Image
+from osgeo import gdal
 from pyiem import iemre
 from pyiem.dep import SOUTH, WEST, NORTH, EAST, get_cli_fname
 from pyiem.util import ncopen, logger, convert_value, utc
@@ -35,7 +35,7 @@ ST4PATH = "/mesonet/data/stage4"
 # used for breakpoint logic
 ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
 # How many CPUs are we going to burn
-CPUCOUNT = max([4, int(cpu_count() / 4)])
+CPUCOUNT = min([4, int(cpu_count() / 4)])
 MEMORY = {"stamp": datetime.datetime.now()}
 BOUNDS = namedtuple("Bounds", ["south", "north", "east", "west"])
 
@@ -68,9 +68,12 @@ def get_sts_ets_at_localhour(date, local_hour):
 
 def iemre_bounds_check(name, val, lower, upper):
     """Make sure our data is within bounds, if not, exit!"""
+    if np.isnan(val).all():
+        LOG.info("FATAL: iemre %s all NaN", name)
+        sys.exit(3)
     minval = np.nanmin(val)
     maxval = np.nanmax(val)
-    if np.ma.is_masked(minval) or minval < lower or maxval > upper:
+    if minval < lower or maxval > upper:
         LOG.info(
             "FATAL: iemre failure %s %.3f to %.3f [%.3f to %.3f]",
             name,
@@ -88,15 +91,18 @@ def load_iemre(nc, data, valid):
 
     24km product is smoothed down to the 0.01 degree grid
     """
-    LOG.debug("called")
-
     offset = iemre.daily_offset(valid)
     lats = nc.variables["lat"][:]
     lons = nc.variables["lon"][:]
     lons, lats = np.meshgrid(lons, lats)
 
     # Storage is W m-2, we want langleys per day
-    ncdata = nc.variables["rsds"][offset, :, :] * 86400.0 / 1000000.0 * 23.9
+    ncdata = (
+        nc.variables["rsds"][offset, :, :].filled(np.nan)
+        * 86400.0
+        / 1000000.0
+        * 23.9
+    )
     # Default to a value of 300 when this data is missing, for some reason
     nn = NearestNDInterpolator(
         (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
@@ -106,7 +112,7 @@ def load_iemre(nc, data, valid):
     )
 
     ncdata = convert_value(
-        nc.variables["high_tmpk"][offset, :, :], "degK", "degC"
+        nc.variables["high_tmpk"][offset, :, :].filled(np.nan), "degK", "degC"
     )
     nn = NearestNDInterpolator(
         (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
@@ -116,7 +122,7 @@ def load_iemre(nc, data, valid):
     )
 
     ncdata = convert_value(
-        nc.variables["low_tmpk"][offset, :, :], "degK", "degC"
+        nc.variables["low_tmpk"][offset, :, :].filled(np.nan), "degK", "degC"
     )
     nn = NearestNDInterpolator(
         (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
@@ -126,7 +132,7 @@ def load_iemre(nc, data, valid):
     )
 
     ncdata = convert_value(
-        nc.variables["avg_dwpk"][offset, :, :], "degK", "degC"
+        nc.variables["avg_dwpk"][offset, :, :].filled(np.nan), "degK", "degC"
     )
     nn = NearestNDInterpolator(
         (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
@@ -135,14 +141,14 @@ def load_iemre(nc, data, valid):
         "avg_dwpk", nn(data["lon"], data["lat"]), -60, 60
     )
 
-    ncdata = nc.variables["wind_speed"][offset, :, :]
+    # Wind is already in m/s, but could be masked
+    ncdata = nc.variables["wind_speed"][offset, :, :].filled(np.nan)
     nn = NearestNDInterpolator(
         (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
     )
     data["wind"][:] = iemre_bounds_check(
         "wind_speed", nn(data["lon"], data["lat"]), 0, 30
     )
-    LOG.debug("finished")
 
 
 def load_stage4(data, valid, xtile, ytile):
@@ -164,7 +170,7 @@ def load_stage4(data, valid, xtile, ytile):
         ets_tidx,
         tomorrow,
     )
-    with ncopen("%s/%s_stage4_hourly.nc" % (ST4PATH, valid.year)) as nc:
+    with ncopen(f"{ST4PATH}/{valid.year}_stage4_hourly.nc", "r") as nc:
         p01m = nc.variables["p01m"]
 
         lats = nc.variables["lat"][:]
@@ -173,9 +179,7 @@ def load_stage4(data, valid, xtile, ytile):
         if ets_tidx < sts_tidx:
             LOG.debug("Exercise special stageIV logic for jan1!")
             totals = np.sum(p01m[sts_tidx:, :, :], axis=0)
-            with ncopen(
-                "%s/%s_stage4_hourly.nc" % (ST4PATH, tomorrow.year)
-            ) as nc2:
+            with ncopen(f"{ST4PATH}/{tomorrow.year}_stage4_hourly.nc") as nc2:
                 p01m = nc2.variables["p01m"]
                 totals += np.sum(p01m[:ets_tidx, :, :], axis=0)
         else:
@@ -227,8 +231,7 @@ def _reader(filename, tile_bounds):
     right = int((tile_bounds.east - -126.0) * 100.0)
     left = int((tile_bounds.west - -126.0) * 100.0)
 
-    img = Image.open(filename)
-    imgdata = np.array(img)
+    imgdata = gdal.Open(filename, 0).ReadAsArray()
     # Convert the image data to dbz
     dbz = (np.flipud(imgdata[top:bottom, left:right]) - 7.0) * 5.0
     return np.where(dbz < 255, ((10.0 ** (dbz / 10.0)) / 200.0) ** 0.625, 0)
@@ -330,7 +333,7 @@ def load_precip(data, valid, tile_bounds):
         now += datetime.timedelta(minutes=2)
     if quorum > 0:
         LOG.info(
-            "Failed 75% quorum with MRMS a2m %.1f, loading legacy", quorum
+            "Failed 75%% quorum with MRMS a2m %.1f, loading legacy", quorum
         )
         load_precip_legacy(data, valid, tile_bounds)
         return
@@ -340,10 +343,11 @@ def load_precip(data, valid, tile_bounds):
         """Reader."""
         if fn is None:
             return tidx, 0
-        img = Image.open(fn)
-        imgdata = np.array(img)
+        # PIL is not thread safe, so we need to use GDAL
+        imgdata = gdal.Open(fn, 0).ReadAsArray()
         # sample out and then flip top to bottom!
-        return tidx, np.flipud(imgdata[top:bottom, left:right])
+        imgdata = np.flipud(np.array(imgdata)[top:bottom, left:right])
+        return tidx, imgdata
 
     def _cb(args):
         """write data."""
@@ -363,13 +367,12 @@ def load_precip(data, valid, tile_bounds):
             pool.apply_async(_reader, (tidx, fn), callback=_cb)
         pool.close()
         pool.join()
-    LOG.debug("finished")
 
 
 def bpstr(ts, accum):
     """Make a string representation of this breakpoint and accumulation"""
     # Need four decimals for accurate reproduction
-    return "%02i.%04i %.2f" % (ts.hour, ts.minute / 60.0 * 10000.0, accum)
+    return f"{ts.hour:02.0f}.{(ts.minute / 60. * 10000.):04.0f} {accum:.2f}"
 
 
 def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
@@ -430,11 +433,7 @@ def write_grid(grid, valid, xtile, ytile, fnadd=""):
     basedir = f"/mnt/idep2/data/dailyprecip/{valid.year}"
     if not os.path.isdir(basedir):
         os.makedirs(basedir)
-    np.save(
-        "%s/%s%s.tile_%s_%s"
-        % (basedir, valid.strftime("%Y%m%d"), fnadd, xtile, ytile),
-        grid,
-    )
+    np.save(f"{basedir}/{valid:%Y%m%d}{fnadd}.tile_{xtile}_{ytile}", grid)
 
 
 def precip_workflow(data, valid, xtile, ytile, tile_bounds):
@@ -455,7 +454,8 @@ def precip_workflow(data, valid, xtile, ytile, tile_bounds):
 def edit_clifile(xidx, yidx, clifn, data, valid):
     """Edit the climate file, run from thread."""
     # Okay we have work to do
-    clidata = open(clifn, "r").read()
+    with open(clifn, "r", encoding="utf8") as fh:
+        clidata = fh.read()
     pos = clidata.find(valid.strftime("%-d\t%-m\t%Y"))
     if pos == -1:
         LOG.info("Date find failure for %s", clifn)
@@ -472,24 +472,23 @@ def edit_clifile(xidx, yidx, clifn, data, valid):
     if bpdata is None:
         bpdata = []
 
+    high = data["high"][yidx, xidx]
+    low = data["low"][yidx, xidx]
+    solar = data["solar"][yidx, xidx]
+    wind = data["wind"][yidx, xidx]
+    dwpt = data["dwpt"][yidx, xidx]
+    if np.isnan([high, low, solar, wind, dwpt]).any():
+        LOG.info("Missing data for %s", clifn)
+        return False
+    bptext = "\n".join(bpdata)
+    bptext2 = "\n" if bpdata else ""
     thisday = (
-        "%s\t%s\t%s\t%s\t%3.1f\t%3.1f\t%4.0f\t%4.1f\t%s\t%4.1f\n%s%s"
-    ) % (
-        valid.day,
-        valid.month,
-        valid.year,
-        len(bpdata),
-        data["high"][yidx, xidx],
-        data["low"][yidx, xidx],
-        data["solar"][yidx, xidx],
-        data["wind"][yidx, xidx],
-        0,
-        data["dwpt"][yidx, xidx],
-        "\n".join(bpdata),
-        "\n" if bpdata else "",
+        f"{valid.day}\t{valid.month}\t{valid.year}\t{len(bpdata)}\t"
+        f"{high:3.1f}\t{low:3.1f}\t{solar:4.0f}\t{wind:4.1f}\t0\t"
+        f"{dwpt:4.1f}\n{bptext}{bptext2}"
     )
 
-    with open(clifn, "w") as fh:
+    with open(clifn, "w", encoding="utf8") as fh:
         fh.write(clidata[:pos] + thisday + clidata[(pos + pos2) :])
     return True
 
@@ -558,17 +557,28 @@ def main(argv):
             queue.append([xidx, yidx, clifn])
 
     progress = tqdm(total=len(queue), disable=not sys.stdout.isatty())
-
-    def _callback(_res):
-        """We got a result."""
-        progress.update(1)
-
-    def _errorback(exp):
-        """We hit trouble."""
-        LOG.exception(exp)
+    errors = {"cnt": 0}
 
     with ThreadPool(CPUCOUNT) as pool:
-        for i, (xidx, yidx, clifn) in enumerate(queue):
+
+        def _errorback(exp):
+            """We hit trouble."""
+            LOG.exception(exp)
+            if errors["cnt"] > 10:
+                LOG.info("Too many errors")
+                pool.terminate()
+            errors["cnt"] += 1
+
+        def _callback(res):
+            """We got a result."""
+            if errors["cnt"] > 10:
+                LOG.info("Too many errors")
+                pool.terminate()
+            if not res:
+                errors["cnt"] += 1
+            progress.update(1)
+
+        for _, (xidx, yidx, clifn) in enumerate(queue):
             pool.apply_async(
                 edit_clifile,
                 (xidx, yidx, clifn, data, valid),
@@ -607,12 +617,12 @@ def test_bp():
     data[0] = 0
     data[24 * 30 - 1] = 9.99
     bp = compute_breakpoint(data)
-    assert bp[0] == "23.9666 0.00"
+    assert bp[0] == "23.9667 0.00"
     assert bp[1] == "23.9833 9.99"
 
     data[24 * 30 - 1] = 10.99
     bp = compute_breakpoint(data)
-    assert bp[0] == "23.9666 0.00"
+    assert bp[0] == "23.9667 0.00"
     assert bp[1] == "23.9833 10.99"
 
     # Do some random futzing
