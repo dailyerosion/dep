@@ -19,13 +19,13 @@ FILENAME_RE = re.compile(
 
 def run(rundata):
     """Actually run wepp for this event"""
-    proc = subprocess.Popen(
-        ["wepp"],
+    with subprocess.Popen(
+        ["timeout", 60, "wepp"],
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stdin=subprocess.PIPE,
-    )
-    (stdoutdata, stderrdata) = proc.communicate(rundata)
+    ) as proc:
+        (stdoutdata, stderrdata) = proc.communicate(rundata)
     if stdoutdata[-13:-1] != b"SUCCESSFULLY":
         # So our job failed and we now have to figure out a filename to use
         # for the error file.  This is a quasi-hack here, but the env file
