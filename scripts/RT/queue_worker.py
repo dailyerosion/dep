@@ -20,7 +20,7 @@ FILENAME_RE = re.compile(
 def run(rundata):
     """Actually run wepp for this event"""
     with subprocess.Popen(
-        ["timeout", 60, "wepp"],
+        ["timeout", "60", "wepp"],
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stdin=subprocess.PIPE,
