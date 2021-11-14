@@ -9,6 +9,7 @@ import stat
 import datetime
 import subprocess
 import time
+from multiprocessing import cpu_count
 from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
@@ -21,7 +22,7 @@ DATADIR = "/mnt/idep2/data/dailyprecip"
 
 def get_fn(date):
     """Return the filename for this date."""
-    return "%s/%s/%s.npy" % (DATADIR, date.year, date.strftime("%Y%m%d"))
+    return f"{DATADIR}/{date.year}/{date:%Y%m%d}.npy"
 
 
 def assemble_grids(tilesz, date):
@@ -29,15 +30,10 @@ def assemble_grids(tilesz, date):
     YS = int((NORTH - SOUTH) * 100.0)
     XS = int((EAST - WEST) * 100.0)
     res = np.zeros((YS, XS))
-    basedir = "%s/%s" % (DATADIR, date.year)
+    basedir = f"{DATADIR}/{date.year}"
     for i, _lon in enumerate(np.arange(WEST, EAST, tilesz)):
         for j, _lat in enumerate(np.arange(SOUTH, NORTH, tilesz)):
-            fn = "%s/%s.tile_%s_%s.npy" % (
-                basedir,
-                date.strftime("%Y%m%d"),
-                i,
-                j,
-            )
+            fn = f"{basedir}/{date:%Y%m%d}.tile_{i}_{j}.npy"
             if not os.path.isfile(fn):
                 continue
             yslice = slice(j * 100 * tilesz, (j + 1) * 100 * tilesz)
@@ -76,16 +72,16 @@ def main(argv):
     jobs = []
     for i, _lon in enumerate(np.arange(WEST, EAST, tilesz)):
         for j, _lat in enumerate(np.arange(SOUTH, NORTH, tilesz)):
-            cmd = "python daily_clifile_editor.py %s %s %s %s %s" % (
-                i,
-                j,
-                tilesz,
-                scenario,
-                date.strftime("%Y %m %d"),
+            cmd = (
+                f"python daily_clifile_editor.py {i} {j} {tilesz} "
+                f"{scenario} {date:%Y %m %d}"
             )
             jobs.append(cmd)
     failed = False
-    with ProcessPoolExecutor(max_workers=4) as executor:
+    # 12 Nov 2021 audit shows per process usage in the 2-3 GB range
+    workers = int(min([4, cpu_count() / 4]))
+    LOG.debug("starting %s workers", workers)
+    with ProcessPoolExecutor(max_workers=workers) as executor:
         for job, res in zip(jobs, executor.map(myjob, jobs)):
             if res != 0:
                 failed = True
