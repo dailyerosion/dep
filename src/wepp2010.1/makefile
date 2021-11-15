@@ -6,7 +6,7 @@ FC_IF	  = ifort
 FC_G95        = g95
 FC_GNU        = gfortran
 FC_2      = f2c
-FFLAGS_IFORT    = -c -autodouble -O -align dcommons -fast
+FFLAGS_IFORT    = -mno-avx -mno-avx2 -c -autodouble -O -align dcommons
 FFLAGS_G95    = -c -Wall -r8 -malign-double -O3 -march=pentium4 
 FFLAGS_GNU     = -c -fdefault-real-8 -Wall -malign-double -O2 
 FFLAGS_2 = -c -r
@@ -23,7 +23,7 @@ LINKER = $(LINK_IF)
 
 DEST      = .
 #LDFLAGS   = -static /usr/lib/gcc-lib/i686-pc-linux-gnu/4.1.1/libgcc.a /usr/lib/gcc-lib/i686-pc-linux-gnu/4.1.1/libgcc_eh.a /usr/lib/gcc-lib/i686-pc-linux-gnu/4.1.1/libf95.a 
-LDFLAGS   = 
+LDFLAGS   = -mno-avx -mno-avx2
 
 .SUFFIXES: .for .o
 
