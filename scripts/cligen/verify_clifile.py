@@ -5,8 +5,8 @@ import datetime
 
 def main(argv):
     """Run for a given file."""
-    fn = argv[1]
-    lines = open(fn).readlines()
+    with open(argv[1], encoding="ascii") as fh:
+        lines = fh.readlines()
     tokens = lines[4].strip().split()
     syear = int(tokens[4])
     # simyears = int(tokens[5])
@@ -15,43 +15,44 @@ def main(argv):
     while linenum < len(lines):
         tokens = lines[linenum].split()
         if len(tokens) < 4:
-            print("linenum: %s has len(tokens): %s" % (linenum, len(tokens)))
-            sys.exit()
+            print(f"linenum: {linenum} has len(tokens): {len(tokens)}")
         thisdate = datetime.date(
             int(tokens[2]), int(tokens[1]), int(tokens[0])
         )
         if (thisdate - yesterday) != datetime.timedelta(days=1):
             print(
-                "linenum: %s has date: %s, not %s"
-                % (linenum, thisdate, yesterday + datetime.timedelta(days=1))
+                f"linenum: {linenum} has date: {thisdate}, "
+                f"not {yesterday + datetime.timedelta(days=1)}"
             )
-            sys.exit()
         yesterday = thisdate
         lastprecip = -1
         lasttime = ""
-        for _ in range(int(tokens[3])):
+        ftime = 0
+        nrbkpts = int(tokens[3])
+        if nrbkpts > 100:
+            print(f"linenum: {linenum} has nrbkpts: {nrbkpts} > 100")
+        for _ in range(nrbkpts):
             linenum += 1
             tokens = lines[linenum].split()
             if len(tokens) != 2:
-                print("linenum: %s has bad token count" % (linenum,))
-                sys.exit()
+                print(f"linenum: {linenum} has bad token count")
             if tokens[0] == lasttime:
                 print(f"linenum: {linenum} has duplicated time")
+            if float(tokens[0]) < ftime:
+                print(f"linenum: {linenum} has time {tokens[0]} < {ftime}")
+            ftime = float(tokens[0])
             lasttime = tokens[0]
             tm = float(tokens[0])
             if tm < 0 or tm >= 24:
-                print("linenum: %s has bad time: %s" % (linenum, tokens[0]))
-                sys.exit()
+                print(f"linenum: {linenum} has bad time: {tokens[0]}")
             precip = float(tokens[1])
             if precip < 0 or precip >= 350:
-                print("linenum: %s has bad precip: %s" % (linenum, tokens[1]))
-                sys.exit()
+                print(f"linenum: {linenum} has bad precip: {tokens[1]}")
             if precip <= lastprecip:
                 print(
-                    "linenum: %s has decreasing precip: %s, last %s"
-                    % (linenum, tokens[1], lastprecip)
+                    f"linenum: {linenum} has decreasing precip: {tokens[1]}, "
+                    f"last {lastprecip}"
                 )
-                sys.exit()
             lastprecip = precip
         linenum += 1
 
