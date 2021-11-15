@@ -468,9 +468,20 @@ def edit_clifile(xidx, yidx, clifn, data, valid):
         LOG.info("Date2 find failure for %s", clifn)
         return False
 
-    bpdata = compute_breakpoint(data["precip"][yidx, xidx, :])
+    intensity_threshold = 1.0
+    bpdata = compute_breakpoint(
+        data["precip"][yidx, xidx, :],
+    )
     if bpdata is None:
         bpdata = []
+    while len(bpdata) >= 100:
+        intensity_threshold += 2
+        LOG.info("len(bpdata) %s>100 t:%s", len(bpdata), intensity_threshold)
+        bpdata = compute_breakpoint(
+            data["precip"][yidx, xidx, :],
+            accumThreshold=intensity_threshold,
+            intensityThreshold=intensity_threshold,
+        )
 
     high = data["high"][yidx, xidx]
     low = data["low"][yidx, xidx]
