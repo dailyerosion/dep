@@ -30,7 +30,7 @@ def main(argv):
         ftime = 0
         nrbkpts = int(tokens[3])
         if nrbkpts > 100:
-            print(f"linenum: {linenum} has nrbkpts: {nrbkpts} > 100")
+            print(f"Date: {thisdate} has nrbkpts: {nrbkpts} > 100")
         for _ in range(nrbkpts):
             linenum += 1
             tokens = lines[linenum].split()

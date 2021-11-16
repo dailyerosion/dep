@@ -1,7 +1,6 @@
 """Compare scenarios."""
 import os
 import glob
-import datetime
 
 import pandas as pd
 from pyiem.plot.use_agg import plt

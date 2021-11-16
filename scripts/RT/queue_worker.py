@@ -1,20 +1,26 @@
 """We do work when jobs are placed in the queue."""
-import sys
-import re
-import subprocess
 from functools import partial
 from multiprocessing import Pool
+import re
+import socket
+import subprocess
+import sys
 import time
 
 import rabbitpy
+from pyiem.util import logger
 
+LOG = logger()
 URL = "amqp://guest:guest@iem-rabbitmq.local:5672/%2f"
 FILENAME_RE = re.compile(
-    (
-        "/i/(?P<scenario>[0-9]+)/env/(?P<huc8>[0-9]{8})/(?P<huc812>[0-9]{4})/"
-        "(?P<huc12>[0-9]{12})_(?P<fpath>[0-9]+).env"
-    )
+    "/i/(?P<scenario>[0-9]+)/env/(?P<huc8>[0-9]{8})/(?P<huc812>[0-9]{4})/"
+    "(?P<huc12>[0-9]{12})_(?P<fpath>[0-9]+).env"
 )
+
+
+def drain(_rundata):
+    """NOOP to clear out the queue via a hackery"""
+    return True
 
 
 def run(rundata):
@@ -33,14 +39,13 @@ def run(rundata):
         m = FILENAME_RE.search(rundata.decode("ascii"))
         if m:
             d = m.groupdict()
-            errorfn = "/i/%s/error/%s/%s/%s_%s.error" % (
-                d["scenario"],
-                d["huc8"],
-                d["huc812"],
-                d["huc12"],
-                d["fpath"],
+            errorfn = (
+                f"/i/{d['scenario']}/error/{d['huc8']}/{d['huc812']}/"
+                f"{d['huc12']}_{d['fpath']}.error"
             )
             with open(errorfn, "wb") as fp:
+                hn = f"Hostname: {socket.gethostname()}\n"
+                fp.write(hn.encode("ascii"))
                 fp.write(stdoutdata)
                 fp.write(stderrdata)
         return False
@@ -53,11 +58,11 @@ def cb(*args):
     print(args)
 
 
-def setup_connection(queuename):
+def setup_connection(queuename, jobfunc):
     """Setup and run."""
 
     def consume(message):
-        run(message.body)
+        jobfunc(message.body)
         message.ack()
 
     # Use context managers as we had some strange thread issues otherwise?
@@ -75,11 +80,15 @@ def runloop(argv):
     """Our main runloop."""
     scenario = int(argv[1])
     start_threads = int(argv[2])
+    jobfunc = run
+    if len(argv) > 3:
+        jobfunc = drain
+        LOG.debug("Running in queue-draining mode")
 
     queuename = "dep" if scenario == 0 else "depscenario"
 
     pool = Pool(start_threads)
-    f = partial(setup_connection, queuename)
+    f = partial(setup_connection, queuename, jobfunc)
     for _ in range(start_threads):
         pool.apply_async(f, callback=cb, error_callback=cb)
     pool.close()
@@ -88,8 +97,8 @@ def runloop(argv):
 
 def main(argv):
     """Go main Go."""
-    if len(argv) != 3:
-        print("USAGE: python queue_worker.py <scenario> <threads>")
+    if len(argv) not in [3, 4]:
+        print("USAGE: python queue_worker.py <scenario> <threads> <drainme?>")
         return
     while True:
         try:

@@ -198,7 +198,7 @@ def do_rotation(scenario, zone, rotfn, landuse, management):
 # Created with scripts/import/flowpath2prj.py
 #
 Version = 98.7
-Name = %(name)s
+Name = {data['name']}
 Description {{
 }}
 Color = 0 255 0

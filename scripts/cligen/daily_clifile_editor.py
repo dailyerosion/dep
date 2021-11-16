@@ -476,7 +476,7 @@ def edit_clifile(xidx, yidx, clifn, data, valid):
         bpdata = []
     while len(bpdata) >= 100:
         intensity_threshold += 2
-        LOG.info("len(bpdata) %s>100 t:%s", len(bpdata), intensity_threshold)
+        LOG.debug("len(bpdata) %s>100 t:%s", len(bpdata), intensity_threshold)
         bpdata = compute_breakpoint(
             data["precip"][yidx, xidx, :],
             accumThreshold=intensity_threshold,
