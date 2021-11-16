@@ -21,20 +21,16 @@ class WeppRun:
         """We initialize with a huc12 identifier and a flowpath id"""
         self.huc12 = huc12
         self.huc8 = huc12[:8]
-        self.subdir = "%s/%s" % (huc12[:8], huc12[8:])
+        self.subdir = f"{huc12[:8]}/{huc12[8:]}"
         self.fpid = fpid
         self.clifile = clifile
         self.scenario = scenario
 
     def _getfn(self, prefix):
         """boilerplate code to get a filename."""
-        return "/i/%s/%s/%s/%s_%s.%s" % (
-            self.scenario,
-            prefix,
-            self.subdir,
-            self.huc12,
-            self.fpid,
-            prefix,
+        return (
+            f"/i/{self.scenario}/{prefix}/{self.subdir}/"
+            f"{self.huc12}_{self.fpid}.{prefix}"
         )
 
     def get_wb_fn(self):
@@ -97,30 +93,30 @@ class WeppRun:
         out.write("No\n")  # initial conditions output
         out.write("/dev/null\n")  # soil loss output file
         out.write("Yes\n")  # Do water balance output
-        out.write("%s\n" % (self.get_wb_fn(),))  # water balance output file
+        out.write(f"{self.get_wb_fn()}\n")  # water balance output file
         out.write("No\n")  # crop output
         # out.write("%s\n" % (self.get_crop_fn(),))  # crop output file
         out.write("No\n")  # soil output
         out.write("No\n")  # distance and sed output
         if self.huc12 in ["090201081101", "090201081102", "090201060605"]:
             out.write("Yes\n")  # large graphics output
-            out.write("%s\n" % (self.get_graphics_fn(),))
+            out.write(f"{self.get_graphics_fn()}\n")
         else:
             out.write("No\n")  # large graphics output
         out.write("Yes\n")  # event by event output
-        out.write("%s\n" % (self.get_env_fn(),))  # event file output
+        out.write(f"{self.get_env_fn()}\n")  # event file output
         out.write("No\n")  # element output
         # out.write("%s\n" % (self.get_ofe_fn(),))
         out.write("No\n")  # final summary output
         out.write("No\n")  # daily winter output
         out.write("Yes\n")  # plant yield output
-        out.write("%s\n" % (self.get_yield_fn(),))  # yield file
-        out.write("%s\n" % (self.get_man_fn(),))  # management file
-        out.write("%s\n" % (self.get_slope_fn(),))  # slope file
-        out.write("%s\n" % (self.get_clifile_fn(),))  # climate file
-        out.write("%s\n" % (self.get_soil_fn(),))  # soil file
+        out.write(f"{self.get_yield_fn()}\n")  # yield file
+        out.write(f"{self.get_man_fn()}\n")  # management file
+        out.write(f"{self.get_slope_fn()}\n")  # slope file
+        out.write(f"{self.get_clifile_fn()}\n")  # climate file
+        out.write(f"{self.get_soil_fn()}\n")  # soil file
         out.write("0\n")  # Irrigation
-        out.write("%s\n" % (YEARS,))  # years 2007-
+        out.write(f"{YEARS}\n")  # years 2007-
         out.write("0\n")  # route all events
         out.seek(0)
         return out.read()
@@ -133,16 +129,15 @@ def main(argv):
     myhucs = []
     if os.path.isfile("myhucs.txt"):
         log.warning("Using myhucs.txt to filter job submission")
-        myhucs = [s.strip() for s in open("myhucs.txt").readlines()]
+        with open("myhucs.txt", encoding="ascii") as fh:
+            myhucs = [s.strip() for s in fh]
     idep = get_dbconn("idep")
     icursor = idep.cursor()
 
     icursor.execute(
-        """
-        SELECT huc_12, fpath, climate_file
-        from flowpaths where scenario = %s
-    """
-        % (scenario,)
+        "SELECT huc_12, fpath, climate_file from flowpaths "
+        "where scenario = %s",
+        (scenario,),
     )
     totaljobs = icursor.rowcount
     connection = pika.BlockingConnection(
