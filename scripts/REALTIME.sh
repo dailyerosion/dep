@@ -7,7 +7,7 @@ if [ "$HH" -ne "00" ]
 fi 
 
 # Remove any previous run's error files
-find /i/0/error -type f -name *.env -exec rm {} \;
+find /i/0/error -type f -exec rm {} \;
 
 cd cligen
 # usage of 1 day ago here is problematic during spring CST -> CDT
