@@ -31,16 +31,28 @@ def main(argv):
             slp = read_slp(slpfn)
             for i, ofe in enumerate(slp):
                 total_ofes += 1
+                # NB: we need to be careful here as we are dealing with
+                # floating point values, so we do a bit of nudging
+                # 0.5m is within the resolution of the data (3m)
+                x0 = ofe["x"][0] - 0.5
+                x1 = ofe["x"][-1] + 0.5
                 cursor.execute(
                     "UPDATE flowpath_points p SET ofe = %s FROM flowpaths f "
                     "where p.flowpath = f.fid and p.scenario = %s and "
                     "f.huc_12 = %s and f.fpath = %s and p.length >= %s and "
                     "p.length < %s",
-                    (i, scenario, huc12, fpath, ofe["x"][0], ofe["x"][-1]),
+                    (
+                        i,
+                        scenario,
+                        huc12,
+                        fpath,
+                        x0,
+                        x1,
+                    ),
                 )
                 updates += cursor.rowcount
                 if cursor.rowcount == 0:
-                    LOG.info("no points updated %s %s", i, slpfn)
+                    LOG.info("no points found %s %s [%s-%s]", i, slpfn, x0, x1)
                     return
     cursor.close()
     pgconn.commit()
