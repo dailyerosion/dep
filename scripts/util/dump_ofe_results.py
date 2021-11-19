@@ -1,115 +1,68 @@
 """Summarize the OFE files"""
-import os
 import datetime
+import os
+import sys
 
 import pandas as pd
+from pandas.io.sql import read_sql
 from tqdm import tqdm
-from pyiem.dep import read_ofe, read_man, read_slp
+from pyiem.util import get_dbconn
+from pyiem.dep import read_ofe
 
-# See import/flowpath2prj for table about these codes.
-LABEL2CODE = {
-    "ALFALFA": "P",
-    "soybean2": "B",
-    "Soy_2191": "B",
-    "Soy_2192": "B",
-    "Soy_2193": "B",
-    "Soy_2194": "B",
-    "Corn": "C",
-    "Cor_0967": "C",
-    "Cor_0966": "C",
-    "Cor_0965": "C",
-    "Cor_0964": "C",
-    "Tre_2932": "I",
-    "bromegr1": "P",
-    "Bar_8319": "R",
-}
 # 2007 is skipped
 YEARS = 2021 - 2008
 
 
-def get_rotation_string(manres, ofe):
-    """Uffff"""
-    codes = []
-    for rot in manres["rotations"]:
-        idx = rot[ofe - 1]["yearindex"]
-        ntype = manres["scens"][idx - 1]["ntype"]
-        codes.append(LABEL2CODE.get(manres["crops"][ntype - 1]["crpnam"], "_"))
-    return "".join(codes)
-
-
-def get_soils(prjfn):
-    """Hack to get soil names from prj and soil file"""
-    soils = []
-    for line in open(prjfn):
-        if line.find("/sol_input/") == -1:
-            continue
-        soils.append(line.split("_")[2].split(".")[0])
-    # now read sol file
-    names = []
-    for line in open(prjfn.replace("prj", "sol")):
-        if not line.startswith("'"):
-            continue
-        names.append(line[1:].split("'")[0])
-    if len(names) == len(soils):
-        return soils
-    # uh oh, more work to do
-    mapping = {}
-    i = 0
-    for name in names:
-        if name in mapping:
-            continue
-        mapping[name] = soils[i]
-        i += 1
-    return [mapping[name] for name in names]
-
-
 def main():
     """Go Main Go"""
-    # ['id', 'CropRotationString', 'slope',
-    #                           'rainfall', 'runoff', 'detach', 'delivery'])
+    pgconn = get_dbconn("idep")
     rows = []
-    for root, _dirs, files in tqdm(os.walk("/i/0/ofe")):
+    for root, _dirs, files in tqdm(os.walk("/i/0/ofe"), disable=True):
         for filename in files:
-            ofedf = read_ofe("%s/%s" % (root, filename))
+            ofedf = read_ofe(f"{root}/{filename}")
             # Drop any 2007 or 2018+ data
             ofedf = ofedf[
                 (ofedf["date"] < datetime.datetime(2021, 1, 1))
                 & (ofedf["date"] >= datetime.datetime(2008, 1, 1))
             ]
             # Figure out the crop string
-            man = "%s/%s" % (
-                root.replace("ofe", "man"),
-                filename.replace("ofe", "man"),
+            fpath = filename.split("_")[1][:-4]
+            huc12 = filename[:12]
+            meta = read_sql(
+                """
+                with data as (
+                    select ofe, (max(elevation) - min(elevation)) /
+                    greatest(3, max(length) - min(length)) as slope,
+                    max(genlu) as genlu,
+                    max(landuse) as landuse, max(management) as management,
+                    max(surgo) as surgo,
+                    greatest(3, max(length) - min(length)) as length
+                    from flowpath_points p JOIN flowpaths f on
+                    (p.flowpath = f.fid) WHERe f.scenario = 0
+                    and f.huc_12 = %s  and fpath = %s GROUP by ofe)
+                select d.*, g.label from data d JOIN general_landuse g on
+                (d.genlu = g.id)
+                """,
+                pgconn,
+                params=(huc12, fpath),
             )
-            try:
-                manres = read_man(man)
-            except Exception as exp:
-                print("failure reading %s\n%s" % (man, exp))
-                continue
 
-            slp = "%s/%s" % (
-                root.replace("ofe", "slp"),
-                filename.replace("ofe", "slp"),
-            )
-            slpres = read_slp(slp)
-            soils = get_soils(slp.replace("slp", "prj"))
             for ofe in ofedf["ofe"].unique():
                 myofe = ofedf[ofedf["ofe"] == ofe]
-                length = slpres[ofe - 1]["x"][-1] - slpres[ofe - 1]["x"][0]
-                slp = (
-                    slpres[ofe - 1]["y"][0] - slpres[ofe - 1]["y"][-1]
-                ) / length
+                meta_ofe = meta[meta["ofe"] == (ofe - 1)]
+                if meta_ofe.empty:
+                    print(ofe, huc12, fpath)
+                    sys.exit()
+                length = meta_ofe["length"].values[0]
                 rows.append(
                     {
-                        "id": "%s_%s" % (filename[:-4], ofe),
-                        "huc12": filename[:12],
-                        "fpath": filename.split("_")[1][:-4],
+                        "id": f"{filename[:-4]}_{ofe}",
+                        "huc12": huc12,
+                        "fpath": fpath,
                         "ofe": ofe,
-                        "CropRotationString": (
-                            get_rotation_string(manres, ofe)
-                        ),
-                        "slope[1]": slp,
-                        "soil_mukey": soils[ofe - 1],
+                        "CropRotationString": meta_ofe["landuse"].values[0],
+                        "slope[1]": meta_ofe["slope"].values[0],
+                        "soil_mukey": meta_ofe["surgo"].values[0],
                         "rainfall": -1,
                         "runoff[mm/yr]": myofe["runoff"].sum() / YEARS,
                         "detach": -1,
@@ -117,6 +70,8 @@ def main():
                         "delivery[t/a/yr]": (
                             myofe["sedleave"].sum() / YEARS / length * 4.463
                         ),
+                        "genlanduse": meta_ofe["label"].values[0],
+                        "management": meta_ofe["management"].values[0],
                     }
                 )
 
