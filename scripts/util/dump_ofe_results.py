@@ -49,7 +49,7 @@ def main():
 
             for ofe in ofedf["ofe"].unique():
                 myofe = ofedf[ofedf["ofe"] == ofe]
-                meta_ofe = meta[meta["ofe"] == (ofe - 1)]
+                meta_ofe = meta[meta["ofe"] == ofe]
                 if meta_ofe.empty:
                     print(ofe, huc12, fpath)
                     sys.exit()
