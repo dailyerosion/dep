@@ -42,7 +42,7 @@ def main(argv):
                     "f.huc_12 = %s and f.fpath = %s and p.length >= %s and "
                     "p.length < %s",
                     (
-                        i,
+                        i + 1,  # store OFE as 1-based
                         scenario,
                         huc12,
                         fpath,
