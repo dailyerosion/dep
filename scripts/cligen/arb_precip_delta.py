@@ -14,32 +14,26 @@ def conservative_adjust(times, accum, multipler):
     # We can't adjust by more than 50%
     assert 0.5 < multipler < 1.5
     # If this was a drizzle event, do nothing.
-    if accum[-1] < 5 or len(accum) < 3:
+    if accum[-1] < 5:
         return times
-    # Compute the peak intensity.
-    maxrate = 0
-    maxi = 0
-    # Don't let max rate happen at the end.
-    for i in range(1, len(accum) - 1):
+    # An algorithm was attempted whereby the peak rate was modified, this
+    # yielded no meaningful change.
+    # Attempt 2: Take a blunt hammer to the time axis.
+    # sometimes there is a danagling midnight
+    if times[-1] > 23.95 and times[-2] < 23:
+        times[-1] = times[-2] + 0.1
+    newtimes = [0]
+    for i in range(1, len(times)):
         dt = times[i] - times[i - 1]
         rate = (accum[i] - accum[i - 1]) / dt
-        if rate > maxrate:
-            maxrate = rate
-            maxi = i
-    # The implementation here is to adjust the timestep to goose the intensity
-    # This is not perfect, but it's a start.
-    newtimes = [times[0]]
-    for i in range(1, len(accum)):
-        if i != maxi:
-            newtimes.append(times[i])
-            continue
-        dt = (times[i] - times[i - 1]) / multipler
-        newtime = times[i - 1] + dt
-        # This situation is too much to ask for
-        if (newtime - times[i + 1]) > -0.001:
-            newtime = (times[i + 1] + times[i]) / 2.0
-        newtimes.append(newtime)
-
+        # only modify rates over 22mm/hr
+        if rate > 22:
+            newtimes.append(newtimes[-1] + dt / multipler)
+        else:
+            newtimes.append(newtimes[-1] + dt)
+    # algo-fail
+    if newtimes[-1] >= 23.99:
+        return times
     return newtimes
 
 
