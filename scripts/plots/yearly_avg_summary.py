@@ -6,7 +6,6 @@ import numpy as np
 from geopandas import read_postgis
 from matplotlib.patches import Polygon
 import matplotlib.colors as mpcolors
-import cartopy.crs as ccrs
 from pyiem.util import get_dbconn
 from pyiem.plot.use_agg import plt
 from pyiem.plot import MapPlot
@@ -63,7 +62,7 @@ def main(argv):
     v = argv[1]
     agg = argv[2]
     ts = datetime.date(2008, 1, 1)
-    ts2 = datetime.date(2017, 12, 31)
+    ts2 = datetime.date(2020, 12, 31)
     scenario = 0
 
     # suggested for runoff and precip
@@ -103,7 +102,7 @@ def main(argv):
         )
     mp = MapPlot(
         axisbg="#EEEEEE",
-        nologo=True,
+        logo="dep",
         sector="iowa",
         nocaption=True,
         title=("DEP %s %s %s")
@@ -146,15 +145,12 @@ def main(argv):
         bins = np.array(V2RAMP[v]) * (10.0 if agg == "sum" else 1.0)
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
 
-    # m.ax.add_geometries(df['geo'], ccrs.PlateCarree())
+    df = df.to_crs(mp.panels[0].crs)
     for _, row in df.iterrows():
         c = cmap(norm([row["data"]]))[0]
-        arr = np.asarray(row["geo"].exterior)
-        points = mp.ax.projection.transform_points(
-            ccrs.Geodetic(), arr[:, 0], arr[:, 1]
-        )
-        p = Polygon(points[:, :2], fc=c, ec="k", zorder=2, lw=0.1)
-        mp.ax.add_patch(p)
+        arr = np.asarray(row["geo"].exterior.coords)
+        p = Polygon(arr[:, :2], fc=c, ec="k", zorder=2, lw=0.1)
+        mp.panels[0].ax.add_patch(p)
 
     mp.drawcounties()
     mp.drawcities()

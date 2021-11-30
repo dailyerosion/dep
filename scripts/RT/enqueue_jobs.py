@@ -134,10 +134,18 @@ def main(argv):
     idep = get_dbconn("idep")
     icursor = idep.cursor()
 
+    # Figure out the source of flowpaths
+    icursor.execute(
+        "SELECT flowpath_scenario, climate_scenario from scenarios "
+        "where id = %s",
+        (scenario,),
+    )
+    flscenario, clscenario = icursor.fetchone()
+
     icursor.execute(
         "SELECT huc_12, fpath, climate_file from flowpaths "
         "where scenario = %s",
-        (scenario,),
+        (flscenario,),
     )
     totaljobs = icursor.rowcount
     connection = pika.BlockingConnection(
@@ -149,7 +157,11 @@ def main(argv):
     for row in icursor:
         if myhucs and row[0] not in myhucs:
             continue
-        wr = WeppRun(row[0], row[1], row[2], scenario)
+        clfile = row[2]
+        if scenario >= 142:
+            # le sigh
+            clfile = clfile.replace("/0/", f"/{scenario}/")
+        wr = WeppRun(row[0], row[1], clfile, scenario)
         channel.basic_publish(
             exchange="",
             routing_key="dep",
