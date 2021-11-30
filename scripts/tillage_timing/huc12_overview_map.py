@@ -3,11 +3,9 @@
 from pyiem.plot import MapPlot
 from pyiem.util import get_dbconn
 from geopandas import read_postgis
-import numpy as np
-import cartopy.crs as ccrs
-from matplotlib.patches import Polygon
 
-MYHUCS = [x.strip() for x in open("myhucs.txt").readlines()]
+with open("myhucs.txt", encoding="utf-8") as fh:
+    MYHUCS = [x.strip() for x in fh.readlines()]
 
 
 def main():
@@ -16,10 +14,10 @@ def main():
 
     mp = MapPlot(
         continentalcolor="#EEEEEE",
-        nologo=True,
+        logo="dep",
         subtitle="3 HUC12s choosen per MLRA",
         nocaption=True,
-        title=("Tillage Timing Experiment 30 Random HUC12s"),
+        title="Climate Change Experiments 30 Random HUC12s",
     )
 
     df = read_postgis(
@@ -33,14 +31,15 @@ def main():
         geom_col="geom",
         index_col="mlra_id",
     )
-    for _i, row in df.iterrows():
-        for poly in row["geom"]:
-            arr = np.asarray(poly.exterior)
-            points = mp.ax.projection.transform_points(
-                ccrs.Geodetic(), arr[:, 0], arr[:, 1]
-            )
-            p = Polygon(points[:, :2], fc="None", ec="k", zorder=2, lw=0.2)
-            mp.ax.add_patch(p)
+    df = df.to_crs(mp.panels[0].crs)
+    df.plot(
+        ax=mp.panels[0].ax,
+        edgecolor="k",
+        facecolor="none",
+        linewidth=0.2,
+        zorder=2,
+        aspect=None,  # !important
+    )
 
     df = read_postgis(
         "select huc_12, ST_transform(geom, 4326) as geom from huc12 "
@@ -50,16 +49,17 @@ def main():
         geom_col="geom",
         index_col="huc_12",
     )
-    for _i, row in df.iterrows():
-        for poly in row["geom"]:
-            arr = np.asarray(poly.exterior)
-            points = mp.ax.projection.transform_points(
-                ccrs.Geodetic(), arr[:, 0], arr[:, 1]
-            )
-            p = Polygon(points[:, :2], fc="r", ec="k", zorder=3, lw=0.5)
-            mp.ax.add_patch(p)
+    df = df.to_crs(mp.panels[0].crs)
+    df.plot(
+        ax=mp.panels[0].ax,
+        edgecolor="k",
+        facecolor="red",
+        linewidth=0.5,
+        zorder=3,
+        aspect=None,  # !important
+    )
 
-    mp.postprocess(filename="test.png")
+    mp.postprocess(filename="mlra_huc12s.png")
 
 
 if __name__ == "__main__":

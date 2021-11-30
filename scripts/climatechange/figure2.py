@@ -7,6 +7,8 @@ rcParams.update(
         "font.sans-serif": ["Liberation Sans"],
     }
 )
+from pyiem.plot import figure_axes
+
 # rcParams['font.sans-serif'] = ['Tahoma']
 from pyiem.plot.use_agg import plt
 
@@ -45,17 +47,23 @@ DATA = [
 
 def main():
     """Go Main Go."""
-    (fig, ax) = plt.subplots(1, 1)
-    ax.bar(range(-14, 15), [x * 100 for x in DATA], color="gray")
-    ax.grid(True)
-    ax.set_title(
-        "Change in Hillslope Soil Loss by -/+ 14 Day Precipitation Shift"
+    title = (
+        "Change in Hillslope Soil Loss\n" "by -/+ 14 Day Precipitation Shift"
     )
+    (fig, ax) = figure_axes(
+        logo="dep",
+        title=title,
+        figsize=(8, 6),
+    )
+    ax.bar(range(-14, 15), [x * 100 for x in DATA], color="blue")
+    ax.grid(True)
     ax.set_xlabel("Shift in Days (negative is earlier)")
-    ax.set_ylabel("Percent Change in Soil Loss (baseline: 7.8 $t$ $ha^{-1}$)")
+    # ylabel = "Percent Change in Soil Loss (baseline: 7.8 $t$ $ha^{-1}$)"
+    ylabel = "Percent Change in Soil Loss (baseline: 3.0 $T$ $a^{-1}$)"
+    ax.set_ylabel(ylabel)
     ax.set_ylim(-12, 12)
     ax.axhline(0, color="k")
-    fig.savefig("figure2.png", dpi=600)
+    fig.savefig("figure2.png")
 
 
 if __name__ == "__main__":

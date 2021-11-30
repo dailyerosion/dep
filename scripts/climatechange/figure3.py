@@ -7,6 +7,7 @@ rcParams.update(
         "font.sans-serif": ["Liberation Sans"],
     }
 )
+from pyiem.plot import figure_axes
 from pyiem.plot.use_agg import plt
 from pyiem.util import logger
 import numpy as np
@@ -29,12 +30,17 @@ DATA = [
 
 def main():
     """Plot."""
-    fig, ax = plt.subplots(1, 1)
-    ax.set_title(
-        "Change in Hillslope Soil Loss with Additional 25 $mm$ $h^{-1}$ Events"
+    title = (
+        "Change in Hillslope Soil Loss\n"
+        "with Additional 1 $inch$ $h^{-1}$ Daily Events"
+    )
+    fig, ax = figure_axes(
+        logo="dep",
+        figsize=(8, 6),
+        title=title,
     )
     y = np.array(DATA) * 100.0
-    ax.bar(np.arange(1, 11), y, color="gray")
+    ax.bar(np.arange(1, 11), y, color="b")
     for i, val in enumerate(y):
         ax.text(
             i + 1,
@@ -44,13 +50,15 @@ def main():
             bbox=dict(color="white", boxstyle="square,pad=0"),
         )
     ax.set_xlabel(
-        "Additional 25 $mm$ $h^{-1}$ Storms per Spring Season each Year"
+        "Additional 1 $inch$ $h^{-1}$ Storms per Spring Season each Year"
     )
     ax.set_ylim(0, 110)
-    ax.set_ylabel(r"Percent Change in Soil Loss (baseline: 7.8 $t$ $ha^{-1}$)")
+    # ylabel = r"Percent Change in Soil Loss (baseline: 7.8 $t$ $ha^{-1}$)"
+    ylabel = r"Percent Change in Soil Loss (baseline: 3.0 $T$ $a^{-1}$)"
+    ax.set_ylabel(ylabel)
     ax.set_xticks(range(1, 11))
     ax.grid(True)
-    fig.savefig("figure3.png", dpi=600)
+    fig.savefig("figure3.png")
 
 
 if __name__ == "__main__":
