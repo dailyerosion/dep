@@ -117,8 +117,8 @@ if __name__ == "__main__":
 
 def test_conservative_adjust():
     """Test conservative adjust."""
-    times = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    accum = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    times = [0, 1, 2]
+    accum = [1, 30, 40]
     newtimes = conservative_adjust(times, accum, 0.6)
     assert abs(newtimes[1] - 1.666) < 0.001
     newtimes = conservative_adjust(times, accum, 1.4)
