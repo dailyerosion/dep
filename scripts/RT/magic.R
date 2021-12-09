@@ -293,11 +293,11 @@ WEPS[120]<-paste(" ",0.0,"", (round(WEPPout$LAI[i], digits=2)),collapse="") #cro
 #   WEPS[120]<-paste(" ",(round(WEPPout$LAI[i], digits=2)),"", (round(WEPPout$LAI[i], digits=2)),collapse="") #crop StemAI and LAI
    
 #line 141 is flat biomass cover m2/m2, Need to convert residue t/ac to biomass cover (m/m)
-#Percent cover estimated from residue biomass after equtions provided in Gregory, 1982 and Steiner et al., 2000
-#Currently using a single cover coefficient (ave of corn and soy), need to find a way to update this by crop
-Residuegm2<-WEPPout$`Rsd_t-a`[i]*907185/4046.86 #convert t/ac to g/m2
-covercoef<-0.0175 #currently based on value from abstract of Steiner paper (for small grain crops - need to update for other crops)
-Cover<-(1-exp(-covercoef*Residuegm2))
+#Percent cover estimated from residue biomass after equtions provided in Gregory, 1982
+#Currently using a single cover coefficient (corn), need to find a way to update this by crop
+Residuelbac<-WEPPout$`Rsd_t-a`[i]*2000 #convert t/ac to lb/acre
+covercoef<-0.00038 #currently based on value for corn from Gregory 1982 (need to update for other crops)
+Cover<-(1-exp(-covercoef*Residuelbac))
 WEPS[141]<-Cover
 
 ### WEPS.IN +++ SOIL +++ 
