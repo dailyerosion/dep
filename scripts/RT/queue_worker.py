@@ -7,11 +7,10 @@ import subprocess
 import sys
 import time
 
-import rabbitpy
+import pika
 from pyiem.util import logger
 
 LOG = logger()
-URL = "amqp://guest:guest@iem-rabbitmq.local:5672/%2f"
 FILENAME_RE = re.compile(
     "/i/(?P<scenario>[0-9]+)/env/(?P<huc8>[0-9]{8})/(?P<huc812>[0-9]{4})/"
     "(?P<huc12>[0-9]{12})_(?P<fpath>[0-9]+).env"
@@ -61,19 +60,16 @@ def cb(*args):
 def setup_connection(queuename, jobfunc):
     """Setup and run."""
 
-    def consume(message):
-        jobfunc(message.body)
-        message.ack()
+    def consume(channel, method, props, message):
+        jobfunc(message)
 
-    # Use context managers as we had some strange thread issues otherwise?
-    with rabbitpy.Connection(URL) as conn:
-        with conn.channel() as channel:
-            channel.prefetch_count(10)
-            queue = rabbitpy.Queue(channel, name=queuename, durable=True)
-            print(queue)
-            for message in queue:
-                consume(message)
-            print("done")
+    conn = pika.BlockingConnection(
+        pika.ConnectionParameters(host="iem-rabbitmq.local")
+    )
+    channel = conn.channel()
+    channel.queue_declare(queuename, durable=True)
+    channel.basic_consume(queuename, consume, auto_ack=True)
+    channel.start_consuming()
 
 
 def runloop(argv):
