@@ -59,6 +59,8 @@ def consumer_thread(jobfunc, thread_id):
     )
     channel = conn.channel()
     channel.queue_declare("dep", durable=True)
+    # otherwise rabbitmq will send everything
+    channel.basic_qos(prefetch_count=100)
     # make us acknowledge the message
     channel.basic_consume("dep", jobfunc, auto_ack=False)
     # blocks
