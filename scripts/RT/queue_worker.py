@@ -1,6 +1,6 @@
 """We do work when jobs are placed in the queue."""
 from functools import partial
-from multiprocessing import Pool
+from concurrent.futures import ThreadPoolExecutor
 import re
 import socket
 import subprocess
@@ -17,12 +17,12 @@ FILENAME_RE = re.compile(
 )
 
 
-def drain(_rundata):
+def drain(channel, method, _props, _rundata):
     """NOOP to clear out the queue via a hackery"""
-    return True
+    channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def run(rundata):
+def run(channel, method, _props, rundata):
     """Actually run wepp for this event"""
     with subprocess.Popen(
         ["timeout", "60", "wepp"],
@@ -47,48 +47,22 @@ def run(rundata):
                 fp.write(hn.encode("ascii"))
                 fp.write(stdoutdata)
                 fp.write(stderrdata)
-        return False
-    return True
+    channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def cb(*args):
-    """If apply_async has troubles?"""
-    print("cb() called and got the following as args:")
-    print(args)
-
-
-def setup_connection(queuename, jobfunc):
-    """Setup and run."""
-
-    def consume(channel, method, props, message):
-        jobfunc(message)
+def consumer_thread(jobfunc, thread_id):
+    """Our main runloop."""
+    LOG.info("Starting consumer_thread(%s)", thread_id)
 
     conn = pika.BlockingConnection(
         pika.ConnectionParameters(host="iem-rabbitmq.local")
     )
     channel = conn.channel()
-    channel.queue_declare(queuename, durable=True)
-    channel.basic_consume(queuename, consume, auto_ack=True)
+    channel.queue_declare("dep", durable=True)
+    # make us acknowledge the message
+    channel.basic_consume("dep", jobfunc, auto_ack=False)
+    # blocks
     channel.start_consuming()
-
-
-def runloop(argv):
-    """Our main runloop."""
-    scenario = int(argv[1])
-    start_threads = int(argv[2])
-    jobfunc = run
-    if len(argv) > 3:
-        jobfunc = drain
-        LOG.debug("Running in queue-draining mode")
-
-    queuename = "dep" if scenario == 0 else "depscenario"
-
-    pool = Pool(start_threads)
-    f = partial(setup_connection, queuename, jobfunc)
-    for _ in range(start_threads):
-        pool.apply_async(f, callback=cb, error_callback=cb)
-    pool.close()
-    pool.join()
 
 
 def main(argv):
@@ -98,7 +72,11 @@ def main(argv):
         return
     while True:
         try:
-            runloop(argv)
+            start_threads = int(argv[2])
+            f = partial(consumer_thread, run if len(argv) < 4 else drain)
+            with ThreadPoolExecutor(max_workers=start_threads) as pool:
+                LOG.info("Starting %s threads", start_threads)
+                pool.map(f, range(start_threads))
             print("runloop exited cleanly, sleeping 30 seconds")
             time.sleep(30)
         except KeyboardInterrupt:
