@@ -6,6 +6,7 @@ import time
 from io import StringIO
 
 import pika
+import requests
 from pyiem.util import get_dbconn, logger
 
 YEARS = datetime.date.today().year - 2006
@@ -140,7 +141,7 @@ def main(argv):
         "where id = %s",
         (scenario,),
     )
-    flscenario, clscenario = icursor.fetchone()
+    flscenario, _clscenario = icursor.fetchone()
 
     icursor.execute(
         "SELECT huc_12, fpath, climate_file from flowpaths "
@@ -175,14 +176,20 @@ def main(argv):
     percentile = 1.0001
     while True:
         now = datetime.datetime.now()
-        cnt = channel.queue_declare(
-            queue="dep", durable=True
-        ).method.message_count
-        done = totaljobs - cnt
-        if (cnt / float(totaljobs)) < percentile:
+        # Good grief, we have to manually query the queue via the API to
+        # get actual unack'd messages.
+        req = requests.get(
+            "http://iem-rabbitmq.local:15672/api/queues/%2F/dep",
+            auth=("guest", "guest"),
+        )
+        queueinfo = req.json()
+        # jobs either ready or unawked
+        jobsleft = queueinfo["messages_persistent"]
+        done = totaljobs - jobsleft
+        if (done / float(totaljobs)) < percentile:
             log.info(
                 "%6i/%s [%.3f /s]",
-                cnt,
+                jobsleft,
                 totaljobs,
                 done / (now - sts).total_seconds(),
             )
@@ -190,12 +197,10 @@ def main(argv):
         if (now - sts).total_seconds() > 36000:
             log.error("ERROR, 10 Hour Job Limit Hit")
             break
-        if cnt == 0:
+        if jobsleft == 0:
             log.info("%s Done!", now.strftime("%H:%M"))
             break
         time.sleep(30)
-
-    connection.close()
 
 
 if __name__ == "__main__":
