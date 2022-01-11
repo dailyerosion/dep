@@ -164,6 +164,9 @@ def load_precip(dates, huc12s):
         i = 0
         for huc12, _ in huc12df.itertuples():
             d = res.setdefault(huc12, [])
+            if zs[i]["mean"] is None:
+                LOG.info("Missing precip: %s, aborting.", huc12)
+                sys.exit(1)
             if zs[i]["mean"] > PRECIP_CEILING:
                 LOG.info("%s precip %.2f > QC, zeroing", huc12, zs[i]["mean"])
                 zs[i]["mean"] = 0.0
