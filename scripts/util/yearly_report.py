@@ -12,7 +12,7 @@ def main(argv):
     """Do What We Wanted"""
     scenario = int(argv[1])
     state = argv[2]
-    print("This report covers the inclusive years 2008-2019 for %s" % (state,))
+    print(f"This report covers the inclusive years 2008-2020 for {state}")
     pgconn = get_dbconn("idep")
 
     df = read_sql(
@@ -26,7 +26,7 @@ def main(argv):
             sum(avg_loss) as detachment from results_by_huc12 r JOIN iahuc12 i
             on (r.huc_12 = i.huc_12) WHERE r.scenario = %s
             and r.valid >= '2008-01-01'
-            and r.valid < '2020-01-01' GROUP by r.huc_12, yr
+            and r.valid < '2021-01-01' GROUP by r.huc_12, yr
         )
 
         SELECT yr, round((avg(precip) / 25.4)::numeric, 2) as precip_in,
@@ -60,14 +60,12 @@ def main(argv):
     ax.set_xlim(df.index.values[0] - 0.5, df.index.values[-1] + 0.5)
     ax.set_ylabel("Yearly Detatchment [tons/acre]")
     ax.set_title(
-        "%s Daily Erosion Project Iowa's Yearly Detachment"
-        % (state_names[state],)
+        f"{state_names[state]} Daily Erosion Project Iowa's Yearly Detachment"
     )
     fig.text(
         0.01,
         0.01,
-        ("Plot generated %s")
-        % (datetime.datetime.now().strftime("%d %B %Y"),),
+        f"Plot generated {datetime.datetime.now():%d %B %Y}",
     )
     fig.savefig("test.png")
 

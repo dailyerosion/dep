@@ -186,7 +186,7 @@ def main(argv):
         # jobs either ready or unawked
         jobsleft = queueinfo["messages_persistent"]
         done = totaljobs - jobsleft
-        if (done / float(totaljobs)) < percentile:
+        if (jobsleft / float(totaljobs)) < percentile:
             log.info(
                 "%6i/%s [%.3f /s]",
                 jobsleft,
