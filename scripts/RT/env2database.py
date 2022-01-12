@@ -315,7 +315,7 @@ def do_huc12(arg):
     if df.empty:
         LOG.info("FAIL huc12: %s resulted in empty data frame", huc12)
         return huc12, None, None, None
-    df.fillna(0, inplace=True)
+    df = df.fillna(0)
     hillslopes = len(frames)
     rows = []
     deleted = delete_previous_entries(icursor, scenario, huc12, dates)
@@ -334,8 +334,8 @@ def do_huc12(arg):
         return huc12, 0, len(dates), deleted
     # save results
     df = pd.DataFrame(rows)
-    # Prevent any NaN values
-    df.fillna(0, inplace=True)
+    # Prevent any NaN/Inf values
+    df = df.replace([np.inf, -np.inf], 0).fillna(0)
     inserts, skipped = save_results(icursor, scenario, huc12, df, dates)
     icursor.close()
     pgconn.commit()
