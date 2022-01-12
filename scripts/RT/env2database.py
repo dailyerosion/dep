@@ -35,11 +35,12 @@ def find_huc12s(scenario):
     if os.path.isfile("myhucs.txt"):
         LOG.warning("Using myhucs.txt to guide processing...")
         CONFIG["subset"] = True
-        return [s.strip() for s in open("myhucs.txt").readlines()]
+        with open("myhucs.txt", encoding="utf-8") as fh:
+            return [s.strip() for s in fh.readlines()]
 
     res = []
-    for huc8 in os.listdir("/i/%s/env" % (scenario,)):
-        for huc12 in os.listdir("/i/%s/env/%s" % (scenario, huc8)):
+    for huc8 in os.listdir(f"/i/{scenario}/env"):
+        for huc12 in os.listdir(f"/i/{scenario}/env/{huc8}"):
             res.append(huc8 + huc12)
     return res
 
@@ -133,10 +134,8 @@ def load_precip(dates, huc12s):
     # 1. Build GeoPandas DataFrame of HUC12s of interest
     idep = get_dbconn("idep")
     huc12df = gpd.GeoDataFrame.from_postgis(
-        """
-        SELECT huc_12, ST_Transform(simple_geom, 4326) as geo
-        from huc12 WHERE scenario = 0
-    """,
+        "SELECT huc_12, ST_Transform(simple_geom, 4326) as geo from huc12 "
+        "WHERE scenario = 0",
         idep,
         index_col="huc_12",
         geom_col="geo",
@@ -269,31 +268,19 @@ def update_metadata(scenario, dates):
     pgconn = get_dbconn("idep")
     icursor = pgconn.cursor()
     maxdate = max(dates)
+    pkey = f"last_date_{scenario}"
     icursor.execute(
-        """
-        SELECT value from properties where
-        key = 'last_date_%s'
-    """
-        % (scenario,)
+        "SELECT value from properties where key = %s",
+        (pkey,),
     )
     if icursor.rowcount == 0:
         icursor.execute(
-            """
-            INSERT into properties(key, value)
-            values ('last_date_%s', '%s')
-        """
-            % (scenario, maxdate.strftime("%Y-%m-%d"))
+            "INSERT into properties(key, value) values (%s, %s)",
+            (pkey, maxdate.strftime("%Y-%m-%d")),
         )
     icursor.execute(
-        """
-        UPDATE properties
-        SET value = '%s' WHERE key = 'last_date_%s' and value < '%s'
-    """
-        % (
-            maxdate.strftime("%Y-%m-%d"),
-            scenario,
-            maxdate.strftime("%Y-%m-%d"),
-        )
+        "UPDATE properties SET value = %s WHERE key = %s and value < %s",
+        (maxdate.strftime("%Y-%m-%d"), pkey, maxdate.strftime("%Y-%m-%d")),
     )
     icursor.close()
     pgconn.commit()
@@ -304,11 +291,11 @@ def do_huc12(arg):
     scenario, huc12, lengths, dates, precip = arg
     pgconn = get_dbconn("idep")
     icursor = pgconn.cursor()
-    basedir = "/i/%s/env/%s/%s" % (scenario, huc12[:8], huc12[8:])
+    basedir = f"/i/{scenario}/env/{huc12[:8]}/{huc12[8:]}"
     frames = [
         readfile(basedir + "/" + f, lengths) for f in os.listdir(basedir)
     ]
-    if not frames or any([f is None for f in frames]):
+    if not frames or any(f is None for f in frames):
         return huc12, None, None, None
     # Push all dataframes into one
     df = pd.concat(frames)

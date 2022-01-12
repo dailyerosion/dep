@@ -55,6 +55,6 @@ for scenario in titles2.keys():
     for key, val in newcols.iteritems():
         df[val] = df2[key]
 
-df.drop("geom", axis=1, inplace=True)
+df = df.drop("geom", axis=1)
 df.to_csv("county.csv")
 df.to_file("ucs_county_results_161031.shp", driver="ESRI Shapefile")

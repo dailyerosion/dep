@@ -38,30 +38,28 @@ df = read_sql(
 )
 
 s0 = df[df["scenario"] == 0].copy()
-s0.set_index("huc_12", inplace=True)
-s0.rename(
+s0 = s0.set_index("huc_12")
+s0 = s0.rename(
     columns={
         "detach": "detach_s0",
         "delivery": "delivery_s0",
         "scenario": "scenario_s0",
         "runoff": "runoff_s0",
     },
-    inplace=True,
 )
 s7 = df[df["scenario"] == scenario].copy()
-s7.set_index("huc_12", inplace=True)
-s7.rename(
+s7 = s7.set_index("huc_12")
+s7 = s7.rename(
     columns={
         "detach": "detach_s7",
         "delivery": "delivery_s7",
         "scenario": "scenario_s7",
         "runoff": "runoff_s7",
     },
-    inplace=True,
 )
 
 df = s0.join(s7)
-df.sort_values(by=varname + "_s0", ascending=False, inplace=True)
+df = df.sort_values(by=varname + "_s0", ascending=False)
 print(df.head(5))
 
 d0 = np.copy(df[varname + "_s0"].values)

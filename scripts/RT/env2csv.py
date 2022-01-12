@@ -163,7 +163,7 @@ def do_huc12(arg):
         return huc12, None, None, None
     # Push all dataframes into one
     df = pd.concat(frames)
-    df.fillna(0, inplace=True)
+    df = df.fillna(0)
     res = ""
     for _, date in enumerate(dates):
         # df['date'] is datetime64, so need to cast

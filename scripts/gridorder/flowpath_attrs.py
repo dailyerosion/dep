@@ -60,7 +60,7 @@ def dohuc(huc):
     zdbf = Dbf5("zst%s.dbf" % (huc,), codec="utf-8")
     zst = zdbf.to_dataframe()
     zst.columns = ["value", "count", "area", "max", "fpath", "gridorder"]
-    zst.sort_values(["fpath", "gridorder"], inplace=True, ascending=True)
+    zst = zst.sort_values(["fpath", "gridorder"], ascending=True)
     # print(zst)
     df = read_postgis(
         """
