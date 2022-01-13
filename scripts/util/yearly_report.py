@@ -12,7 +12,7 @@ def main(argv):
     """Do What We Wanted"""
     scenario = int(argv[1])
     state = argv[2]
-    print(f"This report covers the inclusive years 2008-2020 for {state}")
+    print(f"This report covers the inclusive years 2008-2021 for {state}")
     pgconn = get_dbconn("idep")
 
     df = read_sql(
@@ -26,7 +26,7 @@ def main(argv):
             sum(avg_loss) as detachment from results_by_huc12 r JOIN iahuc12 i
             on (r.huc_12 = i.huc_12) WHERE r.scenario = %s
             and r.valid >= '2008-01-01'
-            and r.valid < '2021-01-01' GROUP by r.huc_12, yr
+            and r.valid < '2022-01-01' GROUP by r.huc_12, yr
         )
 
         SELECT yr, round((avg(precip) / 25.4)::numeric, 2) as precip_in,
@@ -49,7 +49,7 @@ def main(argv):
         ax.text(
             year,
             row["detachment_ta"] + 0.2,
-            "%.1f" % (row["detachment_ta"],),
+            f"{row['detachment_ta']:.1f}",
             ha="center",
         )
     ax.axhline(
