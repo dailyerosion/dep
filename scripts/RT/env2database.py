@@ -17,9 +17,9 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 import geopandas as gpd
-from rasterstats import zonal_stats
 from affine import Affine
 from pyiem import dep as dep_utils
+from pyiem.grid.zs import CachingZonalStats
 from pyiem.util import get_dbconn, logger
 
 LOG = logger()
@@ -142,6 +142,8 @@ def load_precip(dates, huc12s):
     )
     if CONFIG["subset"]:
         huc12df = huc12df.loc[huc12s]
+
+    czs = CachingZonalStats(PRECIP_AFF)
     # 2. Loop over dates
     res = {}
     progress = tqdm(dates, disable=(not sys.stdout.isatty()))
@@ -157,19 +159,21 @@ def load_precip(dates, huc12s):
         pcp = np.flipud(np.load(fn))
         # nodata here represents the value that is set to missing within the
         # source dataset!, setting to zero has strange side affects
-        zs = zonal_stats(
-            huc12df["geo"], pcp, affine=PRECIP_AFF, nodata=-1, all_touched=True
+        pcp = np.where(pcp < 0, np.nan, pcp)
+        zs = czs.gen_stats(
+            pcp,
+            geometries=huc12df["geo"],
         )
         i = 0
         for huc12, _ in huc12df.itertuples():
             d = res.setdefault(huc12, [])
-            if zs[i]["mean"] is None:
+            if zs[i] is None:
                 LOG.info("Missing precip: %s, aborting.", huc12)
                 sys.exit(1)
-            if zs[i]["mean"] > PRECIP_CEILING:
-                LOG.info("%s precip %.2f > QC, zeroing", huc12, zs[i]["mean"])
-                zs[i]["mean"] = 0.0
-            d.append(zs[i]["mean"])
+            if zs[i] > PRECIP_CEILING:
+                LOG.info("%s precip %.2f > QC, zeroing", huc12, zs[i])
+                zs[i] = 0.0
+            d.append(zs[i])
             i += 1
     return res
 
