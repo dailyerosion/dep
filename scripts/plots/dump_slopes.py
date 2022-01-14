@@ -34,9 +34,7 @@ def read_slope(fn):
     return x2, h2
 
 
-cursor.execute(
-    """SELECT id, model_twp from nri where model_twp = 'T82NR05E'"""
-)
+cursor.execute("SELECT id, model_twp from nri where model_twp = 'T82NR05E'")
 
 slopes1 = {}
 for row in cursor:

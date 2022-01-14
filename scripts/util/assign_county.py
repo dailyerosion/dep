@@ -27,8 +27,8 @@ def main():
         select ugc from ugcs where end_ts is null and
         ST_Contains(geom, ST_SetSrid(ST_GeomFromText('POINT(%s %s)'), 4326))
         and substr(ugc, 3, 1) = 'C'
-        """
-            % (row[0], row[1])
+        """,
+            (row[0], row[1]),
         )
         if pcursor.rowcount == 0:
             LOG.info("failed to find a county for HUC12: %s", row[3])
