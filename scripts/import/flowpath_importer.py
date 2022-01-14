@@ -266,8 +266,10 @@ def main(argv):
                 pgconn.commit()
                 cursor = pgconn.cursor()
             df = get_data(fn)
+            # Sometimes we get no flowpaths, so skip writing those
             huc12 = process(cursor, scenario, df)
-            fh.write(f"{huc12}\n")
+            if not df.empty:
+                fh.write(f"{huc12}\n")
             i += 1
 
     # Commit the database changes
