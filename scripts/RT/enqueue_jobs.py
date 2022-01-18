@@ -187,7 +187,7 @@ def main(argv):
         jobsleft = queueinfo["messages_persistent"]
         done = totaljobs - jobsleft
         if (jobsleft / float(totaljobs)) < percentile:
-            log.info(
+            log.warning(
                 "%6i/%s [%.3f /s]",
                 jobsleft,
                 totaljobs,
@@ -198,7 +198,7 @@ def main(argv):
             log.error("ERROR, 10 Hour Job Limit Hit")
             break
         if jobsleft == 0:
-            log.info("%s Done!", now.strftime("%H:%M"))
+            log.warning("Done!")
             break
         time.sleep(30)
 

@@ -51,7 +51,7 @@ def myjob(cmd):
     )
     stdout, stderr = proc.communicate()
     if stdout != b"" or stderr != b"":
-        LOG.info(
+        LOG.warning(
             "CMD: %s\nSTDOUT: %s\nSTDERR: %s",
             cmd,
             stdout.decode("ascii", "ignore").strip(),
@@ -68,7 +68,7 @@ def main(argv):
     fn = get_fn(date)
     if os.path.isfile(fn):
         filets = os.stat(fn)[stat.ST_MTIME]
-        LOG.info("%s was last processed on %s", date, time.ctime(filets))
+        LOG.warning("%s was last processed on %s", date, time.ctime(filets))
     jobs = []
     for i, _lon in enumerate(np.arange(WEST, EAST, tilesz)):
         for j, _lat in enumerate(np.arange(SOUTH, NORTH, tilesz)):
@@ -85,9 +85,9 @@ def main(argv):
         for job, res in zip(jobs, executor.map(myjob, jobs)):
             if res != 0:
                 failed = True
-                LOG.info("job: %s exited with status code %s", job, res)
+                LOG.warning("job: %s exited with status code %s", job, res)
     if failed:
-        LOG.info("Aborting due to job failures")
+        LOG.warning("Aborting due to job failures")
         sys.exit(3)
 
     assemble_grids(tilesz, date)
