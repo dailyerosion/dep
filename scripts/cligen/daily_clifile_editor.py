@@ -69,12 +69,12 @@ def get_sts_ets_at_localhour(date, local_hour):
 def iemre_bounds_check(name, val, lower, upper):
     """Make sure our data is within bounds, if not, exit!"""
     if np.isnan(val).all():
-        LOG.info("FATAL: iemre %s all NaN", name)
+        LOG.warning("FATAL: iemre %s all NaN", name)
         sys.exit(3)
     minval = np.nanmin(val)
     maxval = np.nanmax(val)
     if minval < lower or maxval > upper:
-        LOG.info(
+        LOG.warning(
             "FATAL: iemre failure %s %.3f to %.3f [%.3f to %.3f]",
             name,
             minval,
@@ -188,7 +188,7 @@ def load_stage4(data, valid, xtile, ytile):
     if np.ma.max(totals) > 0:
         pass
     else:
-        LOG.info("No StageIV data found, aborting...")
+        LOG.warning("No StageIV data found, aborting...")
         sys.exit(3)
     # set a small non-zero number to keep things non-zero
     totals = np.where(totals > 0.001, totals, 0.001)
@@ -262,7 +262,7 @@ def load_precip_legacy(data, valid, tile_bounds):
             filenames.append(fn)
             indices.append(tidx)
         else:
-            LOG.info("missing: %s", fn)
+            LOG.warning("missing: %s", fn)
 
         now += datetime.timedelta(minutes=5)
         tidx += 1
@@ -328,11 +328,11 @@ def load_precip(data, valid, tile_bounds):
             fns.append(fn)
         else:
             fns.append(None)
-            LOG.info("missing: %s", fn)
+            LOG.warning("missing: %s", fn)
 
         now += datetime.timedelta(minutes=2)
     if quorum > 0:
-        LOG.info(
+        LOG.warning(
             "Failed 75%% quorum with MRMS a2m %.1f, loading legacy", quorum
         )
         load_precip_legacy(data, valid, tile_bounds)
@@ -458,14 +458,14 @@ def edit_clifile(xidx, yidx, clifn, data, valid):
         clidata = fh.read()
     pos = clidata.find(valid.strftime("%-d\t%-m\t%Y"))
     if pos == -1:
-        LOG.info("Date find failure for %s", clifn)
+        LOG.warning("Date find failure for %s", clifn)
         return False
 
     pos2 = clidata[pos:].find(
         (valid + datetime.timedelta(days=1)).strftime("%-d\t%-m\t%Y")
     )
     if pos2 == -1:
-        LOG.info("Date2 find failure for %s", clifn)
+        LOG.warning("Date2 find failure for %s", clifn)
         return False
 
     intensity_threshold = 1.0
@@ -489,7 +489,7 @@ def edit_clifile(xidx, yidx, clifn, data, valid):
     wind = data["wind"][yidx, xidx]
     dwpt = data["dwpt"][yidx, xidx]
     if np.isnan([high, low, solar, wind, dwpt]).any():
-        LOG.info("Missing data for %s", clifn)
+        LOG.warning("Missing data for %s", clifn)
         return False
     bptext = "\n".join(bpdata)
     bptext2 = "\n" if bpdata else ""
@@ -576,14 +576,14 @@ def main(argv):
             """We hit trouble."""
             LOG.exception(exp)
             if errors["cnt"] > 10:
-                LOG.info("Too many errors")
+                LOG.warning("Too many errors")
                 pool.terminate()
             errors["cnt"] += 1
 
         def _callback(res):
             """We got a result."""
             if errors["cnt"] > 10:
-                LOG.info("Too many errors")
+                LOG.warning("Too many errors")
                 pool.terminate()
             if not res:
                 errors["cnt"] += 1

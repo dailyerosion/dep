@@ -46,12 +46,9 @@ def main():
         east=-88.9,
         subtitle="",
         title=(
-            "DEP Flowpaths North of HUC12 Centroid (%.0f/%.0f %.2f%%)"
-            % (
-                df["west"].sum(),
-                df["count"].sum(),
-                df["west"].sum() / df["count"].sum() * 100.0,
-            )
+            "DEP Flowpaths North of HUC12 Centroid "
+            f"({df['west'].sum():.0f}/{df['count'].sum():.0f} "
+            f"{(df['west'].sum() / df['count'].sum() * 100.0):.2f}%)"
         ),
     )
     for _i, row in df.iterrows():

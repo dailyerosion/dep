@@ -1,13 +1,10 @@
 """Diagnostic on HUC12 flowpath counts."""
 
-import numpy as np
-import cartopy.crs as ccrs
-from matplotlib.patches import Polygon
 import matplotlib.colors as mpcolors
 from geopandas import read_postgis
+from pyiem.plot import MapPlot, get_cmap
+from pyiem.reference import Z_POLITICAL
 from pyiem.util import get_dbconn
-from pyiem.plot.use_agg import plt
-from pyiem.plot.geoplot import MapPlot
 
 
 def main():
@@ -15,19 +12,18 @@ def main():
     pgconn = get_dbconn("idep")
     df = read_postgis(
         """
-        select f.huc_12, count(*) as fps,
-        st_transform(h.simple_geom, 4326) as geo
+        select f.huc_12, count(*) as fps, simple_geom
         from flowpaths f JOIN huc12 h on
         (f.huc_12 = h.huc_12) WHERE f.scenario = 0 and h.scenario = 0 and
         h.states ~* 'MN'
-        GROUP by f.huc_12, geo ORDER by fps ASC
+        GROUP by f.huc_12, simple_geom ORDER by fps ASC
     """,
         pgconn,
         index_col=None,
-        geom_col="geo",
+        geom_col="simple_geom",
     )
     bins = [1, 5, 10, 15, 20, 25, 30, 35, 40]
-    cmap = plt.get_cmap("copper")
+    cmap = get_cmap("copper")
     cmap.set_over("white")
     cmap.set_under("thistle")
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
@@ -39,31 +35,22 @@ def main():
         caption="Daily Erosion Project",
         title="Minnesota DEP HUC12 Flowpath Counts",
         subtitle=(
-            "Number of HUC12s with <40 Flowpaths (%.0f/%.0f %.2f%%)"
-            % (
-                len(df[df["fps"] < 40].index),
-                len(df.index),
-                len(df[df["fps"] < 40].index) / len(df.index) * 100.0,
-            )
+            "Number of HUC12s with <40 Flowpaths "
+            f"({len(df[df['fps'] < 40].index):.0f}/{len(df.index):.0f} "
+            f"{(len(df[df['fps'] < 40].index) / len(df.index) * 100.0):.2f}%)"
         ),
     )
-    for _i, row in df.iterrows():
-        c = cmap(norm([row["fps"]]))[0]
-        arr = np.asarray(row["geo"].exterior)
-        points = mp.ax.projection.transform_points(
-            ccrs.Geodetic(), arr[:, 0], arr[:, 1]
-        )
-        p = Polygon(points[:, :2], fc=c, ec="None", zorder=2, lw=0.1)
-        mp.ax.add_patch(p)
+    colors = cmap(norm(df["fps"]))
+    df.to_crs(mp.panels[0].crs).plot(
+        fc=colors,
+        ax=mp.panels[0].ax,
+        ec="None",
+        zorder=Z_POLITICAL,
+    )
+
     mp.drawcounties()
     mp.draw_colorbar(bins, cmap, norm, extend="max", title="Count")
     mp.postprocess(filename="/tmp/huc12_cnts.png")
-
-    # gdf = df.groupby('fps').count()
-    # gdf.columns = ['count', ]
-    # gdf['cumsum'] = gdf['count'].cumsum()
-    # gdf['percent'] = gdf['cumsum'] / gdf['count'].sum() * 100.
-    # gdf.to_csv('/tmp/huc12_flowpath_cnts.csv')
 
 
 if __name__ == "__main__":

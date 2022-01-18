@@ -122,7 +122,7 @@ def do_qc(fn, df, year):
             }
         )
     prismdf = pd.DataFrame(rows)
-    prismdf.set_index("date", inplace=True)
+    prismdf = prismdf.set_index("date")
     monthly["prism"] = prismdf["precip"].resample("M").sum().copy().values
 
     # Compare daily values
@@ -142,7 +142,7 @@ def do_qc(fn, df, year):
             }
         )
     iemdf = pd.DataFrame(rows)
-    iemdf.set_index("date", inplace=True)
+    iemdf = iemdf.set_index("date")
     print("PRISM %s precip is: %.2f" % (year, prismdf["precip"].sum()))
     print("IEMRE sum precip is: %.2f" % (iemdf["precip"].sum(),))
     print("StageIV sum precip is: %.2f" % (stage4["precip"].sum(),))

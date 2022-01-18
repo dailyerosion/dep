@@ -7,12 +7,10 @@ that the [WEPP Model](https://www.ars.usda.gov/midwest-area/west-lafayette-in/na
 
 Much of this code is highly custom to what our project aims to do, but hopefully some of it is useful for your inspiration.  In general, the code folders are as such:
 
-- **admin** mostly unused website admin/ interface
 - **config** website configuration files
 - **data** un-versioned local input data files
 - **database** Postgresql database schema management
 - **docs** some more documentation
-- **htdocs** website folder root
 - **include** mostly PHP include files for the website functionality
 - **prj2wepp** installation/support files for the usage of [prj2wepp](http://milford.nserl.purdue.edu/weppdocs/prj2wepp/), which allows for some preprocessing of WEPP inputs
 - **scripts** much of the processing magic happens here

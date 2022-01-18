@@ -6,7 +6,7 @@ def main():
     """Go Main Go."""
     for v in ["avg_loss", "avg_runoff", "qc_precip", "avg_delivery"]:
         for yr in range(2007, 2018):
-            cmd = "python yearly_summary.py %s %s_metric" % (yr, v)
+            cmd = f"python yearly_summary.py {yr} {v}_metric"
             print(cmd)
             subprocess.call(cmd, shell=True)
 

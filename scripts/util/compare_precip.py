@@ -132,11 +132,11 @@ def one():
     )
 
     df["idep"] = df2["precip"] / huccount
-    df.fillna(0, inplace=True)
+    df = df.fillna(0)
     df["diff2max"] = df["max_pday"] - df["idep"]
     df["diff2avg"] = df["avg_pday"] - df["idep"]
 
-    df.sort_values(by="diff2avg", inplace=True, ascending=False)
+    df = df.sort_values(by="diff2avg", ascending=False)
 
     df.to_excel("test.xls")
 
