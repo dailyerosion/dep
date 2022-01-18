@@ -50,7 +50,7 @@ def readfile(fn, lengths):
     try:
         df = dep_utils.read_env(fn)
     except Exception as exp:
-        LOG.info("ABORT: Attempting to read: %s resulted in: %s", fn, exp)
+        LOG.warning("ABORT: Attempting to read: %s resulted in: %s", fn, exp)
         return None
     key = int(fn.split("/")[-1].split(".")[0].split("_")[1])
     df["delivery"] = df["sed_del"] / lengths[key]
@@ -185,10 +185,8 @@ def load_lengths(scenario):
     icursor = idep.cursor()
     res = {}
     icursor.execute(
-        """
-        SELECT huc_12, fpath, ST_Length(geom) from flowpaths where
-        scenario = %s
-    """,
+        "SELECT huc_12, fpath, ST_Length(geom) from flowpaths where "
+        "scenario = %s",
         (int(sdf.loc[scenario, "flowpath_scenario"]),),
     )
     for row in icursor:
@@ -202,18 +200,13 @@ def delete_previous_entries(icursor, scenario, huc12, dates):
     if len(dates) > 366:
         # Means we are running for 'all'
         icursor.execute(
-            """
-            DELETE from results_by_huc12 WHERE
-            scenario = %s and huc_12 = %s
-        """,
+            "DELETE from results_by_huc12 WHERE scenario = %s and huc_12 = %s",
             (scenario, huc12),
         )
     else:
         icursor.execute(
-            """
-            DELETE from results_by_huc12 WHERE
-            valid in %s and scenario = %s and huc_12 = %s
-        """,
+            "DELETE from results_by_huc12 WHERE valid in %s and "
+            "scenario = %s and huc_12 = %s",
             (tuple(dates), scenario, huc12),
         )
     return icursor.rowcount
@@ -353,7 +346,7 @@ def main(argv):
     jobs = []
     for huc12 in huc12s:
         if huc12 not in precip:
-            LOG.info("Skipping huc12 %s with no precip", huc12)
+            LOG.warning("Skipping huc12 %s with no precip", huc12)
             continue
         jobs.append(
             [args.scenario, huc12, lengths[huc12], dates, precip[huc12]]
@@ -371,13 +364,13 @@ def main(argv):
             disable=(not sys.stdout.isatty()),
         ):
             if inserts is None:
-                LOG.info("ERROR: huc12 %s returned 0 data", huc12)
+                LOG.warning("ERROR: huc12 %s returned 0 data", huc12)
                 continue
             totalinserts += inserts
             totalskipped += skipped
             totaldeleted += deleted
-    LOG.info(
-        "env2database.py inserts: %s skips: %s deleted: %s",
+    LOG.warning(
+        "Inserts: %s skips: %s deleted: %s",
         totalinserts,
         totalskipped,
         totaldeleted,
