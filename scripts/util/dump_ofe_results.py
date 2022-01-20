@@ -31,8 +31,10 @@ def main():
             meta = read_sql(
                 """
                 with data as (
-                    select ofe, (max(elevation) - min(elevation)) /
-                    greatest(3, max(length) - min(length)) as slope,
+                    select ofe,
+                    (max(elevation) - min(elevation)) /
+                     greatest(3, max(length) - min(length)) as bulk_slope,
+                    max(slope) as max_slope,
                     max(genlu) as genlu,
                     max(landuse) as landuse, max(management) as management,
                     max(surgo) as surgo,
@@ -46,10 +48,13 @@ def main():
                 pgconn,
                 params=(huc12, fpath),
             )
+            # could have zeros from bulk_slope, so overwrite max value
+            meta.loc[meta["bulk_slope"] == 0, "bulk_slope"] = meta["max_slope"]
 
             for ofe in ofedf["ofe"].unique():
                 myofe = ofedf[ofedf["ofe"] == ofe]
                 meta_ofe = meta[meta["ofe"] == ofe]
+                print(meta_ofe)
                 if meta_ofe.empty:
                     print(ofe, huc12, fpath)
                     sys.exit()
@@ -61,7 +66,8 @@ def main():
                         "fpath": fpath,
                         "ofe": ofe,
                         "CropRotationString": meta_ofe["landuse"].values[0],
-                        "slope[1]": meta_ofe["slope"].values[0],
+                        "bulk_slope[1]": meta_ofe["bulk_slope"].values[0],
+                        "max_slope[1]": meta_ofe["max_slope"].values[0],
                         "soil_mukey": meta_ofe["surgo"].values[0],
                         "rainfall": -1,
                         "runoff[mm/yr]": myofe["runoff"].sum() / YEARS,
