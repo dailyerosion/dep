@@ -2,6 +2,7 @@
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor
 import re
+import os
 import socket
 import subprocess
 import sys
@@ -42,6 +43,7 @@ def run(channel, method, _props, rundata):
                 f"/i/{d['scenario']}/error/{d['huc8']}/{d['huc812']}/"
                 f"{d['huc12']}_{d['fpath']}.error"
             )
+            os.makedirs(os.path.dirname(errorfn), exist_ok=True)
             with open(errorfn, "wb") as fp:
                 hn = f"Hostname: {socket.gethostname()}\n"
                 fp.write(hn.encode("ascii"))
