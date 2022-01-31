@@ -3,8 +3,8 @@ import sys
 import datetime
 
 import matplotlib.pyplot as plt
-from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
+from pandas import read_sql
+from pyiem.util import get_dbconnstr
 from pyiem.reference import state_names
 
 
@@ -13,7 +13,6 @@ def main(argv):
     scenario = int(argv[1])
     state = argv[2]
     print(f"This report covers the inclusive years 2008-2021 for {state}")
-    pgconn = get_dbconn("idep")
 
     df = read_sql(
         """
@@ -35,7 +34,7 @@ def main(argv):
         round((avg(detachment) * 4.463)::numeric, 2) as detachment_ta
         from agg GROUP by yr ORDER by yr
     """,
-        pgconn,
+        get_dbconnstr("idep"),
         params=(state, scenario),
         index_col="yr",
     )
