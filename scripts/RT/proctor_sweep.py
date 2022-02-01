@@ -24,7 +24,7 @@ import shutil
 import subprocess
 from multiprocessing import Pool
 
-from pyiem.util import get_dbconn, logger
+from pyiem.util import get_dbconnstr, logger
 import pandas as pd
 import requests
 from tqdm import tqdm
@@ -135,7 +135,6 @@ def main(argv):
     """Go Main Go."""
     parser = usage()
     args = parser.parse_args(argv[1:])
-    pgconn = get_dbconn("idep")
     df = read_sql(
         """
         SELECT huc_12, fpath, scenario,
@@ -144,7 +143,7 @@ def main(argv):
         from flowpaths where scenario = %s
         and huc_12 in %s
     """,
-        pgconn,
+        get_dbconnstr("idep"),
         params=(args.scenario, tuple(HUC12S)),
         index_col=None,
     )

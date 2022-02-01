@@ -1,7 +1,7 @@
 """R factor work."""
 
 from pyiem.dep import read_cli
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconnstr
 from pyiem.plot.use_agg import plt
 from pyiem.plot import MapPlot
 import cartopy.crs as ccrs
@@ -11,19 +11,16 @@ import numpy as np
 from tqdm import tqdm
 from geopandas import read_postgis
 import pandas as pd
-from pandas.io.sql import read_sql
+from pandas import read_sql
 
 
 def plot():
     """Plot."""
     df2 = pd.read_csv("/tmp/data.csv", dtype={"huc12": str}).set_index("huc12")
-    pgconn = get_dbconn("idep")
     df = read_postgis(
-        """
-        SELECT huc_12, ST_Transform(simple_geom, 4326) as geom
-        from huc12  WHERE scenario = 0
-    """,
-        pgconn,
+        "SELECT huc_12, ST_Transform(simple_geom, 4326) as geom from huc12 "
+        "WHERE scenario = 0",
+        get_dbconnstr("idep"),
         geom_col="geom",
         index_col="huc_12",
     )
@@ -71,13 +68,12 @@ def plot():
 
 def dump_data():
     """Go main Go."""
-    pgconn = get_dbconn("idep")
     df = read_sql(
         """
         SELECT huc_12, max(climate_file) as cli from flowpaths where
         scenario = 0 GROUP by huc_12
     """,
-        pgconn,
+        get_dbconnstr("idep"),
         index_col="huc_12",
     )
     data = {

@@ -38,8 +38,8 @@ from functools import partial
 from math import atan2, degrees, pi
 
 from tqdm import tqdm
-from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn, logger
+from pandas import read_sql
+from pyiem.util import get_dbconn, get_dbconnstr, logger
 from pyiem.dep import load_scenarios
 
 LOG = logger()
@@ -356,7 +356,7 @@ def rewrite_flowpath(cursor, scenario, flowpath_id, df):
         )
 
 
-def do_flowpath(pgconn, cursor, scenario, zone, metadata):
+def do_flowpath(cursor, scenario, zone, metadata):
     """Process a given flowpathid"""
     # slope = compute_slope(fid)
     # I need bad soilfiles so that the length can be computed
@@ -371,7 +371,7 @@ def do_flowpath(pgconn, cursor, scenario, zone, metadata):
         WHERE flowpath = %s and length < 9999
         ORDER by segid ASC
     """,
-        pgconn,
+        get_dbconnstr("idep"),
         params=(metadata["fid"],),
     )
     origsize = len(df.index)
@@ -577,7 +577,7 @@ def main(argv):
         "SELECT ST_ymax(ST_Transform(geom, 4326)) as lat, fpath, fid, huc_12, "
         "climate_file from flowpaths WHERE scenario = %s and fpath != 0 "
         "ORDER by huc_12 ASC",
-        pgconn,
+        get_dbconnstr("idep"),
         params=(get_flowpath_scenario(scenario),),
     )
     if os.path.isfile("myhucs.txt"):
@@ -596,7 +596,7 @@ def main(argv):
             zone = "IA_CENTRAL"
         elif row["lat"] >= 40.5:
             zone = "IA_SOUTH"
-        data = do_flowpath(pgconn, cursor, scenario, zone, row)
+        data = do_flowpath(cursor, scenario, zone, row)
         if data is not None:
             write_prj(data)
     cursor.close()

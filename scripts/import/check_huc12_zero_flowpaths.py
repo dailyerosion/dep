@@ -1,19 +1,18 @@
 """Report which HUC12s have 0 flowpaths."""
 import sys
 
-from pyiem.util import get_dbconn
-from pandas.io.sql import read_sql
+from pyiem.util import get_dbconnstr
+from pandas import read_sql
 
 
 def main(argv):
     """Go Main Go."""
     scenario = int(argv[1])
     huc12s = [s.strip() for s in open("myhucs.txt", encoding="utf8")]
-    pgconn = get_dbconn("idep")
     df = read_sql(
         "SELECT huc_12, count(*) from flowpaths where scenario = %s "
         "GROUP by huc_12",
-        pgconn,
+        get_dbconnstr("idep"),
         params=(scenario,),
         index_col="huc_12",
     )
