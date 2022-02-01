@@ -26,6 +26,9 @@ print(" * This will generate a `myhucs.txt` file with found HUCs")
 PREFIX = "fp"
 TRUNC_GRIDORDER_AT = 4
 GENLU_CODES = {}
+PROCESSING_COUNTS = {
+    "flowpaths_deduped": 0,
+}
 
 
 def get_flowpath(cursor, scenario, huc12, fpath):
@@ -111,6 +114,24 @@ def get_genlu_code(cursor, label):
     return GENLU_CODES[label]
 
 
+def dedupe(df, lencolname):
+    """Deduplicate by checking the FBndID."""
+    # Optmization, a 1 field value count is likely the dup we want to dump
+    fields = df["FBndID"].value_counts().sort_values(ascending=False)
+    # Find any fields with a count of 1
+    fields2 = fields[fields == 1]
+    if not fields2.empty and len(fields.index) == 2:
+        PROCESSING_COUNTS["flowpaths_deduped"] += 1
+        return df[df["FBndID"] != fields2.index[0]]
+    # Could have a perfect duplicate?
+    if fields.min() == fields.max():
+        PROCESSING_COUNTS["flowpaths_deduped"] += 1
+        return df[df["FBndID"] != fields.index[0]]
+    # high field wins
+    PROCESSING_COUNTS["flowpaths_deduped"] += 1
+    return df[df["FBndID"] == fields.index[0]]
+
+
 def process_flowpath(cursor, scenario, huc12, db_fid, df):
     """Do one flowpath please."""
     lencolname = f"{PREFIX}Len{huc12}"
@@ -119,6 +140,11 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df):
     # Sort along the length column, which orders the points from top
     # to bottom
     df = df.sort_values(lencolname, ascending=True)
+    # remove duplicate points due to a bkgelder sampling issue whereby some
+    # points exist in two fields
+    if df[lencolname].duplicated().any():
+        df = dedupe(df, lencolname)
+
     # Remove any previous data for this flowpath
     cursor.execute(
         "DELETE from flowpath_points WHERE flowpath = %s", (db_fid,)
@@ -142,7 +168,10 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df):
         elev_change += dy
         dx = abs(row2[lencolname] - row[lencolname])
         if dx == 0:
-            raise Exception(f"dx is zero at segid: {segid} {row} {row2}")
+            # We have a duplicate point, abort as should not be possible
+            print(f"ABORT duplicate point {segid} {row} {row2}")
+            print(df[["OBJECTID", "FBndID", lencolname]])
+            sys.exit()
         x_change += dx
         gridorder = row[gordcolname]
         if gridorder > TRUNC_GRIDORDER_AT or pd.isnull(gridorder):
@@ -215,17 +244,19 @@ def process(cursor, scenario, huc12df):
     """
     # Hack compute the huc12 by finding the fp field name
     huc12 = None
+    fpcol = None
     for col in huc12df.columns:
         if col.startswith(PREFIX):
-            huc12 = col[len(PREFIX) :]
+            fpcol = col
+            huc12 = col[len(PREFIX) :].replace("_tif", "")
             break
-    if huc12 is None:
+    if huc12 is None or len(huc12) != 12:
         raise Exception(f"Could not find huc12 from {huc12df.columns}")
 
     delete_previous(cursor, scenario, huc12)
     # the inbound dataframe has lots of data, one row per flowpath point
     # We group the dataframe by the column which uses a PREFIX and the huc8
-    for flowpath_num, df in huc12df.groupby(f"{PREFIX}{huc12}"):
+    for flowpath_num, df in huc12df.groupby(fpcol):
         # These are upstream errors I should ignore
         if flowpath_num == 0 or len(df.index) < 2:
             continue
@@ -275,6 +306,10 @@ def main(argv):
     # Commit the database changes
     cursor.close()
     pgconn.commit()
+
+    print("Processing accounting:")
+    for key, val in PROCESSING_COUNTS.items():
+        print(f"    {key}: {val}")
 
 
 if __name__ == "__main__":
