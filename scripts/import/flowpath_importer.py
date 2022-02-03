@@ -105,7 +105,7 @@ def get_genlu_code(cursor, label):
         cursor.execute("SELECT max(id) from general_landuse")
         row = cursor.fetchone()
         newval = 0 if row[0] is None else row[0] + 1
-        LOG.debug("Inserting new general landuse code: %s [%s]", newval, label)
+        LOG.info("Inserting new general landuse code: %s [%s]", newval, label)
         cursor.execute(
             "INSERT into general_landuse(id, label) values (%s, %s)",
             (newval, label),
@@ -114,7 +114,7 @@ def get_genlu_code(cursor, label):
     return GENLU_CODES[label]
 
 
-def dedupe(df, lencolname):
+def dedupe(df):
     """Deduplicate by checking the FBndID."""
     # Optmization, a 1 field value count is likely the dup we want to dump
     fields = df["FBndID"].value_counts().sort_values(ascending=False)
@@ -143,7 +143,7 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df):
     # remove duplicate points due to a bkgelder sampling issue whereby some
     # points exist in two fields
     if df[lencolname].duplicated().any():
-        df = dedupe(df, lencolname)
+        df = dedupe(df)
 
     # Remove any previous data for this flowpath
     cursor.execute(
