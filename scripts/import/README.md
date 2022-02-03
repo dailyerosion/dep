@@ -11,6 +11,7 @@ is one file per HUC12.
 1. `python prj2wepp.py <scenario>`
 1. `python dbset_ofe.py <scenario>`
 1. `python package_myhucs.py <scenario>`
+1. `python check_huc12_zero_flowpaths.py <scenario>`
 1. go to ../cligen and run `python assign_climate_file.py <scenario>`
 1. If new HUC12s are present, get an updated simplified HUC12 from Dave.
 1. Copy laptop database tables `huc12`, `flowpaths`, `flowpath_points` and

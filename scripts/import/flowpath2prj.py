@@ -122,7 +122,6 @@ def read_file(scenario, zone, prevcode, code, cfactor, year):
     """
     blockfn = f"blocks/{code}{cfactor}.txt"
     if not os.path.isfile(blockfn):
-        # LOG.debug("Missing %s", blockfn)
         return ""
     with open(blockfn, "r", encoding="utf8") as fh:
         data = fh.read()
@@ -273,7 +272,7 @@ def simplify(df):
     df.iat[0, df.columns.get_loc("useme")] = True
     df.iat[-1, df.columns.get_loc("useme")] = True
     # Take the top 18 values by slope
-    df.at[df.sort_values("slope", ascending=False).index[:18], "useme"] = True
+    df.loc[df.sort_values("slope", ascending=False).index[:18]]["useme"] = True
     df = df[df["useme"]].copy()
     # We need to recompute slope values to keep elevation values correct,
     # the value is ahead down the hill
