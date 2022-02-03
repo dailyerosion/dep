@@ -1031,6 +1031,7 @@ c          if ((contrs(nowcrp,iplane).ne.0)) then
      1       soilw(2,iplane)*1000. +( frzw(2,iplane)
      1       + thetdr(2,iplane)* frozen(2,iplane))*1000.
      1       , ep(iplane)*1000.,es(iplane)*1000., eres(iplane)*1000.
+     1       , snodpy(iplane)*1000., densg(iplane)
 c          else
 c           changed runoff value to use cumulative length (totlen)
 c           because efflen may span OFE's. Matches event output code
@@ -1071,7 +1072,7 @@ c
      1    .4,2(1x,i1,1x,f6.4),1x,f5.1)
  1100 format (1x,i2,2x,i3,2x,i5,1x,9f7.2)
  1200 format (1x,i3,1x,i3,1x,i3,1x,6(f6.2,1x),1x,f4.2,2x,f6.2,3x,f7.2)
- 1201 format (i3,1x,i3,1x,i4,1x,5(f6.2,1x),3(f5.2,1x))
+ 1201 format (i3,1x,i3,1x,i4,1x,5(f6.2,1x),3(f5.2,1x),f6.1,1x,f6.1)
  1300 format (1x,3(1x,I4),2(1x,f7.2),1x,e15.7,4(1x,f7.2),
      1        1x,e15.7,5(1x,f7.2),2x,e15.7,2(1x,f7.2),1x,f10.2)
  2300 format (1x,3(1x,I4),11(1x,f9.2))
