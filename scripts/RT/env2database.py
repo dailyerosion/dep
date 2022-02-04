@@ -20,7 +20,7 @@ import geopandas as gpd
 from affine import Affine
 from pyiem import dep as dep_utils
 from pyiem.grid.zs import CachingZonalStats
-from pyiem.util import get_dbconn, logger
+from pyiem.util import get_dbconn, get_dbconnstr, logger
 
 LOG = logger()
 PRECIP_AFF = Affine(0.01, 0.0, dep_utils.WEST, 0.0, -0.01, dep_utils.NORTH)
@@ -132,11 +132,10 @@ def load_precip(dates, huc12s):
       dict of [date][huc12]
     """
     # 1. Build GeoPandas DataFrame of HUC12s of interest
-    idep = get_dbconn("idep")
     huc12df = gpd.GeoDataFrame.from_postgis(
         "SELECT huc_12, ST_Transform(simple_geom, 4326) as geo from huc12 "
         "WHERE scenario = 0",
-        idep,
+        get_dbconnstr("idep"),
         index_col="huc_12",
         geom_col="geo",
     )
