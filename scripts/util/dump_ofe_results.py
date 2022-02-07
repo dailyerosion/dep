@@ -4,9 +4,8 @@ import os
 import sys
 
 import pandas as pd
-from pandas.io.sql import read_sql
 from tqdm import tqdm
-from pyiem.util import get_dbconn
+from pyiem.util import get_dbconnstr
 from pyiem.dep import read_ofe
 
 # 2007 is skipped
@@ -15,7 +14,6 @@ YEARS = 2021 - 2008
 
 def main():
     """Go Main Go"""
-    pgconn = get_dbconn("idep")
     rows = []
     for root, _dirs, files in tqdm(os.walk("/i/0/ofe"), disable=True):
         for filename in files:
@@ -28,7 +26,7 @@ def main():
             # Figure out the crop string
             fpath = filename.split("_")[1][:-4]
             huc12 = filename[:12]
-            meta = read_sql(
+            meta = pd.read_sql(
                 """
                 with data as (
                     select ofe,
@@ -45,7 +43,7 @@ def main():
                 select d.*, g.label from data d JOIN general_landuse g on
                 (d.genlu = g.id)
                 """,
-                pgconn,
+                get_dbconnstr("idep"),
                 params=(huc12, fpath),
             )
             # could have zeros from bulk_slope, so overwrite max value
