@@ -1,43 +1,46 @@
 """Diagnostic on HUC12 flowpath counts."""
+import sys
 
 import matplotlib.colors as mpcolors
 from geopandas import read_postgis
 from pyiem.plot import MapPlot, get_cmap
-from pyiem.reference import Z_POLITICAL
-from pyiem.util import get_dbconn
+from pyiem.reference import Z_POLITICAL, state_names
+from pyiem.util import get_dbconnstr
 
 
-def main():
+def main(argv):
     """Go Main Go."""
-    pgconn = get_dbconn("idep")
+    state = argv[1]
     df = read_postgis(
         """
         select f.huc_12, count(*) as fps, simple_geom
         from flowpaths f JOIN huc12 h on
         (f.huc_12 = h.huc_12) WHERE f.scenario = 0 and h.scenario = 0 and
-        h.states ~* 'MN'
+        h.states ~* %s
         GROUP by f.huc_12, simple_geom ORDER by fps ASC
     """,
-        pgconn,
+        get_dbconnstr("idep"),
         index_col=None,
+        params=(state,),
         geom_col="simple_geom",
     )
-    bins = [1, 5, 10, 15, 20, 25, 30, 35, 40]
+    bins = [1, 5, 10, 20, 30, 40, 50, 75]
     cmap = get_cmap("copper")
     cmap.set_over("white")
     cmap.set_under("thistle")
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
+    vv = len(df[df["fps"] < bins[-1]].index) / len(df.index) * 100.0
     mp = MapPlot(
         continentalcolor="thistle",
         logo="dep",
         sector="state",
-        state="MN",
+        state=state,
         caption="Daily Erosion Project",
-        title="Minnesota DEP HUC12 Flowpath Counts",
+        title=f"{state_names[state]} DEP HUC12 Flowpath Counts",
         subtitle=(
-            "Number of HUC12s with <40 Flowpaths "
-            f"({len(df[df['fps'] < 40].index):.0f}/{len(df.index):.0f} "
-            f"{(len(df[df['fps'] < 40].index) / len(df.index) * 100.0):.2f}%)"
+            f"Number of HUC12s with <{bins[-1]} Flowpaths "
+            f"({len(df[df['fps'] < bins[-1]].index):.0f}/{len(df.index):.0f} "
+            f"{vv:.2f}%)"
         ),
     )
     colors = cmap(norm(df["fps"]))
@@ -49,9 +52,16 @@ def main():
     )
 
     mp.drawcounties()
-    mp.draw_colorbar(bins, cmap, norm, extend="max", title="Count")
-    mp.postprocess(filename="/tmp/huc12_cnts.png")
+    mp.draw_colorbar(
+        bins,
+        cmap,
+        norm,
+        extend="max",
+        title="Count",
+        spacing="proportional",
+    )
+    mp.postprocess(filename=f"/tmp/huc12_cnts_{state}.png")
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
