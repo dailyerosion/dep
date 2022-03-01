@@ -37,16 +37,18 @@ IF OBJECT_ID('dbo.DEP_HrzCount') IS NOT NULL
  SELECT dom.cokey
       , Count(F.chkey) as HrzCount
       
-   INTO DEPSoils2020.dbo.DEP_HrzCount
-   FROM US_Soils1.dbo.US_DomComponents dom left join DEPSoils2020.dbo.DEP_SoilFractions F 
+   INTO DEP_HrzCount
+   FROM US_DomComponents dom left join DEP_SoilFractions F 
         ON F.cokey = dom.cokey       
    GROUP BY dom.cokey
    ORDER BY dom.cokey
         
-   
-        
+
 IF OBJECT_ID('dbo.DEP_SoilParameters') IS NOT NULL 
         DROP TABLE dbo.DEP_SoilParameters
+
+-- check this (3,118 rows updated)
+update chorizon SET ecec_r = null where ecec_r = 0;
 
 Print 'Extract & create WEPP Parameter table'
 SELECT DOM.mukey
@@ -60,57 +62,55 @@ SELECT DOM.mukey
       ,hrz.hzname
       ,hrz.hzdept_r
       ,hrz.hzdepb_r        
-      ,KI =
-        CASE
+      ,CASE
           WHEN hrz.sandtotal_r >= 30 THEN
             2728000 + ( 192100 * hrz.sandvf_r )
           WHEN hrz.sandtotal_r < 30 and hrz.claytotal_r <= 40 THEN
             6054000 - ( hrz.claytotal_r * 55130 )
           ELSE 
             6054000 - ( 40 * 55130 )
-        END 
+        END as KI
         
-      ,KR = 
-        CASE
+      ,CASE
           WHEN hrz.sandtotal_r >= 30 THEN
             ( 0.00197 + (hrz.sandvf_r * 0.0003 )) + ( 0.03863 * EXP( -1.84 * hrz.om_r) )
           WHEN hrz.sandtotal_r < 30 and hrz.claytotal_r <= 40 THEN
             0.0069 + (0.134 * EXP(hrz.claytotal_r * -0.2))
           ELSE
             0.0069 + (0.134 * EXP(40 * -0.2))
-        END 
+        END as KR
         
-      ,TC = 
-        CASE
+      ,CASE
           WHEN hrz.sandtotal_r >= 30 and hrz.claytotal_r <= 40 THEN
             2.67 + (hrz.claytotal_r * 0.065) - (hrz.sandvf_r * 0.058)
           WHEN hrz.sandtotal_r < 30 and hrz.claytotal_r > 40 THEN
             2.67 + (40 * 0.065) - (hrz.sandvf_r * 0.058)
           ELSE
             3.5 
-         END
+         END as TC
          
-      ,KB = 
-        CASE 
+      ,CASE 
            WHEN hrz.claytotal_r > 40 THEN
               0.0066 * EXP(244.0 / hrz.claytotal_r)
            ELSE
               CASE
                 WHEN hrz.cec7_r Is Null THEN
                    -0.265 + (0.0086 * POWER(hrz.sandtotal_r, 1.8)) + ( 11.46 * POWER(hrz.ecec_r, -0.75))
+                WHEN hrz.cec7_r = 0 THEN
+                   null
                 WHEN hrz.cec7_r <= 1 THEN
                    11.195 + (0.0086 * POWER(hrz.sandtotal_r, 1.8))
                 ELSE
                    -0.265 + (0.0086 * POWER(hrz.sandtotal_r, 1.8)) + ( 11.46 * POWER(hrz.cec7_r, -0.75))
               END
-           END
+           END as KB
 
-  INTO DEPSoils2020.dbo.DEP_SoilParameters
-  FROM US_Soils1.dbo.US_DomComponents dom left join US_Soils1.dbo.component C 
+  INTO DEP_SoilParameters
+  FROM US_DomComponents dom left join component C 
   ON  dom.cokey = C.cokey
-         LEFT JOIN US_Soils1.dbo.chorizon hrz ON hrz.cokey = C.cokey 
-          LEFT JOIN DEPSoils2020.dbo.DEP_HrzCount HC ON HC.cokey = C.cokey 
-            LEFT OUTER JOIN DEPSoils2020.dbo.DEP_SurfaceTexture chtgrp ON hrz.chkey = chtgrp.chkey 
+         LEFT JOIN chorizon hrz ON hrz.cokey = C.cokey 
+          LEFT JOIN DEP_HrzCount HC ON HC.cokey = C.cokey 
+            LEFT OUTER JOIN DEP_SurfaceTexture chtgrp ON hrz.chkey = chtgrp.chkey 
   where hrz.hzdept_r = 0 -- and hrz.claytotal_r > 0 -- C.majcompflag = 'Yes' and
   order by dom.mukey, C.comppct_r DESC
 GO
@@ -125,9 +125,9 @@ ALTER TABLE DEP_SoilParameters ALTER COLUMN KB DECIMAL(8,3) NULL
 GO
 
 
-DELETE FROM DEPSoils2020.dbo.DEP_SoilParameters 
+DELETE FROM DEP_SoilParameters 
 WHERE mukey IN
-(SELECT distinct [mukey]
-  FROM DEPSoils2020.dbo.DEP_SoilFractions
+(SELECT distinct mukey
+  FROM DEP_SoilFractions
   WHERE (CEC7 is null and ECEC is null) or VFSand is null or Clay is null)
 GO

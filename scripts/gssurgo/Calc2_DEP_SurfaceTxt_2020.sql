@@ -32,7 +32,7 @@ SELECT cokey
       ,txTxtClass
       ,tgRVind
       
-  INTO DEPSoils2020.dbo.DEP_SurfaceTexture
+  INTO DEP_SurfaceTexture
   FROM 
      ( SELECT MU.mukey
              ,C.cokey
@@ -44,12 +44,12 @@ SELECT cokey
              ,tgrp.texture as tgTexture
              ,tgrp.rvindicator as tgRVind
              ,txt.texcl as txTxtClass
-             ,rowNbr = ROW_NUMBER() OVER (PARTITION BY hrz.chkey ORDER BY C.cokey)
+             ,ROW_NUMBER() OVER (PARTITION BY hrz.chkey ORDER BY C.cokey) as rowNbr
         
-        FROM US_Soils1.dbo.MAPUNIT MU left join US_Soils1.[dbo].[component] C ON  MU.mukey = C.mukey
-         LEFT JOIN US_Soils1.[dbo].[chorizon] hrz ON hrz.cokey = C.cokey 
-          LEFT JOIN US_Soils2.[dbo].[chtexturegrp] tgrp ON hrz.chkey = tgrp.chkey 
-           LEFT JOIN US_Soils2.[dbo].[chtexture]  txt ON txt.chtgkey = tgrp.chtgkey 
+        FROM MAPUNIT MU left join component C ON  MU.mukey = C.mukey
+         LEFT JOIN chorizon hrz ON hrz.cokey = C.cokey 
+          LEFT JOIN chtexturegrp tgrp ON hrz.chkey = tgrp.chkey 
+           LEFT JOIN chtexture txt ON txt.chtgkey = tgrp.chtgkey 
         
         WHERE  C.majcompflag = 'Yes' and hrz.hzdept_r = 0 
       ) txtQ  

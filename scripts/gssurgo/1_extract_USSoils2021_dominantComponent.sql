@@ -17,15 +17,15 @@ SELECT mukey
       ,cokey
       ,compname
       ,comppct_r   
-  INTO dbo.US_DomComponents
+  INTO US_DomComponents
   FROM 
      ( SELECT MU.mukey
              ,C.cokey
              ,C.compname
              ,C.comppct_r
-             ,rowNbr = ROW_NUMBER() OVER (PARTITION BY MU.mukey ORDER BY C.comppct_r DESC)
+             ,ROW_NUMBER() OVER (PARTITION BY MU.mukey ORDER BY C.comppct_r DESC) as rowNbr
         
-        FROM [US_Soils3].[dbo].[MAPUNIT] MU left join [US_Soils2].[dbo].[COMPONENT] C ON  MU.mukey = C.mukey  
+        FROM MAPUNIT MU left join COMPONENT C ON  MU.mukey = C.mukey  
         WHERE  C.majcompflag = 'Yes' 
       ) muSelect
   where muSelect.rowNbr = 1 

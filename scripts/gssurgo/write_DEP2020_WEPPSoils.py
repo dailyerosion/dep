@@ -21,32 +21,34 @@
 
 
 ## modules
-import pyodbc
 import os
+from pyiem.util import get_dbconn
 
 ##
-outPath = r"D:\DailyErosion\dep_WEPP_SOL2020"
+outPath = "test"
 
 ## SQL Server connect
-cxn = pyodbc.connect("DSN=WEPPsoils")
+cxn = get_dbconn("idep")
 
 Pcursor = cxn.cursor()
 Pcursor.execute(
     """Select mukey, compname, Albedo, Texture, HrzCount, KI, KR, TC, KB
-                   From dbo.DEP_SoilParameters
-                   Where HrzCount > 0 AND Albedo Is Not Null AND compname != 'Aquolls' 
-                   AND KI Is Not Null AND KR Is Not Null AND TC Is Not Null AND KB Is Not Null"""
+    From DEP_SoilParameters
+    Where HrzCount > 0 AND Albedo Is Not Null AND compname != 'Aquolls' 
+    AND KI Is Not Null AND KR Is Not Null AND TC Is Not Null
+    AND KB Is Not Null
+    """
 )
 
 MURows = Pcursor.fetchall()
 del Pcursor
 
-for Pkey in MURows:
-    fname = outPath + "\DEP_" + str(Pkey.mukey) + ".SOL"
+for row in MURows:
+    fname = outPath + "/DEP_" + str(row[0]) + ".SOL"
 
     if not os.path.exists(fname):
-        outf = open(fname, "wb")
-        print("writing: " + fname + "  - " + Pkey.compname)
+        outf = open(fname, "w")
+        print("writing: " + fname + "  - " + row[1])
 
         outf.write("2006.2\n")
         outf.write("#\n")
@@ -54,46 +56,46 @@ for Pkey in MURows:
         outf.write("# DE James 05_2021\n")
         outf.write("# Source: US gSSURGO CONUS Soil DB 07/2020\n")
         outf.write("#\n")
-        outf.write("SSURGO MUKEY: " + str(Pkey.mukey) + "\n")
+        outf.write("SSURGO MUKEY: " + str(row[0]) + "\n")
         outf.write("1 1\n")
 
-        if Pkey.HrzCount > 9:
-            Pkey.HrzCount = 9
+        if row[4] > 9:
+            row[4] = 9
 
         outf.write(
             "'{0}' '{1}' {2} {3} {4} {5:.2f} {6:.4f} {7:.2f} {8:.2f}\n".format(
-                Pkey.compname,
-                Pkey.Texture,
-                Pkey.HrzCount,
-                Pkey.Albedo,
+                row[1],
+                row[3],
+                row[4],
+                row[2],
                 "0.75",
-                Pkey.KI,
-                Pkey.KR,
-                Pkey.TC,
-                Pkey.KB,
+                row[5],
+                row[6],
+                row[7],
+                row[8],
             )
         )
 
         HrzCursor = cxn.cursor()
         zCount = 0
-
-        for lyr in HrzCursor.execute(
+        HrzCursor.execute(
             """SELECT DepthTo_mm, Sand, Clay, OM, CEC7, FragTot
-                                  FROM dbo.DEP_SoilFractions
-                                  WHERE mukey = ?
+                                  FROM DEP_SoilFractions
+                                  WHERE mukey = %s
                                   ORDER by DepthTo_mm""",
-            Pkey.mukey,
-        ):
+            (row[0],),
+        )
+        for row2 in HrzCursor:
             zCount += 1
             if zCount < 10:
                 outf.write(
                     "       {0} {1} {2} {3} {4} {5}\n".format(
-                        lyr.DepthTo_mm,
-                        lyr.Sand,
-                        lyr.Clay,
-                        lyr.OM,
-                        lyr.CEC7,
-                        lyr.FragTot,
+                        row2[0],
+                        row2[1],
+                        row2[2],
+                        row2[3],
+                        row2[4],
+                        row2[5],
                     )
                 )
 

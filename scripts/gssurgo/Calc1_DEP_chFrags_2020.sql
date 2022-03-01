@@ -23,12 +23,11 @@ IF OBJECT_ID('dbo.DEP_SoilFrags') IS NOT NULL
 
 SELECT hrz.chkey
       ,SUM(frg.fragvol_r) as FragTot
---
-  INTO DEPSoils2020.dbo.DEP_SoilFrags
-  FROM US_Soils1.dbo.US_DomComponents dom left join US_Soils1.dbo.component C 
+  INTO DEP_SoilFrags
+  FROM US_DomComponents dom left join component C 
          ON dom.cokey = C.cokey
-           LEFT JOIN US_Soils1.dbo.chorizon hrz ON hrz.cokey = C.cokey 
-           INNER JOIN US_Soils3.dbo.CHFRAGS frg ON frg.chkey = hrz.chkey
+           LEFT JOIN chorizon hrz ON hrz.cokey = C.cokey 
+           INNER JOIN CHFRAGS frg ON frg.chkey = hrz.chkey
            
   where hrz.chkey is not null
   group by hrz.chkey

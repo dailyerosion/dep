@@ -54,7 +54,7 @@ SELECT mukey
       , FragTot
       , rowNbr
  		  
-      INTO DEPSoils2020.dbo.DEP_SoilFractions 
+      INTO DEP_SoilFractions 
           
       FROM
 	(	SELECT dom.mukey
@@ -69,23 +69,22 @@ SELECT mukey
 		      ,hrz.hzdepb_r * 10 as DepthTo_mm
 		      ,hrz.om_r as OM
 		      ,hrz.ecec_r as ECEC
-		      ,CEC7 = 
-		       CASE
+		      ,CASE
 		         WHEN hrz.cec7_r IS NULL
 		           THEN hrz.ecec_r
 		         ELSE hrz.cec7_r
-		       END
+		       END as cec7
 		      ,hrz.sandtotal_r as Sand
 		      ,hrz.sandvf_r as VFSand
 		      ,hrz.silttotal_r as Silt
 		      ,hrz.claytotal_r as Clay
 		      ,frg.FragTot
-		      ,rowNbr = ROW_NUMBER() OVER (PARTITION BY C.cokey ORDER BY hrz.hzdepb_r DESC) 
+		      ,ROW_NUMBER() OVER (PARTITION BY C.cokey ORDER BY hrz.hzdepb_r DESC) as rowNbr
 
-		  FROM US_Soils1.dbo.US_DomComponents dom left join US_Soils1.[dbo].[component] C 
+		  FROM US_DomComponents dom left join component C 
 		         ON dom.cokey = C.cokey
-		           LEFT JOIN US_Soils1.[dbo].[chorizon] hrz ON hrz.cokey = C.cokey 
-	                   LEFT JOIN DEPSoils2020.dbo.DEP_SoilFrags frg ON hrz.chkey = frg.chkey
+		           LEFT JOIN chorizon hrz ON hrz.cokey = C.cokey 
+	                   LEFT JOIN DEP_SoilFrags frg ON hrz.chkey = frg.chkey
                
           ) bRow
 WHERE NOT (bRow.rowNbr = 1 and ( CEC7 is null or Clay is null or Sand is null))
@@ -93,18 +92,17 @@ ORDER BY mukey, hzdept_r
 GO
 
 -- Alter precision/scale and allow NULL 
-ALTER TABLE DEP_SoilFractions ALTER COLUMN OM DECIMAL(8,3) NULL
-ALTER TABLE DEP_SoilFractions ALTER COLUMN Sand DECIMAL(8,3) NULL
-ALTER TABLE DEP_SoilFractions ALTER COLUMN VFSand DECIMAL(8,3) NULL
-ALTER TABLE DEP_SoilFractions ALTER COLUMN Silt DECIMAL(8,3) NULL
-ALTER TABLE DEP_SoilFractions ALTER COLUMN Clay DECIMAL(8,3) NULL
-ALTER TABLE DEP_SoilFractions ALTER COLUMN CEC7 DECIMAL(8,3) NULL
+ALTER TABLE DEP_SoilFractions ALTER COLUMN OM DECIMAL(8,3) NULL;
+ALTER TABLE DEP_SoilFractions ALTER COLUMN Sand DECIMAL(8,3) NULL;
+ALTER TABLE DEP_SoilFractions ALTER COLUMN VFSand DECIMAL(8,3) NULL;
+ALTER TABLE DEP_SoilFractions ALTER COLUMN Silt DECIMAL(8,3) NULL;
+ALTER TABLE DEP_SoilFractions ALTER COLUMN Clay DECIMAL(8,3) NULL;
+ALTER TABLE DEP_SoilFractions ALTER COLUMN CEC7 DECIMAL(8,3) NULL;
 GO
 
 UPDATE DEP_SoilFractions
- SET DEP_SoilFractions.FragTot = 0
-FROM DEP_SoilFractions
-WHERE DEP_SoilFractions.FragTot IS NULL
+ SET FragTot = 0
+WHERE FragTot IS NULL;
 GO
 
   
