@@ -38,7 +38,7 @@ from functools import partial
 from math import atan2, degrees, pi
 
 from tqdm import tqdm
-from pandas import read_sql
+import pandas as pd
 from pyiem.util import get_dbconn, get_dbconnstr, logger
 from pyiem.dep import load_scenarios
 
@@ -272,7 +272,7 @@ def simplify(df):
     df.iat[0, df.columns.get_loc("useme")] = True
     df.iat[-1, df.columns.get_loc("useme")] = True
     # Take the top 18 values by slope
-    df.loc[df.sort_values("slope", ascending=False).index[:18]]["useme"] = True
+    df.loc[df.sort_values("slope", ascending=False).index[:18], "useme"] = True
     df = df[df["useme"]].copy()
     # We need to recompute slope values to keep elevation values correct,
     # the value is ahead down the hill
@@ -355,11 +355,9 @@ def rewrite_flowpath(cursor, scenario, flowpath_id, df):
         )
 
 
-def do_flowpath(cursor, scenario, zone, metadata):
-    """Process a given flowpathid"""
-    # slope = compute_slope(fid)
-    # I need bad soilfiles so that the length can be computed
-    df = read_sql(
+def load_flowpath_from_db(fid):
+    """Fetch me the flowpath."""
+    return pd.read_sql(
         """
         SELECT segid, elevation, length, f.surgo,
         slope, management, 'DEP_'||surgo||'.SOL' as soilfile, landuse,
@@ -371,8 +369,15 @@ def do_flowpath(cursor, scenario, zone, metadata):
         ORDER by segid ASC
     """,
         get_dbconnstr("idep"),
-        params=(metadata["fid"],),
+        params=(fid,),
     )
+
+
+def do_flowpath(cursor, scenario, zone, metadata):
+    """Process a given flowpathid"""
+    # slope = compute_slope(fid)
+    # I need bad soilfiles so that the length can be computed
+    df = load_flowpath_from_db(metadata["fid"])
     origsize = len(df.index)
     df = filter_soils_slopes(df, scenario)
     if df is None or len(df.index) < 2:
@@ -572,7 +577,7 @@ def main(argv):
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     load_surgo2file(cursor)
-    df = read_sql(
+    df = pd.read_sql(
         "SELECT ST_ymax(ST_Transform(geom, 4326)) as lat, fpath, fid, huc_12, "
         "climate_file from flowpaths WHERE scenario = %s and fpath != 0 "
         "ORDER by huc_12 ASC",
@@ -606,3 +611,11 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv)
+
+
+def test_simplify_count():
+    """Test that we don't reduce to two length flowpath."""
+    testfn = os.path.join(os.path.dirname(__file__), "testdata", "fp.csv")
+    df = pd.read_csv(testfn)
+    res = simplify(df)
+    assert len(res.index) == 19
