@@ -96,8 +96,6 @@ SELECT DOM.mukey
               CASE
                 WHEN hrz.cec7_r Is Null THEN
                    -0.265 + (0.0086 * POWER(hrz.sandtotal_r, 1.8)) + ( 11.46 * POWER(hrz.ecec_r, -0.75))
-                WHEN hrz.cec7_r = 0 THEN
-                   null
                 WHEN hrz.cec7_r <= 1 THEN
                    11.195 + (0.0086 * POWER(hrz.sandtotal_r, 1.8))
                 ELSE

@@ -11,7 +11,9 @@ So the FY2022 data would align with the 2021 ACPF year label.
 - Currently takes us to this [box folder](https://nrcs.app.box.com/v/soils).
 - Needed to use `7za` to extract the multipart zip file.
 - In `Calc4`, I needed to update any `chorizon` `ecec_r` values of `0` to `null`
-as there is a power function that fails in postgresql when the value is `0`.
+as there is a power function that fails in postgresql when the value is `0`. A
+discussion with DJ settled that this situation is isolated to wonky soils like
+`Sand Pit` and not relevant to DEP.
 
 Ran the following commands to ingest the needed layers into postgresql
 
