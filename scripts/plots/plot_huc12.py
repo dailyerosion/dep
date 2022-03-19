@@ -4,8 +4,9 @@ import sys
 
 from pyiem.plot.use_agg import plt
 from pyiem.plot import MapPlot, nwsprecip
-from pyiem.util import get_dbconn
-from geopandas import read_postgis
+from pyiem.reference import Z_POLITICAL
+from pyiem.util import get_sqlalchemy_conn
+import geopandas as gpd
 from shapely.wkb import loads
 import numpy as np
 import cartopy.crs as ccrs
@@ -15,44 +16,57 @@ import matplotlib.colors as mpcolors
 
 def main(argv):
     """Do Great Things"""
-    pgconn = get_dbconn("idep")
-    cursor = pgconn.cursor()
-
-    df = read_postgis(
-        """
-        with obs as (
-            select huc_12, sum(avg_delivery) * 4.463 as loss
-            from results_by_huc12
-            WHERE scenario = 0 and valid between '2014-01-01' and '2015-01-01'
-            GROUP by huc_12
+    with get_sqlalchemy_conn("idep") as conn:
+        df = gpd.read_postgis(
+            """
+            with obs as (
+                select huc_12, sum(avg_delivery) * 4.463 as loss
+                from results_by_huc12
+                WHERE scenario = 0 and
+                valid between '2014-01-01' and '2015-01-01'
+                GROUP by huc_12
+            )
+            SELECT ST_Transform(simple_geom, 4326) as geom, o.huc_12, o.loss
+            from obs o RIGHT JOIN huc12 h on (o.huc_12 = h.huc_12)
+            WHERE h.scenario = 0
+        """,
+            conn,
+            geom_col="geom",
+            index_col="huc_12",
         )
-        SELECT ST_Transform(simple_geom, 4326) as geom, o.huc_12, o.loss
-        from obs o JOIN huc12 h on (o.huc_12 = h.huc_12)
-        WHERE h.scenario = 0 and states = 'IA' and loss > 25
-    """,
-        pgconn,
-        geom_col="geom",
-        index_col="huc_12",
-    )
+        huc8 = gpd.read_postgis(
+            "select simple_geom, huc8 from wbd_huc8 WHERE huc8 in ( "
+            "select distinct substr(huc_12, 1, 8) from huc12 where scenario "
+            "= 0)",
+            conn,
+            geom_col="simple_geom",
+            index_col="huc8",
+        )
     mp = MapPlot(
-        continentalcolor="#EEEEEE",
-        nologo=True,
-        subtitle=("%.0f HUC12s exceeded 25 T/a, covering %.1f%% of Iowa")
-        % (len(df.index), df["geom"].area.sum() / 15.857 * 100.0),
+        sector="custom",
+        south=36.8,
+        north=49.4,
+        west=-99.2,
+        east=-88.9,
+        continentalcolor="white",
+        logo="dep",
         nocaption=True,
-        title=("DEP 2014 HUC12 Hillslope Delivery Rates >= 25 T/a"),
+        title="DEP HUC12 Model Domain as of 17 March 2022",
+        subtitle=(f"{len(df.index)} HUC12s over {len(huc8.index)} HUC8s"),
     )
-
-    for _i, row in df.iterrows():
-        poly = row["geom"]
-        arr = np.asarray(poly.exterior)
-        points = mp.ax.projection.transform_points(
-            ccrs.Geodetic(), arr[:, 0], arr[:, 1]
-        )
-        p = Polygon(points[:, :2], fc="r", ec="k", zorder=2, lw=0.2)
-        mp.ax.add_patch(p)
-
-    mp.drawcounties()
+    df.to_crs(mp.panels[0].crs).plot(
+        ax=mp.panels[0].ax,
+        aspect=None,
+        color="tan",
+        zorder=Z_POLITICAL - 1,
+    )
+    huc8.to_crs(mp.panels[0].crs).plot(
+        ax=mp.panels[0].ax,
+        aspect=None,
+        edgecolor="b",
+        facecolor="None",
+        zorder=Z_POLITICAL + 1,
+    )
     mp.postprocess(filename="test.png")
 
 
