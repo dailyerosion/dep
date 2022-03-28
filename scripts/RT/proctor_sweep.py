@@ -20,33 +20,46 @@ Output fields (kg/m2)
 import argparse
 import sys
 import datetime
+import os
 import shutil
 import subprocess
 from multiprocessing import Pool
 
-from pyiem.util import get_dbconnstr, logger
+from pyiem.util import get_sqlalchemy_conn, logger
 import pandas as pd
 import requests
 from tqdm import tqdm
-from pandas.io.sql import read_sql
 
 HUC12S = ["090201081101", "090201081102", "090201060605"]
 LOG = logger()
 IEMRE = "http://mesonet.agron.iastate.edu/iemre/hourly"
 
 
+def run_command(cmd: str) -> bool:
+    """Common command running logic."""
+    with subprocess.Popen(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    ) as proc:
+        (stdout, stderr) = proc.communicate()
+        if proc.returncode != 0:
+            LOG.error(
+                "Command %s failed with %s\n%s",
+                cmd,
+                stdout.decode("utf-8"),
+                stderr.decode("utf-8"),
+            )
+            return False
+    return True
+
+
 def get_wind_obs(date, lon, lat):
     """Get what we need from IEMRE."""
-    uri = "%s/%s/%.2f/%.2f/json" % (
-        IEMRE,
-        date.strftime("%Y-%m-%d"),
-        lat,
-        lon,
-    )
+    uri = f"{IEMRE}/{date:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
     try:
         res = requests.get(uri).json()
-    except Exception:
+    except Exception as exp:
         print(uri)
+        LOG.exception(exp)
         sys.exit()
     hourly = []
     for entry in res["data"]:
@@ -64,23 +77,20 @@ def workflow(arg):
     """Do what we need to do."""
     (idx, row) = arg
     # 1. Replace wind information in each sweepin file
-    sweepinfn = "/i/%s/sweepin/%s/%s/%s_%s.sweepin" % (
-        row["scenario"],
-        row["huc_12"][:8],
-        row["huc_12"][8:12],
-        row["huc_12"],
-        row["fpath"],
+    sweepinfn = (
+        f"/i/{row['scenario']}/sweepin/{row['huc_12'][:8]}/"
+        f"{row['huc_12'][8:12]}/{row['huc_12']}_{row['fpath']}.sweepin"
     )
+    if not os.path.isfile(sweepinfn):
+        LOG.warning("%s does not exist, copying template", sweepinfn)
+        shutil.copyfile("sweepin_template.txt", sweepinfn)
     sweepoutfn = sweepinfn.replace("sweepin", "sweepout")
-    erodfn = "/i/%s/sweepin/%s/%s/%s_%s.erod" % (
-        row["scenario"],
-        row["huc_12"][:8],
-        row["huc_12"][8:12],
-        row["huc_12"],
-        row["fpath"],
-    )
+    # sweep arbitarily sets the erod output file to be the same as the
+    # sweepin, but with a erod extension.
+    erodfn = sweepinfn.replace(".sweepin", ".erod")
     windobs = get_wind_obs(row["date"], row["lon"], row["lat"])
-    lines = list(open(sweepinfn).readlines())
+    with open(sweepinfn, "r", encoding="utf-8") as fh:
+        lines = list(fh.readlines())
     found = False
     for linenum, line in enumerate(lines):
         if not found and line.find(" awu(i)") > -1:
@@ -93,29 +103,26 @@ def workflow(arg):
                     " ".join([str(round(x, 2)) for x in windobs[sl]]) + "\n"
                 )
             break
-    with open(sweepinfn, "w") as fh:
+    with open(sweepinfn, "w", encoding="utf-8") as fh:
         fh.write("".join(lines))
     # 2. Run Rscript to replace grph file content
-    cmd = "Rscript --vanilla magic.R %s %s %s %s %s >& /dev/null" % (
-        sweepinfn,
-        sweepinfn.replace("sweepin", "grph"),
-        sweepinfn.replace("sweepin", "sol"),
-        row["date"].year,
-        row["date"].strftime("%j"),
+    cmd = (
+        f"Rscript --vanilla magic.R {sweepinfn} "
+        f"{sweepinfn.replace('sweepin', 'grph')} "
+        f"{sweepinfn.replace('sweepin', 'sol')} {row['date'].year} "
+        f"{row['date']:%j}"
     )
-    subprocess.call(
-        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
+    if not run_command(cmd):
+        return None, None
     # 3. Run sweep with given sweepin file, writing to sweepout
-    cmd = '~/bin/sweep -i"%s" -Erod' % (sweepinfn,)
-    subprocess.call(
-        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    # can't control the Erod output file :/
+    cmd = f'~/bin/sweep -i"{sweepinfn}" -Erod'
+    if not run_command(cmd):
+        return None, None
+    # Move the erod file into the sweepout directory
     shutil.move(erodfn, sweepoutfn)
     # 4. Harvest the result and profit.
     erosion = None
-    with open(sweepoutfn) as fh:
+    with open(sweepoutfn, encoding="utf-8") as fh:
         tokens = fh.read().strip().split()
         # total soil loss, saltation loss, suspension loss, PM10 loss
         # TODO: units
@@ -135,21 +142,23 @@ def main(argv):
     """Go Main Go."""
     parser = usage()
     args = parser.parse_args(argv[1:])
-    df = read_sql(
-        """
-        SELECT huc_12, fpath, scenario,
-        ST_x(ST_Transform(ST_PointN(geom, 1), 4326)) as lon,
-        ST_y(ST_Transform(ST_PointN(geom, 1), 4326)) as lat
-        from flowpaths where scenario = %s
-        and huc_12 in %s
-    """,
-        get_dbconnstr("idep"),
-        params=(args.scenario, tuple(HUC12S)),
-        index_col=None,
-    )
+    with get_sqlalchemy_conn("idep") as conn:
+        df = pd.read_sql(
+            """
+            SELECT huc_12, fpath, scenario,
+            ST_x(ST_Transform(ST_PointN(geom, 1), 4326)) as lon,
+            ST_y(ST_Transform(ST_PointN(geom, 1), 4326)) as lat
+            from flowpaths where scenario = %s
+            and huc_12 in %s
+        """,
+            conn,
+            params=(args.scenario, tuple(HUC12S)),
+            index_col=None,
+        )
     date = datetime.datetime.strptime(args.date, "%Y-%m-%d")
     df["date"] = pd.Timestamp(date)
-    LOG.debug("found %s flowpaths to run for %s", len(df.index), date)
+    df["erosion"] = -1
+    LOG.info("found %s flowpaths to run for %s", len(df.index), date)
     jobs = list(df.iterrows())
     with Pool() as pool:
         progress = tqdm(
@@ -158,6 +167,8 @@ def main(argv):
             disable=not sys.stdout.isatty(),
         )
         for idx, erosion in progress:
+            if erosion is None:
+                break
             df.at[idx, "erosion"] = erosion
 
     print(df[["huc_12", "erosion"]].groupby("huc_12").describe())
