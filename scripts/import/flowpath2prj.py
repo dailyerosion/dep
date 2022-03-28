@@ -46,7 +46,7 @@ LOG = logger()
 MISSED_SOILS = {}
 MAX_SLOPE_RATIO = 0.9
 MIN_SLOPE = 0.003
-
+YEARS = 2022 - 2006
 SURGO2FILE = {}
 
 # Note that the default used below is
@@ -557,7 +557,7 @@ RunOptions {
    SoilLossOutputType = 1
    EventFile = "%(envfn)s"
    WaterBalanceFile = "test.wb"
-   SimulationYears = 15
+   SimulationYears = %(years)s
    SmallEventByPass = 1
 }
 """
@@ -602,6 +602,7 @@ def main(argv):
             zone = "IA_SOUTH"
         data = do_flowpath(cursor, scenario, zone, row)
         if data is not None:
+            data["years"] = YEARS
             write_prj(data)
     cursor.close()
     pgconn.commit()
