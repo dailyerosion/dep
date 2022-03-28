@@ -24,17 +24,15 @@ if (length(args) == 0) {
   generic_template_in=args[1];
   weppgraphfile=args[2];
   weppsoilfile=args[3];
-  Year=strtoi(args[4]);
-  DayofYear=strtoi(args[5]);
+  Year=as.numeric(args[4]);
+  DayofYear=as.numeric(args[5]);
 }
 generic_template_in.in<-paste(generic_template_in, ".in", sep="")
 print(paste('Template File In: ', generic_template_in.in, sep=""))
 print(paste('WEPP graph file: ', weppgraphfile, sep=""))
 print(paste('WEPP soil file: ', weppsoilfile, sep = ""))
+print(paste('Year: ', Year, sep = ""))
 print(paste('Day of Year: ', DayofYear, sep = ""))
-# dir4 <- paste(generic_template_in, DayofYear, ".in", sep = "")
-print(paste('Creating SWEEP file for day: ', DayofYear, sep = ""))
-# print (dir4)
 
 require(readr)
 require(dplyr)
@@ -48,17 +46,6 @@ require(dplyr)
 ######setwd(working.dir)
 
 ######dir<- working.dir
-
-#*******this is the WEPP output file***these data require daily updates if DEP updates daily
-######dir1<- paste(dir,weppgraphfile,sep="/")
-dir1<- weppgraphfile ###for version to pass to DH
-
-#*******this is the WEPP soil file*****should only require updating once
-######dir2<- paste(dir,weppsoilfile,sep="/")
-dir2<- weppsoilfile ###for version to pass to DH
-
-######dir3<-paste(dir,generic_template_in.in,sep="/")
-dir3<- generic_template_in ###for version to pass to DH
 
 #*******************shouldn't be any user input required down here*************
 # colnames from commented portion of grph_0.txt
@@ -77,15 +64,19 @@ colnames<-c("year","Day","Precip_in","AvDet_t-a","MxDet_t-a","DetPt_ft","AvDepo_
 # set colwidths vector to read "grph_0.txt" as a fixed width file
 colwidths<-c(4,6,rep(11,83),rep(3,7),rep(11,13))
 colwidths<-as.integer(colwidths) #changes from numeric to integer
-WEPPoutAll<- read_fwf(dir1, comment = "#", skip = 121, col_positions = fwf_widths(colwidths, col_names = colnames),
-  col_types = "iidddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddiiiiiiiddddddddddddd")
+WEPPoutAll<- read_fwf(
+    weppgraphfile,
+    comment = "#",
+    skip = 121,
+    col_positions = fwf_widths(colwidths, col_names = colnames),
+    col_types = "iidddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddiiiiiiiddddddddddddd")
 WEPPout <- dplyr::filter(WEPPoutAll, year == Year)
 WEPPout$Precip_mm<-WEPPout$Precip_in*25.4
 WEPPout$IrrDpth_mm<-WEPPout$IrrDpth_in*25.4
 WEPPout$SnwMeltWater_mm<-WEPPout$SnwMeltWater_in*25.4
 
 #***************WEPP soil variables
-WEPPsoil<- read.table(dir2, skip = 4, nrows = 1, sep = " ")
+WEPPsoil<- read.table(weppsoilfile, skip = 4, nrows = 1, sep = " ")
 Depthmm<-round(as.numeric(WEPPsoil[1,4]),digits=2)
 Sandpct<-round(as.numeric(WEPPsoil[1,5]),digits=2)
 Sandpct<-Sandpct/100 #needs to be in decimal percent for calculations
@@ -130,7 +121,7 @@ for (i in 1:nrow(WEPPout)){
 
 print(i)
 
-WEPS<-readLines(dir3, n=-1)
+WEPS<-readLines(generic_template_in, n=-1)
 # substitute WEPS parameter values on a line-by-line basis
 
 ### Compute SWEEP soil crust and aggregate parameters based on equations from SWEEP technical documentation
@@ -281,15 +272,18 @@ if (SZcr < 0){
   SZcr <- 23.0
 }
 
+# Only need to update the file when we are actually going to write something
+if (i < DayofYear){
+    next
+}
 
 ### WEPS.IN +++ BIOMASS +++ 
-
-WEPS[113]<-paste(" ",(round((WEPPout$CnpyHt_ft[i]*0.3048),digits=2)),sep="") #biomass height on day i; converted to m
-WEPS[116]<-paste(" ",(round((WEPPout$CnpyHt_ft[i]*0.3048),digits=2)),sep="") #crop height on day i;  converted to m
+WEPS[86]<-paste(" ",(round((WEPPout$CnpyHt_ft[i]*0.3048),digits=2)),sep="") #biomass height on day i; converted to m
+WEPS[89]<-paste(" ",(round((WEPPout$CnpyHt_ft[i]*0.3048),digits=2)),sep="") #crop height on day i;  converted to m
 
 
 #***************need to find way to estimate Stem Area Index**********
-WEPS[120]<-paste(" ",0.0,"", (round(WEPPout$LAI[i], digits=2)),collapse="") #crop StemAI and LAI
+WEPS[93]<-paste(" ",0.0,"", (round(WEPPout$LAI[i], digits=2)),collapse="") #crop StemAI and LAI
 #   WEPS[120]<-paste(" ",(round(WEPPout$LAI[i], digits=2)),"", (round(WEPPout$LAI[i], digits=2)),collapse="") #crop StemAI and LAI
    
 #line 141 is flat biomass cover m2/m2, Need to convert residue t/ac to biomass cover (m/m)
@@ -298,56 +292,58 @@ WEPS[120]<-paste(" ",0.0,"", (round(WEPPout$LAI[i], digits=2)),collapse="") #cro
 Residuelbac<-WEPPout$`Rsd_t-a`[i]*2000 #convert t/ac to lb/acre
 covercoef<-0.00038 #currently based on value for corn from Gregory 1982 (need to update for other crops)
 Cover<-(1-exp(-covercoef*Residuelbac))
-WEPS[141]<-Cover
+WEPS[114]<-Cover
 
 ### WEPS.IN +++ SOIL +++ 
-WEPS[146]<-paste(" ",1,sep="")  #number of soil layers (WEPS only needs info for the top layer)
-WEPS[151]<-paste(" ",Depthmm,sep="") #thickness of soil layer in mm
+WEPS[119]<-paste(" ",1,sep="")  #number of soil layers (WEPS only needs info for the top layer)
+WEPS[124]<-paste(" ",Depthmm,sep="") #thickness of soil layer in mm
    
 bulkdensity<-round((WEPPout$`BlkDens_lbs-ft3`[i]*16018.47/1000000),digits=2)
-WEPS[154]<-paste(" ",bulkdensity,sep="")
-WEPS[157]<-paste(" ",(round((Sandpct),digits=2)),sep="")
-WEPS[159]<-paste(" ",(round((VFSandpct),digits=2)),sep="") 
-WEPS[161]<-paste(" ",(round((Siltpct),digits=2)),sep="")
-WEPS[163]<-paste(" ",(round((Claypct),digits=2)),sep="")
-WEPS[166]<-paste(" ",(round((Rockpct),digits=2)),sep="")
+WEPS[127]<-paste(" ",bulkdensity,sep="")
+WEPS[130]<-paste(" ",(round((Sandpct),digits=2)),sep="")
+WEPS[132]<-paste(" ",(round((VFSandpct),digits=2)),sep="") 
+WEPS[134]<-paste(" ",(round((Siltpct),digits=2)),sep="")
+WEPS[136]<-paste(" ",(round((Claypct),digits=2)),sep="")
+WEPS[139]<-paste(" ",(round((Rockpct),digits=2)),sep="")
 
 # new in spring/summer 2019 (this note is just to help with trouble shooting)
-WEPS[169]<-paste(" ",(round((SDag), digits=2)),sep="") #Soil layer aggregate density (Mg/m^3)
-WEPS[171]<-paste(" ",(round((SEag), digits=2)),sep="") #Soil layer aggregate stability (ln(K/kg))
-WEPS[173]<-paste(" ",(round((Slagm), digits=2)),sep="") #Soil layer geometric mean diameter (mm)
-WEPS[175]<-paste(" ",(round((Slagn), digits=2)),sep="") #Soil layer minimum aggregate size (mm)
-WEPS[177]<-paste(" ",(round((Slagx), digits=2)),sep="") #Soil layer maximum aggregate size (mm)
-WEPS[179]<-paste(" ",(round((S0ags), digits=2)),sep="") #Soil layer geometric std deviation (mm/mm)
+WEPS[142]<-paste(" ",(round((SDag), digits=2)),sep="") #Soil layer aggregate density (Mg/m^3)
+WEPS[144]<-paste(" ",(round((SEag), digits=2)),sep="") #Soil layer aggregate stability (ln(K/kg))
+WEPS[146]<-paste(" ",(round((Slagm), digits=2)),sep="") #Soil layer geometric mean diameter (mm)
+WEPS[148]<-paste(" ",(round((Slagn), digits=2)),sep="") #Soil layer minimum aggregate size (mm)
+WEPS[150]<-paste(" ",(round((Slagx), digits=2)),sep="") #Soil layer maximum aggregate size (mm)
+WEPS[152]<-paste(" ",(round((S0ags), digits=2)),sep="") #Soil layer geometric std deviation (mm/mm)
 
 #next line contains: Surface Crust Fraction, Surface Crust Thickness, Fraction Loose Material on Surface,
 #Mass of loose material on the crust, soil crust density, soil crust stability
-WEPS[188]<-paste("",(round((SFcr), digits=2)),(round((SZcr), digits=2)),
+WEPS[161]<-paste("",(round((SFcr), digits=2)),(round((SZcr), digits=2)),
                  (round((SFlos), digits=2)),(round((SMlos), digits=2)),
                  (round((SDcr), digits=2)),(round((SEcr), digits=2)),sep=" ") 
 
-WEPS[193]<-paste(" ",(round((WEPPout$RndRough_in[i]*25.4),digits=2)),sep="") #Allmaras Random Roughness (convert to mm)
+WEPS[166]<-paste(" ",(round((WEPPout$RndRough_in[i]*25.4),digits=2)),sep="") #Allmaras Random Roughness (convert to mm)
 
 
 ### WEPS.IN +++ HYDROLOGY +++   
       
-WEPS[205]<-paste(" ",(round((WEPPout$SnwDepth_in[i]*25.4),digits=2)),sep="") #snow depth converted to mm
+WEPS[178]<-paste(" ",(round((WEPPout$SnwDepth_in[i]*25.4),digits=2)),sep="") #snow depth converted to mm
 
 #convert soil water to proper units (Mg/Mg)
 SoilWatercm<-WEPPout$SoilWaterLyr1[i]*2.54 #assume water density of 1g/cc
 Soilpb<-as.numeric(bulkdensity)
 SoilMass<-Depthmm/10*Soilpb
 Layer1WaterContent<-round((SoilWatercm/SoilMass),digits=2)
-WEPS[211]<-paste(" ",Layer1WaterContent,sep="")
+WEPS[184]<-paste(" ",Layer1WaterContent,sep="")
 
 SurfaceLayerWaterContent<-(c(rep(Layer1WaterContent,12))) #daily WEPP value, repeated here for hourly WEPS input
-WEPS[217]<-paste(" ",SurfaceLayerWaterContent,collapse="")
-WEPS[218]<-paste(" ",SurfaceLayerWaterContent,collapse="")
+WEPS[190]<-paste(" ",SurfaceLayerWaterContent,collapse="")
+WEPS[191]<-paste(" ",SurfaceLayerWaterContent,collapse="")
 
 ### WEPS.IN +++ WEATHER +++  
 #this will be where wind data are input
 
 if (i == DayofYear){
-write(WEPS, file=dir3, append=FALSE)
+    write(WEPS, file=generic_template_in, append=FALSE)
+    break
 }
-}
+
+} # End of loop
