@@ -14,21 +14,9 @@ def main(argv):
     with get_sqlalchemy_conn("idep") as conn:
         df = gpd.read_postgis(
             """
-            with data as (
-                select huc_12, regexp_split_to_table(management, '') as ch
-                from flowpaths p JOIN flowpath_points t on (p.fid = t.flowpath)
-                where p.scenario = 0
-                ORDER by management desc, flowpath, fpath),
-            agg as (select ch, huc_12, count(*) from data 
-                WHERE ch != '0' GROUP by ch, huc_12),
-            agg2 as (select huc_12, ch, rank() OVER (PARTITION by huc_12
-                ORDER by count DESC) from agg),
-            agg3 as (select huc_12, ch from agg2 where rank = 1)
-            
-            SELECT ST_Transform(simple_geom, 4326) as geom, a.huc_12,
-            a.ch::int as ch
-            from agg3 a JOIN huc12 h on (a.huc_12 = h.huc_12)
-            WHERE h.scenario = 0
+            SELECT ST_Transform(simple_geom, 4326) as geom, dominant_tillage,
+            huc_12
+            from huc12 WHERE scenario = 0
         """,
             conn,
             geom_col="geom",
@@ -57,7 +45,7 @@ def main(argv):
     cmap = get_cmap("plasma")
     bins = list(range(1, 8))
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
-    df["color"] = [c for c in cmap(norm(df["ch"].values))]
+    df["color"] = [c for c in cmap(norm(df["dominant_tillage"].values))]
 
     df.to_crs(mp.panels[0].crs).plot(
         ax=mp.panels[0].ax,
