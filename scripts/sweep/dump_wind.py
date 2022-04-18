@@ -9,8 +9,8 @@ IEMRE = "http://mesonet.agron.iastate.edu/iemre/hourly"
 
 def main():
     """Go Main Go."""
-    lat = 48.75
-    lon = -97.5
+    lat = 40.51
+    lon = -97.19
     progress = tqdm(pd.date_range("2021-01-01", "2021-12-31"))
     days = []
     with open("/tmp/wind.txt", "w", encoding="utf-8") as ffh:
