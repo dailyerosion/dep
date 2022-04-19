@@ -1,6 +1,7 @@
 """We do work when jobs are placed in the queue."""
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor
+import json
 import re
 import os
 import socket
@@ -16,6 +17,23 @@ FILENAME_RE = re.compile(
     "/i/(?P<scenario>[0-9]+)/env/(?P<huc8>[0-9]{8})/(?P<huc812>[0-9]{4})/"
     "(?P<huc12>[0-9]{12})_(?P<fpath>[0-9]+).env"
 )
+
+
+def get_rabbitmqconn():
+    """Load the configuration."""
+    # load rabbitmq.json in the directory local to this script
+    with open("rabbitmq.json", "r", encoding="utf-8") as fh:
+        config = json.load(fh)
+    return pika.BlockingConnection(
+        pika.ConnectionParameters(
+            host=config["host"],
+            port=config["port"],
+            virtual_host=config["vhost"],
+            credentials=pika.credentials.PlainCredentials(
+                config["user"], config["password"]
+            ),
+        )
+    )
 
 
 def drain(channel, method, _props, _rundata):
@@ -56,9 +74,7 @@ def consumer_thread(jobfunc, thread_id):
     """Our main runloop."""
     LOG.info("Starting consumer_thread(%s)", thread_id)
 
-    conn = pika.BlockingConnection(
-        pika.ConnectionParameters(host="iem-rabbitmq.local")
-    )
+    conn = get_rabbitmqconn()
     channel = conn.channel()
     channel.queue_declare("dep", durable=True)
     # otherwise rabbitmq will send everything

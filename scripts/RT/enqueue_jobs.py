@@ -1,4 +1,5 @@
 """Place jobs into our DEP queue!"""
+import json
 import sys
 import os
 import datetime
@@ -10,6 +11,23 @@ import requests
 from pyiem.util import get_dbconn, logger
 
 YEARS = datetime.date.today().year - 2006
+
+
+def get_rabbitmqconn():
+    """Load the configuration."""
+    # load rabbitmq.json in the directory local to this script
+    with open("rabbitmq.json", "r", encoding="utf-8") as fh:
+        config = json.load(fh)
+    return pika.BlockingConnection(
+        pika.ConnectionParameters(
+            host=config["host"],
+            port=config["port"],
+            virtual_host=config["vhost"],
+            credentials=pika.credentials.PlainCredentials(
+                config["user"], config["password"]
+            ),
+        )
+    )
 
 
 class WeppRun:
@@ -149,9 +167,7 @@ def main(argv):
         (flscenario,),
     )
     totaljobs = icursor.rowcount
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host="iem-rabbitmq.local")
-    )
+    connection = get_rabbitmqconn()
     channel = connection.channel()
     channel.queue_declare(queue="dep", durable=True)
     sts = datetime.datetime.now()
