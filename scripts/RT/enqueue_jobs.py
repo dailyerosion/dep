@@ -194,8 +194,9 @@ def main(argv):
         now = datetime.datetime.now()
         # Good grief, we have to manually query the queue via the API to
         # get actual unack'd messages.
+        # pylint: disable=protected-access
         req = requests.get(
-            "http://iem-rabbitmq.local:15672/api/queues/%2F/dep",
+            f"http://{connection._impl.params.host}:15672/api/queues/%2F/dep",
             auth=("guest", "guest"),
         )
         queueinfo = req.json()
