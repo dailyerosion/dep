@@ -67,14 +67,11 @@ def get_data(filename):
     """
     df = gpd.read_file(filename, index="OBJECTID")
     # Compute full rotation string
-    # 2021 is repeating -2 (2019)
-    # 2022 is repeating -1 (2020)
-    s = df["CropRotatn_CY_2020"]
-    df["landuse"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
-    s = df["Management_CY_2020"]
-    df["management"] = (
-        s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
-    )
+    # 2022 is repeating -2 (2020)
+    s = df["CropRotatn_CY_2021"]
+    df["landuse"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2]
+    s = df["Management_CY_2021"]
+    df["management"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2]
     return df
 
 
@@ -169,7 +166,7 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df):
         dx = abs(row2[lencolname] - row[lencolname])
         if dx == 0:
             # We have a duplicate point, abort as should not be possible
-            print(f"ABORT duplicate point {segid} {row} {row2}")
+            print(f"ABORT duplicate point\n{segid}\n{row}\n{row2}\n")
             print(df[["OBJECTID", "FBndID", lencolname]])
             sys.exit()
         x_change += dx
@@ -185,7 +182,7 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df):
             segid,
             row[elevcolname] / 100.0,
             row[lencolname] / 100.0,
-            row["SOL_FY_2020"],
+            row["SOL_FY_2022"],
             row["management"],
             slope,
             row["geometry"].x,
@@ -258,7 +255,7 @@ def process(cursor, scenario, huc12df):
     # We group the dataframe by the column which uses a PREFIX and the huc8
     for flowpath_num, df in huc12df.groupby(fpcol):
         # These are upstream errors I should ignore
-        if flowpath_num == 0 or len(df.index) < 2:
+        if flowpath_num == 0 or len(df.index) < 3:
             continue
         # Get or create the flowpathid from the database
         db_fid = get_flowpath(cursor, scenario, huc12, flowpath_num)
