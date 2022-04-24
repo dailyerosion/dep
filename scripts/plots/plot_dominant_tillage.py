@@ -10,7 +10,7 @@ import matplotlib.colors as mpcolors
 
 def main(argv):
     """Do Great Things"""
-    plot_huc8 = len(argv) > 10
+    plot_huc8 = len(argv > 10)
     with get_sqlalchemy_conn("idep") as conn:
         df = gpd.read_postgis(
             """
@@ -39,7 +39,7 @@ def main(argv):
         continentalcolor="white",
         logo="dep",
         nocaption=True,
-        title="DEP Dominant Tillage Code by HUC12",
+        title="2022 Apr 24 :: DEP Dominant Tillage Code by HUC12",
         subtitle=(f"{len(df.index)} HUC12s"),
     )
     cmap = get_cmap("plasma")
