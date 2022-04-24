@@ -10,7 +10,7 @@ import matplotlib.colors as mpcolors
 
 def main(argv):
     """Do Great Things"""
-    plot_huc8 = False
+    plot_huc8 = len(argv > 10)
     with get_sqlalchemy_conn("idep") as conn:
         df = gpd.read_postgis(
             """
