@@ -47,11 +47,11 @@ def main(argv):
                 print(f"linenum: {linenum} has bad time: {tokens[0]}")
             precip = float(tokens[1])
             if precip < 0 or precip >= 350:
-                print(f"linenum: {linenum} has bad precip: {tokens[1]}")
+                print(f"{thisdate} line: {linenum} has bad prec: {tokens[1]}")
             if precip <= lastprecip:
                 print(
-                    f"linenum: {linenum} has decreasing precip: {tokens[1]}, "
-                    f"last {lastprecip}"
+                    f"{thisdate} line: {linenum} has decreasing "
+                    f"prec: {tokens[1]}, last {lastprecip}"
                 )
             lastprecip = precip
         linenum += 1

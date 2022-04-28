@@ -1,6 +1,6 @@
 """We do work when jobs are placed in the queue."""
-from functools import partial
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 import json
 import re
 import os
@@ -36,12 +36,13 @@ def get_rabbitmqconn():
     )
 
 
-def drain(channel, method, _props, _rundata):
+def drain(ch, delivery_tag, _rundata):
     """NOOP to clear out the queue via a hackery"""
-    channel.basic_ack(delivery_tag=method.delivery_tag)
+    cb = partial(ack_message, ch, delivery_tag)
+    ch.connection.add_callback_threadsafe(cb)
 
 
-def run(channel, method, _props, rundata):
+def run(ch, delivery_tag, rundata):
     """Actually run wepp for this event"""
     with subprocess.Popen(
         ["timeout", "60", "wepp"],
@@ -61,26 +62,46 @@ def run(channel, method, _props, rundata):
                 f"/i/{d['scenario']}/error/{d['huc8']}/{d['huc812']}/"
                 f"{d['huc12']}_{d['fpath']}.error"
             )
+            LOG.warning("Errored: %s", errorfn)
             os.makedirs(os.path.dirname(errorfn), exist_ok=True)
             with open(errorfn, "wb") as fp:
                 hn = f"Hostname: {socket.gethostname()}\n"
                 fp.write(hn.encode("ascii"))
                 fp.write(stdoutdata)
                 fp.write(stderrdata)
-    channel.basic_ack(delivery_tag=method.delivery_tag)
+    cb = partial(ack_message, ch, delivery_tag)
+    ch.connection.add_callback_threadsafe(cb)
 
 
-def consumer_thread(jobfunc, thread_id):
+def ack_message(ch, delivery_tag):
+    """Note that `ch` must be the same pika channel instance via which
+    the message being ACKed was retrieved (AMQP protocol constraint).
+    """
+    if ch.is_open:
+        ch.basic_ack(delivery_tag)
+    else:
+        # Channel is already closed, so we can't ACK this message;
+        # log and/or do something that makes sense for your app in this case.
+        pass
+
+
+def run_consumer(jobfunc, executor):
     """Our main runloop."""
-    LOG.info("Starting consumer_thread(%s)", thread_id)
+    LOG.info("Starting queue_worker")
 
     conn = get_rabbitmqconn()
     channel = conn.channel()
     channel.queue_declare("dep", durable=True)
     # otherwise rabbitmq will send everything
-    channel.basic_qos(prefetch_count=100)
+    channel.basic_qos(prefetch_count=300)
+
+    def proxy(mychannel, method, _props, rundata):
+        """Wrapper around jobfunc."""
+        delivery_tag = method.delivery_tag
+        executor.submit(jobfunc, mychannel, delivery_tag, rundata)
+
     # make us acknowledge the message
-    channel.basic_consume("dep", jobfunc, auto_ack=False)
+    channel.basic_consume("dep", proxy, auto_ack=False)
     # blocks
     channel.start_consuming()
 
@@ -90,21 +111,23 @@ def main(argv):
     if len(argv) not in [3, 4]:
         print("USAGE: python queue_worker.py <scenario> <threads> <drainme?>")
         return
+    # argv[1] is the scenario and unused
+    num_workers = int(argv[2])
+    jobfunc = run if len(argv) < 4 else drain
     while True:
+        # Start a threadpool executor that is associated with a rabbitmq
+        # connection.  Run until something bad happens, then start again!
         try:
-            start_threads = int(argv[2])
-            f = partial(consumer_thread, run if len(argv) < 4 else drain)
-            with ThreadPoolExecutor(max_workers=start_threads) as pool:
-                LOG.info("Starting %s threads", start_threads)
-                pool.map(f, range(start_threads))
-            print("runloop exited cleanly, sleeping 30 seconds")
+            with ThreadPoolExecutor(max_workers=num_workers) as executor:
+                run_consumer(jobfunc, executor)
+            LOG.warning("run_consumer exited cleanly, sleeping 30 seconds")
             time.sleep(30)
         except KeyboardInterrupt:
-            print("Exiting due to keyboard interrupt")
+            LOG.critical("Exiting due to keyboard interrupt")
             break
         except Exception as exp:
-            print("Encountered Exception, sleeping 30 seconds")
-            print(exp)
+            LOG.warning("Encountered Exception, sleeping 30 seconds")
+            LOG.exception(exp)
             time.sleep(30)
 
 

@@ -39,7 +39,7 @@ from math import atan2, degrees, pi
 
 from tqdm import tqdm
 import pandas as pd
-from pyiem.util import get_dbconn, get_dbconnstr, logger
+from pyiem.util import get_dbconn, get_sqlalchemy_conn, logger
 from pyiem.dep import load_scenarios
 
 LOG = logger()
@@ -355,7 +355,7 @@ def rewrite_flowpath(cursor, scenario, flowpath_id, df):
         )
 
 
-def load_flowpath_from_db(fid):
+def load_flowpath_from_db(pgconn, fid):
     """Fetch me the flowpath."""
     return pd.read_sql(
         """
@@ -368,16 +368,16 @@ def load_flowpath_from_db(fid):
         WHERE flowpath = %s and length < 9999
         ORDER by segid ASC
     """,
-        get_dbconnstr("idep"),
+        pgconn,
         params=(fid,),
     )
 
 
-def do_flowpath(cursor, scenario, zone, metadata):
+def do_flowpath(pgconn, cursor, scenario, zone, metadata):
     """Process a given flowpathid"""
     # slope = compute_slope(fid)
     # I need bad soilfiles so that the length can be computed
-    df = load_flowpath_from_db(metadata["fid"])
+    df = load_flowpath_from_db(pgconn, metadata["fid"])
     origsize = len(df.index)
     df = filter_soils_slopes(df, scenario)
     if df is None or len(df.index) < 2:
@@ -571,17 +571,16 @@ def get_flowpath_scenario(scenario):
     return int(sdf.at[scenario, "flowpath_scenario"])
 
 
-def main(argv):
+def workflow(pgconn, scenario):
     """Go main go"""
-    scenario = int(argv[1])
-    pgconn = get_dbconn("idep")
-    cursor = pgconn.cursor()
+    conn = get_dbconn("idep")
+    cursor = conn.cursor()
     load_surgo2file(cursor)
     df = pd.read_sql(
         "SELECT ST_ymax(ST_Transform(geom, 4326)) as lat, fpath, fid, huc_12, "
         "climate_file from flowpaths WHERE scenario = %s and fpath != 0 "
         "ORDER by huc_12 ASC",
-        get_dbconnstr("idep"),
+        pgconn,
         params=(get_flowpath_scenario(scenario),),
     )
     if os.path.isfile("myhucs.txt"):
@@ -600,14 +599,21 @@ def main(argv):
             zone = "IA_CENTRAL"
         elif row["lat"] >= 40.5:
             zone = "IA_SOUTH"
-        data = do_flowpath(cursor, scenario, zone, row)
+        data = do_flowpath(pgconn, cursor, scenario, zone, row)
         if data is not None:
             data["years"] = YEARS
             write_prj(data)
     cursor.close()
-    pgconn.commit()
+    conn.commit()
     for fn, sn in MISSED_SOILS.items():
         print(f"{sn:6s} {fn}")
+
+
+def main(argv):
+    """Go main go"""
+    scenario = int(argv[1])
+    with get_sqlalchemy_conn("idep") as pgconn:
+        workflow(pgconn, scenario)
 
 
 if __name__ == "__main__":

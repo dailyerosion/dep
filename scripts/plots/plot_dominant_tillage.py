@@ -1,4 +1,5 @@
 """General HUC12 mapper"""
+from datetime import date
 import sys
 
 from pyiem.plot import MapPlot, get_cmap
@@ -10,13 +11,13 @@ import matplotlib.colors as mpcolors
 
 def main(argv):
     """Do Great Things"""
-    plot_huc8 = len(argv > 10)
+    plot_huc8 = len(argv) > 10
     with get_sqlalchemy_conn("idep") as conn:
         df = gpd.read_postgis(
             """
             SELECT ST_Transform(simple_geom, 4326) as geom, dominant_tillage,
-            huc_12
-            from huc12 WHERE scenario = 0
+            huc_12 from huc12 WHERE scenario = 0
+            and dominant_tillage is not null
         """,
             conn,
             geom_col="geom",
@@ -39,13 +40,15 @@ def main(argv):
         continentalcolor="white",
         logo="dep",
         nocaption=True,
-        title="2022 Apr 24 :: DEP Dominant Tillage Code by HUC12",
-        subtitle=(f"{len(df.index)} HUC12s"),
+        title=(
+            f"{date.today():%-d %b %Y} :: DEP Dominant Tillage Code by HUC12"
+        ),
+        subtitle=f"{len(df.index)} HUC12s",
     )
     cmap = get_cmap("plasma")
     bins = list(range(1, 8))
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
-    df["color"] = [c for c in cmap(norm(df["dominant_tillage"].values))]
+    df["color"] = list(cmap(norm(df["dominant_tillage"].values)))
 
     df.to_crs(mp.panels[0].crs).plot(
         ax=mp.panels[0].ax,

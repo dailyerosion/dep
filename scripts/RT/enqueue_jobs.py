@@ -189,6 +189,7 @@ def main(argv):
         )
     # Wait a few seconds for the dust to settle
     time.sleep(10)
+    connection.close()
     percentile = 1.0001
     while True:
         now = datetime.datetime.now()
