@@ -143,7 +143,6 @@ def main(argv):
         # Start a threadpool executor that is associated with a rabbitmq
         # connection.  Run until something bad happens, then start again!
         try:
-            1 / 0
             with ThreadPoolExecutor(max_workers=num_workers) as executor:
                 run_consumer(jobfunc, executor)
             LOG.warning("run_consumer exited cleanly, sleeping 30 seconds")
