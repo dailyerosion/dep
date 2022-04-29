@@ -8,6 +8,8 @@ import socket
 import subprocess
 import sys
 import time
+import threading
+import traceback
 
 import pika
 from pyiem.util import logger
@@ -17,6 +19,10 @@ FILENAME_RE = re.compile(
     "/i/(?P<scenario>[0-9]+)/env/(?P<huc8>[0-9]{8})/(?P<huc812>[0-9]{4})/"
     "(?P<huc12>[0-9]{12})_(?P<fpath>[0-9]+).env"
 )
+MEMORY = {
+    "runs": 0,
+    "timestamp": time.time(),
+}
 
 
 def get_rabbitmqconn():
@@ -44,8 +50,10 @@ def drain(ch, delivery_tag, _rundata):
 
 def run(ch, delivery_tag, rundata):
     """Actually run wepp for this event"""
+    # We run timeout to keep things from hanging indefinitely, we tried 60
+    # seconds but it was too short as sometimes latency happens.
     with subprocess.Popen(
-        ["timeout", "60", "wepp"],
+        ["timeout", "-s", "9", "600", "wepp"],
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stdin=subprocess.PIPE,
@@ -83,6 +91,7 @@ def ack_message(ch, delivery_tag):
         # Channel is already closed, so we can't ACK this message;
         # log and/or do something that makes sense for your app in this case.
         pass
+    MEMORY["runs"] += 1
 
 
 def run_consumer(jobfunc, executor):
@@ -106,6 +115,20 @@ def run_consumer(jobfunc, executor):
     channel.start_consuming()
 
 
+def print_timing():
+    """Print timing information."""
+    while True:
+        time.sleep(300)
+        runs = MEMORY["runs"]
+        dt = time.time() - MEMORY["timestamp"]
+        rate = runs / dt
+        MEMORY["runs"] = 0
+        MEMORY["timestamp"] = time.time()
+        if runs == 0:
+            continue
+        LOG.info("%s runs over %.3fs for %.3f r/s", runs, dt, rate)
+
+
 def main(argv):
     """Go main Go."""
     if len(argv) not in [3, 4]:
@@ -114,10 +137,13 @@ def main(argv):
     # argv[1] is the scenario and unused
     num_workers = int(argv[2])
     jobfunc = run if len(argv) < 4 else drain
+    # Start a thread to print timing every 300 seconds
+    threading.Thread(target=print_timing).start()
     while True:
         # Start a threadpool executor that is associated with a rabbitmq
         # connection.  Run until something bad happens, then start again!
         try:
+            1 / 0
             with ThreadPoolExecutor(max_workers=num_workers) as executor:
                 run_consumer(jobfunc, executor)
             LOG.warning("run_consumer exited cleanly, sleeping 30 seconds")
@@ -126,8 +152,8 @@ def main(argv):
             LOG.critical("Exiting due to keyboard interrupt")
             break
         except Exception as exp:
-            LOG.warning("Encountered Exception, sleeping 30 seconds")
-            LOG.exception(exp)
+            LOG.error("Exception %s, sleeping 30", exp)
+            traceback.print_exc()
             time.sleep(30)
 
 
