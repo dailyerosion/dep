@@ -12,7 +12,7 @@ development laptop has data for 3 March 2019, 23 May 2009, and 8 Jun 2009
 try:
     from zoneinfo import ZoneInfo  # type: ignore
 except ImportError:
-    from backports.zoneinfo import ZoneInfo
+    from backports.zoneinfo import ZoneInfo  # type: ignore
 from collections import namedtuple
 import datetime
 import sys
@@ -416,7 +416,9 @@ def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
             else:
                 ts = ZEROHOUR + datetime.timedelta(minutes=((i + 1) * 2))
             bp.append(bpstr(ts, accum))
-    if accum != lastaccum:
+    # To append a last accumulation, we need to have something meaningful
+    # so to not have redundant values, which bombs WEPP
+    if accum - lastaccum > 0.02:
         if (lasti + 1) == len(ar):
             ts = ZEROHOUR.replace(hour=23, minute=59)
         else:
@@ -616,6 +618,14 @@ def test_compute_tilebounds():
     """Test that computing tilebounds works."""
     res = compute_tile_bounds(5, 5, 5)
     assert abs(res.south - 60.0) < 0.01
+
+
+def test_duplicated_lastbp():
+    """Test that we do not get a duplicated last breakpoint."""
+    data = np.zeros([30 * 24])
+    data[-4:] = [3.2, 2.009, 0.001, 0]
+    bp = compute_breakpoint(data)
+    assert bp[-2].split()[1] != bp[-1].split()[1]
 
 
 def test_bp():
