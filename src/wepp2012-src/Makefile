@@ -2,6 +2,7 @@
 #
 # makefile for solaris 8 wepp executable.
 #
+
 FC_IF	  = ifort
 FC_G95        = g95
 FC_GNU        = gfortran
@@ -17,13 +18,15 @@ LINK_GNU     = gfortran
 LINK_2    = g++
 PROGRAM   = wepp
 
-#FFLAGS = $(FFLAGS_G95)
-#FC = $(FC_G95)
-#LINKER = $(LINK_G95)
-
-FFLAGS = $(FFLAGS_IFORT)
-FC = $(FC_IF)
-LINKER = $(LINK_IF)
+ifeq ($(FC),gfortran)
+  FFLAGS = $(FFLAGS_GNU)
+  FC = $(FC_GNU)
+  LINKER = $(LINK_GNU)
+else
+  FFLAGS = $(FFLAGS_IFORT)
+  FC = $(FC_IF)
+  LINKER = $(LINK_IF)
+endif
 
 
 DEST      = .

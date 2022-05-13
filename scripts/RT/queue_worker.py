@@ -70,7 +70,7 @@ def run(ch, delivery_tag, rundata):
                 f"/i/{d['scenario']}/error/{d['huc8']}/{d['huc812']}/"
                 f"{d['huc12']}_{d['fpath']}.error"
             )
-            LOG.warning("Errored: %s", errorfn)
+            LOG.info("Errored: %s", errorfn)
             os.makedirs(os.path.dirname(errorfn), exist_ok=True)
             with open(errorfn, "wb") as fp:
                 hn = f"Hostname: {socket.gethostname()}\n"
