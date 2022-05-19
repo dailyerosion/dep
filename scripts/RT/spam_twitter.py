@@ -34,7 +34,7 @@ def main():
         media_ids.append(response["media_id"])
 
     status = (
-        "Daily Erosion output for {yesterday:%B %-d %Y} is available "
+        f"Daily Erosion output for {yesterday:%B %-d %Y} is available "
         f"https://dailyerosion.org/map/#{yyyymmdd}//qc_precip"
     )
 
