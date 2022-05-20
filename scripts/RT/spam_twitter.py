@@ -11,7 +11,7 @@ LOG = util.logger()
 def main():
     """Do Wonderful things"""
     if datetime.date.today().month < 4 or datetime.date.today().month > 10:
-        LOG.info("Tweeting disabled Nov-Mar")
+        LOG.warning("Tweeting disabled Nov-Mar")
         return
     twitter = util.get_twitter("dailyerosion")
     # assume we run for yesterday
@@ -24,13 +24,12 @@ def main():
         )
         req = util.exponential_backoff(requests.get, uri, timeout=120)
         if req is None or req.status_code != 200:
-            LOG.info("Download %s failed", uri)
+            LOG.warning("Download %s failed", uri)
             continue
         bio = BytesIO()
         bio.write(req.content)
         bio.seek(0)
         response = twitter.upload_media(media=bio)
-        del bio
         media_ids.append(response["media_id"])
 
     status = (
@@ -39,7 +38,7 @@ def main():
     )
 
     res = twitter.update_status(status=status, media_ids=media_ids)
-    LOG.info(
+    LOG.warning(
         "Posted https://twitter.com/dailyerosion/status/%s", res["id_str"]
     )
 
