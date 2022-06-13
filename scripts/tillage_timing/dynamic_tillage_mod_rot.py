@@ -39,7 +39,7 @@ def get_threshold_bypl(scenario, row):
     # depth, sand, clay, OM, CEC, Rock
     clay = float(tokens[2])
     om = float(tokens[3])
-    pl = 14.22 + 0.005 * clay ** 2 + 3.63 * om - 0.048 * clay * om
+    pl = 14.22 + 0.005 * clay**2 + 3.63 * om - 0.048 * clay * om
     if PL_THRESHOLDS[scenario] is None:
         line = open(fn).readlines()[3]
         tokens = line.strip().split()

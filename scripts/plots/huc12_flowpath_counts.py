@@ -2,29 +2,30 @@
 import sys
 
 import matplotlib.colors as mpcolors
-from geopandas import read_postgis
+import geopandas as gpd
 from pyiem.plot import MapPlot, get_cmap
 from pyiem.reference import Z_POLITICAL, state_names
-from pyiem.util import get_dbconnstr
+from pyiem.util import get_sqlalchemy_conn
 
 
 def main(argv):
     """Go Main Go."""
     state = argv[1]
-    df = read_postgis(
-        """
-        select f.huc_12, count(*) as fps, simple_geom
-        from flowpaths f JOIN huc12 h on
-        (f.huc_12 = h.huc_12) WHERE f.scenario = 0 and h.scenario = 0 and
-        h.states ~* %s
-        GROUP by f.huc_12, simple_geom ORDER by fps ASC
-    """,
-        get_dbconnstr("idep"),
-        index_col=None,
-        params=(state,),
-        geom_col="simple_geom",
-    )
-    bins = [1, 5, 10, 20, 30, 40, 50, 75]
+    with get_sqlalchemy_conn("idep") as conn:
+        df = gpd.read_postgis(
+            """
+            select f.huc_12, count(*) as fps, simple_geom
+            from flowpaths f JOIN huc12 h on
+            (f.huc_12 = h.huc_12) WHERE f.scenario = 0 and h.scenario = 0 and
+            h.states ~* %s
+            GROUP by f.huc_12, simple_geom ORDER by fps ASC
+        """,
+            conn,
+            index_col=None,
+            params=(state,),
+            geom_col="simple_geom",
+        )
+    bins = [1, 5, 10, 20]
     cmap = get_cmap("copper")
     cmap.set_over("white")
     cmap.set_under("thistle")

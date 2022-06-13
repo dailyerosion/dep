@@ -9,6 +9,7 @@ is one file per HUC12.
 1. go to ../util and run `python make_dirs.py <scenario>`
 1. cd to ../import and run `python flowpath2prj.py <scenario>`
 1. `python prj2wepp.py <scenario>`
+1. do checks below for new HUC12s
 1. `python assign_dominant_tillage.py <scenario>`
 1. `python dbset_ofe.py <scenario>`
 1. `python package_myhucs.py <scenario>`

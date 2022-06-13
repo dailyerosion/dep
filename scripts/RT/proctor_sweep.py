@@ -25,6 +25,7 @@ import shutil
 import subprocess
 from multiprocessing import Pool
 
+from pyiem.dep import man2df, read_man
 from pyiem.util import get_sqlalchemy_conn, logger
 import pandas as pd
 import requests
@@ -73,6 +74,26 @@ def get_wind_obs(date, lon, lat):
     return hourly
 
 
+def compute_crop(manfn: str, year: int) -> str:
+    """Compute the crop code used for magic.R in sweep workflow."""
+    try:
+        mandf = man2df(read_man(manfn), 2007)
+    except Exception as exp:
+        LOG.info("%s generated %s", manfn, exp)
+        return "0"
+    cropname = (
+        mandf.query(f"year == {year} and ofe == 1")
+        .iloc[0]["crop_name"]
+        .lower()
+    )
+    cropcode = "0"
+    if cropname.startswith("Cor"):
+        cropcode = "C"
+    elif cropname.startswith("Soy"):
+        cropcode = "B"
+    return cropcode
+
+
 def workflow(arg):
     """Do what we need to do."""
     (idx, row) = arg
@@ -81,6 +102,11 @@ def workflow(arg):
         f"/i/{row['scenario']}/sweepin/{row['huc_12'][:8]}/"
         f"{row['huc_12'][8:12]}/{row['huc_12']}_{row['fpath']}.sweepin"
     )
+    cropcode = compute_crop(
+        sweepinfn.replace("sweepin", "man"),
+        row["date"].year,
+    )
+    # Compute the management df to get the crop code needed for downstream
     if not os.path.isfile(sweepinfn):
         LOG.warning("%s does not exist, copying template", sweepinfn)
         shutil.copyfile("sweepin_template.txt", sweepinfn)
@@ -110,7 +136,7 @@ def workflow(arg):
         f"Rscript --vanilla magic.R {sweepinfn} "
         f"{sweepinfn.replace('sweepin', 'grph')} "
         f"{sweepinfn.replace('sweepin', 'sol')} {row['date'].year} "
-        f"{row['date']:%j}"
+        f"{row['date']:%j} {cropcode}"
     )
     if not run_command(cmd):
         return None, None
