@@ -19,6 +19,7 @@ if (length(args) == 0) {
   weppsoilfile <- 'p0.sol';
   Year <- 2019;
   DayofYear <- 365;
+  CropCode <- 'C';
 } else {
   # get arguments from the command line
   generic_template_in=args[1];
@@ -26,6 +27,7 @@ if (length(args) == 0) {
   weppsoilfile=args[3];
   Year=as.numeric(args[4]);
   DayofYear=as.numeric(args[5]);
+  CropCode=args[6];
 }
 generic_template_in.in<-paste(generic_template_in, ".in", sep="")
 print(paste('Template File In: ', generic_template_in.in, sep=""))
