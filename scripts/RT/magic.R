@@ -285,14 +285,14 @@ WEPS[89]<-paste(" ",(round((WEPPout$CnpyHt_ft[i]*0.3048),digits=2)),sep="") #cro
 
 
 #***************estimate Stem Area Index**********
-if (CropCode ==S ){
+if (CropCode == 'S'){
     stem_dia <- 0.006 #m #6.0mm
     stem_pop<-(100000/4046.86)
-  } else if (CropCode == C){
+} else {
     stem_dia <- 0.01 #m #10.0mm
     stem_pop<-(32000/4046.86)
-  }
- #NEED TO ADD STATEMENT FOR OTHER CROP
+}
+#NEED TO ADD STATEMENT FOR OTHER CROP
 CSAI<-stem_dia*stem_pop*(WEPPout$CnpyHt_ft[i]*0.3048)
 WEPS[93]<-paste(" ",(round(CSAI, digits=2)),"", (round(WEPPout$LAI[i], digits=2)),collapse="") #crop StemAI and LAI
 
@@ -303,11 +303,11 @@ WEPS[93]<-paste(" ",(round(CSAI, digits=2)),"", (round(WEPPout$LAI[i], digits=2)
 #Percent cover estimated from residue biomass after equtions provided in Gregory, 1982
 #Currently using a single cover coefficient (corn), need to find a way to update this by crop
 Residuelbac<-WEPPout$`Rsd_t-a`[i]*2000 #convert t/ac to lb/acre
-  if (CropCode ==S ){
+if (CropCode == 'S'){
     covercoef<-0.0002
-  } else if (CropCode == C){
+} else {
     covercoef<-0.00038
-  }
+}
 
 Cover<-(1-exp(-covercoef*Residuelbac))
 WEPS[114]<-Cover
