@@ -97,6 +97,14 @@ SOYBEAN = {
     "IA_CENTRAL": "CropDef.Soy_2193",
     "IA_NORTH": "CropDef.Soy_2194",
 }
+WHEAT = {
+    "KS_SOUTH": "CropDef.spwheat1",
+    "KS_CENTRAL": "CropDef.spwheat1",
+    "KS_NORTH": "CropDef.spwheat1",
+    "IA_SOUTH": "CropDef.spwheat1",
+    "IA_CENTRAL": "CropDef.spwheat1",
+    "IA_NORTH": "CropDef.spwheat1",
+}
 
 
 def load_surgo2file(cursor):
@@ -143,14 +151,15 @@ def read_file(scenario, zone, prevcode, code, cfactor, year):
         pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
         plant = CORN[zone]
-    elif code == "B":
+    elif code in ["B", "L"]:  # TODO support double crop
         date = SOYBEAN_PLANT.get(scenario, SOYBEAN_PLANT[zone])
         pdate = date.strftime("%m    %d")
         pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
         plant = SOYBEAN[zone]
     elif code == "W":
-        date = WHEAT_PLANT[zone]
+        date = SOYBEAN_PLANT.get(scenario, SOYBEAN_PLANT[zone])  # TODO
+        plant = WHEAT_PLANT[zone]
         pdate = date.strftime("%m    %d")
         pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
