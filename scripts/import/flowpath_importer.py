@@ -213,9 +213,15 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df):
             print(df)
             sys.exit()
         cursor.execute(
-            "UPDATE flowpaths SET geom = %s, "
+            "UPDATE flowpaths SET geom = %s, irrigated = %s,"
             "max_slope = %s, bulk_slope = %s WHERE fid = %s",
-            (f"SRID=5070;{ls.wkt}", maxslope, elev_change / x_change, db_fid),
+            (
+                f"SRID=5070;{ls.wkt}",
+                bool(df["irrigated"].sum() > 0),
+                maxslope,
+                elev_change / x_change,
+                db_fid,
+            ),
         )
     else:
         # Cull our work above if this flowpath is too short
