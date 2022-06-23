@@ -6,6 +6,7 @@ also do any of the following:
     # See usage
     python env2database.py -h
 """
+import gzip
 import os
 import re
 import argparse
@@ -148,14 +149,15 @@ def load_precip(dates, huc12s):
     progress = tqdm(dates, disable=(not sys.stdout.isatty()))
     for date in progress:
         progress.set_description(date.strftime("%Y-%m-%d"))
-        fn = date.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.npy")
+        fn = date.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.npy.gz")
         if not os.path.isfile(fn):
             LOG.info("Missing precip: %s", fn)
             for huc12 in huc12df.index.values:
                 d = res.setdefault(huc12, [])
                 d.append(0)
             continue
-        pcp = np.flipud(np.load(fn))
+        with gzip.GzipFile(fn, "r") as fh:
+            pcp = np.flipud(np.load(file=fh))
         # nodata here represents the value that is set to missing within the
         # source dataset!, setting to zero has strange side affects
         pcp = np.where(pcp < 0, np.nan, pcp)

@@ -34,10 +34,8 @@ def main():
                 (lon, lat),
             )
             if cursor.rowcount == 0:
-                # print("lon: %s lat: %s is not onland" % (lon, lat))
                 if os.path.isfile(fn):
-                    print("Removing %s" % (fn,))
-                    os.unlink(fn)
+                    print(f"Hmmm {fn} is not onland, but has file?")
                     removed += 1
                 continue
             mydir = fn.rsplit("/", 1)[0]
@@ -47,9 +45,7 @@ def main():
                 created += 1
                 shutil.copyfile(SRC, fn)
 
-    print(
-        "We just created %s new files, removed %s files!" % (created, removed)
-    )
+    print(f"We just created {created} new files, removed {removed} files!")
 
 
 if __name__ == "__main__":
