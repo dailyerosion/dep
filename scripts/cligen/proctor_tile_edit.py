@@ -3,6 +3,7 @@
 Usage:
     python proctor_tile_edit.py <scenario> <yyyy> <mm> <dd>
 """
+import gzip
 import sys
 import os
 import stat
@@ -22,7 +23,7 @@ DATADIR = "/mnt/idep2/data/dailyprecip"
 
 def get_fn(date):
     """Return the filename for this date."""
-    return f"{DATADIR}/{date.year}/{date:%Y%m%d}.npy"
+    return f"{DATADIR}/{date.year}/{date:%Y%m%d}.npy.gz"
 
 
 def assemble_grids(tilesz, date):
@@ -41,7 +42,8 @@ def assemble_grids(tilesz, date):
             res[yslice, xslice] = np.load(fn)
             os.unlink(fn)
 
-    np.save(get_fn(date), res)
+    with gzip.GzipFile(get_fn(date), "w") as fh:
+        np.save(file=fh, arr=res)
 
 
 def myjob(cmd):

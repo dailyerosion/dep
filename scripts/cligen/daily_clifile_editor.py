@@ -40,6 +40,16 @@ MEMORY = {"stamp": datetime.datetime.now()}
 BOUNDS = namedtuple("Bounds", ["south", "north", "east", "west"])
 
 
+def check_has_clifiles(bounds: BOUNDS):
+    """Test that this tile has clifiles for editing."""
+    fn1 = get_cli_fname(bounds.west, bounds.south)
+    fn2 = get_cli_fname(bounds.west, bounds.north)
+    fn3 = get_cli_fname(bounds.east, bounds.north)
+    fn4 = get_cli_fname(bounds.east, bounds.south)
+    # Since we have constant files every 0.25 degree, we should find at 1+
+    return any(os.path.isfile(fn) for fn in [fn1, fn2, fn3, fn4])
+
+
 def get_sts_ets_at_localhour(date, local_hour):
     """Return a Day Interval in UTC for the given date at CST/CDT hour."""
     # ZoneInfo is supposed to get this right at instanciation
@@ -328,7 +338,8 @@ def load_precip(data, valid, tile_bounds):
             fns.append(fn)
         else:
             fns.append(None)
-            LOG.warning("missing: %s", fn)
+            # TODO log this from proctor to cut down on noise
+            LOG.info("missing: %s", fn)
 
         now += datetime.timedelta(minutes=2)
     if quorum > 0:
@@ -533,7 +544,7 @@ def main(argv):
     valid = datetime.date(int(argv[5]), int(argv[6]), int(argv[7]))
 
     tile_bounds = compute_tile_bounds(xtile, ytile, tilesize)
-    LOG.debug("bounds %s", tile_bounds)
+    LOG.info("bounds %s", tile_bounds)
     shp = (
         int((tile_bounds.north - tile_bounds.south) * 100),
         int((tile_bounds.east - tile_bounds.west) * 100),
@@ -541,8 +552,15 @@ def main(argv):
     data = {}
     for vname in "high low dwpt wind solar stage4".split():
         data[vname] = np.zeros(shp, np.float16)
+
     # Optimize for continuous memory
     data["precip"] = np.zeros((*shp, 30 * 24), np.float16)
+
+    # We could be outside conus, if so, just write out zeros
+    if not check_has_clifiles(tile_bounds):
+        LOG.info("Exiting as tile %s %s is outside CONUS", xtile, ytile)
+        write_grid(np.sum(data["precip"], 2), valid, xtile, ytile)
+        return
 
     xaxis = np.arange(tile_bounds.west, tile_bounds.east, 0.01)
     yaxis = np.arange(tile_bounds.south, tile_bounds.north, 0.01)
@@ -617,7 +635,7 @@ def test_get_sts_ets_at_localhour():
 def test_compute_tilebounds():
     """Test that computing tilebounds works."""
     res = compute_tile_bounds(5, 5, 5)
-    assert abs(res.south - 60.0) < 0.01
+    assert abs(res.south - 48.0) < 0.01
 
 
 def test_duplicated_lastbp():
