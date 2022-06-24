@@ -278,7 +278,9 @@ def load_precip_legacy(data, valid, tile_bounds):
         tidx += 1
 
     for tidx, filename in zip(indices, filenames):
-        m5[tidx, :, :] = _reader(filename, tile_bounds)
+        # Legacy product may not go far enough south :/
+        yslice = slice(100, 500) if tile_bounds.south == 23 else slice(0, 500)
+        m5[tidx, yslice, :] = _reader(filename, tile_bounds)
     LOG.debug("finished loading N0R Composites")
     m5 = np.transpose(m5, (1, 2, 0)).copy()
     LOG.debug("transposed the data!")

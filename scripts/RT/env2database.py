@@ -11,7 +11,7 @@ import os
 import re
 import argparse
 import datetime
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 import sys
 
 import numpy as np
@@ -358,7 +358,7 @@ def main(argv):
     totalinserts = 0
     totalskipped = 0
     totaldeleted = 0
-    with Pool() as pool:
+    with Pool(max([2, cpu_count() - 4])) as pool:
         for huc12, inserts, skipped, deleted in tqdm(
             pool.imap_unordered(do_huc12, jobs),
             total=len(jobs),
