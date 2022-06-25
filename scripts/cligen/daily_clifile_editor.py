@@ -255,7 +255,8 @@ def load_precip_legacy(data, valid, tile_bounds):
     midnight, tomorrow = get_sts_ets_at_localhour(valid, 0)
 
     now = midnight
-    m5 = np.zeros((ts, *data["solar"].shape), np.float16)
+    # To avoid division by zero below when we have the strip of no-data 23-24N
+    m5 = np.ones((ts, *data["solar"].shape), np.float16) * 0.01
     tidx = 0
     filenames = []
     indices = []
