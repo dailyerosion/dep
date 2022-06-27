@@ -66,6 +66,9 @@ def get_data(filename):
       gpd.DataFrame with the geojson data included.
     """
     df = gpd.read_file(filename, index="OBJECTID")
+    if "irrigated" not in df.columns:
+        LOG.info("%s had no irrigated column", filename)
+        df["irrigated"] = 0
     # Compute full rotation string
     # 2022 is repeating -2 (2020)
     s = df["CropRotatn_CY_2021"]

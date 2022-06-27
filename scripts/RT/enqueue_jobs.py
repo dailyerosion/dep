@@ -36,7 +36,7 @@ class WeppRun:
     Filenames have a 51 character restriction.
     """
 
-    def __init__(self, huc12, fpid, clifile, scenario):
+    def __init__(self, huc12, fpid, clifile, scenario, ofe_count, is_irr):
         """We initialize with a huc12 identifier and a flowpath id"""
         self.huc12 = huc12
         self.huc8 = huc12[:8]
@@ -44,6 +44,8 @@ class WeppRun:
         self.fpid = fpid
         self.clifile = clifile
         self.scenario = scenario
+        self.ofe_count = ofe_count
+        self.is_irr = is_irr
 
     def _getfn(self, prefix):
         """boilerplate code to get a filename."""
@@ -100,6 +102,10 @@ class WeppRun:
         """Filename to be used for crop output."""
         return self._getfn("grph")
 
+    def get_irrigation_fn(self):
+        """Filename providing irrigation data."""
+        return f"/i/{self.scenario}/irrigation/ofe{self.ofe_count}.txt"
+
     def make_runfile(self):
         """Create a runfile for our runs"""
         out = StringIO()
@@ -134,7 +140,11 @@ class WeppRun:
         out.write(f"{self.get_slope_fn()}\n")  # slope file
         out.write(f"{self.get_clifile_fn()}\n")  # climate file
         out.write(f"{self.get_soil_fn()}\n")  # soil file
-        out.write("0\n")  # Irrigation
+        if self.is_irr:
+            out.write("2\n")  # Irrigation
+            out.write(f"{self.get_irrigation_fn()}\n")
+        else:
+            out.write("0\n")  # Irrigation
         out.write(f"{YEARS}\n")  # years 2007-
         out.write("0\n")  # route all events
         out.seek(0)
@@ -162,8 +172,8 @@ def main(argv):
     flscenario, _clscenario = icursor.fetchone()
 
     icursor.execute(
-        "SELECT huc_12, fpath, climate_file from flowpaths "
-        "where scenario = %s",
+        "SELECT huc_12, fpath, climate_file, ofe_count, irrigated "
+        "from flowpaths where scenario = %s",
         (flscenario,),
     )
     totaljobs = icursor.rowcount
@@ -178,7 +188,7 @@ def main(argv):
         if scenario >= 142:
             # le sigh
             clfile = clfile.replace("/0/", f"/{scenario}/")
-        wr = WeppRun(row[0], row[1], clfile, scenario)
+        wr = WeppRun(row[0], row[1], clfile, scenario, row[3], row[4])
         channel.basic_publish(
             exchange="",
             routing_key="dep",
