@@ -33,6 +33,9 @@ This query finds any new HUC12s and inserts the geometry into a table.
     (select distinct huc_12 from flowpaths where huc_12 not in
     (select huc_12 from huc12 where scenario = 0) and scenario = 0);
 
+    Update huc12 h SET simple_geom = st_geometryn(p.geom, 1) FROM huc12_p250 p
+    WHERE h.huc_12 = p.huc12;
+
 We should also check that we don't have unknown tables.
 
     select distinct huc_12 from flowpaths where scenario = 0 and huc_12 not in (select huc_12 from huc12 where scenario = 0) ORDER by huc_12;
