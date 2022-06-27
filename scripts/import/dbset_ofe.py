@@ -54,6 +54,12 @@ def main(argv):
                 if cursor.rowcount == 0:
                     LOG.info("no points found %s %s [%s-%s]", i, slpfn, x0, x1)
                     return
+            # Update flowpaths now as well
+            cursor.execute(
+                "UPDATE flowpaths SET ofe_count = %s WHERE scenario = %s and "
+                "huc_12 = %s and fpath = %s",
+                (len(slp), scenario, huc12, fpath),
+            )
     cursor.close()
     pgconn.commit()
     LOG.info(
