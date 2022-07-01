@@ -211,7 +211,7 @@ def load_stage4(data, valid, xtile, ytile):
     LOG.debug("finished")
 
 
-def qc_precip(data, valid, xtile, ytile):
+def qc_precip(data, valid, xtile, ytile, tile_bounds):
     """Make some adjustments to the `precip` grid
 
     Not very sophisticated here, if the hires precip grid is within 33% of
@@ -219,6 +219,17 @@ def qc_precip(data, valid, xtile, ytile):
     bring it to near the stage IV value.
     """
     hires_total = np.sum(data["precip"], 2)
+    if valid.year >= 2015:
+        # Do an assessment of the hires_total (A2M MRMS), it may have too many
+        # zeros where stage IV has actual data.
+        a2m_zeros = hires_total < 0.01
+        s4 = data["stage4"] > 5  # arb
+        score = np.sum(np.logical_and(a2m_zeros, s4)) / np.multiply(*s4.shape)
+        if score > 0.1:  # arb
+            LOG.warning("MRMS had %.2f%% bad zeros, using legacy", score * 100)
+            load_precip_legacy(data, valid, tile_bounds)
+            hires_total = np.sum(data["precip"], 2)
+
     # prevent zeros
     hires_total = np.where(hires_total < 0.01, 0.01, hires_total)
     write_grid(hires_total, valid, xtile, ytile, "inqcprecip")
@@ -463,7 +474,7 @@ def precip_workflow(data, valid, xtile, ytile, tile_bounds):
         load_precip_legacy(data, valid, tile_bounds)
     else:
         load_precip(data, valid, tile_bounds)
-    qc_precip(data, valid, xtile, ytile)
+    qc_precip(data, valid, xtile, ytile, tile_bounds)
     write_grid(np.sum(data["precip"], 2), valid, xtile, ytile)
 
 
