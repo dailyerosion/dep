@@ -69,8 +69,9 @@ def main():
             outf.write("1 1\n")
 
             r4 = 9 if row[4] > 9 else row[4]
+            compname = row[1].replace("'", " ")
             outf.write(
-                f"'{row[1]}' '{row[3]}' {r4} {row[2]} 0.75 {row[5]} "
+                f"'{compname}' '{row[3]}' {r4} {row[2]} 0.75 {row[5]} "
                 f"{row[6]:.4f} {row[7]:.2f} {row[8]:.2f}\n"
             )
 
