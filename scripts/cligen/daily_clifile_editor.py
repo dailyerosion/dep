@@ -225,7 +225,7 @@ def qc_precip(data, valid, xtile, ytile, tile_bounds):
         a2m_zeros = hires_total < 0.01
         s4 = data["stage4"] > 5  # arb
         score = np.sum(np.logical_and(a2m_zeros, s4)) / np.multiply(*s4.shape)
-        if score > 0.1:  # arb
+        if score > 0.005:  # 0.5% is arb, but good enough?
             LOG.warning("MRMS had %.2f%% bad zeros, using legacy", score * 100)
             load_precip_legacy(data, valid, tile_bounds)
             hires_total = np.sum(data["precip"], 2)

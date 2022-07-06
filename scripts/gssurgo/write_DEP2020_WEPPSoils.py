@@ -28,64 +28,72 @@ original coding: DE James 03.2013
 import os
 from pyiem.util import get_dbconn
 
-#
-outPath = "/i/0/sol_input_fy2021"
 
-# SQL Server connect
-cxn = get_dbconn("idep")
+def main():
+    """Main loop."""
+    #
+    outPath = "/i/0/sol_input_fy2021"
 
-Pcursor = cxn.cursor()
-Pcursor.execute(
-    """Select mukey, compname, Albedo, Texture, HrzCount, KI, KR, TC, KB
-    From DEP_SoilParameters
-    Where HrzCount > 0 AND Albedo Is Not Null AND compname != 'Aquolls'
-    AND KI Is Not Null AND KR Is Not Null AND TC Is Not Null
-    AND KB Is Not Null
-    """
-)
+    # SQL Server connect
+    cxn = get_dbconn("idep")
 
-MURows = Pcursor.fetchall()
-del Pcursor
+    Pcursor = cxn.cursor()
+    Pcursor.execute(
+        """Select mukey, compname, Albedo, Texture, HrzCount, KI, KR, TC, KB
+        From DEP_SoilParameters
+        Where HrzCount > 0 AND Albedo Is Not Null AND compname != 'Aquolls'
+        AND KI Is Not Null AND KR Is Not Null AND TC Is Not Null
+        AND KB Is Not Null
+        """
+    )
 
-HrzCursor = cxn.cursor()
-for row in MURows:
-    fname = f"{outPath}/DEP_{row[0]}.SOL"
+    MURows = Pcursor.fetchall()
+    del Pcursor
 
-    if os.path.exists(fname):
-        continue
-    with open(fname, "w", encoding="utf-8") as outf:
-        print(f"writing: {fname}  - {row[1]}")
+    HrzCursor = cxn.cursor()
+    for row in MURows:
+        fname = f"{outPath}/DEP_{row[0]}.SOL"
 
-        outf.write("2006.2\n")
-        outf.write("#\n")
-        outf.write("# DEP SOL\n")
-        outf.write("# DE James 05_2021\n")
-        outf.write("# Source: US gSSURGO CONUS Soil DB 07/2020\n")
-        outf.write("#\n")
-        outf.write(f"SSURGO MUKEY: {row[0]}\n")
-        outf.write("1 1\n")
+        if os.path.exists(fname):
+            continue
+        with open(fname, "w", encoding="utf-8") as outf:
+            print(f"writing: {fname}  - {row[1]}")
 
-        r4 = 9 if row[4] > 9 else row[4]
-        outf.write(
-            f"'{row[1]}' '{row[3]}' {r4} {row[2]} 0.75 {row[5]} {row[6]:.4f} "
-            f"{row[7]:.2f} {row[8]:.2f}\n"
-        )
+            outf.write("2006.2\n")
+            outf.write("#\n")
+            outf.write("# DEP SOL\n")
+            outf.write("# DE James 05_2021\n")
+            outf.write("# Source: US gSSURGO CONUS Soil DB 07/2020\n")
+            outf.write("#\n")
+            outf.write(f"SSURGO MUKEY: {row[0]}\n")
+            outf.write("1 1\n")
 
-        zCount = 0
-        HrzCursor.execute(
-            """SELECT DepthTo_mm, Sand, Clay, OM, CEC7, FragTot
-                                  FROM DEP_SoilFractions
-                                  WHERE mukey = %s
-                                  ORDER by DepthTo_mm""",
-            (row[0],),
-        )
-        for row2 in HrzCursor:
-            zCount += 1
-            if zCount < 10:
-                outf.write(
-                    f"       {row2[0]} {row2[1]} {row2[2]} {row2[3]} "
-                    f"{row2[4]} {row2[5]}\n"
-                )
+            r4 = 9 if row[4] > 9 else row[4]
+            compname = row[1].replace("'", " ")
+            outf.write(
+                f"'{compname}' '{row[3]}' {r4} {row[2]} 0.75 {row[5]} "
+                f"{row[6]:.4f} {row[7]:.2f} {row[8]:.2f}\n"
+            )
 
-        outf.write("0 0 0 0\n")
-        outf.write("255 255 255\n")
+            zCount = 0
+            HrzCursor.execute(
+                """SELECT DepthTo_mm, Sand, Clay, OM, CEC7, FragTot
+                                    FROM DEP_SoilFractions
+                                    WHERE mukey = %s
+                                    ORDER by DepthTo_mm""",
+                (row[0],),
+            )
+            for row2 in HrzCursor:
+                zCount += 1
+                if zCount < 10:
+                    outf.write(
+                        f"       {row2[0]} {row2[1]} {row2[2]} {row2[3]} "
+                        f"{row2[4]} {row2[5]}\n"
+                    )
+
+            outf.write("0 0 0 0\n")
+            outf.write("255 255 255\n")
+
+
+if __name__ == "__main__":
+    main()
