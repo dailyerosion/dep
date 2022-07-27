@@ -49,7 +49,8 @@ def main():
         )
     # Now make white color transparent
     subprocess.call(
-        "convert depdomain.png -transparent white depdomain.png", shell=True
+        "convert depdomain.png -transparent white -colors 2 depdomain.png",
+        shell=True,
     )
 
 
