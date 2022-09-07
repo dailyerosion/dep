@@ -312,6 +312,16 @@ if (CropCode == 'S'){
 Cover<-(1-exp(-covercoef*Residuelbac))
 WEPS[114]<-Cover
 
+#Crop row spacing
+  if (crop_type =='S' ){
+  crop_spacing<-(20*0.0254) #20in soybean row spacing
+} else if (crop_type == 'C'){
+  crop_spacing<-(30*0.0254) #30in corn row spacing 
+}else {
+  crop_spacing<-(30*0.0254)
+}
+WEPS[101]<-paste(" ",(round(crop_spacing, digits=2)),"", 0,collapse="")
+
 ### WEPS.IN +++ SOIL +++ 
 WEPS[119]<-paste(" ",1,sep="")  #number of soil layers (WEPS only needs info for the top layer)
 WEPS[124]<-paste(" ",Depthmm,sep="") #thickness of soil layer in mm
