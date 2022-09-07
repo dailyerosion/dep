@@ -314,7 +314,7 @@ WEPS[114]<-Cover
 
 #Crop row spacing
   if (crop_type =='S' ){
-  crop_spacing<-(20*0.054) #20in soybean row spacing
+  crop_spacing<-(20*0.0254) #20in soybean row spacing
 } else if (crop_type == 'C'){
   crop_spacing<-(30*0.0254) #30in corn row spacing 
 }else {
