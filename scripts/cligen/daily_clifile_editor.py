@@ -296,7 +296,8 @@ def load_precip_legacy(data, valid, tile_bounds):
     LOG.debug("finished loading N0R Composites")
     m5 = np.transpose(m5, (1, 2, 0)).copy()
     LOG.debug("transposed the data!")
-    m5total = np.sum(m5, 2)
+    # Prevent overflow with likely bad data leading to value > np.float16
+    m5total = np.sum(m5, 2, dtype=np.float32)
     LOG.debug("computed sum(m5)")
     wm5 = m5 / m5total[:, :, None]
     LOG.debug("computed weights of m5")
