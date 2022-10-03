@@ -80,12 +80,13 @@ def get_data(filename):
 
 def delete_previous(cursor, scenario, huc12):
     """This file is the authority, so we cull previous content."""
-    cursor.execute(
-        "DELETE from flowpath_points p USING flowpaths f WHERE "
-        "p.scenario = %s and p.flowpath = f.fid and f.huc_12 = %s "
-        "and f.scenario = %s",
-        (scenario, huc12, scenario),
-    )
+    for table in ["flowpath_points", "flowpath_ofes"]:
+        cursor.execute(
+            f"DELETE from {table} p USING flowpaths f WHERE "
+            "p.scenario = %s and p.flowpath = f.fid and f.huc_12 = %s "
+            "and f.scenario = %s",
+            (scenario, huc12, scenario),
+        )
     cursor.execute(
         "DELETE from flowpaths WHERE scenario = %s and huc_12 = %s",
         (scenario, huc12),
