@@ -47,7 +47,6 @@ MISSED_SOILS = {}
 MAX_SLOPE_RATIO = 0.9
 MIN_SLOPE = 0.003
 YEARS = 2022 - 2006
-SURGO2FILE = {}
 
 # Note that the default used below is
 INITIAL_COND_DEFAULT = "IniCropDef.Default"
@@ -105,13 +104,6 @@ WHEAT = {
     "IA_CENTRAL": "CropDef.spwheat1",
     "IA_NORTH": "CropDef.spwheat1",
 }
-
-
-def load_surgo2file(cursor):
-    """Populate"""
-    cursor.execute("SELECT surgo, soilfile from xref_surgo")
-    for row in cursor:
-        SURGO2FILE[row[0]] = row[1]
 
 
 def read_file(scenario, zone, prevcode, code, cfactor, year):
@@ -584,7 +576,6 @@ def workflow(pgconn, scenario):
     """Go main go"""
     conn = get_dbconn("idep")
     cursor = conn.cursor()
-    load_surgo2file(cursor)
     df = pd.read_sql(
         "SELECT ST_ymax(ST_Transform(geom, 4326)) as lat, fpath, fid, huc_12, "
         "climate_file from flowpaths WHERE scenario = %s and fpath != 0 "
