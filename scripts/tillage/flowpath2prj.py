@@ -18,11 +18,6 @@ cursor = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cursor2 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cursor3 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-surgo2file = {}
-cursor.execute("""SELECT surgo, soilfile from xref_surgo""")
-for _row in cursor:
-    surgo2file[_row[0]] = _row[1]
-
 
 def get_rotation(code):
     """Convert complex things into a simple WEPP management for now"""
