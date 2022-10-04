@@ -52,6 +52,7 @@ update chorizon SET ecec_r = null where ecec_r = 0;
 
 Print 'Extract & create WEPP Parameter table'
 SELECT DOM.mukey
+    ,C.hydgrp as hydrogroup
       ,C.cokey
       ,C.compname
       ,C.comppct_r
@@ -61,7 +62,8 @@ SELECT DOM.mukey
       ,hrz.chkey 
       ,hrz.hzname
       ,hrz.hzdept_r
-      ,hrz.hzdepb_r        
+      ,hrz.hzdepb_r
+      ,hrz.kwfact
       ,CASE
           WHEN hrz.sandtotal_r >= 30 THEN
             2728000 + ( 192100 * hrz.sandvf_r )

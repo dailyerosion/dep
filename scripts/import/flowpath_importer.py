@@ -23,6 +23,7 @@ print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")
 print(" * VERIFY that the GeoJSON is the 5070 grid value")
 print(" * This will generate a `myhucs.txt` file with found HUCs")
 
+SOILFY = 2022
 PREFIX = "fp"
 TRUNC_GRIDORDER_AT = 4
 GENLU_CODES = {}
@@ -186,7 +187,8 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df):
             segid,
             row[elevcolname] / 100.0,
             row[lencolname] / 100.0,
-            row["SOL_FY_2022"],
+            SOILFY,
+            row[f"SOL_FY_{SOILFY}"],
             row["management"],
             slope,
             row["geometry"].x,
@@ -198,11 +200,15 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df):
             row["FBndID"].split("_")[1],
         )
         cursor.execute(
-            "INSERT into flowpath_points(flowpath, segid, elevation, length, "
-            "surgo, management, slope, geom, landuse, scenario, gridorder, "
-            "genlu, fbndid) "
-            "values(%s, %s, %s, %s, %s, %s, %s, 'SRID=5070;POINT(%s %s)', "
-            "%s, %s, %s, %s, %s)",
+            """
+            INSERT into flowpath_points(flowpath, segid, elevation, length,
+            gssurgo_id, management, slope, geom, landuse, scenario, gridorder,
+            genlu, fbndid)
+            values(%s, %s, %s, %s,
+            (select id from ggsurgo where fiscal_year = %s and mukey = %s),
+            %s, %s, 'SRID=5070;POINT(%s %s)',
+            %s, %s, %s, %s, %s)
+            """,
             args,
         )
 

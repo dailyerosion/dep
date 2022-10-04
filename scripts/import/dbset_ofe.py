@@ -86,7 +86,7 @@ def main(argv):
                     """
                     UPDATE flowpath_points SET ofe = %s where
                     flowpath = %s and length >= %s and length < %s
-                    returning surgo, length
+                    returning gssurgo_id, length
                     """,
                     (
                         ofenum,
@@ -101,11 +101,11 @@ def main(argv):
                     return
                 # NB see dailyerosion/dep#151 for why we can't trust last pt
                 surgos = pd.DataFrame(
-                    cursor.fetchall(), columns=["surgo", "length"]
+                    cursor.fetchall(), columns=["gssurgo_id", "length"]
                 ).sort_values("length", ascending=True)
                 if len(surgos.index) > 1:
                     surgos = surgos.iloc[:-1]
-                if len(surgos["surgo"].unique()) > 1:
+                if len(surgos["gssurgo_id"].unique()) > 1:
                     print(surgos, ofenum, fid)
                     sys.exit()
                 # OFE geometry work
@@ -116,7 +116,7 @@ def main(argv):
                 cursor.execute(
                     """
                     INSERT into flowpath_ofes
-                    (flowpath, ofe, geom, scenario, bulk_slope, surgo)
+                    (flowpath, ofe, geom, scenario, bulk_slope, gssurgo_id)
                     VALUES(%s,%s,%s,%s,%s, %s)
                     """,
                     (
@@ -125,7 +125,7 @@ def main(argv):
                         ofeline.wkt,
                         scenario,
                         bs,
-                        surgos["surgo"].values[0],
+                        surgos["gssurgo_id"].values[0],
                     ),
                 )
 

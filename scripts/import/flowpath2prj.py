@@ -335,15 +335,15 @@ def rewrite_flowpath(cursor, scenario, flowpath_id, df):
     for _idx, row in df.iterrows():
         cursor.execute(
             "INSERT INTO flowpath_points (flowpath, segid, elevation, length, "
-            "surgo, slope, geom, scenario, gridorder, landuse, management, "
-            "fbndid, genlu) "
+            "gssurgo_id, slope, geom, scenario, gridorder, landuse, "
+            "management, fbndid, genlu) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (
                 flowpath_id,
                 row["segid"],
                 row["elevation"],
                 row["length"],
-                row["surgo"],
+                row["gssurgo_id"],
                 row["slope"],
                 f"SRID=5070;POINT({row['xx']} {row['yy']})",
                 scenario,
@@ -360,12 +360,12 @@ def load_flowpath_from_db(pgconn, fid):
     """Fetch me the flowpath."""
     return pd.read_sql(
         """
-        SELECT segid, elevation, length, f.surgo,
-        slope, management, 'DEP_'||surgo||'.SOL' as soilfile, landuse,
+        SELECT segid, elevation, length, f.gssurgo_id,
+        slope, management, 'DEP_'||mukey||'.SOL' as soilfile, landuse,
         ST_x(geom) as xx, ST_y(geom) as yy, fbndid, genlu, gridorder,
         round(ST_X(ST_Transform(geom,4326))::numeric,2) as x,
         round(ST_Y(ST_Transform(geom,4326))::numeric,2) as y from
-        flowpath_points f
+        flowpath_points f JOIN gssurgo g on (f.gssurgo_id = g.id)
         WHERE flowpath = %s and length < 9999
         ORDER by segid ASC
     """,
@@ -440,16 +440,18 @@ def do_flowpath(pgconn, cursor, scenario, zone, metadata):
         slpdata = " 0.000,0.00001"
         res["slope_points"] = len(df.index) + 1
 
-    soil = df.iloc[0]["surgo"]
+    soil = df.iloc[0]["gssurgo_id"]
     soilstart = 0
     soils = []
+    soilfiles = []
     soillengths = []
 
     for idx, row in df.iterrows():
-        if soil != row["surgo"] or idx == df.index[-1]:
+        if soil != row["gssurgo_id"] or idx == df.index[-1]:
             soils.append(soil)
+            soilfiles.append(row["soilfile"])
             soillengths.append(row["length"] - soilstart)
-            soil = row["surgo"]
+            soil = row["gssurgo_id"]
             soilstart = row["length"]
         # NEED lots of precision to get grid rectifying right
         # see dailyerosion/dep#79
@@ -459,12 +461,12 @@ def do_flowpath(pgconn, cursor, scenario, zone, metadata):
     res["soils"] = ""
     res["slpdata"] = slpdata
 
-    for d, s in zip(soillengths, soils):
+    for d, s, soilfn in zip(soillengths, soils, soilfiles):
         res[
             "soils"
         ] += f"""    {s} {{
         Distance = {d:.3f}
-        File = "/i/{scenario}/sol_input/DEP_{s}.SOL"
+        File = "/i/{scenario}/sol_input/{soilfn}"
     }}\n"""
 
     prev_landuse = df.iloc[0]["landuse"]
