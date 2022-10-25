@@ -5,27 +5,70 @@ import sys
 
 import pandas as pd
 from tqdm import tqdm
-from pyiem.util import get_sqlalchemy_conn
-from pyiem.dep import read_ofe
+from pyiem.util import get_sqlalchemy_conn, get_dbconn
+from pyiem.dep import read_env, read_ofe
 
 # 2007 is skipped
 YEARS = 2021 - 2008
 
 
+def fpmagic(cursor, envfn, rows, huc12, fpath):
+    """Do the computations for the flowpath."""
+    df = read_env(envfn)
+    # Drop any 2007 or 2021+ data
+    df = df[
+        (df["date"] < datetime.datetime(2021, 1, 1))
+        & (df["date"] >= datetime.datetime(2008, 1, 1))
+    ]
+    cursor.execute(
+        "SELECT ST_length(geom), bulk_slope, max_slope from flowpaths "
+        "where scenario = 0 and huc_12 = %s and fpath = %s",
+        (huc12, fpath),
+    )
+    meta = cursor.fetchone()
+    fplen = meta[0]
+    df["delivery"] = df["sed_del"] / fplen
+    rows.append(
+        {
+            "id": f"{huc12}_{fpath}",
+            "huc12": huc12,
+            "fpath": fpath,
+            "bulk_slope[1]": meta[1],
+            "max_slope[1]": meta[2],
+            "runoff[mm/yr]": df["runoff"].sum() / YEARS,
+            "detach[t/a/yr]": df["av_det"].sum() / YEARS * 4.463,
+            "length[m]": fplen,
+            "delivery[t/a/yr]": df["delivery"].sum() / YEARS * 4.463,
+        }
+    )
+
+
 def main():
     """Go Main Go"""
-    rows = []
+    pgconn = get_dbconn("idep")
+    cursor = pgconn.cursor()
+    rows = {}
+    fprows = {}
     for root, _dirs, files in tqdm(os.walk("/i/0/ofe"), disable=True):
         for filename in files:
-            ofedf = read_ofe(f"{root}/{filename}")
+            ofefn = f"{root}/{filename}"
+            ofedf = read_ofe(ofefn)
+            fpath = filename.split("_")[1][:-4]
+            huc12 = filename[:12]
+            fpmagic(
+                cursor,
+                ofefn.replace("ofe", "env"),
+                fprows.setdefault(huc12, []),
+                huc12,
+                fpath,
+            )
             # Drop any 2007 or 2021+ data
             ofedf = ofedf[
                 (ofedf["date"] < datetime.datetime(2021, 1, 1))
                 & (ofedf["date"] >= datetime.datetime(2008, 1, 1))
             ]
             # Figure out the crop string
-            fpath = filename.split("_")[1][:-4]
-            huc12 = filename[:12]
+            huc12rows = rows.setdefault(huc12, [])
             with get_sqlalchemy_conn("idep") as conn:
                 meta = pd.read_sql(
                     """
@@ -64,7 +107,7 @@ def main():
                     sys.exit()
                 length = meta_ofe["length"].values[0]
                 # TODO does not handle OFEs crossing fbndid values
-                rows.append(
+                huc12rows.append(
                     {
                         "id": f"{filename[:-4]}_{ofe}",
                         "huc12": huc12,
@@ -89,8 +132,9 @@ def main():
                     }
                 )
 
-    df = pd.DataFrame(rows)
-    df.to_csv("results.csv", index=False)
+    for huc12, hrows in fprows.items():
+        df = pd.DataFrame(hrows)
+        df.to_csv(f"fpresults_{huc12}.csv", index=False)
 
 
 if __name__ == "__main__":
