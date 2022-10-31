@@ -22,10 +22,10 @@ def cut(line, distance):
         return [LineString(line), None]
     coords = list(line.coords)
     for i, p in enumerate(coords):
-        pd = line.project(Point(p))
-        if pd == distance:
+        pp = line.project(Point(p))
+        if pp == distance:
             return [LineString(coords[: i + 1]), LineString(coords[i:])]
-        if pd > distance:
+        if pp > distance:
             cp = line.interpolate(distance)
             return [
                 LineString(coords[:i] + [(cp.x, cp.y)]),
