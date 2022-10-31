@@ -33,7 +33,7 @@ PROCESSING_COUNTS = {
 
 
 def get_flowpath(cursor, scenario, huc12, fpath):
-    """Get or create a database flowpath identifier
+    """Create a database flowpath identifier
 
     Args:
       cursor (psycopg2.cursor): database cursor
@@ -44,16 +44,10 @@ def get_flowpath(cursor, scenario, huc12, fpath):
       int the value of this huc12 flowpath
     """
     cursor.execute(
-        "SELECT fid from flowpaths where huc_12 = %s and fpath = %s "
-        "and scenario = %s",
+        "INSERT into flowpaths(huc_12, fpath, scenario) "
+        "values (%s, %s, %s) RETURNING fid",
         (huc12, fpath, scenario),
     )
-    if cursor.rowcount == 0:
-        cursor.execute(
-            "INSERT into flowpaths(huc_12, fpath, scenario) "
-            "values (%s, %s, %s) RETURNING fid",
-            (huc12, fpath, scenario),
-        )
     return cursor.fetchone()[0]
 
 
@@ -273,7 +267,7 @@ def process(cursor, scenario, huc12df):
         # These are upstream errors I should ignore
         if flowpath_num == 0 or len(df.index) < 3:
             continue
-        # Get or create the flowpathid from the database
+        # Create the flowpathid in the database
         db_fid = get_flowpath(cursor, scenario, huc12, flowpath_num)
         try:
             process_flowpath(cursor, scenario, huc12, db_fid, df)
