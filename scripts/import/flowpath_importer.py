@@ -9,6 +9,7 @@ to.
 
 """
 import glob
+import logging
 import os
 import sys
 
@@ -16,6 +17,8 @@ from tqdm import tqdm
 from shapely.geometry import LineString
 import geopandas as gpd
 import pandas as pd
+import pyproj
+from pyiem.dep import get_cli_fname
 from pyiem.util import get_dbconn, logger
 
 LOG = logger()
@@ -24,16 +27,26 @@ print(" * VERIFY that the GeoJSON is the 5070 grid value")
 print(" * This will generate a `myhucs.txt` file with found HUCs")
 
 SOILFY = 2022
+SOILCOL = f"SOL_FY_{SOILFY}"
 PREFIX = "fp"
 TRUNC_GRIDORDER_AT = 4
 GENLU_CODES = {}
 PROCESSING_COUNTS = {
     "flowpaths_deduped": 0,
+    "flowpaths_tooshort": 0,
+    "flowpaths_toosteep": 0,
+    "flowpaths_toomanydupes": 0,
+    "flowpaths_invalidgeom": 0,
 }
+TRANSFORMER = pyproj.Transformer.from_crs(
+    "epsg:5070", "epsg:4326", always_xy=True
+)
+MAX_SLOPE_RATIO = 0.9
+MIN_SLOPE = 0.003
 
 
-def get_flowpath(cursor, scenario, huc12, fpath):
-    """Get or create a database flowpath identifier
+def create_flowpath_id(cursor, scenario, huc12, fpath) -> int:
+    """Create a database flowpath identifier
 
     Args:
       cursor (psycopg2.cursor): database cursor
@@ -44,16 +57,10 @@ def get_flowpath(cursor, scenario, huc12, fpath):
       int the value of this huc12 flowpath
     """
     cursor.execute(
-        "SELECT fid from flowpaths where huc_12 = %s and fpath = %s "
-        "and scenario = %s",
+        "INSERT into flowpaths(huc_12, fpath, scenario) "
+        "values (%s, %s, %s) RETURNING fid",
         (huc12, fpath, scenario),
     )
-    if cursor.rowcount == 0:
-        cursor.execute(
-            "INSERT into flowpaths(huc_12, fpath, scenario) "
-            "values (%s, %s, %s) RETURNING fid",
-            (huc12, fpath, scenario),
-        )
     return cursor.fetchone()[0]
 
 
@@ -84,9 +91,8 @@ def delete_previous(cursor, scenario, huc12):
     for table in ["flowpath_points", "flowpath_ofes"]:
         cursor.execute(
             f"DELETE from {table} p USING flowpaths f WHERE "
-            "p.scenario = %s and p.flowpath = f.fid and f.huc_12 = %s "
-            "and f.scenario = %s",
-            (scenario, huc12, scenario),
+            "p.flowpath = f.fid and f.huc_12 = %s and f.scenario = %s",
+            (huc12, scenario),
         )
     cursor.execute(
         "DELETE from flowpaths WHERE scenario = %s and huc_12 = %s",
@@ -117,130 +123,230 @@ def get_genlu_code(cursor, label):
 
 
 def dedupe(df):
-    """Deduplicate by checking the FBndID."""
-    # Optmization, a 1 field value count is likely the dup we want to dump
-    fields = df["FBndID"].value_counts().sort_values(ascending=False)
-    # Find any fields with a count of 1
-    fields2 = fields[fields == 1]
-    if not fields2.empty and len(fields.index) == 2:
-        PROCESSING_COUNTS["flowpaths_deduped"] += 1
-        return df[df["FBndID"] != fields2.index[0]]
-    # Could have a perfect duplicate?
-    if fields.min() == fields.max():
-        PROCESSING_COUNTS["flowpaths_deduped"] += 1
-        return df[df["FBndID"] != fields.index[0]]
-    # high field wins
+    """Deduplicate by removing duplicated points."""
+    dups = df["len"].duplicated(keep=False)
+    if dups.sum() > 7:
+        PROCESSING_COUNTS["flowpaths_toomanydupes"] += 1
+        return None
     PROCESSING_COUNTS["flowpaths_deduped"] += 1
-    return df[df["FBndID"] == fields.index[0]]
+    df = df[~dups].copy()
+    # Ensure we are zero based.
+    if df["len"].min() > 0:
+        df["len"] = df["len"] - df["len"].min()
+    return df
 
 
-def process_flowpath(cursor, scenario, huc12, db_fid, df):
-    """Do one flowpath please."""
-    lencolname = f"{PREFIX}Len{huc12}"
-    elevcolname = f"ep3m{huc12}"
-    gordcolname = f"gord_{huc12}"
-    # Sort along the length column, which orders the points from top
-    # to bottom
-    df = df.sort_values(lencolname, ascending=True)
-    # remove duplicate points due to a bkgelder sampling issue whereby some
-    # points exist in two fields
-    if df[lencolname].duplicated().any():
-        df = dedupe(df)
+def compute_ofe(df):
+    """Figure out what the OFE should be after prj2wepp does magic."""
+    # Default
+    df["ofe"] = 1
+    # OFEs are breaks in management, landuse and or soils
+    cols = ["FBndID", SOILCOL, "management", "landuse"]
+    locs = df[cols].ne(df[cols].shift()).apply(lambda x: x.index[x].tolist())
+    indices = locs.apply(pd.Series).stack().unique()
+    ofeid = 0
+    values = df.index.to_list()
+    for idx in values:
+        # Last index should not bump OFE, it is quasi ignored
+        if idx in indices and idx != values[-1]:
+            ofeid += 1
+        df.at[idx, "ofe"] = ofeid
+    return df
 
-    # Remove any previous data for this flowpath
-    cursor.execute(
-        "DELETE from flowpath_points WHERE flowpath = %s", (db_fid,)
-    )
-    points = []
-    sz = len(df.index)
-    maxslope = 0
-    elev_change = 0
-    x_change = 0
-    for segid, (_, row) in enumerate(df.iterrows()):
-        if (segid + 1) == sz:  # Last row!
-            # This effectively repeats the slope of the previous point
-            row2 = df.iloc[segid - 1]
-        else:
-            row2 = df.iloc[segid + 1]
-            if pd.isna(row2[lencolname]):
-                print("Null fpLen")
-                print(row2)
-                sys.exit()
-        dy = abs(row[elevcolname] - row2[elevcolname])
-        elev_change += dy
-        dx = abs(row2[lencolname] - row[lencolname])
-        if dx == 0:
-            # We have a duplicate point, abort as should not be possible
-            print(f"ABORT duplicate point\n{segid}\n{row}\n{row2}\n")
-            print(df[["OBJECTID", "FBndID", lencolname]])
-            sys.exit()
-        x_change += dx
-        gridorder = row[gordcolname]
-        if gridorder > TRUNC_GRIDORDER_AT or pd.isnull(gridorder):
+
+def simplify(df):
+    """WEPP can only handle 20 slope points per OFE."""
+    df["useme"] = False
+    for _ofe, gdf in df.groupby("ofe"):
+        if len(gdf.index) < 18:
+            df.loc[gdf.index, "useme"] = True
             continue
-        slope = dy / dx
+        # Any hack is a good hack here, take the first and last point
+        df.at[gdf.index[0], "useme"] = True
+        df.at[gdf.index[-1], "useme"] = True
+        # Take the top 16 values by slope
+        df.loc[
+            gdf.sort_values("slope", ascending=False).index[:16], "useme"
+        ] = True
 
-        if slope > maxslope:
-            maxslope = slope
+    df = df[df["useme"]].copy()
+
+    return df
+
+
+def compute_slope(df):
+    """Figure out the slope values."""
+    # Compute slope
+    df["slope"] = (df["elev"] - df["elev"].shift()) / (
+        df["len"].shift() - df["len"]
+    )
+    # Duplicate the first value, for now?
+    df.iat[0, df.columns.get_loc("slope")] = df["slope"].values[1]
+    # Ensure we are non-zero, min slope threshold
+    df.loc[df["slope"] < MIN_SLOPE, "slope"] = MIN_SLOPE
+    return df
+
+
+def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
+    """Add database entry."""
+    pts = list(zip(gdf.geometry.x, gdf.geometry.y))
+    next_ofe = ofe + 1
+    firstpt = gdf.iloc[0]
+    lastpt = gdf.iloc[-1]
+    if next_ofe in ofe_starts.index:
+        lastpt = ofe_starts.loc[next_ofe]
+        # append on next
+        pts.extend([(lastpt.geometry.x, lastpt.geometry.y)])
+    line = LineString(pts)
+
+    cursor.execute(
+        """
+        INSERT into flowpath_ofes (flowpath, ofe, geom, bulk_slope, max_slope,
+        gssurgo_id, fbndid, management, landuse, real_length, genlu)
+        values (%s, %s, %s, %s, %s,
+        (select id from gssurgo where fiscal_year = %s and mukey = %s),
+        %s, %s, %s, %s, %s)
+        """,
+        (
+            db_fid,
+            ofe,
+            f"SRID=5070;{line.wkt}",
+            (
+                (firstpt["elev"] - lastpt["elev"])
+                / (lastpt["len"] - firstpt["len"])
+            ),
+            gdf["slope"].max(),
+            SOILFY,
+            firstpt[SOILCOL],
+            firstpt["FBndID"].split("_")[1],
+            firstpt["management"],
+            firstpt["landuse"],
+            (lastpt["len"] - firstpt["len"]) / 100.0,
+            get_genlu_code(cursor, firstpt["GenLU"]),
+        ),
+    )
+
+
+def insert_points(cursor, gdf, db_fid):
+    """Insert into point database."""
+    # Insert point information
+    for segid, row in gdf.iterrows():
         args = (
             db_fid,
             segid,
-            row[elevcolname] / 100.0,
-            row[lencolname] / 100.0,
+            row["elev"] / 100.0,
+            row["len"] / 100.0,
             SOILFY,
-            row[f"SOL_FY_{SOILFY}"],
-            row["management"],
-            slope,
+            row[SOILCOL],
+            row["slope"],
             row["geometry"].x,
             row["geometry"].y,
-            row["landuse"],
-            scenario,
-            gridorder,
-            get_genlu_code(cursor, row["GenLU"]),
-            row["FBndID"].split("_")[1],
+            row["gorder"],
+            row["ofe"],
         )
         cursor.execute(
             """
             INSERT into flowpath_points(flowpath, segid, elevation, length,
-            gssurgo_id, management, slope, geom, landuse, scenario, gridorder,
-            genlu, fbndid)
+            gssurgo_id, slope, geom, gridorder, ofe)
             values(%s, %s, %s, %s,
-            (select id from ggsurgo where fiscal_year = %s and mukey = %s),
-            %s, %s, 'SRID=5070;POINT(%s %s)',
-            %s, %s, %s, %s, %s)
+            (select id from gssurgo where fiscal_year = %s and mukey = %s),
+            %s, 'SRID=5070;POINT(%s %s)', %s, %s)
             """,
             args,
         )
 
-        points.append((row["geometry"].x, row["geometry"].y))
 
-    # Line string must have at least 2 points
-    if len(points) > 1:
-        ls = LineString(points)
-        assert ls.is_valid
-        if x_change == 0:
-            print("x_change equals 0, abort")
-            print(df)
-            sys.exit()
-        cursor.execute(
-            "UPDATE flowpaths SET geom = %s, irrigated = %s,"
-            "max_slope = %s, bulk_slope = %s WHERE fid = %s",
-            (
-                f"SRID=5070;{ls.wkt}",
-                bool(df["irrigated"].sum() > 0),
-                maxslope,
-                elev_change / x_change,
-                db_fid,
+def process_flowpath(cursor, scenario, huc12, db_fid, df) -> pd.DataFrame:
+    """Do one flowpath please."""
+    rename = {
+        f"{PREFIX}Len{huc12}": "len",
+        f"ep3m{huc12}": "elev",
+        f"gord_{huc12}": "gorder",
+    }
+    # Sort along the length column, which orders the points from top
+    # to bottom, rename columns to simplify further code.
+    df = df.rename(columns=rename).sort_values("len", ascending=True)
+    # remove duplicate points due to a bkgelder sampling issue whereby some
+    # points exist in two fields
+    if df["len"].duplicated().any():
+        df = dedupe(df)
+        if df is None:
+            return
+
+    # Truncate at grid order
+    df = df[df["gorder"] <= TRUNC_GRIDORDER_AT]
+
+    if len(df.index) < 3:
+        PROCESSING_COUNTS["flowpaths_tooshort"] += 1
+        return
+
+    compute_slope(df)
+
+    # Compute the OFE value
+    compute_ofe(df)
+
+    # WEPP has a 20 point per OFE limit, so if we detect this, simplification
+    # is necessary, we are cautious to be well below 20
+    if df[["ofe", "landuse"]].groupby("ofe").count().max()["landuse"] > 17:
+        df = simplify(df)
+        # Need to recompute slopes
+        compute_slope(df)
+
+    if df["slope"].max() > MAX_SLOPE_RATIO:
+        PROCESSING_COUNTS["flowpaths_toosteep"] += 1
+        return
+
+    if len(df.index) < 3:
+        PROCESSING_COUNTS["flowpaths_tooshort"] += 1
+        return
+
+    # Need OFE start points in order to create the end point for the previous
+    # OFE
+    ofe_starts = df.groupby("ofe").first()
+
+    # reset_index to get a sequential id
+    for ofe, gdf in df.reset_index().groupby("ofe"):
+        # Insert OFE information
+        insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts)
+        insert_points(cursor, gdf, db_fid)
+
+    # Update flowpath info
+    ls = LineString(zip(df.geometry.x, df.geometry.y))
+    if not ls.is_valid:
+        PROCESSING_COUNTS["flowpaths_invalidgeom"] += 1
+        return
+    # pylint: disable=not-an-iterable
+    cursor.execute(
+        """
+        UPDATE flowpaths SET geom = %s, irrigated = %s,
+        max_slope = %s, bulk_slope = %s, ofe_count = %s, climate_file = %s,
+        real_length = %s
+        WHERE fid = %s
+        """,
+        (
+            f"SRID=5070;{ls.wkt}",
+            bool(df["irrigated"].sum() > 0),
+            df["slope"].max(),
+            (df["elev"].max() - df["elev"].min())
+            / (df["len"].max() - df["len"].min()),
+            df["ofe"].max(),
+            get_cli_fname(
+                *TRANSFORMER.transform(
+                    df.iloc[0].geometry.x, df.iloc[0].geometry.y
+                ),
+                scenario,
             ),
-        )
-    else:
-        # Cull our work above if this flowpath is too short
-        delete_flowpath(cursor, db_fid)
+            df["len"].max() / 100.0,
+            db_fid,
+        ),
+    )
+    return df
 
 
 def delete_flowpath(cursor, fid):
     """Delete the flowpath."""
-    cursor.execute("DELETE from flowpath_points where flowpath = %s", (fid,))
+    for c in ["points", "ofes"]:
+        cursor.execute(f"DELETE from flowpath_{c} where flowpath = %s", (fid,))
     cursor.execute("DELETE from flowpaths where fid = %s", (fid,))
 
 
@@ -273,13 +379,14 @@ def process(cursor, scenario, huc12df):
         # These are upstream errors I should ignore
         if flowpath_num == 0 or len(df.index) < 3:
             continue
-        # Get or create the flowpathid from the database
-        db_fid = get_flowpath(cursor, scenario, huc12, flowpath_num)
+        # Create the flowpathid in the database
+        db_fid = create_flowpath_id(cursor, scenario, huc12, flowpath_num)
         try:
-            process_flowpath(cursor, scenario, huc12, db_fid, df)
+            if process_flowpath(cursor, scenario, huc12, db_fid, df) is None:
+                delete_flowpath(cursor, db_fid)
         except Exception as exp:
             LOG.info("flowpath_num: %s hit exception", flowpath_num)
-            LOG.exception(exp)
+            logging.error(exp, exc_info=True)
             delete_flowpath(cursor, db_fid)
             # print(df)
             # sys.exit()
@@ -327,3 +434,31 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv)
+
+# -----------
+# | TESTING |
+# -----------
+
+
+def test_startlen_not_zero():
+    """Test that our starting length is zero."""
+    # gdf = get_data("../../data/eduardo_hucs/smpl3m_mean18070802051502.json")
+    # gdf = gdf[gdf["fp070802051502"] == 191]
+    # gdf.to_file("testdata/startlen_not_zero.json", driver="GeoJSON")
+
+    cursor = get_dbconn("idep").cursor()
+    df = get_data(
+        os.path.join(
+            os.path.dirname(__file__), "testdata/startlen_not_zero.json"
+        )
+    )
+    res = process(cursor, -1, df)
+    assert res is not None
+    cursor.execute(
+        """
+        SELECT length from flowpath_points p JOIN flowpaths f on
+        (p.flowpath = f.fid) where f.scenario = -1 and
+        f.huc_12 = '070802051502' and f.fpath = 191 ORDER by segid ASC
+        """
+    )
+    assert abs(cursor.fetchone()[0] - 0) < 0.001
