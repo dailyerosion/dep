@@ -21,7 +21,7 @@ def fpmagic(cursor, envfn, rows, huc12, fpath):
         & (df["date"] >= datetime.datetime(2008, 1, 1))
     ]
     cursor.execute(
-        "SELECT ST_length(geom), bulk_slope, max_slope from flowpaths "
+        "SELECT real_length, bulk_slope, max_slope from flowpaths "
         "where scenario = 0 and huc_12 = %s and fpath = %s",
         (huc12, fpath),
     )
@@ -47,14 +47,18 @@ def main():
     """Go Main Go"""
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
-    rows = {}
     fprows = {}
+    oferows = {}
+    with open("myhucs.txt", encoding="utf8") as fh:
+        myhucs = fh.read().split("\n")
     for root, _dirs, files in tqdm(os.walk("/i/0/ofe"), disable=True):
         for filename in files:
             ofefn = f"{root}/{filename}"
-            ofedf = read_ofe(ofefn)
             fpath = filename.split("_")[1][:-4]
             huc12 = filename[:12]
+            if huc12 not in myhucs:
+                continue
+            ofedf = read_ofe(ofefn)
             fpmagic(
                 cursor,
                 ofefn.replace("ofe", "env"),
@@ -68,37 +72,29 @@ def main():
                 & (ofedf["date"] >= datetime.datetime(2008, 1, 1))
             ]
             # Figure out the crop string
-            huc12rows = rows.setdefault(huc12, [])
+            huc12rows = oferows.setdefault(huc12, [])
             with get_sqlalchemy_conn("idep") as conn:
                 meta = pd.read_sql(
                     """
                     with data as (
                         select ofe,
-                        (max(elevation) - min(elevation)) /
-                        greatest(3, max(length) - min(length)) as bulk_slope,
-                        max(slope) as max_slope,
-                        max(genlu) as genlu,
-                        max(landuse) as landuse, max(management) as management,
-                        max(g.mukey) as surgo,
-                        max(g.kwfact) as kwfact,
-                        max(g.hydrogroup) as hydrogroup,
-                        max(fbndid) as max_fbndid,
-                        min(fbndid) as min_fbndid,
-                        greatest(3, max(length) - min(length)) as length
-                        from flowpath_points p JOIN flowpaths f on
-                        (p.flowpath = f.fid)
-                        JOIN gssurgo g on (p.gssurgo_id = g.id)
+                        o.bulk_slope,
+                        o.max_slope,
+                        landuse, management,
+                        mukey as surgo,
+                        kwfact, hydrogroup, fbndid,
+                        o.real_length as length, o.genlu
+                        from flowpath_ofes o JOIN flowpaths f on
+                        (o.flowpath = f.fid)
+                        JOIN gssurgo g on (o.gssurgo_id = g.id)
                         WHERe f.scenario = 0
-                        and f.huc_12 = %s  and fpath = %s GROUP by ofe)
+                        and f.huc_12 = %s  and fpath = %s)
                     select d.*, g.label from data d JOIN general_landuse g on
                     (d.genlu = g.id)
                     """,
                     conn,
                     params=(huc12, fpath),
                 )
-            # could have zeros from bulk_slope, so overwrite max value
-            meta.loc[meta["bulk_slope"] == 0, "bulk_slope"] = meta["max_slope"]
-
             for ofe in ofedf["ofe"].unique():
                 myofe = ofedf[ofedf["ofe"] == ofe]
                 meta_ofe = meta[meta["ofe"] == ofe]
@@ -106,14 +102,13 @@ def main():
                     print(ofe, huc12, fpath)
                     sys.exit()
                 length = meta_ofe["length"].values[0]
-                # TODO does not handle OFEs crossing fbndid values
                 huc12rows.append(
                     {
                         "id": f"{filename[:-4]}_{ofe}",
                         "huc12": huc12,
                         "fpath": fpath,
                         "ofe": ofe,
-                        "fbndid": meta_ofe["min_fbndid"].values[0],
+                        "fbndid": meta_ofe["fbndid"].values[0],
                         "CropRotationString": meta_ofe["landuse"].values[0],
                         "bulk_slope[1]": meta_ofe["bulk_slope"].values[0],
                         "max_slope[1]": meta_ofe["max_slope"].values[0],
@@ -131,6 +126,10 @@ def main():
                         "management": meta_ofe["management"].values[0],
                     }
                 )
+
+    for huc12, frows in oferows.items():
+        df = pd.DataFrame(frows)
+        df.to_csv(f"oferesults_{huc12}.csv", index=False)
 
     for huc12, hrows in fprows.items():
         df = pd.DataFrame(hrows)
