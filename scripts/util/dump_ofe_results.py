@@ -97,6 +97,7 @@ def main():
                 )
             for ofe in ofedf["ofe"].unique():
                 myofe = ofedf[ofedf["ofe"] == ofe]
+                myofe2010 = myofe[myofe["year"] == 2010]
                 meta_ofe = meta[meta["ofe"] == ofe]
                 if meta_ofe.empty:
                     print(ofe, huc12, fpath)
@@ -121,6 +122,9 @@ def main():
                         "length[m]": length,
                         "delivery[t/a/yr]": (
                             myofe["sedleave"].sum() / YEARS / length * 4.463
+                        ),
+                        "delivery_2010[t/a/yr]": (
+                            myofe2010["sedleave"].sum() / length * 4.463
                         ),
                         "genlanduse": meta_ofe["label"].values[0],
                         "management": meta_ofe["management"].values[0],
