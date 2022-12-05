@@ -1,13 +1,11 @@
 """General HUC12 mapper"""
 import sys
 
-from pyiem.plot import MapPlot, get_cmap
-from pyiem.plot.colormaps import dep_erosion
+from pyiem.plot import MapPlot
 from pyiem.reference import Z_POLITICAL
 from pyiem.util import get_sqlalchemy_conn
 import geopandas as gpd
 import pandas as pd
-from matplotlib.patches import Rectangle
 import matplotlib.colors as mpcolors
 
 
