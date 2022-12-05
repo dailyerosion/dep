@@ -371,6 +371,8 @@ def process(cursor, scenario, huc12df):
             break
     if huc12 is None or len(huc12) != 12:
         raise Exception(f"Could not find huc12 from {huc12df.columns}")
+    if f"fp_id_{huc12}" in huc12df.columns:
+        fpcol = f"fp_id_{huc12}"
 
     delete_previous(cursor, scenario, huc12)
     # the inbound dataframe has lots of data, one row per flowpath point
@@ -379,6 +381,8 @@ def process(cursor, scenario, huc12df):
         # These are upstream errors I should ignore
         if flowpath_num == 0 or len(df.index) < 3:
             continue
+        # Condition the flowpath_num to fit in database
+        flowpath_num = int(flowpath_num[4:])
         # Create the flowpathid in the database
         db_fid = create_flowpath_id(cursor, scenario, huc12, flowpath_num)
         try:
