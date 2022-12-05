@@ -16,7 +16,7 @@ jobs:
       if: ${{ matrix.FC == 'gfortran' }}
       run: |
         sudo apt-get update
-        sudo apt install gfortran-8
+        sudo apt install gfortran-11
 
     - name: Build WEPP with gfortran
       if: $${{ matrix.FC == 'gfortran' }}
