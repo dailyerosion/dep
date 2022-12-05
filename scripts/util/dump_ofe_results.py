@@ -12,7 +12,7 @@ from pyiem.dep import read_env, read_ofe
 YEARS = 2021 - 2008
 
 
-def fpmagic(cursor, envfn, rows, huc12, fpath):
+def fpmagic(cursor, scenario, envfn, rows, huc12, fpath):
     """Do the computations for the flowpath."""
     df = read_env(envfn)
     # Drop any 2007 or 2021+ data
@@ -22,8 +22,8 @@ def fpmagic(cursor, envfn, rows, huc12, fpath):
     ]
     cursor.execute(
         "SELECT real_length, bulk_slope, max_slope from flowpaths "
-        "where scenario = 0 and huc_12 = %s and fpath = %s",
-        (huc12, fpath),
+        "where scenario = %s and huc_12 = %s and fpath = %s",
+        (scenario, huc12, fpath),
     )
     meta = cursor.fetchone()
     fplen = meta[0]
@@ -43,15 +43,16 @@ def fpmagic(cursor, envfn, rows, huc12, fpath):
     )
 
 
-def main():
+def main(argv):
     """Go Main Go"""
+    scenario = int(sys.argv[1])
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     fprows = {}
     oferows = {}
     with open("myhucs.txt", encoding="utf8") as fh:
         myhucs = fh.read().split("\n")
-    for root, _dirs, files in tqdm(os.walk("/i/0/ofe"), disable=True):
+    for root, _d, files in tqdm(os.walk(f"/i/{scenario}/ofe"), disable=True):
         for filename in files:
             ofefn = f"{root}/{filename}"
             fpath = filename.split("_")[1][:-4]
@@ -61,6 +62,7 @@ def main():
             ofedf = read_ofe(ofefn)
             fpmagic(
                 cursor,
+                scenario,
                 ofefn.replace("ofe", "env"),
                 fprows.setdefault(huc12, []),
                 huc12,
@@ -87,13 +89,13 @@ def main():
                         from flowpath_ofes o JOIN flowpaths f on
                         (o.flowpath = f.fid)
                         JOIN gssurgo g on (o.gssurgo_id = g.id)
-                        WHERe f.scenario = 0
+                        WHERe f.scenario = %s
                         and f.huc_12 = %s  and fpath = %s)
                     select d.*, g.label from data d JOIN general_landuse g on
                     (d.genlu = g.id)
                     """,
                     conn,
-                    params=(huc12, fpath),
+                    params=(scenario, huc12, fpath),
                 )
             for ofe in ofedf["ofe"].unique():
                 myofe = ofedf[ofedf["ofe"] == ofe]
@@ -141,4 +143,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
