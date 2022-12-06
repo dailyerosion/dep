@@ -27,24 +27,30 @@ def workflow(filename, newyear, analogyear):
     # Figure out what this file's lon/lat values are
     lon, lat = parse_filename(filename)
     # LOG.debug("%s -> %.2f %.2f", filename, lon, lat)
-    lines = open(filename).readlines()
+    with open(filename, encoding="ascii") as fh:
+        lines = fh.readlines()
     # Replace the header information denoting years simulated
-    years_simulated = (newyear - 2007) + 1
+    years_simulated = int((newyear - 2007) + 1)
     lines[4] = (
-        "    %.2f   %.2f         289          %i        2007"
-        "              %i\n"
-    ) % (lat, lon, years_simulated, years_simulated)
+        f"    {lat:.2f}   {lon:.2f}         289          {years_simulated}"
+        f"        2007              {years_simulated}\n"
+    )
     data = "".join(lines)
-    if data.find("1\t1\t%s" % (newyear,)) > 0:
+    if data.find(f"1\t1\t{newyear}") > 0:
         LOG.info("%s already has %s data", filename, newyear)
         return
-    pos = data.find("1\t1\t%s" % (analogyear,))
-    pos2 = data.find("1\t1\t%s" % (analogyear + 1,))
+    pos = data.find(f"1\t1\t{analogyear}")
+    pos2 = data.find(f"1\t1\t{analogyear + 1}")
     content = data[pos:pos2] if pos2 > 0 else data[pos:]
-    with open("/tmp/%s" % (filename,), "w") as fh:
+    # Ensure that both data and content has a trailing linefeed
+    if content[-1] != "\n":
+        content += "\n"
+    if data[-1] != "\n":
+        data += "\n"
+    with open(f"/tmp/{filename}", "w", encoding="ascii") as fh:
         # careful here to get the line feeds right
         fh.write(data + content.replace(str(analogyear), str(newyear)))
-    subprocess.call("mv /tmp/%s %s" % (filename, filename), shell=True)
+    subprocess.call(f"mv /tmp/{filename} {filename}", shell=True)
 
 
 def compute_analog_year(year):
@@ -65,7 +71,7 @@ def main(argv):
     year = int(argv[2])
     analogyear = compute_analog_year(year)
     LOG.info("Using analog year %s for new year %s", analogyear, year)
-    os.chdir("/i/%s/cli" % (scenario,))
+    os.chdir(f"/i/{scenario}/cli")
     for mydir in tqdm(glob.glob("*")):
         os.chdir(mydir)
         for fn in glob.glob("*.cli"):
