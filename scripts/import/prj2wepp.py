@@ -63,7 +63,8 @@ def main(argv):
                     continue
                 # This generates .cli, .man, .run, .slp, .sol
                 # We need the .man , .slp , .sol from this process
-                for suffix in ["man", "slp", "sol"]:
+                # slp is generated in flowpath2prj
+                for suffix in ["man", "sol"]:
                     shutil.copyfile(
                         f"test.{suffix}",
                         (
