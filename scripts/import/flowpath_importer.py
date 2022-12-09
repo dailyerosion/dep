@@ -41,6 +41,8 @@ PROCESSING_COUNTS = {
 TRANSFORMER = pyproj.Transformer.from_crs(
     "epsg:5070", "epsg:4326", always_xy=True
 )
+# First call returns inf for unknown reasons
+TRANSFORMER.transform(223279, 2071344)
 MAX_SLOPE_RATIO = 0.9
 MIN_SLOPE = 0.003
 
@@ -155,10 +157,10 @@ def compute_ofe(df):
 
 
 def simplify(df):
-    """WEPP can only handle 20 slope points per OFE."""
+    """WEPP can only handle 100 slope points per OFE."""
     df["useme"] = False
     for _ofe, gdf in df.groupby("ofe"):
-        if len(gdf.index) < 18:
+        if len(gdf.index) < 98:
             df.loc[gdf.index, "useme"] = True
             continue
         # Any hack is a good hack here, take the first and last point
@@ -166,7 +168,7 @@ def simplify(df):
         df.at[gdf.index[-1], "useme"] = True
         # Take the top 16 values by slope
         df.loc[
-            gdf.sort_values("slope", ascending=False).index[:16], "useme"
+            gdf.sort_values("slope", ascending=False).index[:97], "useme"
         ] = True
 
     df = df[df["useme"]].copy()
@@ -285,9 +287,9 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df) -> pd.DataFrame:
     # Compute the OFE value
     compute_ofe(df)
 
-    # WEPP has a 20 point per OFE limit, so if we detect this, simplification
-    # is necessary, we are cautious to be well below 20
-    if df[["ofe", "landuse"]].groupby("ofe").count().max()["landuse"] > 17:
+    # WEPP has a 100 point per OFE limit, so if we detect this, simplification
+    # is necessary, we are cautious to be well below 100
+    if df[["ofe", "landuse"]].groupby("ofe").count().max()["landuse"] > 97:
         df = simplify(df)
         # Need to recompute slopes
         compute_slope(df)

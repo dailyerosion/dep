@@ -309,11 +309,11 @@ def do_flowpath(pgconn, scenario, zone, metadata):
     res["length"] = df["real_length"].sum()
 
     # Slope data
-    # NEED lots of precision to get grid rectifying right: dailyerosion/dep#79
-    # prj2wepp has some line length limit ~1024 bytes?!?
-    # %(slope_points)s  %(length).4f
-    # %(slpdata)s
-    res["slp"] = ""
+    # Here be dragons: dailyerosion/dep#79 dailyerosion/dep#158
+    # Current approach is that since we are defining OFEs, we subvert whatever
+    # prj2wepp is doing with the slope files and prescribe them below
+    slpdata = ""
+    res["slp_dummy"] = f"2 {res['length']:.4f}\n0.00, 0.01 1.00, 0.01\n"
     startlen = 0
     for _ofe, row in df.iterrows():
         endlen = startlen + row["real_length"]
@@ -334,13 +334,30 @@ def do_flowpath(pgconn, scenario, zone, metadata):
         lens = np.array(lens) - lens[0]
         lens = lens / lens[-1]
         startlen = endlen
-        tokens = [f"{r},{s:.3f}" for r, s in zip(lens, slopes)]
-        res["slp"] += (
+        tokens = [f"{r:.6f},{s:.6f}" for r, s in zip(lens, slopes)]
+        slpdata += (
             f"{len(lens)} {row['real_length']:.4f}\n" f"{' '.join(tokens)}\n"
         )
-    for line in res["slp"].split("\n"):
+    for line in slpdata.split("\n"):
         if len(line) > 1024:
             LOG.warning("Flowpath with len(slpdata) %s > 1024", len(line))
+    slpfn = (
+        f"/i/{scenario}/slp/{res['huc8']}/{res['huc12'][-4:]}/"
+        f"{res['huc12']}_{metadata['fpath']}.slp"
+    )
+    # We do this ourselves do to prj2wepp limitations
+    with open(slpfn, "w", encoding="ascii") as fh:
+        fh.write(
+            "97.5\n"
+            "#\n"
+            f"# from flowpath2prj.py {res['date']}\n"
+            "#\n"
+            "#\n"
+            f"{len(df.index)}\n"
+            f"{res['aspect']:.4f} 1.000\n"
+            f"{slpdata}\n"
+        )
+
     soilfiles = df["soilfile"].values
     soillengths = df["real_length"].values
 
@@ -404,7 +421,7 @@ Length = %(length).4f
 Profile {
     Data {
         %(aspect).4f  1.0
-%(slp)s
+%(slp_dummy)s
     }
 }
 Climate {
