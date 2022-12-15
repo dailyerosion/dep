@@ -338,9 +338,6 @@ def do_flowpath(pgconn, scenario, zone, metadata):
         slpdata += (
             f"{len(lens)} {row['real_length']:.4f}\n" f"{' '.join(tokens)}\n"
         )
-    for line in slpdata.split("\n"):
-        if len(line) > 1024:
-            LOG.warning("Flowpath with len(slpdata) %s > 1024", len(line))
     slpfn = (
         f"/i/{scenario}/slp/{res['huc8']}/{res['huc12'][-4:]}/"
         f"{res['huc12']}_{metadata['fpath']}.slp"

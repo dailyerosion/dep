@@ -62,8 +62,8 @@ def main(argv):
         if copyfn is None:
             LOG.info("missing %s for fid: %s ", fn, row[1])
             sys.exit()
-        LOG.info("%s -> %s xoff: %s yoff: %s", copyfn, fn, xoff, yoff)
-        mydir = os.path.basename(fn)
+        LOG.info("cp %s %s xoff: %s yoff: %s", copyfn, fn, xoff, yoff)
+        mydir = os.path.dirname(fn)
         if not os.path.isdir(mydir):
             os.makedirs(mydir)
         subprocess.call(["cp", copyfn, fn])

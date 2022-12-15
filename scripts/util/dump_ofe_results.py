@@ -9,17 +9,18 @@ from pyiem.util import get_sqlalchemy_conn, get_dbconn
 from pyiem.dep import read_env, read_ofe
 
 # 2007 is skipped
-YEARS = 2021 - 2008
+print("\n    PERIOD OF RECORD!!!\n")
+YEARS = 2023 - 2007
 
 
 def fpmagic(cursor, scenario, envfn, rows, huc12, fpath):
     """Do the computations for the flowpath."""
     df = read_env(envfn)
     # Drop any 2007 or 2021+ data
-    df = df[
-        (df["date"] < datetime.datetime(2021, 1, 1))
-        & (df["date"] >= datetime.datetime(2008, 1, 1))
-    ]
+    # df = df[
+    #    (df["date"] < datetime.datetime(2021, 1, 1))
+    #    & (df["date"] >= datetime.datetime(2008, 1, 1))
+    # ]
     cursor.execute(
         "SELECT real_length, bulk_slope, max_slope from flowpaths "
         "where scenario = %s and huc_12 = %s and fpath = %s",
@@ -45,7 +46,7 @@ def fpmagic(cursor, scenario, envfn, rows, huc12, fpath):
 
 def main(argv):
     """Go Main Go"""
-    scenario = int(sys.argv[1])
+    scenario = int(argv[1])
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     fprows = {}
@@ -69,10 +70,10 @@ def main(argv):
                 fpath,
             )
             # Drop any 2007 or 2021+ data
-            ofedf = ofedf[
-                (ofedf["date"] < datetime.datetime(2021, 1, 1))
-                & (ofedf["date"] >= datetime.datetime(2008, 1, 1))
-            ]
+            # ofedf = ofedf[
+            #    (ofedf["date"] < datetime.datetime(2021, 1, 1))
+            #    & (ofedf["date"] >= datetime.datetime(2008, 1, 1))
+            # ]
             # Figure out the crop string
             huc12rows = oferows.setdefault(huc12, [])
             with get_sqlalchemy_conn("idep") as conn:
@@ -97,6 +98,7 @@ def main(argv):
                     conn,
                     params=(scenario, huc12, fpath),
                 )
+            accum_length = 0
             for ofe in ofedf["ofe"].unique():
                 myofe = ofedf[ofedf["ofe"] == ofe]
                 myofe2010 = myofe[myofe["year"] == 2010]
@@ -105,6 +107,7 @@ def main(argv):
                     print(ofe, huc12, fpath)
                     sys.exit()
                 length = meta_ofe["length"].values[0]
+                accum_length += length
                 huc12rows.append(
                     {
                         "id": f"{filename[:-4]}_{ofe}",
@@ -123,10 +126,13 @@ def main(argv):
                         "detach": -1,
                         "length[m]": length,
                         "delivery[t/a/yr]": (
-                            myofe["sedleave"].sum() / YEARS / length * 4.463
+                            myofe["sedleave"].sum()
+                            / YEARS
+                            / accum_length
+                            * 4.463
                         ),
                         "delivery_2010[t/a/yr]": (
-                            myofe2010["sedleave"].sum() / length * 4.463
+                            myofe2010["sedleave"].sum() / accum_length * 4.463
                         ),
                         "genlanduse": meta_ofe["label"].values[0],
                         "management": meta_ofe["management"].values[0],
@@ -135,11 +141,11 @@ def main(argv):
 
     for huc12, frows in oferows.items():
         df = pd.DataFrame(frows)
-        df.to_csv(f"oferesults_{huc12}.csv", index=False)
+        df.to_csv(f"oferesults_scenario_{huc12}.csv", index=False)
 
     for huc12, hrows in fprows.items():
         df = pd.DataFrame(hrows)
-        df.to_csv(f"fpresults_{huc12}.csv", index=False)
+        df.to_csv(f"fpresults_scenario_{huc12}.csv", index=False)
 
 
 if __name__ == "__main__":
