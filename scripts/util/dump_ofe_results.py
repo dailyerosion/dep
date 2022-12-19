@@ -4,23 +4,23 @@ import os
 import sys
 
 import pandas as pd
+from sqlalchemy import text
 from tqdm import tqdm
 from pyiem.util import get_sqlalchemy_conn, get_dbconn
 from pyiem.dep import read_env, read_ofe
 
 # 2007 is skipped
-print("\n    PERIOD OF RECORD!!!\n")
 YEARS = 2023 - 2007
 
 
-def fpmagic(cursor, scenario, envfn, rows, huc12, fpath):
+def fpmagic(cursor, scenario, envfn, rows, huc12, fpath, mlrarsym):
     """Do the computations for the flowpath."""
     df = read_env(envfn)
-    # Drop any 2007 or 2021+ data
-    # df = df[
-    #    (df["date"] < datetime.datetime(2021, 1, 1))
-    #    & (df["date"] >= datetime.datetime(2008, 1, 1))
-    # ]
+    # Drop any 2007 or 2023+ data
+    df = df[
+        (df["date"] < datetime.datetime(2023, 1, 1))
+        & (df["date"] >= datetime.datetime(2008, 1, 1))
+    ]
     cursor.execute(
         "SELECT real_length, bulk_slope, max_slope from flowpaths "
         "where scenario = %s and huc_12 = %s and fpath = %s",
@@ -33,6 +33,7 @@ def fpmagic(cursor, scenario, envfn, rows, huc12, fpath):
         {
             "id": f"{huc12}_{fpath}",
             "huc12": huc12,
+            "mlrarsym": mlrarsym,
             "fpath": fpath,
             "bulk_slope[1]": meta[1],
             "max_slope[1]": meta[2],
@@ -53,6 +54,20 @@ def main(argv):
     oferows = {}
     with open("myhucs.txt", encoding="utf8") as fh:
         myhucs = fh.read().split("\n")
+    with get_sqlalchemy_conn("idep") as conn:
+        huc12df = pd.read_sql(
+            text(
+                """
+            SELECT huc_12, max(mlrarsym) as mlrarsym
+                from huc12 h JOIN mlra m on
+            (h.mlra_id = m.mlra_id) WHERE h.scenario = :scen and huc_12 in :h
+            GROUP by huc_12
+            """
+            ),
+            conn,
+            params={"scen": scenario, "h": tuple(myhucs)},
+            index_col="huc_12",
+        )
     for root, _d, files in tqdm(os.walk(f"/i/{scenario}/ofe"), disable=True):
         for filename in files:
             ofefn = f"{root}/{filename}"
@@ -68,12 +83,13 @@ def main(argv):
                 fprows.setdefault(huc12, []),
                 huc12,
                 fpath,
+                huc12df.at[huc12, "mlrarsym"],
             )
-            # Drop any 2007 or 2021+ data
-            # ofedf = ofedf[
-            #    (ofedf["date"] < datetime.datetime(2021, 1, 1))
-            #    & (ofedf["date"] >= datetime.datetime(2008, 1, 1))
-            # ]
+            # Drop any 2007 or 2023+ data
+            ofedf = ofedf[
+                (ofedf["date"] < datetime.datetime(2023, 1, 1))
+                & (ofedf["date"] >= datetime.datetime(2008, 1, 1))
+            ]
             # Figure out the crop string
             huc12rows = oferows.setdefault(huc12, [])
             with get_sqlalchemy_conn("idep") as conn:
@@ -112,6 +128,7 @@ def main(argv):
                     {
                         "id": f"{filename[:-4]}_{ofe}",
                         "huc12": huc12,
+                        "mlrarsym": huc12df.at[huc12, "mlrarsym"],
                         "fpath": fpath,
                         "ofe": ofe,
                         "fbndid": meta_ofe["fbndid"].values[0],
@@ -141,11 +158,11 @@ def main(argv):
 
     for huc12, frows in oferows.items():
         df = pd.DataFrame(frows)
-        df.to_csv(f"oferesults_scenario_{huc12}.csv", index=False)
+        df.to_csv(f"oferesults_{huc12}.csv", index=False)
 
     for huc12, hrows in fprows.items():
         df = pd.DataFrame(hrows)
-        df.to_csv(f"fpresults_scenario_{huc12}.csv", index=False)
+        df.to_csv(f"fpresults_{huc12}.csv", index=False)
 
 
 if __name__ == "__main__":
