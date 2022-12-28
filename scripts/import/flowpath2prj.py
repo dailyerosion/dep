@@ -184,7 +184,7 @@ def do_rotation(scenario, zone, rotfn, landuse, management):
     f = partial(read_file, scenario, zone)
     # 2007
     data["year1"] = f(prevcode, landuse[0], int(management[0]), 1)
-    for i in range(1, 16):
+    for i in range(1, 17):
         data[f"year{i + 1}"] = f(
             landuse[i - 1], landuse[i], int(management[i]), i + 1
         )
@@ -221,6 +221,7 @@ Operations {{
 {data['year14']}
 {data['year15']}
 {data['year16']}
+{data['year17']}
 }}
 """
         )
