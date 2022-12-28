@@ -82,10 +82,13 @@ def get_data(filename):
         df["irrigated"] = 0
     # Compute full rotation string
     # 2022 is repeating -2 (2020)
+    # 2023 is repeating -2 (2021)
     s = df["CropRotatn_CY_2021"]
-    df["landuse"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2]
+    df["landuse"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
     s = df["Management_CY_2021"]
-    df["management"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2]
+    df["management"] = (
+        s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
+    )
     return df
 
 
