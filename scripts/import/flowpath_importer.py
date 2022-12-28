@@ -37,6 +37,7 @@ PROCESSING_COUNTS = {
     "flowpaths_toosteep": 0,
     "flowpaths_toomanydupes": 0,
     "flowpaths_invalidgeom": 0,
+    "flowpaths_lenzero_reset": 0,
 }
 TRANSFORMER = pyproj.Transformer.from_crs(
     "epsg:5070", "epsg:4326", always_xy=True
@@ -268,6 +269,9 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df) -> pd.DataFrame:
     # Sort along the length column, which orders the points from top
     # to bottom, rename columns to simplify further code.
     df = df.rename(columns=rename).sort_values("len", ascending=True)
+    if df.iloc[0]["len"] > 0:
+        PROCESSING_COUNTS["flowpaths_lenzero_reset"] += 1
+        df["len"] = df["len"] - df.iloc[0]["len"]
     # remove duplicate points due to a bkgelder sampling issue whereby some
     # points exist in two fields
     if df["len"].duplicated().any():
