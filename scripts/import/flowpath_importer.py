@@ -38,6 +38,7 @@ PROCESSING_COUNTS = {
     "flowpaths_toomanydupes": 0,
     "flowpaths_invalidgeom": 0,
     "flowpaths_lenzero_reset": 0,
+    "flowpaths_inconsistent_gridorder": 0,
 }
 TRANSFORMER = pyproj.Transformer.from_crs(
     "epsg:5070", "epsg:4326", always_xy=True
@@ -281,6 +282,11 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df) -> pd.DataFrame:
         df = dedupe(df)
         if df is None:
             return
+
+    # Ensure that the gorder field is monotonic
+    if not df["gorder"].is_monotonic_increasing:
+        PROCESSING_COUNTS["flowpaths_inconsistent_gridorder"] += 1
+        return
 
     # Truncate at grid order
     df = df[df["gorder"] <= TRUNC_GRIDORDER_AT]
