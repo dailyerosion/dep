@@ -45,7 +45,7 @@ from pyiem.dep import load_scenarios
 
 LOG = logger()
 MISSED_SOILS = {}
-YEARS = 2022 - 2006
+YEARS = 2023 - 2006
 
 # Note that the default used below is
 INITIAL_COND_DEFAULT = "IniCropDef.Default"
