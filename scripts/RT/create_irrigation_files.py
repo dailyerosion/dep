@@ -9,7 +9,7 @@ LASTYEAR = date.today().year
 
 def main():
     """Create files."""
-    for ofecnt in range(1, 7):  # Do we have more than 6 OFEs?
+    for ofecnt in range(1, 25):
         fn = f"/i/0/irrigation/ofe{ofecnt}.txt"
         with open(fn, "w", encoding="utf-8") as fh:
             fh.write("95.7\n")  # datver
