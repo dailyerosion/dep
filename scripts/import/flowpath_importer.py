@@ -32,6 +32,7 @@ PREFIX = "fp"
 TRUNC_GRIDORDER_AT = 4
 GENLU_CODES = {}
 PROCESSING_COUNTS = {
+    "flowpaths_good": 0,
     "flowpaths_deduped": 0,
     "flowpaths_tooshort": 0,
     "flowpaths_toosteep": 0,
@@ -355,6 +356,7 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df) -> pd.DataFrame:
             db_fid,
         ),
     )
+    PROCESSING_COUNTS["flowpaths_good"] += 1
     return df
 
 
