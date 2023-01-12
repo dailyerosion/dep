@@ -82,6 +82,8 @@ def get_data(filename):
     if "irrigated" not in df.columns:
         LOG.info("%s had no irrigated column", filename)
         df["irrigated"] = 0
+    # Any null FBndID (mostly forest?) get set to -1
+    df["FBndID"] = df["FBndID"].fillna("FUNUSED_-1")
     # Compute full rotation string
     # 2022 is repeating -2 (2020)
     # 2023 is repeating -2 (2021)
