@@ -50,7 +50,7 @@ YEARS = 2023 - 2006
 # Note that the default used below is
 INITIAL_COND_DEFAULT = "IniCropDef.Default"
 INITIAL_COND = {
-    "F": "IniCropDef.Tre_2239",
+    "F": "CropDef.For_5688",
     "P": "IniCropDef.gra_3425",
     "R": "IniCropDef.Aft_12889",
 }
@@ -78,6 +78,19 @@ CORN_PLANT = {
     "IA_SOUTH": datetime.date(2000, 4, 30),
     "IA_CENTRAL": datetime.date(2000, 5, 5),
     "IA_NORTH": datetime.date(2000, 5, 10),
+}
+# Management code maps back to a forest crop
+FOREST = {
+    "J": "IniCropDef.DEP_forest_95",
+    "I": "IniCropDef.DEP_forest_85",
+    "H": "IniCropDef.DEP_forest_75",
+    "G": "IniCropDef.DEP_forest_65",
+    "F": "IniCropDef.DEP_forest_55",
+    "E": "IniCropDef.DEP_forest_45",
+    "D": "IniCropDef.DEP_forest_35",
+    "C": "IniCropDef.DEP_forest_25",
+    "B": "IniCropDef.DEP_forest_15",
+    "A": "IniCropDef.DEP_forest_5",
 }
 CORN = {
     "KS_SOUTH": "CropDef.Cor_0964",
@@ -179,15 +192,24 @@ def do_rotation(scenario, zone, rotfn, landuse, management):
     # Dictionary of values used to fill out the file template below
     data = {}
     data["name"] = f"{landuse}-{management}"
-    data["initcond"] = INITIAL_COND.get(landuse[0], INITIAL_COND_DEFAULT)
-    prevcode = "C" if landuse[0] not in INITIAL_COND else landuse[0]
-    f = partial(read_file, scenario, zone)
-    # 2007
-    data["year1"] = f(prevcode, landuse[0], int(management[0]), 1)
-    for i in range(1, 17):
-        data[f"year{i + 1}"] = f(
-            landuse[i - 1], landuse[i], int(management[i]), i + 1
-        )
+    # Special hack for forest
+    if landuse[0] == "F" and landuse == len(landuse) * landuse[0]:
+        data["initcond"] = FOREST[management[0]]
+        for i in range(1, 18):
+            # Reset roughness each year
+            data[
+                f"year{i}"
+            ] = f"1 2 {i} 1 Tillage OpCropDef.Old_6807 {{0.001, 2}}"
+    else:
+        data["initcond"] = INITIAL_COND.get(landuse[0], INITIAL_COND_DEFAULT)
+        prevcode = "C" if landuse[0] not in INITIAL_COND else landuse[0]
+        f = partial(read_file, scenario, zone)
+        # 2007
+        data["year1"] = f(prevcode, landuse[0], int(management[0]), 1)
+        for i in range(1, 17):
+            data[f"year{i + 1}"] = f(
+                landuse[i - 1], landuse[i], int(management[i]), i + 1
+            )
 
     with open(rotfn, "w", encoding="utf8") as fh:
         fh.write(
