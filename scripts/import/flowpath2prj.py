@@ -50,7 +50,7 @@ YEARS = 2023 - 2006
 # Note that the default used below is
 INITIAL_COND_DEFAULT = "IniCropDef.Default"
 INITIAL_COND = {
-    "F": "CropDef.For_5688",
+    "F": "IniCropDef.Tre_2239",  # TODO for new forest stuff
     "P": "IniCropDef.gra_3425",
     "R": "IniCropDef.Aft_12889",
 }
@@ -91,6 +91,7 @@ FOREST = {
     "C": "IniCropDef.DEP_forest_25",
     "B": "IniCropDef.DEP_forest_15",
     "A": "IniCropDef.DEP_forest_5",
+    "0": "IniCropDef.DEP_forest_45",  # TODO
 }
 CORN = {
     "KS_SOUTH": "CropDef.Cor_0964",
