@@ -12,5 +12,7 @@ pytest
 scipy
 # GIS work
 shapely
+# pinned down due to pandas
+sqlalchemy<2
 twython
 reportlab
