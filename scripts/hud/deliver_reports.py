@@ -89,7 +89,7 @@ def workflow(hucs):
     pgconn = get_dbconn("idep")
     df = read_sql(
         """
-    select huc_12, hu_12_name from huc12 where scenario = 0
+    select huc_12, name from huc12 where scenario = 0
     and huc_12 in %s
     """,
         pgconn,
@@ -106,7 +106,7 @@ def workflow(hucs):
         if req.status_code != 200:
             print("Uri: %s failed with: %s" % (uri, req.status_code))
             continue
-        fn = "%s-%s.pdf" % (huc, df.at[huc, "hu_12_name"].replace(" ", "_"))
+        fn = "%s-%s.pdf" % (huc, df.at[huc, "name"].replace(" ", "_"))
         fp = open(fn, "wb")
         fp.write(req.content)
         fp.close()
