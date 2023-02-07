@@ -24,7 +24,7 @@ is one file per HUC12.
 This query finds any new HUC12s and inserts the geometry into a table.
 
     insert into huc12
-    (states, hu_12_name,  huc_12, simple_geom, geom, scenario)
+    (states, name,  huc_12, simple_geom, geom, scenario)
     select states, name, huc12,
     ST_Transform(st_geometryn(simple_geom, 1), 5070),
     ST_Transform(geom, 5070), 0 from wbd_huc12 where huc12 in

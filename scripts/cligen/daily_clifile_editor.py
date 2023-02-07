@@ -517,7 +517,14 @@ def edit_clifile(xidx, yidx, clifn, data, valid):
     wind = data["wind"][yidx, xidx]
     dwpt = data["dwpt"][yidx, xidx]
     if np.isnan([high, low, solar, wind, dwpt]).any():
-        LOG.warning("Missing data for %s", clifn)
+        msg = []
+        for v, n in zip(
+            [high, low, solar, wind, dwpt],
+            "hi lo sol wnd dpt".split(),
+        ):
+            if np.isnan(v):
+                msg.append(f"{n}={v}")
+        LOG.warning("Missing data[%s] for %s", ",".join(msg), clifn)
         return False
     bptext = "\n".join(bpdata)
     bptext2 = "\n" if bpdata else ""

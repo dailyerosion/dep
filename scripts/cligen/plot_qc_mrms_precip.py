@@ -45,19 +45,13 @@ def do(valid):
 
     yidx = int((43.27 - SOUTH) / 0.01)
     xidx = int((-94.39 - WEST) / 0.01)
-    # print(("yidx:%s xidx:%s precip:%.2f stage4: %.2f inqc: %.2f outqc: %.2f "
-    #       "mul: %.2f"
-    #       ) % (yidx, xidx, precip[yidx, xidx], stage4[yidx, xidx],
-    #            inqcprecip[yidx, xidx], outqcprecip[yidx, xidx],
-    #            multiplier[yidx, xidx]))
     projection = ccrs.Mercator()
     pgconn = get_dbconn("idep")
     df = read_postgis(
         """
         SELECT ST_Transform(simple_geom, %s) as geom, huc_12,
         ST_x(ST_Transform(ST_Centroid(geom), 4326)) as centroid_x,
-        ST_y(ST_Transform(ST_Centroid(geom), 4326)) as centroid_y,
-        hu_12_name
+        ST_y(ST_Transform(ST_Centroid(geom), 4326)) as centroid_y, name
         from huc12 i WHERE i.scenario = 0 and huc_12 = '071100010901'
     """,
         pgconn,

@@ -117,8 +117,11 @@ class WeppRun:
         out.write("1\n")  # abbreviated annual output
         out.write("No\n")  # initial conditions output
         out.write("/dev/null\n")  # soil loss output file
-        out.write("Yes\n")  # Do water balance output
-        out.write(f"{self.get_wb_fn()}\n")  # water balance output file
+        if self.scenario == 0:
+            out.write("Yes\n")  # Do water balance output
+            out.write(f"{self.get_wb_fn()}\n")  # water balance output file
+        else:
+            out.write("No\n")
         out.write("No\n")  # crop output
         # out.write("%s\n" % (self.get_crop_fn(),))  # crop output file
         out.write("No\n")  # soil output
@@ -209,6 +212,7 @@ def main(argv):
         req = requests.get(
             f"http://{connection._impl.params.host}:15672/api/queues/%2F/dep",
             auth=("guest", "guest"),
+            timeout=60,
         )
         queueinfo = req.json()
         # jobs either ready or unawked
