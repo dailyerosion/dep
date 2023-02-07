@@ -43,5 +43,6 @@ jobs:
 
     - name: Run Regression Tests
       run: |
+        python -m pip install pyiem "sqlalchemy<2"
         cd src/regression_tests
         python run_regressions.py
