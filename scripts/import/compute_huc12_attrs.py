@@ -1,4 +1,4 @@
-"""Compute the dominant tillage code for each HUC12."""
+"""Compute attributes associated with the huc12 table."""
 # stdlib
 import sys
 
@@ -6,11 +6,28 @@ import sys
 from pyiem.util import get_dbconn
 
 
+def compute_average_slope_ratio(cursor, scenario):
+    """Set attr"""
+    cursor.execute(
+        """
+        with data as (
+            select huc_12, avg(bulk_slope) from flowpaths where
+            scenario = %s GROUP by huc_12
+        )
+        UPDATE huc12 h SET average_slope_ratio = d.avg FROM data d
+        WHERE h.huc_12 = d.huc_12 and h.scenario = %s
+        """,
+        (scenario, scenario),
+    )
+    print(f"Updated {cursor.rowcount} rows for average_slope_ratio")
+
+
 def main(argv):
     """Do great things."""
     scenario = int(argv[1])
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
+    compute_average_slope_ratio(cursor, scenario)
     # Very small percentage have ties, so take max tillage code in that case
     cursor.execute(
         """
