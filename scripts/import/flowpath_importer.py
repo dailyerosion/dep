@@ -385,6 +385,13 @@ def delete_flowpath(cursor, fid):
 def process_fields(cursor, scenario, huc12, fld_df):
     """Database update this information."""
     cursor.execute(
+        """
+        DELETE from field_operations o USING fields f where
+        o.field_id = f.field_id and f.scenario = %s and f.huc12 = %s
+        """,
+        (scenario, huc12),
+    )
+    cursor.execute(
         "DELETE from fields where scenario = %s and huc12 = %s",
         (scenario, huc12),
     )
