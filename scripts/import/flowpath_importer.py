@@ -71,6 +71,19 @@ def create_flowpath_id(cursor, scenario, huc12, fpath) -> int:
     return cursor.fetchone()[0]
 
 
+def fillout_codes(df):
+    """ "Get the right full-string codes."""
+    # Compute full rotation string
+    # 2022 is repeating -2 (2020)
+    # 2023 is repeating -2 (2021)
+    s = df["CropRotatn_CY_2021"]
+    df["landuse"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
+    s = df["Management_CY_2021"]
+    df["management"] = (
+        s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
+    )
+
+
 def get_data(filename):
     """Converts a GeoJSON file into a pandas dataframe
 
@@ -86,20 +99,13 @@ def get_data(filename):
         df["irrigated"] = 0
     # Any null FBndID (mostly forest?) get set to -1
     df["FBndID"] = df["FBndID"].fillna("FUNUSED_-1")
-    # Compute full rotation string
-    # 2022 is repeating -2 (2020)
-    # 2023 is repeating -2 (2021)
-    s = df["CropRotatn_CY_2021"]
-    df["landuse"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
-    s = df["Management_CY_2021"]
-    df["management"] = (
-        s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
-    )
+    fillout_codes(df)
     # Get the field bounds dataframe as well
     fld_df = gpd.read_file(
         filename.replace("smpl3m_mean18", "FB"),
         index="OBJECTID",
     )
+    fillout_codes(fld_df)
     return df, fld_df
 
 
@@ -387,8 +393,9 @@ def process_fields(cursor, scenario, huc12, fld_df):
     for _, row in fld_df.iterrows():
         cursor.execute(
             """
-            INSERT into fields (scenario, huc12, fbndid, acres, isag, geom)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT into fields (scenario, huc12, fbndid, acres, isag, geom,
+            management, landuse)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 scenario,
@@ -397,6 +404,8 @@ def process_fields(cursor, scenario, huc12, fld_df):
                 row["Acres"],
                 bool(row["isAG"]),
                 row["geometry"].wkt,
+                row["management"],
+                row["landuse"],
             ),
         )
     PROCESSING_COUNTS["fields_inserted"] += len(fld_df.index)
