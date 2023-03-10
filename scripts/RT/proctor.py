@@ -8,8 +8,8 @@ import subprocess
 import datetime
 from multiprocessing.pool import ThreadPool
 
-from pyiem.dep import load_scenarios
 from pyiem.util import get_dbconn
+from pydep.util import load_scenarios
 
 YEARS = datetime.date.today().year - 2006
 # need to regenerate run files on 2 January

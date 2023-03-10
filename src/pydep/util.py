@@ -1,7 +1,21 @@
 """pydep helper util methods."""
 import math
 
+import pandas as pd
 from pyiem.iemre import SOUTH, WEST, NORTH, EAST
+from pyiem.util import get_sqlalchemy_conn
+from sqlalchemy import text
+
+
+def load_scenarios():
+    """Build a dataframe of DEP scenarios."""
+    with get_sqlalchemy_conn("idep") as conn:
+        df = pd.read_sql(
+            text("SELECT * from scenarios ORDER by id ASC"),
+            conn,
+            index_col="id",
+        )
+    return df
 
 
 def get_cli_fname(lon, lat, scenario=0):

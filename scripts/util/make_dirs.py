@@ -3,7 +3,7 @@ import os
 import sys
 
 from pyiem.util import get_dbconn, logger
-from pyiem.dep import load_scenarios
+from pydep.util import load_scenarios
 
 LOG = logger()
 PREFIXES = (

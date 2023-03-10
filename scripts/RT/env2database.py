@@ -19,11 +19,11 @@ import pandas as pd
 from tqdm import tqdm
 import geopandas as gpd
 from affine import Affine
-from pydep.io.wepp import read_env
-from pyiem import dep as dep_utils
 from pyiem.iemre import WEST, NORTH
 from pyiem.grid.zs import CachingZonalStats
 from pyiem.util import get_dbconn, get_dbconnstr, logger
+from pydep.io.wepp import read_env
+from pydep.util import load_scenarios
 
 LOG = logger()
 PRECIP_AFF = Affine(0.01, 0.0, WEST, 0.0, -0.01, NORTH)
@@ -183,7 +183,7 @@ def load_precip(dates, huc12s):
 
 def load_lengths(scenario):
     """Build out our flowpath lengths."""
-    sdf = dep_utils.load_scenarios()
+    sdf = load_scenarios()
     idep = get_dbconn("idep")
     icursor = idep.cursor()
     res = {}

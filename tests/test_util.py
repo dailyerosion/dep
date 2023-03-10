@@ -18,3 +18,10 @@ def test_cli_fname_raises():
         util.get_cli_fname(util.WEST - 1, util.SOUTH + 1)
     with pytest.raises(ValueError):
         util.get_cli_fname(util.WEST + 1, util.SOUTH - 1)
+
+
+def test_scenarios():
+    """Can we load scenarios?"""
+    df = util.load_scenarios()
+    assert not df.empty
+    assert 0 in df.index
