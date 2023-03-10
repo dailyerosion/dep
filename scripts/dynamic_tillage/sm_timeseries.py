@@ -27,12 +27,10 @@ def main():
         subtitle="15 April - 1 June 0-10 cm Soil Moisture + Days below 0.9 PL",
         logo="dep",
     )
-    jan1 = pd.Timestamp(year=2001, month=1, day=1)
     for year in range(2007, 2023):
         sts = pd.Timestamp(year=year, month=4, day=15)
         ets = pd.Timestamp(year=year, month=6, day=1)
         df2 = df[(df["date"] >= sts) & (df["date"] < ets)].copy()
-        # x = df2["date"] - pd.Timestamp(year=year, month=1, day=1) + jan1
         cnt = len(df2[df2["sw1"] < pl].index)
         ax.text(
             df2["date"].values[0],
