@@ -1,12 +1,11 @@
 """Dump for tab1 of requested 10 march 2020 spreadsheet.
 
 """
-import datetime
 import glob
 
-from pyiem.dep import read_wb, read_env
 from pyiem.util import logger
 import pandas as pd
+from pydep.io.wepp import read_env
 
 LOG = logger()
 

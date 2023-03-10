@@ -12,6 +12,7 @@ from tqdm import tqdm
 import geopandas as gpd
 from rasterstats import zonal_stats
 from affine import Affine
+from pydep.io.wepp import read_env
 from pyiem import dep as dep_utils
 from pyiem.util import get_dbconn, logger
 
@@ -36,11 +37,7 @@ def find_huc12s(scenario):
 
 def readfile(fn, lengths):
     """Our env reader."""
-    try:
-        df = dep_utils.read_env(fn)
-    except Exception as exp:
-        print("\nABORT: Attempting to read: %s resulted in: %s\n" % (fn, exp))
-        return None
+    df = read_env(fn)
     key = int(fn.split("/")[-1].split(".")[0].split("_")[1])
     df["fpath"] = key
     df["delivery"] = df["sed_del"] / lengths[key]

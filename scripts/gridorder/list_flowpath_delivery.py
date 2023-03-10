@@ -5,7 +5,7 @@ import datetime
 import psycopg2
 import pandas as pd
 from pandas.io.sql import read_sql
-from pyiem.dep import read_env
+from pydep.io.wepp import read_env
 
 SCEN2CODE = [None, 12, 13, 14, 0, 15, 16]
 PGCONN = psycopg2.connect(database="idep")

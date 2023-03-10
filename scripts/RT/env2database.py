@@ -19,6 +19,7 @@ import pandas as pd
 from tqdm import tqdm
 import geopandas as gpd
 from affine import Affine
+from pydep.io.wepp import read_env
 from pyiem import dep as dep_utils
 from pyiem.grid.zs import CachingZonalStats
 from pyiem.util import get_dbconn, get_dbconnstr, logger
@@ -49,7 +50,7 @@ def find_huc12s(scenario):
 def readfile(fn, lengths):
     """Our env reader."""
     try:
-        df = dep_utils.read_env(fn)
+        df = read_env(fn)
     except Exception as exp:
         LOG.warning("ABORT: Attempting to read: %s resulted in: %s", fn, exp)
         return None

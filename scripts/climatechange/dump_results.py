@@ -2,8 +2,8 @@
 import os
 import sys
 
-from pyiem.dep import read_env
 from pyiem.util import logger, get_dbconn
+from pydep.io.wepp import read_env
 from tqdm import tqdm
 import numpy as np
 
