@@ -19,12 +19,14 @@ import pandas as pd
 from tqdm import tqdm
 import geopandas as gpd
 from affine import Affine
-from pyiem import dep as dep_utils
+from pyiem.iemre import WEST, NORTH
 from pyiem.grid.zs import CachingZonalStats
 from pyiem.util import get_dbconn, get_dbconnstr, logger
+from pydep.io.wepp import read_env
+from pydep.util import load_scenarios
 
 LOG = logger()
-PRECIP_AFF = Affine(0.01, 0.0, dep_utils.WEST, 0.0, -0.01, dep_utils.NORTH)
+PRECIP_AFF = Affine(0.01, 0.0, WEST, 0.0, -0.01, NORTH)
 CONFIG = {"subset": False}
 
 # Maximum precip value allowed, will alert otherwise, see dailyerosion/dep#65
@@ -49,7 +51,7 @@ def find_huc12s(scenario):
 def readfile(fn, lengths):
     """Our env reader."""
     try:
-        df = dep_utils.read_env(fn)
+        df = read_env(fn)
     except Exception as exp:
         LOG.warning("ABORT: Attempting to read: %s resulted in: %s", fn, exp)
         return None
@@ -181,7 +183,7 @@ def load_precip(dates, huc12s):
 
 def load_lengths(scenario):
     """Build out our flowpath lengths."""
-    sdf = dep_utils.load_scenarios()
+    sdf = load_scenarios()
     idep = get_dbconn("idep")
     icursor = idep.cursor()
     res = {}
@@ -381,53 +383,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv)
-
-
-def test_dohuc12():
-    """Can we process a huc12"""
-    lengths = load_lengths(0)
-    myhuc = "102400130105"
-    # Run from CI, abort for now
-    if myhuc not in lengths:
-        return
-    res, _, _, _ = do_huc12(
-        [0, myhuc, lengths[myhuc], [datetime.date(2014, 9, 9)], [0]]
-    )
-    assert res == myhuc
-
-
-def test_one_date():
-    """Can we properly parse dates."""
-    parser = usage()
-    args = parser.parse_args(["-s", "0", "--date", "2019-12-03"])
-    dates = determine_dates(args)
-    assert len(dates) == 1
-
-
-def test_dup_date():
-    """Can we properly parse dates."""
-    parser = usage()
-    args = parser.parse_args(
-        ["-s", "0", "--date", "2019-12-03", "--date", "2019-12-03"]
-    )
-    dates = determine_dates(args)
-    assert len(dates) == 1
-
-
-def test_one_month():
-    """Can we properly one month."""
-    parser = usage()
-    args = parser.parse_args(["-s", "0", "--date", "2019-11"])
-    dates = determine_dates(args)
-    assert len(dates) == 30
-    assert dates[0] == pd.Timestamp("2019/11/01")
-    assert dates[-1] == pd.Timestamp("2019/11/30")
-
-
-def test_all_dates():
-    """Can we properly do all."""
-    parser = usage()
-    args = parser.parse_args(["-s", "0", "--date", "all"])
-    dates = determine_dates(args)
-    assert len(dates) > 600  # arb
-    assert dates[0] == pd.Timestamp("2007/01/01")

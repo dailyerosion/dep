@@ -8,7 +8,7 @@ from math import atan2, degrees, pi
 import psycopg2.extras
 from tqdm import tqdm
 from pyiem.util import get_dbconn
-from pyiem.dep import get_cli_fname
+from pydep.util import get_cli_fname
 
 SCENARIO = int(sys.argv[1])
 TILLAGE_CLASS = int(sys.argv[2])

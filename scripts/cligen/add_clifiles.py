@@ -5,7 +5,7 @@ import sys
 import shutil
 
 from pyiem.util import get_dbconn
-from pyiem.dep import get_cli_fname
+from pydep.util import get_cli_fname
 
 
 def missing_logic(scenario, fn):

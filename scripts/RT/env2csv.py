@@ -12,11 +12,13 @@ from tqdm import tqdm
 import geopandas as gpd
 from rasterstats import zonal_stats
 from affine import Affine
-from pyiem import dep as dep_utils
+from pyiem.iemre import WEST, NORTH
 from pyiem.util import get_dbconn, logger
+from pydep.io.wepp import read_env
+from pydep.util import load_scenarios
 
 LOG = logger()
-PRECIP_AFF = Affine(0.01, 0.0, dep_utils.WEST, 0.0, -0.01, dep_utils.NORTH)
+PRECIP_AFF = Affine(0.01, 0.0, WEST, 0.0, -0.01, NORTH)
 CONFIG = {"subset": False}
 
 
@@ -36,11 +38,7 @@ def find_huc12s(scenario):
 
 def readfile(fn, lengths):
     """Our env reader."""
-    try:
-        df = dep_utils.read_env(fn)
-    except Exception as exp:
-        print("\nABORT: Attempting to read: %s resulted in: %s\n" % (fn, exp))
-        return None
+    df = read_env(fn)
     key = int(fn.split("/")[-1].split(".")[0].split("_")[1])
     df["fpath"] = key
     df["delivery"] = df["sed_del"] / lengths[key]
@@ -137,7 +135,7 @@ def load_precip(dates, huc12s):
 
 def load_lengths(scenario):
     """Build out our flowpath lengths."""
-    sdf = dep_utils.load_scenarios()
+    sdf = load_scenarios()
     idep = get_dbconn("idep")
     icursor = idep.cursor()
     res = {}

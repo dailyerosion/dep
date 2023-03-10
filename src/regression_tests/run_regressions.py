@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 
-from pyiem.dep import read_env
+from pydep.io.wepp import read_env
 
 
 def main():

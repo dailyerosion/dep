@@ -3,9 +3,9 @@ import glob
 
 from tqdm import tqdm
 import numpy as np
-import pyiem.dep as dep_utils
 from pyiem.plot.use_agg import plt
 import pandas as pd
+from pydep.io.wepp import read_env
 
 MYHUCS = [
     "070600060701",
@@ -50,7 +50,7 @@ def main():
                 "/i/%s/env/%s/%s/*.env" % (scenario, huc12[:8], huc12[8:])
             ):
                 fpath = int(fn.split("/")[-1].split(".")[0].split("_")[1])
-                df = dep_utils.read_env(fn)
+                df = read_env(fn)
                 df["fpath"] = fpath
                 df["av_det"] = df["av_det"] * 4.463
                 df["scenario"] = scenario

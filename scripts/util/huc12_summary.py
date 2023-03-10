@@ -1,11 +1,11 @@
 """Generate DEP summary."""
 from calendar import month_abbr
 
-from pyiem.dep import read_env
 from pyiem.util import get_dbconn
 import pandas as pd
 from pandas.io.sql import read_sql
 from tqdm import tqdm
+from pydep.io.wepp import read_env
 
 
 def main():

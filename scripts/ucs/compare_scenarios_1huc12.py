@@ -2,13 +2,14 @@
 import os
 import glob
 
-import pyiem.dep as dep_utils
+from pydep.io.wepp import read_env
+
 
 os.chdir("/i/0/env/10230003/1504")
 for fn in glob.glob("*.env"):
-    df0 = dep_utils.read_env(fn)
+    df0 = read_env(fn)
     df0 = df0.set_index("date")
-    df7 = dep_utils.read_env("/i/7/env/10230003/1504/" + fn)
+    df7 = read_env("/i/7/env/10230003/1504/" + fn)
     df7 = df7.set_index("date")
     if (df7["sed_del"].sum() - df0["sed_del"].sum()) > 1000:
         print("--- Investigating: %s" % (fn,))

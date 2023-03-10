@@ -5,8 +5,8 @@ import glob
 
 import pandas as pd
 from pandas.io.sql import read_sql
-from pyiem import dep
 from pyiem.util import get_dbconn
+from pydep.io.wepp import read_env
 
 YEARS = datetime.date.today().year - 2007 + 1
 CONV = 4.463
@@ -32,7 +32,7 @@ def summarize_hillslopes(huc12, scenario):
     )
     dfs = []
     for env in envs:
-        df = dep.read_env(env)
+        df = read_env(env)
         df["flowpath"] = int(env.split("/")[-1].split("_")[1][:-4])
         dfs.append(df)
     df = pd.concat(dfs)

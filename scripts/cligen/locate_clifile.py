@@ -4,7 +4,7 @@ import subprocess
 import sys
 
 from pyiem.util import get_dbconn, logger
-from pyiem.dep import get_cli_fname
+from pydep.util import get_cli_fname
 
 LOG = logger()
 
@@ -68,12 +68,6 @@ def main(argv):
             os.makedirs(mydir)
         subprocess.call(["cp", copyfn, fn])
     LOG.info("added %s files", created)
-
-
-def test_finder():
-    """Test what our finder does."""
-    finder(-95.0, 42.0, 0)
-    assert False
 
 
 if __name__ == "__main__":

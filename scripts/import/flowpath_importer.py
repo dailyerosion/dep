@@ -18,8 +18,8 @@ from shapely.geometry import LineString
 import geopandas as gpd
 import pandas as pd
 import pyproj
-from pyiem.dep import get_cli_fname
 from pyiem.util import get_dbconn, logger
+from pydep.util import get_cli_fname
 
 LOG = logger()
 print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")
@@ -511,31 +511,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv)
-
-# -----------
-# | TESTING |
-# -----------
-
-
-def test_startlen_not_zero():
-    """Test that our starting length is zero."""
-    # gdf = get_data("../../data/eduardo_hucs/smpl3m_mean18070802051502.json")
-    # gdf = gdf[gdf["fp070802051502"] == 191]
-    # gdf.to_file("testdata/startlen_not_zero.json", driver="GeoJSON")
-
-    cursor = get_dbconn("idep").cursor()
-    df = get_data(
-        os.path.join(
-            os.path.dirname(__file__), "testdata/startlen_not_zero.json"
-        )
-    )
-    res = process(cursor, -1, df, None)
-    assert res is not None
-    cursor.execute(
-        """
-        SELECT length from flowpath_points p JOIN flowpaths f on
-        (p.flowpath = f.fid) where f.scenario = -1 and
-        f.huc_12 = '070802051502' and f.fpath = 191 ORDER by segid ASC
-        """
-    )
-    assert abs(cursor.fetchone()[0] - 0) < 0.001

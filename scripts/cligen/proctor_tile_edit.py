@@ -14,7 +14,7 @@ from multiprocessing import cpu_count
 from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
-from pyiem.dep import SOUTH, NORTH, EAST, WEST
+from pyiem.iemre import SOUTH, NORTH, EAST, WEST
 from pyiem.util import logger
 
 LOG = logger()

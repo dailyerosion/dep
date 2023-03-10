@@ -41,7 +41,7 @@ import numpy as np
 from tqdm import tqdm
 import pandas as pd
 from pyiem.util import get_dbconn, get_sqlalchemy_conn, logger
-from pyiem.dep import load_scenarios
+from pydep.util import load_scenarios
 
 LOG = logger()
 MISSED_SOILS = {}

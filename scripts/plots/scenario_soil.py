@@ -1,12 +1,10 @@
 """Plot soil stuff."""
 import os
 import glob
-import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from pyiem.dep import read_slp
 from pyiem.util import utc
 
 

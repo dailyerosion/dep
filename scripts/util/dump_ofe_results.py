@@ -7,7 +7,7 @@ import pandas as pd
 from sqlalchemy import text
 from tqdm import tqdm
 from pyiem.util import get_sqlalchemy_conn, get_dbconn
-from pyiem.dep import read_env, read_ofe
+from pydep.io.wepp import read_env, read_ofe
 
 # 2007 is skipped
 YEARS = 2023 - 2007

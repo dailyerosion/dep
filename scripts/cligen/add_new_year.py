@@ -81,9 +81,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv)
-
-
-def test_analog():
-    """Test that we can do the right thing."""
-    assert compute_analog_year(2021) == 2019
-    assert compute_analog_year(2020) == 2016

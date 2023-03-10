@@ -8,6 +8,7 @@ import psycopg2
 from tqdm import tqdm
 from pyiem import dep as dep_utils
 from pyiem.util import get_dbconn
+from pydep.io.wepp import read_env
 
 
 def find_huc12s():
@@ -29,7 +30,7 @@ def find_huc12s():
 def readfile(huc12, fn):
     """Read the file."""
     try:
-        df = dep_utils.read_env(fn)
+        df = read_env(fn)
     except Exception:
         return None
     key = "%s_%s" % (huc12, int(fn.split("/")[-1].split(".")[0].split("_")[1]))
@@ -101,7 +102,7 @@ if __name__ == "__main__":
 
     # Begin the processing work now!
     pool = multiprocessing.Pool()
-    for (df, huc12, slopes) in tqdm(
+    for df, huc12, slopes in tqdm(
         pool.imap_unordered(do_huc12, huc12s),
         total=len(huc12s),
         disable=(not sys.stdout.isatty()),

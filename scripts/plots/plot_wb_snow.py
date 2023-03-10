@@ -3,8 +3,8 @@ import sys
 
 import pandas as pd
 import seaborn as sns
-from pyiem.dep import read_wb
 from pyiem.util import get_dbconnstr
+from pydep.io.dep import read_wb
 
 
 def main(argv):

@@ -4,7 +4,7 @@ import glob
 
 import pandas as pd
 from pyiem.plot.use_agg import plt
-from pyiem.dep import read_env
+from pydep.io.wepp import read_env
 
 
 def main():
