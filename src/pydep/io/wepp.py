@@ -1,6 +1,17 @@
 """pydep readers for WEPP input/output files."""
+import datetime
+import re
 
 import pandas as pd
+
+YLD_CROPTYPE = re.compile(r"Crop Type #\s+(?P<num>\d+)\s+is (?P<name>[^\s]+)")
+YLD_DATA = re.compile(
+    (
+        r"Crop Type #\s+(?P<num>\d+)\s+Date = (?P<doy>\d+)"
+        r" OFE #\s+(?P<ofe>\d+)\s+yield=\s+(?P<yield>[0-9\.]+)"
+        r" \(kg/m\*\*2\) year= (?P<year>\d+)"
+    )
+)
 
 
 def read_env(filename, year0=2006) -> pd.DataFrame:
@@ -47,3 +58,34 @@ def read_env(filename, year0=2006) -> pd.DataFrame:
             {"year": df["year"], "month": df["month"], "day": df["day"]}
         )
     return df
+
+
+def read_yld(filename):
+    """read WEPP yld file with some local mods to include a year
+
+    Args:
+      filename (str): Filename to read
+
+    Returns:
+      pandas.DataFrame
+    """
+    with open(filename, encoding="utf8") as fh:
+        data = fh.read()
+    xref = {}
+    for cropcode, label in YLD_CROPTYPE.findall(data):
+        xref[cropcode] = label
+    rows = []
+    for cropcode, doy, ofe, yld, year in YLD_DATA.findall(data):
+        date = datetime.date(int(year), 1, 1) + datetime.timedelta(
+            days=(int(doy) - 1)
+        )
+        rows.append(
+            dict(
+                valid=date,
+                year=int(year),
+                yield_kgm2=float(yld),
+                crop=xref[cropcode],
+                ofe=int(ofe),
+            )
+        )
+    return pd.DataFrame(rows)

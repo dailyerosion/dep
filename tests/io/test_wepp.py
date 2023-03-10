@@ -2,7 +2,7 @@
 import datetime
 import os
 
-from pydep.io.wepp import read_env
+from pydep.io.wepp import read_env, read_yld
 
 
 def get_path(name):
@@ -24,3 +24,10 @@ def test_read():
     assert len(df2.index) == 1
     row = df2.iloc[0]
     assert row["runoff"] == 86.3
+
+
+def test_yld():
+    """Read a slope file"""
+    df = read_yld(get_path("yld.txt"))
+    assert len(df.index) == 10
+    assert abs(df["yield_kgm2"].max() - 0.93) < 0.01
