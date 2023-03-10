@@ -2,13 +2,28 @@
 import datetime
 import os
 
-from pydep.io.wepp import read_cli, read_env, read_ofe, read_slp, read_yld
+from pydep.io.wepp import (
+    read_cli,
+    read_crop,
+    read_env,
+    read_ofe,
+    read_slp,
+    read_yld,
+)
 
 
 def get_path(name):
     """helper"""
     basedir = os.path.dirname(__file__)
     return os.path.join(basedir, "..", "data", name)
+
+
+def test_crop():
+    """Read a crop file."""
+    df = read_crop(get_path("crop.txt"))
+    assert len(df.index) > 10
+    assert abs(df["lai"].max() - 9.00) < 0.01
+    assert abs(df["avg_temp_c"].max() - 24.30) < 0.01
 
 
 def test_empty():

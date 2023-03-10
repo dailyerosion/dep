@@ -2,9 +2,9 @@
 import datetime
 import sys
 
-from pyiem.dep import read_crop
 from pyiem.plot.use_agg import plt
 import matplotlib.dates as mdates
+from pydep.io.wepp import read_crop
 
 
 def main(argv):
