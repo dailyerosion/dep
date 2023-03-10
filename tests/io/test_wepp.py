@@ -2,7 +2,7 @@
 import datetime
 import os
 
-from pydep.io.wepp import read_cli, read_env, read_slp, read_yld
+from pydep.io.wepp import read_cli, read_env, read_ofe, read_slp, read_yld
 
 
 def get_path(name):
@@ -52,3 +52,13 @@ def test_slp():
     assert len(slp) == 5
     assert abs(slp[4]["y"][-1] + 2.91) < 0.01
     assert abs(slp[4]["slopes"][-1] - 0.033) < 0.01
+
+
+def test_ofe():
+    """Read an OFE please"""
+    df = read_ofe(get_path("ofe.txt"))
+    assert abs(df["precip"].max() - 107.56) < 0.01
+
+    df = read_ofe(get_path("ofe2.txt"))
+    print(df["sedleave"].sum())
+    assert abs(df["sedleave"].sum() - 400257.48) < 0.01

@@ -1,6 +1,5 @@
 """Get some things straight in my head about these OFE files"""
-from pyiem.dep import read_ofe
-from pydep.io.wepp import read_env
+from pydep.io.wepp import read_env, read_ofe
 
 
 def main():

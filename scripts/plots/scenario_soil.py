@@ -1,7 +1,6 @@
 """Plot soil stuff."""
 import os
 import glob
-import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
