@@ -40,6 +40,8 @@ PROCESSING_COUNTS = {
     "flowpaths_invalidgeom": 0,
     "flowpaths_lenzero_reset": 0,
     "flowpaths_inconsistent_gridorder": 0,
+    "fields_deleted": 0,
+    "fields_inserted": 0,
 }
 TRANSFORMER = pyproj.Transformer.from_crs(
     "epsg:5070", "epsg:4326", always_xy=True
@@ -69,6 +71,19 @@ def create_flowpath_id(cursor, scenario, huc12, fpath) -> int:
     return cursor.fetchone()[0]
 
 
+def fillout_codes(df):
+    """ "Get the right full-string codes."""
+    # Compute full rotation string
+    # 2022 is repeating -2 (2020)
+    # 2023 is repeating -2 (2021)
+    s = df["CropRotatn_CY_2021"]
+    df["landuse"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
+    s = df["Management_CY_2021"]
+    df["management"] = (
+        s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
+    )
+
+
 def get_data(filename):
     """Converts a GeoJSON file into a pandas dataframe
 
@@ -84,16 +99,14 @@ def get_data(filename):
         df["irrigated"] = 0
     # Any null FBndID (mostly forest?) get set to -1
     df["FBndID"] = df["FBndID"].fillna("FUNUSED_-1")
-    # Compute full rotation string
-    # 2022 is repeating -2 (2020)
-    # 2023 is repeating -2 (2021)
-    s = df["CropRotatn_CY_2021"]
-    df["landuse"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
-    s = df["Management_CY_2021"]
-    df["management"] = (
-        s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
+    fillout_codes(df)
+    # Get the field bounds dataframe as well
+    fld_df = gpd.read_file(
+        filename.replace("smpl3m_mean18", "FB"),
+        index="OBJECTID",
     )
-    return df
+    fillout_codes(fld_df)
+    return df, fld_df
 
 
 def delete_previous(cursor, scenario, huc12):
@@ -369,13 +382,50 @@ def delete_flowpath(cursor, fid):
     cursor.execute("DELETE from flowpaths where fid = %s", (fid,))
 
 
-def process(cursor, scenario, huc12df):
+def process_fields(cursor, scenario, huc12, fld_df):
+    """Database update this information."""
+    cursor.execute(
+        """
+        DELETE from field_operations o USING fields f where
+        o.field_id = f.field_id and f.scenario = %s and f.huc12 = %s
+        """,
+        (scenario, huc12),
+    )
+    cursor.execute(
+        "DELETE from fields where scenario = %s and huc12 = %s",
+        (scenario, huc12),
+    )
+    PROCESSING_COUNTS["fields_deleted"] += cursor.rowcount
+
+    for _, row in fld_df.iterrows():
+        cursor.execute(
+            """
+            INSERT into fields (scenario, huc12, fbndid, acres, isag, geom,
+            management, landuse)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                scenario,
+                huc12,
+                row["FBndID"].split("_")[1],
+                row["Acres"],
+                bool(row["isAG"]),
+                row["geometry"].wkt,
+                row["management"],
+                row["landuse"],
+            ),
+        )
+    PROCESSING_COUNTS["fields_inserted"] += len(fld_df.index)
+
+
+def process(cursor, scenario, huc12df, fld_df):
     """Processing of a HUC12's data into the database
 
     Args:
       cursor (psycopg2.cursor): database cursor
         scenario (int): the scenario to process
       huc12df (pd.DataFrame): the dataframe containing the data
+      fld_df (gpd.GeoDataFrame): The associated fields.
 
     Returns:
       None
@@ -389,7 +439,9 @@ def process(cursor, scenario, huc12df):
             huc12 = col[len(PREFIX) :].replace("_tif", "")
             break
     if huc12 is None or len(huc12) != 12:
-        raise Exception(f"Could not find huc12 from {huc12df.columns}")
+        raise ValueError(f"Could not find huc12 from {huc12df.columns}")
+    if fld_df is not None:
+        process_fields(cursor, scenario, huc12, fld_df)
     newid_schema = f"fp_id_{huc12}" in huc12df.columns
     if newid_schema:
         fpcol = f"fp_id_{huc12}"
@@ -424,15 +476,15 @@ def main(argv):
     cursor = pgconn.cursor()
     load_genlu_codes(cursor)
     scenario = int(argv[1])
+    datadir = os.path.join("..", "..", "data", argv[2])
+    # collect up the GeoJSONs in that directory
+    fns = glob.glob(f"{datadir}/smpl3m_*.json")
+    fns.sort()
+    i = 0
+
+    progress = tqdm(fns)
     # track our work
     with open("myhucs.txt", "w", encoding="utf8") as fh:
-        datadir = os.path.join("..", "..", "data", argv[2])
-        # collect up the GeoJSONs in that directory
-        fns = glob.glob(f"{datadir}/smpl3m_*.json")
-        fns.sort()
-        i = 0
-
-        progress = tqdm(fns)
         for fn in progress:
             progress.set_description(os.path.basename(fn))
             # Save our work every 100 HUC12s,
@@ -441,10 +493,10 @@ def main(argv):
             if i > 0 and i % 100 == 0:
                 pgconn.commit()
                 cursor = pgconn.cursor()
-            df = get_data(fn)
+            fp_df, fld_df = get_data(fn)
             # Sometimes we get no flowpaths, so skip writing those
-            huc12 = process(cursor, scenario, df)
-            if not df.empty:
+            huc12 = process(cursor, scenario, fp_df, fld_df)
+            if not fp_df.empty:
                 fh.write(f"{huc12}\n")
             i += 1
 
@@ -477,7 +529,7 @@ def test_startlen_not_zero():
             os.path.dirname(__file__), "testdata/startlen_not_zero.json"
         )
     )
-    res = process(cursor, -1, df)
+    res = process(cursor, -1, df, None)
     assert res is not None
     cursor.execute(
         """

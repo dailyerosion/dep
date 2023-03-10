@@ -15,3 +15,5 @@ prj2wepp/wepp/hill.slp
 prj2wepp/wepp/data/managements
 prj2wepp/wepp/runs/p0*
 .coverage
+/build
+**/pydep.egg-info/
