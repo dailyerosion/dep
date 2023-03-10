@@ -27,6 +27,7 @@ jobs:
         export PATH="/usr/lib/postgresql/14/bin:$PATH"
         cd database; sh bootstrap.sh
         python schema_manager.py
+        cd ..
         coverage run --source=pydep setup.py test
         coverage xml
 
