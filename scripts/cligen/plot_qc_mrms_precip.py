@@ -4,8 +4,14 @@ import datetime
 import os
 
 from pyiem.plot import MapPlot
-from pyiem.iemre import daily_offset, get_daily_mrms_ncname
-from pyiem.dep import SOUTH, NORTH, EAST, WEST
+from pyiem.iemre import (
+    daily_offset,
+    get_daily_mrms_ncname,
+    SOUTH,
+    NORTH,
+    EAST,
+    WEST,
+)
 from pyiem.util import get_dbconn
 import netCDF4
 import numpy as np

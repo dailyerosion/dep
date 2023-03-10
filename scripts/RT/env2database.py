@@ -21,11 +21,12 @@ import geopandas as gpd
 from affine import Affine
 from pydep.io.wepp import read_env
 from pyiem import dep as dep_utils
+from pyiem.iemre import WEST, NORTH
 from pyiem.grid.zs import CachingZonalStats
 from pyiem.util import get_dbconn, get_dbconnstr, logger
 
 LOG = logger()
-PRECIP_AFF = Affine(0.01, 0.0, dep_utils.WEST, 0.0, -0.01, dep_utils.NORTH)
+PRECIP_AFF = Affine(0.01, 0.0, WEST, 0.0, -0.01, NORTH)
 CONFIG = {"subset": False}
 
 # Maximum precip value allowed, will alert otherwise, see dailyerosion/dep#65

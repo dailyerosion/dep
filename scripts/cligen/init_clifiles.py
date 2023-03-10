@@ -8,7 +8,7 @@ import shutil
 
 import numpy as np
 from pyiem.util import get_dbconn
-from pyiem.dep import SOUTH, EAST, NORTH, WEST
+from pyiem.iemre import SOUTH, EAST, NORTH, WEST
 from pydep.util import get_cli_fname
 
 

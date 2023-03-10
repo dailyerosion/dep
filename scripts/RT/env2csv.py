@@ -12,12 +12,13 @@ from tqdm import tqdm
 import geopandas as gpd
 from rasterstats import zonal_stats
 from affine import Affine
-from pydep.io.wepp import read_env
 from pyiem import dep as dep_utils
+from pyiem.iemre import WEST, NORTH
 from pyiem.util import get_dbconn, logger
+from pydep.io.wepp import read_env
 
 LOG = logger()
-PRECIP_AFF = Affine(0.01, 0.0, dep_utils.WEST, 0.0, -0.01, dep_utils.NORTH)
+PRECIP_AFF = Affine(0.01, 0.0, WEST, 0.0, -0.01, NORTH)
 CONFIG = {"subset": False}
 
 

@@ -7,14 +7,14 @@ import sys
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from pyiem import dep as dep_utils
+from pyiem.iemre import WEST, NORTH
 from pyiem.util import get_dbconn
 import geopandas as gpd
 from rasterstats import zonal_stats
 from affine import Affine
 from pydep.io.dep import read_wb
 
-PRECIP_AFF = Affine(0.01, 0.0, dep_utils.WEST, 0.0, -0.01, dep_utils.NORTH)
+PRECIP_AFF = Affine(0.01, 0.0, WEST, 0.0, -0.01, NORTH)
 
 
 def find_huc12s():

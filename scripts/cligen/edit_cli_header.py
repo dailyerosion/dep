@@ -6,8 +6,7 @@ import os
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from pyiem.dep import NORTH, EAST, SOUTH, WEST
-from pyiem.iemre import find_ij, get_dailyc_ncname
+from pyiem.iemre import find_ij, get_dailyc_ncname, NORTH, EAST, SOUTH, WEST
 from pyiem.util import logger, ncopen, convert_value
 from pydep.util import get_cli_fname
 
