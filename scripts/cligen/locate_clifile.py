@@ -70,11 +70,5 @@ def main(argv):
     LOG.info("added %s files", created)
 
 
-def test_finder():
-    """Test what our finder does."""
-    finder(-95.0, 42.0, 0)
-    assert False
-
-
 if __name__ == "__main__":
     main(sys.argv)

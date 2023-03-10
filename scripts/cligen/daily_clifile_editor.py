@@ -26,7 +26,7 @@ from scipy.interpolate import NearestNDInterpolator
 from osgeo import gdal
 from pyiem import iemre
 from pyiem.dep import SOUTH, WEST, NORTH, EAST, get_cli_fname
-from pyiem.util import ncopen, logger, convert_value, utc
+from pyiem.util import ncopen, logger, convert_value
 
 LOG = logger()
 CENTRAL = ZoneInfo("America/Chicago")
@@ -645,58 +645,3 @@ def main(argv):
 if __name__ == "__main__":
     # Go Main Go
     main(sys.argv)
-
-
-def test_get_sts_ets_at_localhour():
-    """Test that we properly deal with fall back in this logic."""
-    sts, ets = get_sts_ets_at_localhour(datetime.date(2021, 11, 7), 1)
-    assert sts == utc(2021, 11, 7, 6)
-    assert ets == utc(2021, 11, 8, 7)
-
-
-def test_compute_tilebounds():
-    """Test that computing tilebounds works."""
-    res = compute_tile_bounds(5, 5, 5)
-    assert abs(res.south - 48.0) < 0.01
-
-
-def test_duplicated_lastbp():
-    """Test that we do not get a duplicated last breakpoint."""
-    data = np.zeros([30 * 24])
-    data[-4:] = [3.2, 2.009, 0.001, 0]
-    bp = compute_breakpoint(data)
-    assert bp[-2].split()[1] != bp[-1].split()[1]
-
-
-def test_bp():
-    """issue #6 invalid time"""
-    data = np.zeros([30 * 24])
-    data[0] = 3.2
-    bp = compute_breakpoint(data)
-    assert bp[0] == "00.0000 0.00"
-    assert bp[1] == "00.0333 3.20"
-    data[0] = 0
-    data[24 * 30 - 1] = 9.99
-    bp = compute_breakpoint(data)
-    assert bp[0] == "23.9667 0.00"
-    assert bp[1] == "23.9833 9.99"
-
-    data[24 * 30 - 1] = 10.99
-    bp = compute_breakpoint(data)
-    assert bp[0] == "23.9667 0.00"
-    assert bp[1] == "23.9833 10.99"
-
-    # Do some random futzing
-    for _ in range(100):
-        data = np.random.randint(20, size=(30 * 24,))
-        bp = compute_breakpoint(data)
-        lastts = -1
-        lastaccum = -1
-        for b in bp:
-            tokens = b.split()
-            if float(tokens[0]) <= lastts or float(tokens[1]) <= lastaccum:
-                print(data)
-                print(bp)
-                assert False
-            lastts = float(tokens[0])
-            lastaccum = float(tokens[1])

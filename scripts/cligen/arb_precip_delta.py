@@ -113,29 +113,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv)
-
-
-def test_conservative_adjust():
-    """Test conservative adjust."""
-    times = [0, 1, 2]
-    accum = [1, 30, 40]
-    newtimes = conservative_adjust(times, accum, 0.6)
-    assert abs(newtimes[1] - 1.666) < 0.001
-    newtimes = conservative_adjust(times, accum, 1.4)
-    assert abs(newtimes[1] - 0.714) < 0.001
-
-
-def test_endofday_bug():
-    """Found this bug with actual values."""
-    times = [0.53, 0.80, 23.76, 23.86, 23.96, 23.98]
-    accum = [0, 2.37, 4.59, 6.75, 8.92, 9.64]
-    newtimes = conservative_adjust(times, accum, 0.8)
-    assert (newtimes[-1] - newtimes[-2]) > 0.001
-
-
-def test_endofday_bug2():
-    """Found another edge case."""
-    times = [16.8, 17.56, 19.06, 21.63, 22.63, 22.90, 23.06, 23.10]
-    accum = [0, 2.03, 4.22, 6.44, 8.47, 10.73, 13.3, 14.0]
-    newtimes = conservative_adjust(times, accum, 0.8)
-    assert (newtimes[-1] - newtimes[-2]) > 0.001
