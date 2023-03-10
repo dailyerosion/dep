@@ -2,7 +2,7 @@
 import datetime
 import os
 
-from pydep.io.wepp import read_cli, read_env, read_yld
+from pydep.io.wepp import read_cli, read_env, read_slp, read_yld
 
 
 def get_path(name):
@@ -44,3 +44,11 @@ def test_cli_rfactor():
     df = read_cli(get_path("cli.txt"), compute_rfactor=True)
     assert abs(df["rfactor"].max() - 872.63) < 0.01
     assert (df.groupby(df.index.year).sum()["rfactor"].max() - 4276.60) < 0.01
+
+
+def test_slp():
+    """Read a slope file"""
+    slp = read_slp(get_path("slp.txt"))
+    assert len(slp) == 5
+    assert abs(slp[4]["y"][-1] + 2.91) < 0.01
+    assert abs(slp[4]["slopes"][-1] - 0.033) < 0.01

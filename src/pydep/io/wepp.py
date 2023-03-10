@@ -169,6 +169,42 @@ def read_env(filename, year0=2006) -> pd.DataFrame:
     return df
 
 
+def read_slp(filename):
+    """read WEPP slp file.
+
+    Args:
+      filename (str): Filename to read
+
+    Returns:
+      list of slope profiles
+    """
+    with open(filename, encoding="utf8") as fh:
+        lines = [a[: a.find("#")].strip() for a in fh]
+    segments = int(lines[5])
+    res = [None] * segments
+    xpos = 0
+    elev = 0
+    for seg in range(segments):
+        # first line is pts and x-length
+        (_pts, length) = [float(x) for x in lines[7 + seg * 2].split()]
+        # next line is the combo of x-position along length and slope at pt
+        line2 = lines[8 + seg * 2].replace(",", "")
+        tokens = np.array([float(x) for x in line2.split()])
+        # first value in each pair is the x-pos relative to the length
+        xs = xpos + tokens[::2] * length
+        # second value is the slope at that position?
+        slopes = tokens[1::2]
+        # initialize the y-position at the current elevation
+        ys = [elev]
+        for i in range(1, len(slopes)):
+            # dx * slope
+            elev -= (xs[i] - xs[i - 1]) * slopes[i - 1]
+            ys.append(elev)
+        res[seg] = {"x": xs, "slopes": slopes, "y": np.array(ys)}
+        xpos += length
+    return res
+
+
 def read_yld(filename):
     """read WEPP yld file with some local mods to include a year
 

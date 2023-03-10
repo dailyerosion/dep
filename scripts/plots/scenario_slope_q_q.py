@@ -6,8 +6,8 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from pyiem.dep import read_slp
 from pyiem.util import utc
+from pydep.io.wepp import read_slp
 
 
 def read_data():

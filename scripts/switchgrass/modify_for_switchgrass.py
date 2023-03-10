@@ -7,7 +7,7 @@ import sys
 import glob
 
 from tqdm import tqdm
-from pyiem.dep import read_slp
+from pydep.io.wepp import read_slp
 
 
 def main(argv):
