@@ -25,8 +25,9 @@ import numpy as np
 from scipy.interpolate import NearestNDInterpolator
 from osgeo import gdal
 from pyiem import iemre
-from pyiem.dep import SOUTH, WEST, NORTH, EAST, get_cli_fname
+from pyiem.dep import SOUTH, WEST, NORTH, EAST
 from pyiem.util import ncopen, logger, convert_value
+from pydep.util import get_cli_fname
 
 LOG = logger()
 CENTRAL = ZoneInfo("America/Chicago")

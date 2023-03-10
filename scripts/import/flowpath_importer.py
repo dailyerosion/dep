@@ -18,8 +18,8 @@ from shapely.geometry import LineString
 import geopandas as gpd
 import pandas as pd
 import pyproj
-from pyiem.dep import get_cli_fname
 from pyiem.util import get_dbconn, logger
+from pydep.util import get_cli_fname
 
 LOG = logger()
 print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")

@@ -4,7 +4,7 @@ import subprocess
 import sys
 
 from pyiem.util import get_dbconn, logger
-from pyiem.dep import get_cli_fname
+from pydep.util import get_cli_fname
 
 LOG = logger()
 
