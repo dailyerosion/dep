@@ -12,6 +12,7 @@ from pyiem.util import get_dbconn
 import geopandas as gpd
 from rasterstats import zonal_stats
 from affine import Affine
+from pydep.io.dep import read_wb
 
 PRECIP_AFF = Affine(0.01, 0.0, dep_utils.WEST, 0.0, -0.01, dep_utils.NORTH)
 
@@ -28,7 +29,7 @@ def find_huc12s():
 def readfile(huc12, fn):
     """Read one file please"""
     try:
-        df = dep_utils.read_wb(fn)
+        df = read_wb(fn)
     except Exception as exp:
         print("\nABORT: Attempting to read: %s resulted in: %s\n" % (fn, exp))
         return None
@@ -177,7 +178,7 @@ if __name__ == "__main__":
         total=len(HUC12S),
         disable=(not sys.stdout.isatty()),
     ):
-        for (date, huc12, et, runoff) in res:
+        for date, huc12, et, runoff in res:
             if et is None or np.isnan(et):
                 continue
             key = date.strftime("%Y%m%d")

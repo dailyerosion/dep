@@ -4,9 +4,9 @@ import sys
 import pandas as pd
 import geopandas as gpd
 from sqlalchemy import text
-from pyiem.dep import read_wb
 from pyiem.plot import figure_axes, MapPlot
 from pyiem.util import get_sqlalchemy_conn, get_dbconn
+from pydep.io.dep import read_wb
 
 MAKE_PLOTS = False
 

@@ -7,7 +7,7 @@ from tqdm import tqdm
 import pandas as pd
 import seaborn as sns
 from pyiem.plot.use_agg import plt
-from pyiem.dep import read_wb
+from pydep.io.dep import read_wb
 
 
 def main(argv):

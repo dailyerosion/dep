@@ -3,7 +3,7 @@ import sys
 import calendar
 
 from pyiem.plot.use_agg import plt
-from pyiem.dep import read_wb
+from pydep.io.dep import read_wb
 
 
 def main(argv):

@@ -18,10 +18,10 @@ Period ID
 import datetime
 import glob
 
-from pyiem.dep import read_wb
 from pyiem.util import logger
 import pandas as pd
 from pydep.io.wepp import read_env
+from pydep.io.dep import read_wb
 
 LOG = logger()
 
