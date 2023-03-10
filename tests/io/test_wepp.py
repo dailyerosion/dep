@@ -2,7 +2,7 @@
 import datetime
 import os
 
-from pydep.io.wepp import read_env, read_yld
+from pydep.io.wepp import read_cli, read_env, read_yld
 
 
 def get_path(name):
@@ -31,3 +31,16 @@ def test_yld():
     df = read_yld(get_path("yld.txt"))
     assert len(df.index) == 10
     assert abs(df["yield_kgm2"].max() - 0.93) < 0.01
+
+
+def test_cli():
+    """read a CLI file please"""
+    df = read_cli(get_path("cli.txt"))
+    assert len(df.index) == 4018
+
+
+def test_cli_rfactor():
+    """read a CLI file please"""
+    df = read_cli(get_path("cli.txt"), compute_rfactor=True)
+    assert abs(df["rfactor"].max() - 872.63) < 0.01
+    assert (df.groupby(df.index.year).sum()["rfactor"].max() - 4276.60) < 0.01

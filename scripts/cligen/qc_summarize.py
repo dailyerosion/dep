@@ -7,9 +7,9 @@ import netCDF4
 import pytz
 import pandas as pd
 import requests
-from pyiem.dep import read_cli
 from pyiem.iemre import hourly_offset
 from pyiem.util import c2f, mm2inch
+from pydep.io.wepp import read_cli
 
 
 def compute_stage4(lon, lat, year):

@@ -4,9 +4,9 @@ import os
 from datetime import date
 
 from pyiem.util import get_dbconn
-from pyiem.dep import read_cli
 from pandas.io.sql import read_sql
 from tqdm import tqdm
+from pydep.io.wepp import read_cli
 
 MYHUCS = [x.strip() for x in open("myhucs.txt")]
 

@@ -1,6 +1,5 @@
 """R factor work."""
 
-from pyiem.dep import read_cli
 from pyiem.util import get_sqlalchemy_conn
 from pyiem.plot.use_agg import plt
 from pyiem.plot import MapPlot
@@ -11,6 +10,7 @@ import numpy as np
 from tqdm import tqdm
 import geopandas as gpd
 import pandas as pd
+from pydep.io.wepp import read_cli
 
 
 def plot():
