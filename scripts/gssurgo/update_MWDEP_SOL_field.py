@@ -15,7 +15,6 @@ import sys, os, tempfile, time
 
 
 def updsoilFiles():
-
     muList = []
     inRas = r"D:\Data\IAErosion\IDEP_Expansion\DEP_Soils.gdb\MWDEP_gSSURGO"
     solpath = r"D:\Data\IAErosion\IDEP_Expansion\MWDEP_WEPP_SOL2014\\"
@@ -45,6 +44,5 @@ def updsoilFiles():
 
 
 if __name__ == "__main__":
-
     # upa the WEPP SOL name
     updsoilFiles()

@@ -27,7 +27,6 @@ def operation_maker(crop, tillage_class, last_crop="C"):
     if last_crop == "C":
         spring = Spring_op_list[tillage_number][1]
     else:
-
         spring = Spring_op_list[tillage_number][0]
 
     if tillage_class == 1:

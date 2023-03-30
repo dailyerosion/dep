@@ -17,7 +17,6 @@ arcpy.CheckOutExtension("Spatial")
 ##------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-
     inFolder = r"D:\USData\US_Soils\stateSoils_Oct2021\stateSoilsData"
     outFGDB = r"D:\USData\US_Soils\stateSoil10mrasters.gdb"
 
@@ -28,7 +27,6 @@ if __name__ == "__main__":
     inWrkFolder = arcpy.ListWorkspaces("*")
 
     for folder in inWrkFolder:
-
         ST = os.path.basename(folder[-2:])
         inFGDB = os.path.join(folder, "gSSURGO_%s.gdb" % ST)
         arcpy.AddMessage("copying %s" % (inFGDB))
@@ -38,7 +36,6 @@ if __name__ == "__main__":
         # arcpy.AddMessage("copying %s  to %s" %(inFGDB, outRaster))
 
         if not arcpy.Exists(outRaster):
-
             arcpy.CopyRaster_management(
                 "MapunitRaster_10m",
                 outRaster,
