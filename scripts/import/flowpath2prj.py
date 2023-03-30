@@ -119,7 +119,7 @@ WHEAT = {
 }
 
 
-def read_file(scenario, zone, prevcode, code, cfactor, year):
+def read_file(scenario, zone, prevcode, code, nextcode, cfactor, year):
     """Read a block file and do replacements
 
     Args:
@@ -145,6 +145,10 @@ def read_file(scenario, zone, prevcode, code, cfactor, year):
             f"4  15 {year} 1 Plant-Perennial CropDef.ALFALFA  {{0.000000}}\n"
             f"{data}"
         )
+    # One off
+    if code == "B" and prevcode == "C" and cfactor == 2:
+        # Remove fall chisel
+        data = data[: data.find("11  1  %(yr)s")]
     pdate = ""
     pdatem5 = ""
     pdatem10 = ""
@@ -206,10 +210,13 @@ def do_rotation(scenario, zone, rotfn, landuse, management):
         prevcode = "C" if landuse[0] not in INITIAL_COND else landuse[0]
         f = partial(read_file, scenario, zone)
         # 2007
-        data["year1"] = f(prevcode, landuse[0], int(management[0]), 1)
+        data["year1"] = f(
+            prevcode, landuse[0], landuse[1], int(management[0]), 1
+        )
         for i in range(1, 17):
+            nextcode = "" if i == 16 else landuse[i + 1]
             data[f"year{i + 1}"] = f(
-                landuse[i - 1], landuse[i], int(management[i]), i + 1
+                landuse[i - 1], landuse[i], nextcode, int(management[i]), i + 1
             )
 
     with open(rotfn, "w", encoding="utf8") as fh:
