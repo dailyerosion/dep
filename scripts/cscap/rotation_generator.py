@@ -210,7 +210,7 @@ Operations {
     limit = 2018
     for rot in rots[:11]:
         lastmonth = 0
-        for (month, day, operation, label) in rot:
+        for month, day, operation, label in rot:
             if month < lastmonth:
                 year += 1
             lastmonth = month
