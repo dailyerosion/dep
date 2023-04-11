@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 from sqlalchemy import text
+from matplotlib.patches import Rectangle
 from pyiem.iemre import daily_offset
 from pyiem.mrms import WEST, SOUTH
 from pyiem.plot import figure_axes, MapPlot
@@ -24,9 +25,10 @@ def plot_map(i, dt, huc12df, fields):
     """Make a map diagnostic"""
     minx, miny, maxx, maxy = huc12df["geom"].to_crs(4326).total_bounds
     buffer = 0.01
+    huc12 = huc12df.index.values[0]
 
     mp = MapPlot(
-        title=f"DEP Planting Progress {dt:%Y %b %d}",
+        title=f"DEP Planting Progress {dt:%Y %b %d} for HUC12: {huc12}",
         logo="dep",
         sector="custom",
         west=minx - buffer,
@@ -40,32 +42,46 @@ def plot_map(i, dt, huc12df, fields):
         ax=mp.panels[0].ax,
         aspect=None,
         facecolor="None",
-        edgecolor="k",
+        edgecolor="b",
         linewidth=2,
         zorder=100,
     )
-    fields["color"] = "tan"
-    fields.loc[fields["planted"], "color"] = "g"
+    fields["color"] = "white"
+    fields.loc[fields["till1"].notna(), "color"] = "tan"
+    fields.loc[fields["plant"].notna(), "color"] = "g"
     fields.to_crs(mp.panels[0].crs).plot(
         ax=mp.panels[0].ax,
         aspect=None,
         facecolor=fields["color"],
-        edgecolor=fields["color"],
+        edgecolor="k",
+        linewidth=1,
         zorder=100,
     )
+    p0 = Rectangle((0, 0), 1, 1, fc="white", ec="k")
+    p1 = Rectangle((0, 0), 1, 1, fc="tan", ec="k")
+    p2 = Rectangle((0, 0), 1, 1, fc="g", ec="k")
+    mp.panels[0].ax.legend(
+        (p0, p1, p2),
+        ("Awaiting", "Tilled", "Planted"),
+        ncol=3,
+        fontsize=11,
+        loc=2,
+    )
+
     mp.fig.savefig(f"{i:04.0f}.png")
     mp.close()
 
 
-def plot_timeseries(year, df):
+def plot_timeseries(year, df, huc12):
     """Make a diagnostic."""
     (fig, ax) = figure_axes(
         logo="dep",
-        title=f"DEP {year} Tillage/Plant Operation Timing for 102300070305",
+        title=f"DEP {year} Tillage/Plant Operation Timing for HUC12: {huc12}",
         subtitle="<=10% Daily Rate, All Field OFEs below 0.9 Plastic Limit",
     )
     ax2 = ax.twinx()
-    x = pd.date_range(f"{year}/04/15", f"{year}/06/01")
+    x = pd.date_range(f"{year}/04/15", f"{year}/06/03")
+    print(df)
     ax2.bar(
         x - pd.Timedelta(hours=8),
         df["acres_planted"],
@@ -247,7 +263,10 @@ def do_huc12(year, huc12, huc12row):
 
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
-    startdate = max([pd.Timestamp(f"{year}/04/15"), DBSET_DATE_THRESHOLD])
+    if year == DBSET_DATE_THRESHOLD.year:
+        startdate = max([pd.Timestamp(f"{year}/04/15"), DBSET_DATE_THRESHOLD])
+    else:
+        startdate = pd.Timestamp(f"{year}/04/15")
     # NOTE once we get to 1 June, everything goes into the ground, so we need
     # three days to clear the backlog...
     for i, dt in enumerate(pd.date_range(startdate, f"{year}/06/03")):
@@ -328,6 +347,7 @@ def do_huc12(year, huc12, huc12row):
                     "acres_tilled": acres_tilled,
                 }
             ),
+            huc12,
         )
 
 
@@ -377,13 +397,14 @@ def main(argv):
     estimate_rainfall(huc12df)
     # Any HUC12 over 10mm gets skipped
     huc12df = huc12df[huc12df["precip_mm"] < 10]
-    # Estimate soil temperature via GFS forecast
-    estimate_soiltemp(huc12df)
-    # Any HUC12 under 6C gets skipped
-    huc12df = huc12df[huc12df["tsoil"] > 5.9]
+    if year == date.today().year:
+        # Estimate soil temperature via GFS forecast
+        estimate_soiltemp(huc12df)
+        # Any HUC12 under 6C gets skipped
+        huc12df = huc12df[huc12df["tsoil"] > 5.9]
     LOG.warning("Running for %s huc12s", len(huc12df.index))
-    for huc12, row in huc12df.iterrows():
-        do_huc12(year, huc12, row)
+    for huc12 in huc12df.index.values:
+        do_huc12(year, huc12, huc12df.loc[[huc12]])
 
 
 if __name__ == "__main__":
