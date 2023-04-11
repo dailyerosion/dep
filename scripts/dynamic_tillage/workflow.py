@@ -2,7 +2,7 @@
 Our Dynamic Tillage Workflow!
 
 """
-from datetime import date
+from datetime import date, timedelta
 import sys
 
 import numpy as np
@@ -213,7 +213,7 @@ def do_huc12(year, huc12, huc12row):
         )
     # Figure out soil moisture state for each of our flowpaths and ofes
     dfs = []
-    sts = pd.Timestamp(f"{year}/04/15")
+    sts = pd.Timestamp(f"{year}/04/14")  # Need "yesterday"
     ets = pd.Timestamp(f"{year}/06/01")
     for flowpath in df["fpath"].unique():
         flowpath = int(flowpath)
@@ -279,10 +279,12 @@ def do_huc12(year, huc12, huc12row):
         ]
         acres_to_plant.append(pop["acres"].sum())
         LOG.info("%s acres to plant: %s", dt, pop["acres"].sum())
+        yesterday = dt - timedelta(days=1)
         # random iter
         for fbndid, row in pop.sample(frac=1).iterrows():
-            # Go get the soil moisture state
-            sm = smdf[(smdf["fbndid"] == fbndid) & (smdf["date"] == dt)]
+            # Go get the soil moisture state for yesterday as it would be
+            # what is valid at 12 AM today.
+            sm = smdf[(smdf["fbndid"] == fbndid) & (smdf["date"] == yesterday)]
             # Are we all below?
             if dt.month < 6 and (sm["sw1"] > row["plastic_limit"]).any():
                 continue
@@ -305,7 +307,7 @@ def do_huc12(year, huc12, huc12row):
         # random iter
         for fbndid, row in pop.sample(frac=1).iterrows():
             # Go get the soil moisture state
-            sm = smdf[(smdf["fbndid"] == fbndid) & (smdf["date"] == dt)]
+            sm = smdf[(smdf["fbndid"] == fbndid) & (smdf["date"] == yesterday)]
             # Are we all below?
             if dt.month < 6 and (sm["sw1"] > row["plastic_limit"]).any():
                 continue
