@@ -1,9 +1,11 @@
 """ Generate WEPP project files, which we then hand off to prj2wepp for run"""
+from multiprocessing import cpu_count
+from multiprocessing.pool import ThreadPool
 import subprocess
 import os
 import sys
-import glob
 import shutil
+import threading
 
 from tqdm import tqdm
 from pyiem.util import logger
@@ -11,74 +13,95 @@ from pyiem.util import logger
 LOG = logger()
 PROJDIR = "/opt/dep/prj2wepp"
 EXE = f"{PROJDIR}/prj2wepp"
-WEPP = f"{PROJDIR}/wepp"
+CPUCOUNT = min([4, int(cpu_count() / 2)])
+
+
+def find_prjs(scenario, myhucs):
+    """Yield up found prj files."""
+    for root, _dirs, files in os.walk(f"/i/{scenario}/prj"):
+        tokens = root.split("/")
+        if len(tokens) == 6:
+            huc12 = f"{tokens[4]}{tokens[5]}"
+            if myhucs and huc12 not in myhucs:
+                continue
+        for fn in files:
+            if not fn.endswith(".prj"):
+                continue
+            yield f"{root}/{fn}"
+
+
+def prj_job(fn) -> bool:
+    """Process this proj!"""
+    mydir = f"tmp{threading.get_native_id()}"
+    testfn = os.path.basename(fn)[:-4]
+    cmd = [EXE, fn, testfn, f"{PROJDIR}/{mydir}/wepp", "no"]
+    with subprocess.Popen(
+        cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE, cwd=mydir
+    ) as proc:
+        # Need to block the above
+        stdout = proc.stdout.read()
+        stderr = proc.stderr.read()
+        if not os.path.isfile(f"{mydir}/{testfn}.man"):
+            print("bzzzz", testfn)
+            print(" ".join(cmd))
+            print(stdout.decode("ascii"))
+            print(stderr.decode("ascii"))
+            return False
+        # This generates .cli, .man, .run, .slp, .sol
+        # We need the .man , .slp , .sol from this process
+        # slp is generated in flowpath2prj
+        for suffix in ["man", "sol"]:
+            shutil.copyfile(
+                f"{mydir}/{testfn}.{suffix}", fn.replace("prj", suffix)
+            )
+        for suffix in ["cli", "man", "run", "slp", "sol"]:
+            os.unlink(f"{mydir}/{testfn}.{suffix}")
+    return True
+
+
+def setup_thread():
+    """Ensure that we have temp folders and sym links constructed."""
+    mydir = f"tmp{threading.get_native_id()}"
+    os.makedirs(f"{mydir}/wepp/runs", exist_ok=True)
+    for dn in ["data", "output", "wepp", "weppwin"]:
+        subprocess.call(["ln", "-s", f"../../wepp/{dn}"], cwd=f"{mydir}/wepp")
+    subprocess.call(["ln", "-s", "../userdb"], cwd=mydir)
 
 
 def main(argv):
     """Go Main Go."""
     scenario = int(argv[1])
-    basedir = f"/i/{scenario}/prj"
     myhucs = []
     if os.path.isfile("myhucs.txt"):
         with open("myhucs.txt", encoding="utf8") as fh:
             myhucs = fh.read().split("\n")
         LOG.info("using HUC12s found in myhucs.txt...")
-    os.chdir(basedir)
-    huc8s = glob.glob("*")
-    errors = 0
-    for huc8 in tqdm(huc8s):
-        os.chdir(huc8)
-        for huc4 in glob.glob("*"):
-            huc12 = f"{huc8}{huc4}"
-            if myhucs and huc12 not in myhucs:
-                continue
-            os.chdir(huc4)
-            for pfile in glob.glob("*.prj"):
-                # Run prj2wepp in its install dir so that the local userdb
-                # is used
-                os.chdir(PROJDIR)
-                fullfn = f"/i/{scenario}/prj/{huc8}/{huc4}/{pfile}"
-                cmd = f"{EXE} {fullfn} test {WEPP} no"
-                proc = subprocess.Popen(
-                    cmd,
-                    shell=True,
-                    stderr=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                )
-                # Need to block the above
-                stdout = proc.stdout.read()
-                if not os.path.isfile("test.man"):
-                    LOG.info(
-                        "---> ERROR generating output for %s\n%s\n%s\n%s",
-                        huc12,
-                        cmd,
-                        proc.stderr.read(),
-                        stdout,
-                    )
-                    errors += 1
-                    if errors > 10:
-                        LOG.info("Aborting due to errors...")
-                        sys.exit()
-                    os.chdir(os.path.join(basedir, huc8, huc4))
-                    continue
-                # This generates .cli, .man, .run, .slp, .sol
-                # We need the .man , .slp , .sol from this process
-                # slp is generated in flowpath2prj
-                for suffix in ["man", "sol"]:
-                    shutil.copyfile(
-                        f"test.{suffix}",
-                        (
-                            f"/i/{scenario}/{suffix}/{huc8}/{huc4}/"
-                            f"{pfile[:-4]}.{suffix}"
-                        ),
-                    )
+    # Need to run from project dir so local userdb is found
+    os.chdir(PROJDIR)
 
-                for suffix in ["cli", "man", "run", "slp", "sol"]:
-                    if os.path.isfile(f"test.{suffix}"):
-                        os.unlink(f"test.{suffix}")
-                os.chdir(os.path.join(basedir, huc8, huc4))
-            os.chdir("..")
-        os.chdir("..")
+    progress = tqdm(disable=not sys.stdout.isatty())
+
+    with ThreadPool(CPUCOUNT, initializer=setup_thread) as pool:
+
+        def _cb(res):
+            """Callback."""
+            if not res:
+                LOG.warning("Abort")
+                pool.terminate()
+            progress.update()
+
+        def _eb(error):
+            """Erroback."""
+            print(error)
+            pool.terminate()
+
+        total = 0
+        for fn in find_prjs(scenario, myhucs):
+            pool.apply_async(prj_job, (fn,), callback=_cb, error_callback=_eb)
+            total += 1
+        progress.reset(total=total)
+        pool.close()
+        pool.join()
 
 
 if __name__ == "__main__":
