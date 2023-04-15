@@ -3,20 +3,26 @@ Our Dynamic Tillage Workflow!
 
 """
 from datetime import date, timedelta
+from multiprocessing import cpu_count
+from multiprocessing.pool import ThreadPool
+import os
 import sys
 
 import numpy as np
 import pandas as pd
 import geopandas as gpd
 from sqlalchemy import text
+from tqdm import tqdm
 from matplotlib.patches import Rectangle
-from pyiem.iemre import daily_offset
-from pyiem.mrms import WEST, SOUTH
+
+# The MRMS netcdf file use the IEMRE grid domain
+from pyiem.iemre import daily_offset, WEST, SOUTH
 from pyiem.plot import figure_axes, MapPlot
 from pyiem.util import get_sqlalchemy_conn, get_dbconn, logger, ncopen
 from pydep.io.dep import read_wb
 
 LOG = logger()
+CPU_COUNT = min([4, cpu_count() / 2])
 MAKE_PLOTS = False
 DBSET_DATE_THRESHOLD = pd.Timestamp(date.today())
 
@@ -217,9 +223,10 @@ def do_huc12(year, huc12, huc12row):
     ets = pd.Timestamp(f"{year}/06/01")
     for flowpath in df["fpath"].unique():
         flowpath = int(flowpath)
-        smdf = read_wb(
-            f"/i/0/wb/{huc12[:8]}/{huc12[8:]}/{huc12}_{flowpath}.wb"
-        )
+        wbfn = f"/i/0/wb/{huc12[:8]}/{huc12[8:]}/{huc12}_{flowpath}.wb"
+        if not os.path.isfile(wbfn):
+            continue
+        smdf = read_wb(wbfn)
         smdf = smdf[(smdf["date"] >= sts) & (smdf["date"] <= ets)]
         # Each flowpath + ofe should be associated with a fbndid
         for ofe, gdf in smdf.groupby("ofe"):
@@ -228,6 +235,9 @@ def do_huc12(year, huc12, huc12row):
             ]["fbndid"]
             smdf.loc[gdf.index, "fbndid"] = fbndid
         dfs.append(smdf[["fbndid", "date", "sw1"]])  # save space
+    if not dfs:
+        LOG.warning("Failed to find any soil moisture data for %s", huc12)
+        return
     smdf = pd.concat(dfs)
 
     # Compute things for year
@@ -404,9 +414,28 @@ def main(argv):
         estimate_soiltemp(huc12df)
         # Any HUC12 under 6C gets skipped
         huc12df = huc12df[huc12df["tsoil"] > 5.9]
-    LOG.warning("Running for %s huc12s", len(huc12df.index))
-    for huc12 in huc12df.index.values:
-        do_huc12(year, huc12, huc12df.loc[[huc12]])
+
+    LOG.warning("%s threads for %s huc12s", CPU_COUNT, len(huc12df.index))
+    progress = tqdm(total=len(huc12df.index))
+
+    with ThreadPool(CPU_COUNT) as pool:
+
+        def _error(exp):
+            """Uh oh."""
+            LOG.warning("Got exception, aborting....")
+            LOG.exception(exp)
+            pool.terminate()
+
+        def _job(huc12):
+            """Do the job."""
+            progress.set_description(huc12)
+            do_huc12(year, huc12, None)
+            progress.update()
+
+        for huc12 in huc12df.index.values:
+            pool.apply_async(_job, (huc12,), error_callback=_error)
+        pool.close()
+        pool.join()
 
 
 if __name__ == "__main__":
