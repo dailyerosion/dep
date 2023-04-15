@@ -2,20 +2,27 @@
 Our Dynamic Tillage Workflow!
 
 """
-from datetime import date
+from datetime import date, timedelta
+from multiprocessing import cpu_count
+from multiprocessing.pool import ThreadPool
+import os
 import sys
 
 import numpy as np
 import pandas as pd
 import geopandas as gpd
 from sqlalchemy import text
-from pyiem.iemre import daily_offset
-from pyiem.mrms import WEST, SOUTH
+from tqdm import tqdm
+from matplotlib.patches import Rectangle
+
+# The MRMS netcdf file use the IEMRE grid domain
+from pyiem.iemre import daily_offset, WEST, SOUTH
 from pyiem.plot import figure_axes, MapPlot
 from pyiem.util import get_sqlalchemy_conn, get_dbconn, logger, ncopen
 from pydep.io.dep import read_wb
 
 LOG = logger()
+CPU_COUNT = min([4, cpu_count() / 2])
 MAKE_PLOTS = False
 DBSET_DATE_THRESHOLD = pd.Timestamp(date.today())
 
@@ -24,9 +31,10 @@ def plot_map(i, dt, huc12df, fields):
     """Make a map diagnostic"""
     minx, miny, maxx, maxy = huc12df["geom"].to_crs(4326).total_bounds
     buffer = 0.01
+    huc12 = huc12df.index.values[0]
 
     mp = MapPlot(
-        title=f"DEP Planting Progress {dt:%Y %b %d}",
+        title=f"DEP Planting Progress {dt:%Y %b %d} for HUC12: {huc12}",
         logo="dep",
         sector="custom",
         west=minx - buffer,
@@ -40,32 +48,46 @@ def plot_map(i, dt, huc12df, fields):
         ax=mp.panels[0].ax,
         aspect=None,
         facecolor="None",
-        edgecolor="k",
+        edgecolor="b",
         linewidth=2,
         zorder=100,
     )
-    fields["color"] = "tan"
-    fields.loc[fields["planted"], "color"] = "g"
+    fields["color"] = "white"
+    fields.loc[fields["till1"].notna(), "color"] = "tan"
+    fields.loc[fields["plant"].notna(), "color"] = "g"
     fields.to_crs(mp.panels[0].crs).plot(
         ax=mp.panels[0].ax,
         aspect=None,
         facecolor=fields["color"],
-        edgecolor=fields["color"],
+        edgecolor="k",
+        linewidth=1,
         zorder=100,
     )
+    p0 = Rectangle((0, 0), 1, 1, fc="white", ec="k")
+    p1 = Rectangle((0, 0), 1, 1, fc="tan", ec="k")
+    p2 = Rectangle((0, 0), 1, 1, fc="g", ec="k")
+    mp.panels[0].ax.legend(
+        (p0, p1, p2),
+        ("Awaiting", "Tilled", "Planted"),
+        ncol=3,
+        fontsize=11,
+        loc=2,
+    )
+
     mp.fig.savefig(f"{i:04.0f}.png")
     mp.close()
 
 
-def plot_timeseries(year, df):
+def plot_timeseries(year, df, huc12):
     """Make a diagnostic."""
     (fig, ax) = figure_axes(
         logo="dep",
-        title=f"DEP {year} Tillage/Plant Operation Timing for 102300070305",
+        title=f"DEP {year} Tillage/Plant Operation Timing for HUC12: {huc12}",
         subtitle="<=10% Daily Rate, All Field OFEs below 0.9 Plastic Limit",
     )
     ax2 = ax.twinx()
-    x = pd.date_range(f"{year}/04/15", f"{year}/06/01")
+    x = pd.date_range(f"{year}/04/15", f"{year}/06/03")
+    print(df)
     ax2.bar(
         x - pd.Timedelta(hours=8),
         df["acres_planted"],
@@ -197,13 +219,14 @@ def do_huc12(year, huc12, huc12row):
         )
     # Figure out soil moisture state for each of our flowpaths and ofes
     dfs = []
-    sts = pd.Timestamp(f"{year}/04/15")
+    sts = pd.Timestamp(f"{year}/04/14")  # Need "yesterday"
     ets = pd.Timestamp(f"{year}/06/01")
     for flowpath in df["fpath"].unique():
         flowpath = int(flowpath)
-        smdf = read_wb(
-            f"/i/0/wb/{huc12[:8]}/{huc12[8:]}/{huc12}_{flowpath}.wb"
-        )
+        wbfn = f"/i/0/wb/{huc12[:8]}/{huc12[8:]}/{huc12}_{flowpath}.wb"
+        if not os.path.isfile(wbfn):
+            continue
+        smdf = read_wb(wbfn)
         smdf = smdf[(smdf["date"] >= sts) & (smdf["date"] <= ets)]
         # Each flowpath + ofe should be associated with a fbndid
         for ofe, gdf in smdf.groupby("ofe"):
@@ -212,6 +235,9 @@ def do_huc12(year, huc12, huc12row):
             ]["fbndid"]
             smdf.loc[gdf.index, "fbndid"] = fbndid
         dfs.append(smdf[["fbndid", "date", "sw1"]])  # save space
+    if not dfs:
+        LOG.warning("Failed to find any soil moisture data for %s", huc12)
+        return
     smdf = pd.concat(dfs)
 
     # Compute things for year
@@ -247,7 +273,10 @@ def do_huc12(year, huc12, huc12row):
 
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
-    startdate = max([pd.Timestamp(f"{year}/04/15"), DBSET_DATE_THRESHOLD])
+    if year == DBSET_DATE_THRESHOLD.year:
+        startdate = max([pd.Timestamp(f"{year}/04/15"), DBSET_DATE_THRESHOLD])
+    else:
+        startdate = pd.Timestamp(f"{year}/04/15")
     # NOTE once we get to 1 June, everything goes into the ground, so we need
     # three days to clear the backlog...
     for i, dt in enumerate(pd.date_range(startdate, f"{year}/06/03")):
@@ -260,10 +289,12 @@ def do_huc12(year, huc12, huc12row):
         ]
         acres_to_plant.append(pop["acres"].sum())
         LOG.info("%s acres to plant: %s", dt, pop["acres"].sum())
+        yesterday = dt - timedelta(days=1)
         # random iter
         for fbndid, row in pop.sample(frac=1).iterrows():
-            # Go get the soil moisture state
-            sm = smdf[(smdf["fbndid"] == fbndid) & (smdf["date"] == dt)]
+            # Go get the soil moisture state for yesterday as it would be
+            # what is valid at 12 AM today.
+            sm = smdf[(smdf["fbndid"] == fbndid) & (smdf["date"] == yesterday)]
             # Are we all below?
             if dt.month < 6 and (sm["sw1"] > row["plastic_limit"]).any():
                 continue
@@ -286,7 +317,7 @@ def do_huc12(year, huc12, huc12row):
         # random iter
         for fbndid, row in pop.sample(frac=1).iterrows():
             # Go get the soil moisture state
-            sm = smdf[(smdf["fbndid"] == fbndid) & (smdf["date"] == dt)]
+            sm = smdf[(smdf["fbndid"] == fbndid) & (smdf["date"] == yesterday)]
             # Are we all below?
             if dt.month < 6 and (sm["sw1"] > row["plastic_limit"]).any():
                 continue
@@ -328,6 +359,7 @@ def do_huc12(year, huc12, huc12row):
                     "acres_tilled": acres_tilled,
                 }
             ),
+            huc12,
         )
 
 
@@ -377,13 +409,33 @@ def main(argv):
     estimate_rainfall(huc12df)
     # Any HUC12 over 10mm gets skipped
     huc12df = huc12df[huc12df["precip_mm"] < 10]
-    # Estimate soil temperature via GFS forecast
-    estimate_soiltemp(huc12df)
-    # Any HUC12 under 6C gets skipped
-    huc12df = huc12df[huc12df["tsoil"] > 5.9]
-    LOG.warning("Running for %s huc12s", len(huc12df.index))
-    for huc12, row in huc12df.iterrows():
-        do_huc12(year, huc12, row)
+    if year == date.today().year:
+        # Estimate soil temperature via GFS forecast
+        estimate_soiltemp(huc12df)
+        # Any HUC12 under 6C gets skipped
+        huc12df = huc12df[huc12df["tsoil"] > 5.9]
+
+    LOG.warning("%s threads for %s huc12s", CPU_COUNT, len(huc12df.index))
+    progress = tqdm(total=len(huc12df.index))
+
+    with ThreadPool(CPU_COUNT) as pool:
+
+        def _error(exp):
+            """Uh oh."""
+            LOG.warning("Got exception, aborting....")
+            LOG.exception(exp)
+            pool.terminate()
+
+        def _job(huc12):
+            """Do the job."""
+            progress.set_description(huc12)
+            do_huc12(year, huc12, None)
+            progress.update()
+
+        for huc12 in huc12df.index.values:
+            pool.apply_async(_job, (huc12,), error_callback=_error)
+        pool.close()
+        pool.join()
 
 
 if __name__ == "__main__":
