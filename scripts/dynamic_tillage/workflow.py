@@ -5,7 +5,6 @@ Our Dynamic Tillage Workflow!
 from datetime import date, timedelta
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
-import os
 import sys
 
 import numpy as np
@@ -19,7 +18,6 @@ from matplotlib.patches import Rectangle
 from pyiem.iemre import daily_offset, WEST, SOUTH
 from pyiem.plot import figure_axes, MapPlot
 from pyiem.util import get_sqlalchemy_conn, get_dbconn, logger, ncopen
-from pydep.io.dep import read_wb
 
 LOG = logger()
 CPU_COUNT = min([4, cpu_count() / 2])
@@ -189,7 +187,7 @@ def edit_rotfile(year, huc12, ofedf):
             fh.write("".join(lines))
 
 
-def do_huc12(year, huc12, huc12row):
+def do_huc12(year, huc12, smdf):
     """Go Main Go."""
     with get_sqlalchemy_conn("idep") as conn:
         # build up the cross reference of everyhing we need to know
@@ -217,28 +215,6 @@ def do_huc12(year, huc12, huc12row):
             index_col=None,
             geom_col="geom",
         )
-    # Figure out soil moisture state for each of our flowpaths and ofes
-    dfs = []
-    sts = pd.Timestamp(f"{year}/04/14")  # Need "yesterday"
-    ets = pd.Timestamp(f"{year}/06/01")
-    for flowpath in df["fpath"].unique():
-        flowpath = int(flowpath)
-        wbfn = f"/i/0/wb/{huc12[:8]}/{huc12[8:]}/{huc12}_{flowpath}.wb"
-        if not os.path.isfile(wbfn):
-            continue
-        smdf = read_wb(wbfn)
-        smdf = smdf[(smdf["date"] >= sts) & (smdf["date"] <= ets)]
-        # Each flowpath + ofe should be associated with a fbndid
-        for ofe, gdf in smdf.groupby("ofe"):
-            fbndid = df[(df["fpath"] == flowpath) & (df["ofe"] == ofe)].iloc[
-                0
-            ]["fbndid"]
-            smdf.loc[gdf.index, "fbndid"] = fbndid
-        dfs.append(smdf[["fbndid", "date", "sw1"]])  # save space
-    if not dfs:
-        LOG.warning("Failed to find any soil moisture data for %s", huc12)
-        return
-    smdf = pd.concat(dfs)
 
     # Compute things for year
     char_at = (year - 2007) + 1
@@ -333,8 +309,6 @@ def do_huc12(year, huc12, huc12row):
             if dt.month < 6 and running > limit:
                 break
         acres_tilled.append(running)
-        if MAKE_PLOTS:
-            plot_map(i, dt, huc12row, fields)
         LOG.info(
             "%s acres to till: %s, did %s", dt, pop["acres"].sum(), running
         )
@@ -418,6 +392,8 @@ def main(argv):
     LOG.warning("%s threads for %s huc12s", CPU_COUNT, len(huc12df.index))
     progress = tqdm(total=len(huc12df.index))
 
+    smdf = pd.read_feather(f"smstate{year}.feather")
+
     with ThreadPool(CPU_COUNT) as pool:
 
         def _error(exp):
@@ -429,7 +405,7 @@ def main(argv):
         def _job(huc12):
             """Do the job."""
             progress.set_description(huc12)
-            do_huc12(year, huc12, None)
+            do_huc12(year, huc12, smdf[smdf["huc12"] == huc12])
             progress.update()
 
         for huc12 in huc12df.index.values:
