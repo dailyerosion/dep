@@ -27,6 +27,7 @@ from osgeo import gdal
 from pyiem import iemre
 from pyiem.iemre import SOUTH, WEST, NORTH, EAST
 from pyiem.util import ncopen, logger, convert_value
+from pydep.io.cli import daily_formatter
 from pydep.util import get_cli_fname
 
 LOG = logger()
@@ -527,12 +528,14 @@ def edit_clifile(xidx, yidx, clifn, data, valid):
                 msg.append(f"{n}={v}")
         LOG.warning("Missing data[%s] for %s", ",".join(msg), clifn)
         return False
-    bptext = "\n".join(bpdata)
-    bptext2 = "\n" if bpdata else ""
-    thisday = (
-        f"{valid.day}\t{valid.month}\t{valid.year}\t{len(bpdata)}\t"
-        f"{high:3.1f}\t{low:3.1f}\t{solar:4.0f}\t{wind:4.1f}\t0\t"
-        f"{dwpt:4.1f}\n{bptext}{bptext2}"
+    thisday = daily_formatter(
+        valid,
+        bpdata,
+        high,
+        low,
+        solar,
+        wind,
+        dwpt,
     )
 
     with open(clifn, "w", encoding="utf8") as fh:
