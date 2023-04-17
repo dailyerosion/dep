@@ -77,6 +77,12 @@ def run(ch, delivery_tag, rundata):
                 fp.write(hn.encode("ascii"))
                 fp.write(stdoutdata)
                 fp.write(stderrdata)
+            # Errored runs may leave incomplete output files, we should zap
+            # those to prevent downstream impacts
+            for prefix in ["wb", "env", "yld"]:
+                fn = errorfn.replace("error", prefix)
+                if os.path.isfile(fn):
+                    os.unlink(fn)
     cb = partial(ack_message, ch, delivery_tag)
     ch.connection.add_callback_threadsafe(cb)
 
