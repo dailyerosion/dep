@@ -34,6 +34,7 @@ USE DEPSoils2020
 IF OBJECT_ID('dbo.DEP_SoilFractions') IS NOT NULL 
         DROP TABLE dbo.DEP_SoilFractions
 
+set search_path=gssurgo23;
 SELECT mukey
       , cokey
       , compname
@@ -53,42 +54,42 @@ SELECT mukey
       , Clay
       , FragTot
       , rowNbr
- 		  
+           
       INTO DEP_SoilFractions 
           
       FROM
-	(	SELECT dom.mukey
-		      ,C.cokey
-		      ,C.compname
-		      ,C.comppct_r
-		      ,hrz.chkey
-		      ,hrz.hzname
-		      ,hrz.hzdept_r
-		      ,hrz.hzdepb_r
-		      ,hrz.hzdepb_r - hrz.hzdept_r as HrzThick
-		      ,hrz.hzdepb_r * 10 as DepthTo_mm
-		      ,hrz.om_r as OM
-		      ,hrz.ecec_r as ECEC
-		      ,CASE
-		         WHEN hrz.cec7_r IS NULL
-		           THEN hrz.ecec_r
-		         ELSE hrz.cec7_r
-		       END as cec7
-		      ,hrz.sandtotal_r as Sand
-		      ,hrz.sandvf_r as VFSand
-		      ,hrz.silttotal_r as Silt
-		      ,hrz.claytotal_r as Clay
-		      ,frg.FragTot
-		      ,ROW_NUMBER() OVER (PARTITION BY C.cokey ORDER BY hrz.hzdepb_r DESC) as rowNbr
+    (	SELECT dom.mukey
+              ,C.cokey
+              ,C.compname
+              ,C.comppct_r
+              ,hrz.chkey
+              ,hrz.hzname
+              ,hrz.hzdept_r
+              ,hrz.hzdepb_r
+              ,hrz.hzdepb_r - hrz.hzdept_r as HrzThick
+              ,hrz.hzdepb_r * 10 as DepthTo_mm
+              ,hrz.om_r as OM
+              ,hrz.ecec_r as ECEC
+              ,CASE
+                 WHEN hrz.cec7_r IS NULL
+                   THEN hrz.ecec_r
+                 ELSE hrz.cec7_r
+               END as cec7
+              ,hrz.sandtotal_r as Sand
+              ,hrz.sandvf_r as VFSand
+              ,hrz.silttotal_r as Silt
+              ,hrz.claytotal_r as Clay
+              ,frg.FragTot
+              ,ROW_NUMBER() OVER (PARTITION BY C.cokey ORDER BY hrz.hzdepb_r DESC) as rowNbr
 
-		  FROM US_DomComponents dom left join component C 
-		         ON dom.cokey = C.cokey
-		           LEFT JOIN chorizon hrz ON hrz.cokey = C.cokey 
-	                   LEFT JOIN DEP_SoilFrags frg ON hrz.chkey = frg.chkey
+          FROM US_DomComponents dom left join component C 
+                 ON dom.cokey = C.cokey
+                   LEFT JOIN chorizon hrz ON hrz.cokey = C.cokey 
+                       LEFT JOIN DEP_SoilFrags frg ON hrz.chkey = frg.chkey
                
           ) bRow
 WHERE NOT (bRow.rowNbr = 1 and ( CEC7 is null or Clay is null or Sand is null))
-ORDER BY mukey, hzdept_r
+ORDER BY mukey, hzdept_r;
 GO
 
 -- Alter precision/scale and allow NULL 
@@ -104,7 +105,3 @@ UPDATE DEP_SoilFractions
  SET FragTot = 0
 WHERE FragTot IS NULL;
 GO
-
-  
-  
-  

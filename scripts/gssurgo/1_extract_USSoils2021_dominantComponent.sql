@@ -13,6 +13,7 @@ USE US_Soils2
 IF OBJECT_ID('dbo.US_DomComponents') IS NOT NULL 
         DROP TABLE dbo.US_DomComponents
 
+set search_path=gssurgo23;
 SELECT mukey
       ,cokey
       ,compname
@@ -29,7 +30,7 @@ SELECT mukey
         WHERE  C.majcompflag = 'Yes' 
       ) muSelect
   where muSelect.rowNbr = 1 
-  order by mukey, comppct_r DESC
+  order by mukey, comppct_r DESC;
 GO
 
 

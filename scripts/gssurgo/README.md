@@ -17,10 +17,16 @@ discussion with DJ settled that this situation is isolated to wonky soils like
 
 Ran the following commands to ingest the needed layers into postgresql
 
+```sql
+create schema gssurgo23;
+ALTER DATABASE idep SET search_path = public,gssurgo23;
+```
+
 ```bash
-ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS_202110.gdb -nln public.component component
-ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS_202110.gdb -nln public.mapunit mapunit -progress
-ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS_202110.gdb -nln public.chorizon chorizon -progress
-ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS_202110.gdb -nln public.chfrags chfrags -progress
-ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS_202110.gdb -nln public.chtexturegrp  chtexturegrp  -progress
+ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS_202210.gdb -nln gssurgo23.component component -progress
+ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS_202210.gdb -nln gssurgo23.mapunit mapunit -progress
+ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS_202210.gdb -nln gssurgo23.chorizon chorizon -progress
+ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS_202210.gdb -nln gssurgo23.chfrags chfrags -progress
+ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS_202210.gdb -nln gssurgo23.chtexture  chtexture  -progress
+ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS_202210.gdb -nln gssurgo23.chtexturegrp  chtexturegrp  -progress
 ```
