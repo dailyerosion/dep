@@ -1,6 +1,6 @@
 USE DEP_Soils
 GO
-
+set search_path=gssurgo23;
 SELECT sp.mukey
       ,sp.cokey
       ,sp.compname
@@ -16,9 +16,9 @@ SELECT sp.mukey
       ,sp.KR
       ,sp.TC
       ,sp.KB
-  INTO dbo.MWDEP_SoilParameters
-  FROM dbo.DEP_SoilParameters sp left join dbo.mw2018_mapunittable m on sp.mukey = m.mukey
-  WHERE sp.mukey = m.mukey
+  INTO MWDEP_SoilParameters
+  FROM DEP_SoilParameters sp left join mw2018_mapunittable m on sp.mukey = m.mukey
+  WHERE sp.mukey = m.mukey;
 
 GO
 

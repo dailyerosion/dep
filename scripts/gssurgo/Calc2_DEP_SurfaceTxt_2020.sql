@@ -24,6 +24,7 @@ USE DEPSoils2020
 IF OBJECT_ID('dbo.DEP_SurfaceTexture') IS NOT NULL 
         DROP TABLE dbo.DEP_SurfaceTexture
 
+set search_path=gssurgo23;
 SELECT cokey
       ,compname
       ,comppct_r
@@ -54,7 +55,7 @@ SELECT cokey
         WHERE  C.majcompflag = 'Yes' and hrz.hzdept_r = 0 
       ) txtQ  
   where txtQ.rowNbr = 1 --and chtgrp.rvindicator = 'Yes'
-  order by mukey, comppct_r DESC
+  order by mukey, comppct_r DESC;
 GO
 
 

@@ -33,7 +33,7 @@ USE DEPSoils2020
 
 IF OBJECT_ID('dbo.DEP_HrzCount') IS NOT NULL 
         DROP TABLE dbo.DEP_HrzCount
-        
+set search_path=gssurgo23;
  SELECT dom.cokey
       , Count(F.chkey) as HrzCount
       
@@ -41,8 +41,8 @@ IF OBJECT_ID('dbo.DEP_HrzCount') IS NOT NULL
    FROM US_DomComponents dom left join DEP_SoilFractions F 
         ON F.cokey = dom.cokey       
    GROUP BY dom.cokey
-   ORDER BY dom.cokey
-        
+   ORDER BY dom.cokey;
+
 
 IF OBJECT_ID('dbo.DEP_SoilParameters') IS NOT NULL 
         DROP TABLE dbo.DEP_SoilParameters
@@ -112,7 +112,7 @@ SELECT DOM.mukey
           LEFT JOIN DEP_HrzCount HC ON HC.cokey = C.cokey 
             LEFT OUTER JOIN DEP_SurfaceTexture chtgrp ON hrz.chkey = chtgrp.chkey 
   where hrz.hzdept_r = 0 -- and hrz.claytotal_r > 0 -- C.majcompflag = 'Yes' and
-  order by dom.mukey, C.comppct_r DESC
+  order by dom.mukey, C.comppct_r DESC;
 GO
 
 Print ''
@@ -129,5 +129,5 @@ DELETE FROM DEP_SoilParameters
 WHERE mukey IN
 (SELECT distinct mukey
   FROM DEP_SoilFractions
-  WHERE (CEC7 is null and ECEC is null) or VFSand is null or Clay is null)
+  WHERE (CEC7 is null and ECEC is null) or VFSand is null or Clay is null);
 GO
