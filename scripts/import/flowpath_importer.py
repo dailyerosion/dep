@@ -76,7 +76,8 @@ def fillout_codes(df):
     # Compute full rotation string
     # 2022 is repeating -2 (2020)
     # 2023 is repeating -2 (2021)
-    s = df["CropRotatn_CY_2021"]
+    col = "CropRotatn" if "CropRotatn" in df.columns else "CropRotatn_CY_2021"
+    s = df[col]
     df["landuse"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
     s = df["Management_CY_2021"]
     df["management"] = (
@@ -398,11 +399,14 @@ def process_fields(cursor, scenario, huc12, fld_df):
     PROCESSING_COUNTS["fields_deleted"] += cursor.rowcount
 
     for _, row in fld_df.iterrows():
+        if row["geometry"] is None:
+            print("null geom", row)
+            continue
         cursor.execute(
             """
             INSERT into fields (scenario, huc12, fbndid, acres, isag, geom,
             management, landuse)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, st_multi(%s), %s, %s)
             """,
             (
                 scenario,
