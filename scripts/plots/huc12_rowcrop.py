@@ -1,13 +1,13 @@
 """Diagnostic on HUC12 rowcrop counts."""
 
-import numpy as np
 import cartopy.crs as ccrs
-from matplotlib.patches import Polygon
 import matplotlib.colors as mpcolors
+import numpy as np
 from geopandas import read_postgis
-from pyiem.util import get_dbconn
+from matplotlib.patches import Polygon
 from pyiem.plot import get_cmap
 from pyiem.plot.geoplot import MapPlot
+from pyiem.util import get_dbconn
 
 
 def main():

@@ -1,7 +1,7 @@
 """Collate up the myhucs.txt data."""
-import sys
 import os
 import subprocess
+import sys
 
 from pyiem.util import logger
 from tqdm import tqdm

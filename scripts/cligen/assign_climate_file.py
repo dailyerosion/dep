@@ -1,8 +1,8 @@
 """Make sure our database has things right with climate_file."""
 import sys
 
-from pyiem.util import get_dbconn, logger
 from pydep.util import get_cli_fname
+from pyiem.util import get_dbconn, logger
 
 LOG = logger()
 

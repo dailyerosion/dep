@@ -3,9 +3,9 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy import stats
 import pandas as pd
 from pyiem.util import get_dbconn
+from scipy import stats
 
 YEAR = int(sys.argv[1])
 pgconn = get_dbconn("idep")

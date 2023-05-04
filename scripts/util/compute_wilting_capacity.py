@@ -6,8 +6,8 @@ thought experiment for now.
 import sys
 
 import pandas as pd
-from pyiem.util import get_sqlalchemy_conn, get_dbconn, logger
 from pydep.io.dep import read_wb
+from pyiem.util import get_dbconn, get_sqlalchemy_conn, logger
 
 LOG = logger()
 

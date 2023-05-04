@@ -2,12 +2,12 @@
 
 IDEP2/CSCAP/SWITCHGRASS.rot
 """
+import glob
 import os
 import sys
-import glob
 
-from tqdm import tqdm
 from pydep.io.wepp import read_slp
+from tqdm import tqdm
 
 
 def main(argv):

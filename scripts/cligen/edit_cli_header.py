@@ -5,10 +5,10 @@ import os
 # Third Party
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
-from pyiem.iemre import find_ij, get_dailyc_ncname, NORTH, EAST, SOUTH, WEST
-from pyiem.util import logger, ncopen, convert_value
 from pydep.util import get_cli_fname
+from pyiem.iemre import EAST, NORTH, SOUTH, WEST, find_ij, get_dailyc_ncname
+from pyiem.util import convert_value, logger, ncopen
+from tqdm import tqdm
 
 LOG = logger()
 REV = "HeaderRev: v20220706.1"

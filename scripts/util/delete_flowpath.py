@@ -1,6 +1,6 @@
 """Utility script to delete a flowpath from the database and on-disk"""
-import sys
 import os
+import sys
 
 from pyiem.util import get_dbconn
 

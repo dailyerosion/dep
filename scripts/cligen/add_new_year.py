@@ -6,12 +6,12 @@ The previous year is choosen based on if the year to add is a leap year or not,
 if it is, then pick a year four years ago, if it isn't, use last year
 """
 import glob
-import sys
 import os
 import subprocess
+import sys
 
-from tqdm import tqdm
 from pyiem.util import logger
+from tqdm import tqdm
 
 LOG = logger()
 

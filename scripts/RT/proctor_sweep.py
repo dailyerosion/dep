@@ -18,18 +18,18 @@ Output fields (kg/m2)
   - PM2.5 soil loss
 """
 import argparse
-import sys
 import datetime
 import os
 import shutil
 import subprocess
+import sys
 from multiprocessing import Pool
 
-from pyiem.util import get_sqlalchemy_conn, logger
 import pandas as pd
 import requests
-from tqdm import tqdm
 from pydep.io.man import man2df, read_man
+from pyiem.util import get_sqlalchemy_conn, logger
+from tqdm import tqdm
 
 HUC12S = ["090201081101", "090201081102", "090201060605"]
 LOG = logger()

@@ -1,9 +1,9 @@
 """List out the results for each flowpath within a HUC12"""
-import sys
 import datetime
+import sys
 
-import psycopg2
 import pandas as pd
+import psycopg2
 from pandas.io.sql import read_sql
 from pydep.io.wepp import read_env
 

@@ -1,13 +1,13 @@
 """Plot a Q-Q plot of slopes."""
-import os
 import glob
+import os
 import sys
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
-from pyiem.util import utc
 from pydep.io.wepp import read_slp
+from pyiem.util import utc
 
 
 def read_data():

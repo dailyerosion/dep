@@ -1,13 +1,13 @@
 import datetime
 import sys
 
+import cartopy.crs as ccrs
+import matplotlib.colors as mpcolors
+import matplotlib.pyplot as plt
 import numpy as np
 from geopandas import read_postgis
-from pyiem.plot import MapPlot
-import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
-import matplotlib.colors as mpcolors
-import cartopy.crs as ccrs
+from pyiem.plot import MapPlot
 from pyiem.util import get_dbconn
 
 V2NAME = {

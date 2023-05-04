@@ -13,13 +13,13 @@ import logging
 import os
 import sys
 
-from tqdm import tqdm
-from shapely.geometry import LineString
 import geopandas as gpd
 import pandas as pd
 import pyproj
-from pyiem.util import get_dbconn, logger
 from pydep.util import get_cli_fname
+from pyiem.util import get_dbconn, logger
+from shapely.geometry import LineString
+from tqdm import tqdm
 
 LOG = logger()
 print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")

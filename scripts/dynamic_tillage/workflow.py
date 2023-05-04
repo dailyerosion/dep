@@ -2,22 +2,22 @@
 Our Dynamic Tillage Workflow!
 
 """
+import sys
 from datetime import date, timedelta
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
-import sys
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
-import geopandas as gpd
-from sqlalchemy import text
-from tqdm import tqdm
 from matplotlib.patches import Rectangle
 
 # The MRMS netcdf file use the IEMRE grid domain
-from pyiem.iemre import daily_offset, WEST, SOUTH
-from pyiem.plot import figure_axes, MapPlot
-from pyiem.util import get_sqlalchemy_conn, get_dbconn, logger, ncopen
+from pyiem.iemre import SOUTH, WEST, daily_offset
+from pyiem.plot import MapPlot, figure_axes
+from pyiem.util import get_dbconn, get_sqlalchemy_conn, logger, ncopen
+from sqlalchemy import text
+from tqdm import tqdm
 
 LOG = logger()
 CPU_COUNT = min([4, cpu_count() / 2])

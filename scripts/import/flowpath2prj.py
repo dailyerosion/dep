@@ -31,17 +31,17 @@ Here's a listing of project landuse codes used
 
 
 """
-import sys
-import os
 import datetime
+import os
+import sys
 from functools import partial
 from math import atan2, degrees, pi
 
 import numpy as np
-from tqdm import tqdm
 import pandas as pd
-from pyiem.util import get_dbconn, get_sqlalchemy_conn, logger
 from pydep.util import load_scenarios
+from pyiem.util import get_dbconn, get_sqlalchemy_conn, logger
+from tqdm import tqdm
 
 LOG = logger()
 MISSED_SOILS = {}

@@ -1,14 +1,14 @@
 """General HUC12 mapper"""
 import sys
 
-from pyiem.plot.use_agg import plt
+import cartopy.crs as ccrs
+import matplotlib.colors as mpcolors
+import numpy as np
+from matplotlib.patches import Polygon
 from pyiem.plot import MapPlot
+from pyiem.plot.use_agg import plt
 from pyiem.util import get_dbconn
 from shapely.wkb import loads
-import numpy as np
-import cartopy.crs as ccrs
-from matplotlib.patches import Polygon
-import matplotlib.colors as mpcolors
 
 MYHUCS = [
     "071000060202",

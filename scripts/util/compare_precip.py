@@ -1,9 +1,9 @@
 """Something precip related."""
 import datetime
 
+import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.io.sql import read_sql
-import matplotlib.pyplot as plt
 from pyiem.network import Table as NetworkTable
 from pyiem.plot import MapPlot
 from pyiem.util import get_dbconn, mm2inch

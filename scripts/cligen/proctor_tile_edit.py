@@ -3,18 +3,18 @@
 Usage:
     python proctor_tile_edit.py <scenario> <yyyy> <mm> <dd>
 """
+import datetime
 import gzip
-import sys
 import os
 import stat
-import datetime
 import subprocess
+import sys
 import time
-from multiprocessing import cpu_count
 from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import cpu_count
 
 import numpy as np
-from pyiem.iemre import SOUTH, NORTH, EAST, WEST
+from pyiem.iemre import EAST, NORTH, SOUTH, WEST
 from pyiem.util import logger
 
 LOG = logger()

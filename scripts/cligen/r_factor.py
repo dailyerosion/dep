@@ -1,16 +1,16 @@
 """R factor work."""
 
-from pyiem.util import get_sqlalchemy_conn
-from pyiem.plot.use_agg import plt
-from pyiem.plot import MapPlot
 import cartopy.crs as ccrs
-import matplotlib.colors as mpcolors
-from matplotlib.patches import Polygon
-import numpy as np
-from tqdm import tqdm
 import geopandas as gpd
+import matplotlib.colors as mpcolors
+import numpy as np
 import pandas as pd
+from matplotlib.patches import Polygon
 from pydep.io.wepp import read_cli
+from pyiem.plot import MapPlot
+from pyiem.plot.use_agg import plt
+from pyiem.util import get_sqlalchemy_conn
+from tqdm import tqdm
 
 
 def plot():

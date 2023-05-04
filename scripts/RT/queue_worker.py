@@ -1,15 +1,15 @@
 """We do work when jobs are placed in the queue."""
-from concurrent.futures import ThreadPoolExecutor
-from functools import partial
 import json
-import re
 import os
+import re
 import socket
 import subprocess
 import sys
-import time
 import threading
+import time
 import traceback
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 
 import pika
 from pyiem.util import logger

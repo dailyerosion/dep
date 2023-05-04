@@ -1,8 +1,8 @@
 """Place jobs into our DEP queue!"""
-import json
-import sys
-import os
 import datetime
+import json
+import os
+import sys
 import time
 from io import StringIO
 

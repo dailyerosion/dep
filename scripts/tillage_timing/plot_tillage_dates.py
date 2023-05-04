@@ -1,7 +1,7 @@
 """Generate a plot."""
 
-import pandas as pd
 import matplotlib.dates as mdates
+import pandas as pd
 from pyiem.plot.use_agg import plt
 
 THRESHOLDS = {81: 45, 82: 40, 83: 35, 84: 30, 85: 25, 86: 20, 87: 15}

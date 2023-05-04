@@ -1,9 +1,10 @@
 """
 Print out what the initial flowpath counts where 
 """
-import dbflib
-import os
 import glob
+import os
+
+import dbflib
 import pandas as pd
 from pandas import Series
 

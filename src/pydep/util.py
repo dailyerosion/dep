@@ -2,7 +2,7 @@
 import math
 
 import pandas as pd
-from pyiem.iemre import SOUTH, WEST, NORTH, EAST
+from pyiem.iemre import EAST, NORTH, SOUTH, WEST
 from pyiem.util import get_sqlalchemy_conn
 from sqlalchemy import text
 

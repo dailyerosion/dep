@@ -1,14 +1,14 @@
 """ Generate WEPP project files, which we then hand off to prj2wepp for run"""
+import os
+import shutil
+import subprocess
+import sys
+import threading
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
-import subprocess
-import os
-import sys
-import shutil
-import threading
 
-from tqdm import tqdm
 from pyiem.util import logger
+from tqdm import tqdm
 
 LOG = logger()
 PROJDIR = "/opt/dep/prj2wepp"

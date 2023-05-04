@@ -1,8 +1,8 @@
 """Some exploritory OFE based results"""
 
 # third party
-import pandas as pd
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from pyiem.plot.use_agg import plt
 

@@ -1,11 +1,11 @@
 """Utility script that copies neighboring clifiles when it is discovered
 that we need new ones!"""
 import os
-import sys
 import shutil
+import sys
 
-from pyiem.util import get_dbconn
 from pydep.util import get_cli_fname
+from pyiem.util import get_dbconn
 
 
 def missing_logic(scenario, fn):

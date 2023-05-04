@@ -1,5 +1,5 @@
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 from pandas.io.sql import read_sql
 from pyiem.util import get_dbconn
 

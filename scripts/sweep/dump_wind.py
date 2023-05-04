@@ -1,7 +1,7 @@
 """Dump out hourly wind for a year for Dr Wilson."""
 
-import requests
 import pandas as pd
+import requests
 from tqdm import tqdm
 
 IEMRE = "http://mesonet.agron.iastate.edu/iemre/hourly"

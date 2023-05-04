@@ -1,8 +1,8 @@
 """Diagnostic on HUC12 flowpath counts."""
 import sys
 
-import matplotlib.colors as mpcolors
 import geopandas as gpd
+import matplotlib.colors as mpcolors
 from pyiem.plot import MapPlot, get_cmap
 from pyiem.reference import Z_POLITICAL, state_names
 from pyiem.util import get_sqlalchemy_conn

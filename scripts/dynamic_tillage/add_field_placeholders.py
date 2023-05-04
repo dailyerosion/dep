@@ -5,8 +5,8 @@ see dailyerosion/dep#167
 """
 
 import pandas as pd
-from tqdm import tqdm
 from pyiem.util import get_dbconn, get_sqlalchemy_conn, logger
+from tqdm import tqdm
 
 LOG = logger()
 

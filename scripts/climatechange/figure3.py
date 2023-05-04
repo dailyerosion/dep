@@ -1,8 +1,8 @@
 """A plot of the deltas for erosion between scenarios."""
+import numpy as np
 from matplotlib import rcParams
 from pyiem.plot import figure_axes
 from pyiem.util import logger
-import numpy as np
 
 rcParams.update(
     {

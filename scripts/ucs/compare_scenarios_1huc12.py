@@ -1,9 +1,8 @@
 """Sundry."""
-import os
 import glob
+import os
 
 from pydep.io.wepp import read_env
-
 
 os.chdir("/i/0/env/10230003/1504")
 for fn in glob.glob("*.env"):

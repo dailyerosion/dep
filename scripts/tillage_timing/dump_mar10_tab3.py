@@ -3,9 +3,9 @@
 """
 import glob
 
-from pyiem.util import logger
 import pandas as pd
 from pydep.io.wepp import read_env
+from pyiem.util import logger
 
 LOG = logger()
 

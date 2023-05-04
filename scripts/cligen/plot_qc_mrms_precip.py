@@ -1,24 +1,24 @@
 """Plot what was saved from daily_clifile_editor processing"""
-import sys
 import datetime
 import os
+import sys
 
-from pyiem.plot import MapPlot
-from pyiem.iemre import (
-    daily_offset,
-    get_daily_mrms_ncname,
-    SOUTH,
-    NORTH,
-    EAST,
-    WEST,
-)
-from pyiem.util import get_dbconn
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
 import netCDF4
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon
-import cartopy.crs as ccrs
 from geopandas import read_postgis
+from matplotlib.patches import Polygon
+from pyiem.iemre import (
+    EAST,
+    NORTH,
+    SOUTH,
+    WEST,
+    daily_offset,
+    get_daily_mrms_ncname,
+)
+from pyiem.plot import MapPlot
+from pyiem.util import get_dbconn
 
 YS = np.arange(SOUTH, NORTH, 0.01)
 XS = np.arange(WEST, EAST, 0.01)

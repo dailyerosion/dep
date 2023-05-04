@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 
-
 YLD_CROPTYPE = re.compile(r"Crop Type #\s+(?P<num>\d+)\s+is (?P<name>[^\s]+)")
 YLD_DATA = re.compile(
     (

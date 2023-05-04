@@ -2,8 +2,8 @@
 import os
 import sys
 
-from pyiem.util import get_dbconn, logger
 from pydep.util import load_scenarios
+from pyiem.util import get_dbconn, logger
 
 LOG = logger()
 PREFIXES = (

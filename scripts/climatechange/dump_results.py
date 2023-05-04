@@ -2,10 +2,10 @@
 import os
 import sys
 
-from pyiem.util import logger, get_dbconn
-from pydep.io.wepp import read_env
-from tqdm import tqdm
 import numpy as np
+from pydep.io.wepp import read_env
+from pyiem.util import get_dbconn, logger
+from tqdm import tqdm
 
 LOG = logger()
 

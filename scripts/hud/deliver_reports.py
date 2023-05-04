@@ -1,11 +1,11 @@
 """Generate and upload DEP reports."""
 
-from pandas.io.sql import read_sql
-import pandas as pd
 import geopandas as gpd
+import pandas as pd
 import requests
-from pyiem.util import get_dbconn
+from pandas.io.sql import read_sql
 from pyiem.box_utils import sendfiles2box
+from pyiem.util import get_dbconn
 
 LOOKUP = {
     "10240003": "East Nishnabotna River",

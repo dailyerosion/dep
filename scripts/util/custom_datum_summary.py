@@ -1,12 +1,12 @@
 """Generate DEP for a custom datum."""
 from calendar import month_abbr
 
-from pyiem.util import get_dbconn
-from geopandas import read_file
 import pandas as pd
+from geopandas import read_file
 from pandas.io.sql import read_sql
-from tqdm import tqdm
 from pydep.io.wepp import read_env
+from pyiem.util import get_dbconn
+from tqdm import tqdm
 
 
 def main():

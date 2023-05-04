@@ -1,9 +1,9 @@
 """Plot a time-series with plastic_limit."""
 
 import pandas as pd
+from pydep.io.dep import read_wb
 from pyiem.plot import figure_axes
 from pyiem.util import get_dbconn
-from pydep.io.dep import read_wb
 
 
 def main():

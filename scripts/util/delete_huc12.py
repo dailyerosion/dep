@@ -1,7 +1,7 @@
 """Delete all traces of a HUC12"""
-import sys
-import os
 import glob
+import os
+import sys
 
 from pyiem.util import get_dbconn
 

@@ -1,9 +1,9 @@
 """look into soil moisture frequencies."""
-import sys
 import calendar
+import sys
 
-from pyiem.plot.use_agg import plt
 from pydep.io.dep import read_wb
+from pyiem.plot.use_agg import plt
 
 
 def main(argv):
@@ -28,8 +28,8 @@ def main(argv):
     ax.set_xlim(90, 153)
     ax.set_ylabel("Frequency [%]")
     ax.set_title(
-        "huc12: %s fpath: %s\n2007-2019 Frequency of 0-10 cm Soil Moisture below threshold"
-        % (huc12, fpath)
+        f"huc12: {huc12} fpath: {fpath}\n"
+        "2007-2019 Frequency of 0-10 cm Soil Moisture below threshold"
     )
     ax.legend()
     fig.savefig("test.png")

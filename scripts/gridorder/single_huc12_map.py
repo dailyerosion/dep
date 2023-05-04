@@ -1,11 +1,11 @@
 """Map a HUC12"""
 import sys
 
+import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import psycopg2
-from geopandas import read_postgis
-import cartopy.crs as ccrs
 from cartopy.io.img_tiles import GoogleTiles
+from geopandas import read_postgis
 
 
 class ShadedReliefESRI(GoogleTiles):
