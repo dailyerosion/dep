@@ -26,7 +26,7 @@ def main():
         huc12 = fn[4:-4]
         huc8 = huc12[:-4]
         df = get_data(fn)
-        flowpaths = Series(df["g4%s" % (huc8,)]).unique()
+        Series(df["g4%s" % (huc8,)]).unique()
 
 
 if __name__ == "__main__":

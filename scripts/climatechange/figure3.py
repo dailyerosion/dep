@@ -1,5 +1,8 @@
 """A plot of the deltas for erosion between scenarios."""
 from matplotlib import rcParams
+from pyiem.plot import figure_axes
+from pyiem.util import logger
+import numpy as np
 
 rcParams.update(
     {
@@ -7,10 +10,6 @@ rcParams.update(
         "font.sans-serif": ["Liberation Sans"],
     }
 )
-from pyiem.plot import figure_axes
-from pyiem.plot.use_agg import plt
-from pyiem.util import logger
-import numpy as np
 
 LOG = logger()
 

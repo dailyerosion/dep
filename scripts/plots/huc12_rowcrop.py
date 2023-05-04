@@ -7,7 +7,6 @@ import matplotlib.colors as mpcolors
 from geopandas import read_postgis
 from pyiem.util import get_dbconn
 from pyiem.plot import get_cmap
-from pyiem.plot.use_agg import plt
 from pyiem.plot.geoplot import MapPlot
 
 

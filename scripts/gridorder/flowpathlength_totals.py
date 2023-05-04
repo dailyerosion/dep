@@ -6,7 +6,6 @@ import sys
 import pandas as pd
 import psycopg2
 from tqdm import tqdm
-from pyiem import dep as dep_utils
 from pyiem.util import get_dbconn
 from pydep.io.wepp import read_env
 
