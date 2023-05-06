@@ -1,4 +1,4 @@
-      subroutine outeng(bigcrp,iiyear,nowcrp)
+      subroutine outeng(bigcrp,iiyear,nowcrp,nyears)
 c
       include 'pmxcrp.inc'
       include 'pmxelm.inc'
@@ -58,7 +58,8 @@ c
 c
 c     static local (hence the `save')
 c
-      integer tint(8), bigcrp, iiyear, intmin(8), intmax(8),i,kk,nowcrp
+      integer tint(8), bigcrp, nyears, iiyear, intmin(8), intmax(8), i
+      integer kk, nowcrp
       real treal(96), ralmax(96), ralmin(96), watcon,watconf
       save intmin, intmax, ralmin, ralmax
 c
@@ -74,7 +75,8 @@ c
 c
 c       very first time in
 c
-        if (sdate.eq.1.and.iiyear.eq.1) then
+c       DEH reset the DOY back to 1 each year
+      if (sdate.eq.1) then
           intmin(1) = 1
           intmax(1) = 1
 c
@@ -233,8 +235,11 @@ c
 c
 c       write the daily information
 c
-        write (40,1000) tint(1), (treal(i),i=1,83), (tint(i),i = 2,8),
+c       DEH: Only dump OFE 1 for the last year
+        if (iplane.eq.1.and.iiyear.eq.(nyears - 1)) then
+         write (40,1000) tint(1), (treal(i),i=1,83), (tint(i),i = 2,8),
      1         (treal(i),i=84,96)
+        end if
 c
 c
 c     WEPP has completed - append min/max values.

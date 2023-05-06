@@ -4,7 +4,7 @@ c     begin include file pmxslp.inc
 c     + + + PARAMETER DECLARATIONS + + +
 
       integer           mxslp
-      parameter         (mxslp=20)
+      parameter         (mxslp=100)
 
 c     + + + PARAMETER DEFINITIONS + + +
 
