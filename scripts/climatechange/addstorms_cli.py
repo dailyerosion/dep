@@ -1,12 +1,12 @@
 """Add 1"/hr over one day storms."""
-import sys
 import os
+import sys
 from datetime import date
 
-from pyiem.util import get_dbconn
 from pandas.io.sql import read_sql
-from tqdm import tqdm
 from pydep.io.wepp import read_cli
+from pyiem.util import get_dbconn
+from tqdm import tqdm
 
 MYHUCS = [x.strip() for x in open("myhucs.txt")]
 

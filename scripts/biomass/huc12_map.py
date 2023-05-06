@@ -1,14 +1,14 @@
 """Draw a fancy map"""
 import sys
 
-import numpy as np
-from shapely.wkb import loads
-from matplotlib.patches import Polygon
+import cartopy.crs as ccrs
 import matplotlib.colors as mpcolors
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
+import numpy as np
+from matplotlib.patches import Polygon
 from pyiem.plot import MapPlot
 from pyiem.util import get_dbconn
+from shapely.wkb import loads
 
 
 def main():

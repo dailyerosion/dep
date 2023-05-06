@@ -1,15 +1,15 @@
 """Need something that prints diagnostics of our climate file"""
-import sys
 import datetime
+import sys
 
-import numpy as np
 import netCDF4
-import pytz
+import numpy as np
 import pandas as pd
+import pytz
 import requests
+from pydep.io.wepp import read_cli
 from pyiem.iemre import hourly_offset
 from pyiem.util import c2f, mm2inch
-from pydep.io.wepp import read_cli
 
 
 def compute_stage4(lon, lat, year):

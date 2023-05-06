@@ -1,14 +1,14 @@
 """Generate the WEPP prj files based on what our database has for us"""
 import copy
-import sys
-import os
 import datetime
+import os
+import sys
 from math import atan2, degrees, pi
 
 import psycopg2.extras
-from tqdm import tqdm
-from pyiem.util import get_dbconn
 from pydep.util import get_cli_fname
+from pyiem.util import get_dbconn
+from tqdm import tqdm
 
 SCENARIO = int(sys.argv[1])
 TILLAGE_CLASS = int(sys.argv[2])

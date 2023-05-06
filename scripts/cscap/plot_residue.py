@@ -3,9 +3,9 @@ Utility to plot some residue values from WEPP crop output
 """
 import datetime
 
-import pandas as pd
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import pandas as pd
 
 COLS = [
     "canopy_height_m",

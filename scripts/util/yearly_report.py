@@ -1,11 +1,11 @@
 """Generate a report for the yearly DEP totals"""
-import sys
 import datetime
+import sys
 
 import matplotlib.pyplot as plt
 from pandas import read_sql
-from pyiem.util import get_dbconnstr
 from pyiem.reference import state_names
+from pyiem.util import get_dbconnstr
 
 
 def main(argv):

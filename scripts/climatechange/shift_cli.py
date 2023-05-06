@@ -1,10 +1,10 @@
 """Apply arbitrary daily shifts within the climate file."""
-import sys
 import os
+import sys
 from datetime import date, timedelta
 
-from pyiem.util import get_dbconn
 from pandas.io.sql import read_sql
+from pyiem.util import get_dbconn
 from tqdm import tqdm
 
 MYHUCS = [x.strip() for x in open("myhucs.txt")]

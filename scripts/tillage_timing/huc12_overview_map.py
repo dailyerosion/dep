@@ -1,8 +1,8 @@
 """General HUC12 mapper"""
 # third party
+from geopandas import read_postgis
 from pyiem.plot import MapPlot
 from pyiem.util import get_dbconn
-from geopandas import read_postgis
 
 with open("myhucs.txt", encoding="utf-8") as fh:
     MYHUCS = [x.strip() for x in fh.readlines()]

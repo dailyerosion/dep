@@ -1,10 +1,10 @@
 """Plot of 5 day averaged precipitation."""
 import datetime
 
-from pyiem.plot.use_agg import plt
-from pyiem.util import get_dbconn
 import pandas as pd
 from pandas.io.sql import read_sql
+from pyiem.plot.use_agg import plt
+from pyiem.util import get_dbconn
 
 
 def main():

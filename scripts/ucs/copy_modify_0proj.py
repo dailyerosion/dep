@@ -27,14 +27,13 @@ def main():
             for fn in glob.glob("*.prj"):
                 newfn = "/i/%s/prj/%s/%s/%s" % (SCENARIO, huc8, huc4, fn)
                 old = open(fn).read().replace("/i/0/", "/i/%s/" % (SCENARIO,))
-                l = LENGTH.findall(old)
+                ll = LENGTH.findall(old)
                 res = CLIFILE.findall(old)
                 lat = float(res[0])
-                region = "southern"
                 if lat > 42.46:
-                    region = "northern"
+                    pass
                 elif lat > 41.6:
-                    region = "central"
+                    pass
                 # using the legacy crops, not region specific
                 rotfn = "IDEP2/UCS/%s_%s.rot" % (
                     "oldcrop2",
@@ -42,10 +41,10 @@ def main():
                 )
                 pos1 = old.find("Management {")
                 pos2 = old.find("RunOptions {")
-                o = open(newfn, "w")
-                o.write(old[:pos1])
-                o.write(
-                    """Management {
+                with open(newfn, "w") as fp:
+                    fp.write(old[:pos1])
+                    fp.write(
+                        """Management {
    Breaks = 0
     %s {
         Distance = %s
@@ -54,10 +53,9 @@ def main():
 
 }
 """
-                    % (rotfn, l[0], rotfn)
-                )
-                o.write(old[pos2:])
-                o.close()
+                        % (rotfn, ll[0], rotfn)
+                    )
+                    fp.write(old[pos2:])
                 i += 1
             os.chdir("..")
         os.chdir("..")

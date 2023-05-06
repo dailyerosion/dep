@@ -1,7 +1,7 @@
 """Copy the scenario 0 run files and make some mods"""
-import sys
-import os
 import glob
+import os
+import sys
 
 from tqdm import tqdm
 

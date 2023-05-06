@@ -1,7 +1,7 @@
 """Test management reading."""
 import os
 
-from pydep.io.man import read_man, man2df
+from pydep.io.man import man2df, read_man
 
 
 def get_path(name):

@@ -1,12 +1,12 @@
 """Do some diagnostics on what the raw DEP files are telling us"""
 import datetime
-import sys
 import glob
+import sys
 
 import pandas as pd
 from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
 from pydep.io.wepp import read_env
+from pyiem.util import get_dbconn
 
 YEARS = datetime.date.today().year - 2007 + 1
 CONV = 4.463

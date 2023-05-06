@@ -13,8 +13,8 @@ import os
 import sys
 
 import geopandas as gpd
-import pandas as pd
 import numpy as np
+import pandas as pd
 from pyiem.util import get_dbconn, logger
 
 LOG = logger()

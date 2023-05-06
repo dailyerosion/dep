@@ -1,6 +1,6 @@
 """Verify that a climate file is well formed."""
-import sys
 import datetime
+import sys
 
 
 def main(argv):

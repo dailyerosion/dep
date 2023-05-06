@@ -1,6 +1,6 @@
 """Create a map of where we have climate files!"""
-import os
 import glob
+import os
 
 import cartopy.crs as ccrs
 from pyiem.plot import MapPlot

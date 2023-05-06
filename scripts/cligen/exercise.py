@@ -1,8 +1,9 @@
-from daily_clifile_editor import compute_breakpoint
-import pandas as pd
 import subprocess
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from daily_clifile_editor import compute_breakpoint
 
 # Jun 11 2015
 precip = [

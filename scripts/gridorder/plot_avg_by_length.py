@@ -1,10 +1,5 @@
-import glob
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
-import sys
-import psycopg2
+import pandas as pd
 from pandas.io.sql import read_sql
 from pyiem.util import get_dbconn
 

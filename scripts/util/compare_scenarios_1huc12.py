@@ -1,11 +1,11 @@
 """Tease out some differences."""
 import glob
 
-from tqdm import tqdm
 import numpy as np
-from pyiem.plot.use_agg import plt
 import pandas as pd
 from pydep.io.wepp import read_env
+from pyiem.plot.use_agg import plt
+from tqdm import tqdm
 
 MYHUCS = [
     "070600060701",

@@ -1,13 +1,13 @@
 """Diagnose some Water Balance stuff"""
-import sys
-import glob
 import datetime
+import glob
+import sys
 
-from tqdm import tqdm
 import pandas as pd
 import seaborn as sns
-from pyiem.plot.use_agg import plt
 from pydep.io.dep import read_wb
+from pyiem.plot.use_agg import plt
+from tqdm import tqdm
 
 
 def main(argv):

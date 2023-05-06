@@ -1,5 +1,6 @@
 """Simple plot of data."""
 from matplotlib import rcParams
+from pyiem.plot import figure_axes
 
 rcParams.update(
     {
@@ -7,10 +8,8 @@ rcParams.update(
         "font.sans-serif": ["Liberation Sans"],
     }
 )
-from pyiem.plot import figure_axes
 
 # rcParams['font.sans-serif'] = ['Tahoma']
-from pyiem.plot.use_agg import plt
 
 DATA = [
     0.10443217650431767,

@@ -1,10 +1,10 @@
 """Compare scenarios."""
-import os
 import glob
+import os
 
 import pandas as pd
-from pyiem.plot.use_agg import plt
 from pydep.io.wepp import read_env
+from pyiem.plot.use_agg import plt
 
 
 def main():

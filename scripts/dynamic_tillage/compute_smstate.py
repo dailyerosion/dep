@@ -4,17 +4,17 @@ Process DEP Soil Moisture to create a state file.
 Division of labor and this can run much earlier for the Dynamic Tillage
 workflow.
 """
-from multiprocessing import cpu_count
-from multiprocessing.pool import ThreadPool
 import os
 import sys
+from multiprocessing import cpu_count
+from multiprocessing.pool import ThreadPool
 
-import pandas as pd
 import geopandas as gpd
+import pandas as pd
+from pydep.io.dep import read_wb
+from pyiem.util import get_sqlalchemy_conn, logger
 from sqlalchemy import text
 from tqdm import tqdm
-from pyiem.util import logger, get_sqlalchemy_conn
-from pydep.io.dep import read_wb
 
 LOG = logger()
 

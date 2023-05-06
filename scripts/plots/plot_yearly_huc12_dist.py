@@ -1,9 +1,9 @@
 """Plot a distribution."""
 
-from pyiem.util import get_dbconn
-from pyiem.plot.use_agg import plt
-from pandas.io.sql import read_sql
 import seaborn as sns
+from pandas.io.sql import read_sql
+from pyiem.plot.use_agg import plt
+from pyiem.util import get_dbconn
 
 
 def main():

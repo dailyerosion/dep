@@ -13,22 +13,22 @@ try:
     from zoneinfo import ZoneInfo  # type: ignore
 except ImportError:
     from backports.zoneinfo import ZoneInfo  # type: ignore
-from collections import namedtuple
 import datetime
-import sys
 import os
+import sys
+from collections import namedtuple
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
-from tqdm import tqdm
 import numpy as np
-from scipy.interpolate import NearestNDInterpolator
 from osgeo import gdal
-from pyiem import iemre
-from pyiem.iemre import SOUTH, WEST, NORTH, EAST
-from pyiem.util import ncopen, logger, convert_value
 from pydep.io.cli import daily_formatter
 from pydep.util import get_cli_fname
+from pyiem import iemre
+from pyiem.iemre import EAST, NORTH, SOUTH, WEST
+from pyiem.util import convert_value, logger, ncopen
+from scipy.interpolate import NearestNDInterpolator
+from tqdm import tqdm
 
 LOG = logger()
 CENTRAL = ZoneInfo("America/Chicago")

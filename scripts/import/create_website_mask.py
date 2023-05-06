@@ -5,8 +5,8 @@ import subprocess
 # Third Party
 import geopandas as gpd
 import pyproj
+from pyiem.iemre import EAST, NORTH, SOUTH, WEST
 from pyiem.plot.use_agg import plt
-from pyiem.iemre import NORTH, SOUTH, EAST, WEST
 from pyiem.util import get_sqlalchemy_conn
 
 

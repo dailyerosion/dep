@@ -1,9 +1,9 @@
 """County level agg."""
 
-from pyiem.util import get_dbconn
-from pyiem.plot.geoplot import MapPlot
 from geopandas import read_postgis
 from pandas.io.sql import read_sql
+from pyiem.plot.geoplot import MapPlot
+from pyiem.util import get_dbconn
 
 
 def main():

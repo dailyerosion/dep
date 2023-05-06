@@ -8,10 +8,10 @@
  6) Generic properties, perhaps can ignore?
 """
 
-import psycopg2
 import numpy as np
-from geopandas import read_postgis
 import pandas as pd
+import psycopg2
+from geopandas import read_postgis
 from simpledbf import Dbf5
 
 PGCONN = psycopg2.connect(database="idep")

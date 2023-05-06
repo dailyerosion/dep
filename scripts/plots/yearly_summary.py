@@ -1,13 +1,13 @@
 import datetime
 import sys
 
+import cartopy.crs as ccrs
+import matplotlib.colors as mpcolors
+import matplotlib.pyplot as plt
 import numpy as np
 from geopandas import read_postgis
-from pyiem.plot import MapPlot
-import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
-import matplotlib.colors as mpcolors
-import cartopy.crs as ccrs
+from pyiem.plot import MapPlot
 from pyiem.util import get_dbconn
 
 V2NAME = {
@@ -77,8 +77,8 @@ def main():
 
     # Check that we have data for this date!
     cursor.execute("SELECT value from properties where key = 'last_date_0'")
-    lastts = datetime.datetime.strptime(cursor.fetchone()[0], "%Y-%m-%d")
-    floor = datetime.date(2007, 1, 1)
+    datetime.datetime.strptime(cursor.fetchone()[0], "%Y-%m-%d")
+    datetime.date(2007, 1, 1)
     df = read_postgis(
         f"""
     WITH data as (
@@ -103,7 +103,6 @@ def main():
         bins = V2RAMP[v]
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
 
-    patches = []
     # m.ax.add_geometries(df['geo'], ccrs.PlateCarree())
     for i, row in df.iterrows():
         c = cmap(norm([row["data"]]))[0]
@@ -118,7 +117,7 @@ def main():
     m.drawcounties()
     m.drawcities()
     lbl = [round(_, 2) for _ in bins]
-    u = "%s, Avg: %.2f" % (V2UNITS[v], df["data"].mean())
+    "%s, Avg: %.2f" % (V2UNITS[v], df["data"].mean())
     m.draw_colorbar(
         bins,
         cmap,

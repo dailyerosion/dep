@@ -6,24 +6,24 @@ also do any of the following:
     # See usage
     python env2database.py -h
 """
+import argparse
+import datetime
 import gzip
 import os
 import re
-import argparse
-import datetime
-from multiprocessing import Pool, cpu_count
 import sys
+from multiprocessing import Pool, cpu_count
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
-import geopandas as gpd
 from affine import Affine
-from pyiem.iemre import WEST, NORTH
-from pyiem.grid.zs import CachingZonalStats
-from pyiem.util import get_dbconn, get_dbconnstr, logger
 from pydep.io.wepp import read_env
 from pydep.util import load_scenarios
+from pyiem.grid.zs import CachingZonalStats
+from pyiem.iemre import NORTH, WEST
+from pyiem.util import get_dbconn, get_dbconnstr, logger
+from tqdm import tqdm
 
 LOG = logger()
 PRECIP_AFF = Affine(0.01, 0.0, WEST, 0.0, -0.01, NORTH)

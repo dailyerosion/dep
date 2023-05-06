@@ -1,9 +1,9 @@
 """Plot a histogram of slopes used in DEP"""
-import os
 import glob
+import os
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from pydep.io.wepp import read_slp
 

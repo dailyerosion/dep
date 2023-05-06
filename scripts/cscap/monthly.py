@@ -1,8 +1,8 @@
 """Make plots of monthly values or differences"""
 import calendar
 
-from pandas.io.sql import read_sql
 import matplotlib.pyplot as plt
+from pandas.io.sql import read_sql
 from pyiem.util import get_dbconn
 
 PGCONN = get_dbconn("idep")

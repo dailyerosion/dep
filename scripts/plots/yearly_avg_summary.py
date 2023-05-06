@@ -2,13 +2,13 @@
 import datetime
 import sys
 
+import matplotlib.colors as mpcolors
 import numpy as np
 from geopandas import read_postgis
 from matplotlib.patches import Polygon
-import matplotlib.colors as mpcolors
-from pyiem.util import get_dbconn
-from pyiem.plot.use_agg import plt
 from pyiem.plot import MapPlot
+from pyiem.plot.use_agg import plt
+from pyiem.util import get_dbconn
 
 V2NAME = {
     "avg_loss": "Detachment",

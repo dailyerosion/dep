@@ -13,7 +13,7 @@ def read_slope(fn):
         if len(line.strip()) == 0 or line[0] == "#":
             continue
         data.append(line)
-    fplen = data[2].split()[0]
+    data[2].split()[0]
     xs = []
     slp = []
     travel = 0

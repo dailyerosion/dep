@@ -1,14 +1,14 @@
 """Map."""
 import sys
 
+import matplotlib.colors as mpcolors
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.collections import PatchCollection
+from matplotlib.patches import Polygon
 from pyiem.plot import MapPlot
 from pyiem.util import get_dbconn
 from shapely.wkb import loads
-import numpy as np
-from matplotlib.patches import Polygon
-from matplotlib.collections import PatchCollection
-import matplotlib.colors as mpcolors
-import matplotlib.pyplot as plt
 
 DBCONN = get_dbconn("idep")
 cursor = DBCONN.cursor()

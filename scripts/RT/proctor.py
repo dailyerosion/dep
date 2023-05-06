@@ -2,14 +2,14 @@
 
     $ python proctor.py <scenario>
 """
-import sys
+import datetime
 import os
 import subprocess
-import datetime
+import sys
 from multiprocessing.pool import ThreadPool
 
-from pyiem.util import get_dbconn
 from pydep.util import load_scenarios
+from pyiem.util import get_dbconn
 
 YEARS = datetime.date.today().year - 2006
 # need to regenerate run files on 2 January

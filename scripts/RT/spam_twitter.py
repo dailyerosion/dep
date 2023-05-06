@@ -2,8 +2,8 @@
 import datetime
 from io import BytesIO
 
-from pyiem import util
 import requests
+from pyiem import util
 
 LOG = util.logger()
 

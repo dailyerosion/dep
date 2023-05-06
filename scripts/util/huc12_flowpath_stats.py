@@ -1,7 +1,7 @@
 """Summarize Flowpath stats."""
 
-from pyiem.util import get_dbconn
 import pandas as pd
+from pyiem.util import get_dbconn
 
 
 def main():

@@ -1,21 +1,22 @@
 """Dump a days worth of output to file."""
 # stdlib
-import os
 import datetime
-from multiprocessing import Pool
+import os
 import sys
+from multiprocessing import Pool
+
+import geopandas as gpd
 
 # third party
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
-import geopandas as gpd
-from rasterstats import zonal_stats
 from affine import Affine
-from pyiem.iemre import WEST, NORTH
-from pyiem.util import get_dbconn, logger
 from pydep.io.wepp import read_env
 from pydep.util import load_scenarios
+from pyiem.iemre import NORTH, WEST
+from pyiem.util import get_dbconn, logger
+from rasterstats import zonal_stats
+from tqdm import tqdm
 
 LOG = logger()
 PRECIP_AFF = Affine(0.01, 0.0, WEST, 0.0, -0.01, NORTH)

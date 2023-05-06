@@ -10,13 +10,12 @@ Here's a listing of project landuse codes used
 
 See import/flowpath2prj.py
 """
-import os
 import datetime
+import os
 
-from tqdm import tqdm
 from pyiem.util import get_dbconn
-
 from tillage_utility import operation_maker
+from tqdm import tqdm
 
 OVERWRITE = True
 

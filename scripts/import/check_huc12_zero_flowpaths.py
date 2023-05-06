@@ -1,8 +1,8 @@
 """Report which HUC12s have 0 flowpaths."""
 import sys
 
-from pyiem.util import get_dbconnstr
 from pandas import read_sql
+from pyiem.util import get_dbconnstr
 
 
 def main(argv):

@@ -1,11 +1,11 @@
 """General HUC12 mapper"""
 import sys
 
+import geopandas as gpd
+import matplotlib.colors as mpcolors
 from pyiem.plot import MapPlot, get_cmap
 from pyiem.reference import Z_POLITICAL
 from pyiem.util import get_sqlalchemy_conn
-import geopandas as gpd
-import matplotlib.colors as mpcolors
 
 
 def main(argv):
