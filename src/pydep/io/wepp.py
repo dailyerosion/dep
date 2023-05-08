@@ -212,6 +212,8 @@ def read_env(filename, year0=2006) -> pd.DataFrame:
             "point2",
             "sed_del",
             "er",
+            "detlen",  # wepp2023
+            "deplen",  # wepp2023
         ],
     )
     if df.empty:
