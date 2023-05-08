@@ -2,7 +2,7 @@
 import os
 import sys
 
-TARGETS = "crop error man ofe prj run slp sol wb yld env rot".split()
+TARGETS = "crop error man ofe prj run slp sol wb yld env rot out".split()
 
 
 def main(argv):
