@@ -197,10 +197,14 @@ def main(argv):
             # le sigh
             clfile = clfile.replace("/0/", f"/{scenario}/")
         wr = WeppRun(row[0], row[1], clfile, scenario, row[3], row[4])
+        payload = {
+            "wepprun": wr.make_runfile(),
+            "weppexe": "wepp2023",
+        }
         channel.basic_publish(
             exchange="",
             routing_key="dep",
-            body=wr.make_runfile(),
+            body=json.dumps(payload),
             properties=pika.BasicProperties(
                 delivery_mode=2  # make message persistent
             ),
