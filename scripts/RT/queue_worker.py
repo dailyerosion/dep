@@ -42,28 +42,30 @@ def get_rabbitmqconn():
     )
 
 
-def drain(ch, delivery_tag, _rundata):
+def drain(ch, delivery_tag, _payload):
     """NOOP to clear out the queue via a hackery"""
     cb = partial(ack_message, ch, delivery_tag)
     ch.connection.add_callback_threadsafe(cb)
 
 
-def run(ch, delivery_tag, rundata):
-    """Actually run wepp for this event"""
+def run_wepp(payload):
+    """Actually run wepp, really."""
     # We run timeout to keep things from hanging indefinitely, we tried 60
     # seconds but it was too short as sometimes latency happens.
     with subprocess.Popen(
-        ["timeout", "-s", "9", "600", "wepp"],
+        ["timeout", "-s", "9", "600", payload["weppexe"]],
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stdin=subprocess.PIPE,
     ) as proc:
-        (stdoutdata, stderrdata) = proc.communicate(rundata)
+        (stdoutdata, stderrdata) = proc.communicate(
+            payload["wepprun"].encode("ascii")
+        )
     if stdoutdata[-13:-1] != b"SUCCESSFULLY":
         # So our job failed and we now have to figure out a filename to use
         # for the error file.  This is a quasi-hack here, but the env file
         # should always point to the right scenario being run.
-        m = FILENAME_RE.search(rundata.decode("ascii"))
+        m = FILENAME_RE.search(payload["wepprun"])
         if m:
             d = m.groupdict()
             errorfn = (
@@ -83,6 +85,17 @@ def run(ch, delivery_tag, rundata):
                 fn = errorfn.replace("error", prefix)
                 if os.path.isfile(fn):
                     os.unlink(fn)
+
+
+def run(ch, delivery_tag, payload):
+    """Actually run wepp for this event"""
+    # We should be fully within a thread at this point...
+    try:
+        payload = json.loads(payload)
+        run_wepp(payload)
+    except Exception as exp:
+        print(f"run_wepp exception {exp}")
+
     cb = partial(ack_message, ch, delivery_tag)
     ch.connection.add_callback_threadsafe(cb)
 
@@ -110,10 +123,10 @@ def run_consumer(jobfunc, executor):
     # otherwise rabbitmq will send everything
     channel.basic_qos(prefetch_count=300)
 
-    def proxy(mychannel, method, _props, rundata):
+    def proxy(mychannel, method, _props, payload):
         """Wrapper around jobfunc."""
         delivery_tag = method.delivery_tag
-        executor.submit(jobfunc, mychannel, delivery_tag, rundata)
+        executor.submit(jobfunc, mychannel, delivery_tag, payload)
 
     # make us acknowledge the message
     channel.basic_consume("dep", proxy, auto_ack=False)

@@ -102,6 +102,10 @@ class WeppRun:
         """Filename to be used for crop output."""
         return self._getfn("grph")
 
+    def get_out_fn(self):
+        """Filename to be used for soil loss output."""
+        return self._getfn("out")
+
     def get_irrigation_fn(self):
         """Filename providing irrigation data."""
         return f"/i/{self.scenario}/irrigation/ofe{self.ofe_count}.txt"
@@ -117,6 +121,7 @@ class WeppRun:
         out.write("1\n")  # abbreviated annual output
         out.write("No\n")  # initial conditions output
         out.write("/dev/null\n")  # soil loss output file
+        # out.write(f"{self.get_out_fn()}\n")  # soil loss output file
         if self.scenario == 0:
             out.write("Yes\n")  # Do water balance output
             out.write(f"{self.get_wb_fn()}\n")  # water balance output file
@@ -192,10 +197,14 @@ def main(argv):
             # le sigh
             clfile = clfile.replace("/0/", f"/{scenario}/")
         wr = WeppRun(row[0], row[1], clfile, scenario, row[3], row[4])
+        payload = {
+            "wepprun": wr.make_runfile(),
+            "weppexe": "wepp2023",
+        }
         channel.basic_publish(
             exchange="",
             routing_key="dep",
-            body=wr.make_runfile(),
+            body=json.dumps(payload),
             properties=pika.BasicProperties(
                 delivery_mode=2  # make message persistent
             ),

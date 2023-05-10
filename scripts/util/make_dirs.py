@@ -7,7 +7,7 @@ from pyiem.util import get_dbconn, logger
 
 LOG = logger()
 PREFIXES = (
-    "crop env man prj run slp sol wb error ofe yld rot grph "
+    "crop env man prj run slp sol wb error ofe yld rot grph out "
     "sweepin sweepout"
 ).split()
 

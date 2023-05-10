@@ -127,6 +127,7 @@ def read_file(scenario, zone, prevcode, code, nextcode, cfactor, year):
       zone (str): The DEP cropping zone
       prevcode (str): the previous crop code
       code (str): the crop code
+      nextcode (str): The next year's crop code.
       cfactor (int): the c-factor for tillage
       year (int): the year of this crop
 
@@ -145,7 +146,7 @@ def read_file(scenario, zone, prevcode, code, nextcode, cfactor, year):
             f"4  15 {year} 1 Plant-Perennial CropDef.ALFALFA  {{0.000000}}\n"
             f"{data}"
         )
-    # One off
+    # TODO
     if code == "B" and prevcode == "C" and cfactor == 2:
         # Remove fall chisel
         data = data[: data.find("11  1  %(yr)s")]
