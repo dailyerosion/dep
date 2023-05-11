@@ -26,16 +26,19 @@ def man2df(mandict: dict, year1: int = 1) -> pd.DataFrame:
             ncrop = mandict["scens"][scenyr - 1]["ntype"]
             tilseq = mandict["scens"][scenyr - 1]["tilseq"]
             plant_date = None
-            for surfeff in mandict["surfeffects"][tilseq - 1]["tills"]:
-                op = surfeff["op"]
-                if (
-                    mandict["operations"][op - 1]["scecomment"].find("Planter")
-                    > -1
-                ):
-                    doy = surfeff["mdate"]
-                    plant_date = datetime.date(
-                        year, 1, 1
-                    ) + datetime.timedelta(days=doy - 1)
+            if mandict["surfeffects"]:
+                for surfeff in mandict["surfeffects"][tilseq - 1]["tills"]:
+                    op = surfeff["op"]
+                    if (
+                        mandict["operations"][op - 1]["scecomment"].find(
+                            "Planter"
+                        )
+                        > -1
+                    ):
+                        doy = surfeff["mdate"]
+                        plant_date = datetime.date(
+                            year, 1, 1
+                        ) + datetime.timedelta(days=doy - 1)
             rows.append(
                 {
                     "year": year,

@@ -10,6 +10,12 @@ def get_path(name):
     return os.path.join(basedir, "..", "data", name)
 
 
+def test_230511_man2df_index_error():
+    """Fix a index error found."""
+    df = man2df(read_man(get_path("man4.txt")))
+    assert len(df.index) == 17
+
+
 def test_man_rotation_repeats():
     """Test that a management file can have a rotation repeat read."""
     manfile = read_man(get_path("man3.txt"))
