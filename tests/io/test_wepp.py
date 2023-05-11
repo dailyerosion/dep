@@ -64,9 +64,9 @@ def test_cli_rfactor():
 def test_slp():
     """Read a slope file"""
     slp = read_slp(get_path("slp.txt"))
-    assert len(slp) == 5
-    assert abs(slp[4]["y"][-1] + 2.91) < 0.01
-    assert abs(slp[4]["slopes"][-1] - 0.033) < 0.01
+    assert len(slp) == 2
+    assert abs(slp[1]["y"][-1] + 10.34) < 0.01
+    assert abs(slp[1]["slopes"][-1] - 0.064) < 0.01
 
 
 def test_ofe():
