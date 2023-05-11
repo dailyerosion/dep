@@ -236,9 +236,9 @@ c
 c       write the daily information
 c
 c       DEH: Only dump OFE 1 for the last year
-        if (iplane.eq.1.and.iiyear.eq.(nyears - 1)) then
-         write (40,1000) tint(1), (treal(i),i=1,83), (tint(i),i = 2,8),
-     1         (treal(i),i=84,96)
+        if (iplane.eq.1) then
+         write (40,1000) iiyear+2006, tint(1), (treal(i),i=1,83),
+     1         (tint(i),i = 2,8), (treal(i),i=84,96)
         end if
 c
 c
@@ -250,13 +250,13 @@ c
         write (40,*) '#       Minimum/Maximum values:'
         write (40,*) '#'
 c
-        write (40,1000)intmin(1),(ralmin(i),i=1,83),(intmin(i),i = 2,8),
-     1        (ralmin(i),i=84,96)
-        write (40,1000)intmax(1),(ralmax(i),i=1,83),(intmax(i),i = 2,8),
-     1        (ralmax(i),i=84,96)
+        write (40,1000)0, intmin(1),(ralmin(i),i=1,83),
+     1        (intmin(i),i = 2,8), (ralmin(i),i=84,96)
+        write (40,1000)0, intmax(1),(ralmax(i),i=1,83),
+     1        (intmax(i),i = 2,8), (ralmax(i),i=84,96)
 c
       end if
       return
 c
- 1000 format (i6,83(1x,f10.5),7(1x,i2),13(1x,f10.5))
+ 1000 format (i4,i6,83(1x,f10.5),7(1x,i2),13(1x,f10.5))
       end
