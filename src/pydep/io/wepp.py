@@ -303,7 +303,7 @@ def read_slp(filename):
         # first line is pts and x-length
         (_pts, length) = [float(x) for x in lines[7 + seg * 2].split()]
         # next line is the combo of x-position along length and slope at pt
-        line2 = lines[8 + seg * 2].replace(",", "")
+        line2 = lines[8 + seg * 2].replace(",", " ")
         tokens = np.array([float(x) for x in line2.split()])
         # first value in each pair is the x-pos relative to the length
         xs = xpos + tokens[::2] * length
