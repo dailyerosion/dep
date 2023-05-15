@@ -146,13 +146,17 @@ def read_file(scenario, zone, prevcode, code, nextcode, cfactor, year):
             f"4  15 {year} 1 Plant-Perennial CropDef.ALFALFA  {{0.000000}}\n"
             f"{data}"
         )
-    # TODO
-    if code == "B" and prevcode == "C" and cfactor == 2:
-        # Remove fall chisel
-        data = data[: data.find("11  1  %(yr)s")]
+    # Add spring operation after corn
+    if prevcode == "C" and cfactor == 4:
+        data = (
+            "%(pdatem15)s  %(yr)s  1 Tillage  OpCropDef.TAND0002      "
+            "{0.101600, 2}\n"
+            f"{data}"
+        )
     pdate = ""
     pdatem5 = ""
     pdatem10 = ""
+    pdatem15 = ""
     plant = ""
     # We currently only have zone specific files for Corn and Soybean
     if code == "C":
@@ -160,12 +164,14 @@ def read_file(scenario, zone, prevcode, code, nextcode, cfactor, year):
         pdate = date.strftime("%m    %d")
         pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
+        pdatem15 = (date - datetime.timedelta(days=15)).strftime("%m    %d")
         plant = CORN[zone]
     elif code in ["B", "L"]:  # TODO support double crop
         date = SOYBEAN_PLANT.get(scenario, SOYBEAN_PLANT[zone])
         pdate = date.strftime("%m    %d")
         pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
+        pdatem15 = (date - datetime.timedelta(days=15)).strftime("%m    %d")
         plant = SOYBEAN[zone]
     elif code == "W":
         date = SOYBEAN_PLANT.get(scenario, SOYBEAN_PLANT[zone])  # TODO
@@ -173,11 +179,13 @@ def read_file(scenario, zone, prevcode, code, nextcode, cfactor, year):
         pdate = date.strftime("%m    %d")
         pdatem5 = (date - datetime.timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (date - datetime.timedelta(days=10)).strftime("%m    %d")
+        pdatem15 = (date - datetime.timedelta(days=15)).strftime("%m    %d")
     return data % {
         "yr": year,
         "pdate": pdate,
         "pdatem5": pdatem5,
         "pdatem10": pdatem10,
+        "pdatem15": pdatem15,
         "plant": plant,
     }
 
