@@ -425,7 +425,7 @@ c
           endif
           
           if(prcp.gt.0. .or. runt.gt.0.)
-     1      write (30,1100) day, mon, year - ibyear + 1, prcp * 1000.0,
+     1      write (30,1100) day, mon, year, prcp * 1000.0,
      1      runt,
      1      avirdt, avedet, maxdet, ptdet, avedep, maxdep, ptdep,
      1      avsole, enrato(nplane), lossdis, deposdis
@@ -470,7 +470,7 @@ c
           sedyld=sedyld+tgsd(i,nelmt)
    60   continue
         if(runvol(nelmt).gt.0.005)
-     1      write(30,3100)day, mon, year - ibyear + 1, prcp * 1000,
+     1      write(30,3100)day, mon, year, prcp * 1000,
      1      runvol(nelmt), peakot(nelmt), sedyld * 0.4536
       end if
 c

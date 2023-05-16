@@ -11,3 +11,4 @@ The following code changes were made to the baseline WEPP model.
 - Increase `mxslp` (max number of slope points) from 20 to 100 (#158).
 - Increase `mxtime` to 3000 to match WEPP 2022 and resolve numerical instability
 with high resolution time precision?!?
+- Change WEPP `.env` files to have explicit years (#183).

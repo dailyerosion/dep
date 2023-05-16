@@ -32,6 +32,12 @@ def test_empty():
     assert df.empty
 
 
+def test_gh183_env_year4():
+    """Test reading an env file with a four digit year."""
+    df = read_env(get_path("env_year4.txt"))
+    assert df["date"].max().year == 2023
+
+
 def test_read():
     """Read a ENV file"""
     df = read_env(get_path("good_env.txt"))
