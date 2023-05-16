@@ -112,15 +112,16 @@ def load_iemre(nc, data, valid):
     ncdata = (
         nc.variables["rsds"][offset, :, :].filled(np.nan)
         * 86400.0
-        / 1000000.0
+        / 1_000_000.0
         * 23.9
     )
     # Default to a value of 300 when this data is missing, for some reason
     nn = NearestNDInterpolator(
         (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
     )
+    # What's a reasonable max bounts?  Well, 50 MJ/d should be an extreme high
     data["solar"][:] = iemre_bounds_check(
-        "rsds", nn(data["lon"], data["lat"]), 0, 1000
+        "rsds", nn(data["lon"], data["lat"]), 0, 50.0 * 23.9
     )
 
     ncdata = convert_value(

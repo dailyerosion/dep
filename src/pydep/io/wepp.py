@@ -181,11 +181,12 @@ def read_crop(filename):
 
 
 def read_env(filename, year0=2006) -> pd.DataFrame:
-    """Read WEPP .env file, return a dataframe
+    """Read WEPP .env file, return a dataframe.
 
     Args:
       filename (str): Filename to read
-      year0 (int,optional): The simulation start year minus 1
+      year0 (int,optional): The simulation start year minus 1, WEPP2013 for DEP
+        uses an explicit year, so magic happens if it detects years > 1000.
 
     Returns:
       pd.DataFrame
@@ -219,8 +220,10 @@ def read_env(filename, year0=2006) -> pd.DataFrame:
     if df.empty:
         df["date"] = None
     else:
-        # Faster than +=
-        df["year"] = df["year"] + year0
+        # Only add years when the data seems to warrant it.
+        if df["year"].max() < 1000:
+            # Faster than +=
+            df["year"] = df["year"] + year0
         # Considerably faster than df.apply
         df["date"] = pd.to_datetime(
             {"year": df["year"], "month": df["month"], "day": df["day"]}

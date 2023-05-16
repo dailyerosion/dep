@@ -17,7 +17,7 @@ def main():
         if os.path.isfile("wepp_env.txt"):
             os.remove("wepp_env.txt")
         with subprocess.Popen(
-            "../../wepp2012-src/wepp < fp.run",
+            "../../wepp20230117/wepp < fp.run",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
