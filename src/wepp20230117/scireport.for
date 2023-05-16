@@ -70,7 +70,8 @@ CAS Using sand and silt content directly from top soil layer (without layer adju
 	      if (((sand+clay) .ge. 0.50) .and. ((sand+clay) .lt. 0.72)  
      &         .and. (clay .gt. 0.7) .and. (sand .lt. 0.52)) 
      &         texclass = 4    ! loam
-	      if (((sand+clay).ge. 0.72).and.(clay .gt. 0.20)) texclass = 7 !scl
+	      if (((sand+clay).ge. 0.72).and.(clay .gt. 0.20))
+     &         texclass = 7 !'scl'
 	      if ((sand-clay) .gt. 0.70) texclass = 2 !'ls  '
 	      if ((sand-0.5*clay) .gt. 0.85) texclass = 1 !'s   '
 	    end if
