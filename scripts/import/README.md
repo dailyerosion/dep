@@ -15,7 +15,7 @@ is one file per HUC12.
 1. `python check_huc12_zero_flowpaths.py <scenario>`
 1. If new HUC12s are present, get an updated simplified HUC12 from Dave.
 1. Copy laptop database tables `huc12`, `flowpaths`, `flowpath_points`,
-`flowpath_ofes`, and `general_landuse` to IEMDB
+`flowpath_ofes`, `fields`, and `general_landuse` to IEMDB
 1. copy `myhucs.txt` up to IEM and run `python clear_files.py <scenario>`
 1. extract the `dep.tar` file on IEM
 1. On IEM run `cligen/locate_clifile.py <scenario>`

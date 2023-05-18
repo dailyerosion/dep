@@ -146,6 +146,17 @@ def read_file(scenario, zone, prevcode, code, nextcode, cfactor, year):
             f"4  15 {year} 1 Plant-Perennial CropDef.ALFALFA  {{0.000000}}\n"
             f"{data}"
         )
+
+    # TODO:
+    # Tillage code 5 - move TAND0002 before FCSTACDP and add another
+    # TAND0002 in spring after soy, remove FCSTACDP and TAND0002 after corn,
+    # switch MOPL after soy to CHISSTSP
+    # Tillage code 6 - start with revised tillage code 5 as a guide then switch
+    # CHISSTSP after soy to MOPL. Then add in two TAND0002 and FCSTACDP after
+    # corn. This will be a little different than DEP documentation
+    # (an extra disking after plowing corn) but as we discussed, that is
+    # more similar to what farmers do.
+
     # Add spring operation after corn
     if prevcode == "C" and cfactor == 4:
         data = (
