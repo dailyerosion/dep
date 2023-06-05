@@ -98,7 +98,7 @@ def omnibus():
 def main(argv):
     """We ride or die."""
     if len(argv) == 1:
-        omnibus
+        omnibus()
         return
     process(argv[1])
 
