@@ -1,6 +1,7 @@
 """Keep the CLI file headers in sync."""
 # stdlib
 import os
+import sys
 
 # Third Party
 import numpy as np
@@ -11,7 +12,8 @@ from pyiem.util import convert_value, logger, ncopen
 from tqdm import tqdm
 
 LOG = logger()
-REV = "HeaderRev: v20220706.1"
+# Untracked here, but this version was used to fix the header column labels
+REV = "HeaderRev: v20230605.1"
 
 
 def monthly_avgs(lon, lat):
@@ -93,6 +95,13 @@ def omnibus():
             process(clifn)
 
 
+def main(argv):
+    """We ride or die."""
+    if len(argv) == 1:
+        omnibus()
+        return
+    process(argv[1])
+
+
 if __name__ == "__main__":
-    # process(sys.argv[1])
-    omnibus()
+    main(sys.argv)

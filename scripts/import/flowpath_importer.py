@@ -101,12 +101,14 @@ def get_data(filename):
     # Any null FBndID (mostly forest?) get set to -1
     df["FBndID"] = df["FBndID"].fillna("FUNUSED_-1")
     fillout_codes(df)
-    # Get the field bounds dataframe as well
-    fld_df = gpd.read_file(
-        filename.replace("smpl3m_mean18", "FB"),
-        index="OBJECTID",
-    )
-    fillout_codes(fld_df)
+    fld_df = None
+    fldfn = filename.replace("smpl3m_mean18", "FB")
+    if os.path.isfile(fldfn):
+        # Get the field bounds dataframe as well
+        fld_df = gpd.read_file(fldfn, index="OBJECTID")
+        fillout_codes(fld_df)
+    else:
+        LOG.warning("Missing %s", fldfn)
     return df, fld_df
 
 
