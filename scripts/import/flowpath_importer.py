@@ -26,7 +26,7 @@ print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")
 print(" * VERIFY that the GeoJSON is the 5070 grid value")
 print(" * This will generate a `myhucs.txt` file with found HUCs")
 
-SOILFY = 2022
+SOILFY = 2023
 SOILCOL = f"SOL_FY_{SOILFY}"
 PREFIX = "fp"
 TRUNC_GRIDORDER_AT = 4
@@ -76,13 +76,11 @@ def fillout_codes(df):
     # Compute full rotation string
     # 2022 is repeating -2 (2020)
     # 2023 is repeating -2 (2021)
-    col = "CropRotatn" if "CropRotatn" in df.columns else "CropRotatn_CY_2021"
+    col = "CropRotatn" if "CropRotatn" in df.columns else "CropRotatn_CY_2022"
     s = df[col]
-    df["landuse"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
-    s = df["Management_CY_2021"]
-    df["management"] = (
-        s.str[1] + s.str[0] + s.str[1] + s + s.str[-2] + s.str[-1]
-    )
+    df["landuse"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2]
+    s = df["Management_CY_2022"]
+    df["management"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2]
 
 
 def get_data(filename):
@@ -230,7 +228,7 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
         INSERT into flowpath_ofes (flowpath, ofe, geom, bulk_slope, max_slope,
         gssurgo_id, fbndid, management, landuse, real_length, genlu)
         values (%s, %s, %s, %s, %s,
-        (select id from gssurgo where fiscal_year = %s and mukey = %s),
+        (select id from gssurgo where fiscal_year = %s and mukey = %s::int),
         %s, %s, %s, %s, %s)
         """,
         (
@@ -275,7 +273,8 @@ def insert_points(cursor, gdf, db_fid):
             INSERT into flowpath_points(flowpath, segid, elevation, length,
             gssurgo_id, slope, geom, gridorder, ofe)
             values(%s, %s, %s, %s,
-            (select id from gssurgo where fiscal_year = %s and mukey = %s),
+            (select id from gssurgo
+             where fiscal_year = %s and mukey = %s::int),
             %s, 'SRID=5070;POINT(%s %s)', %s, %s)
             """,
             args,
