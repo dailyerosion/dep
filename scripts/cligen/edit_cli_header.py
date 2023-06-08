@@ -54,14 +54,17 @@ def get_elevation(lon, lat):
     return elev
 
 
-def process(clifn):
+def process(clifn, check_header):
     """Edit the given climate file."""
     lon, lat = [float(x) for x in os.path.basename(clifn)[:-4].split("x")]
     lon = 0 - lon
 
     with open(clifn, encoding="utf-8") as fh:
         lines = fh.readlines()
-    if lines[2].find(REV) > -1:
+    # Flag to force editing of the file, even if the header is right.  This
+    # is needed for bootstrapping a single file as the copied file will have
+    # this header, but still need edited
+    if check_header and lines[2].find(REV) > -1:
         return
     # Set Station Name to something descriptive
     lines[2] = f"Station: Daily Erosion Project 0.01deg Grid Cell {REV}\n"
@@ -92,7 +95,7 @@ def omnibus():
             clifn = get_cli_fname(lon, lat)
             if not os.path.isfile(clifn):
                 continue
-            process(clifn)
+            process(clifn, True)
 
 
 def main(argv):
@@ -100,7 +103,7 @@ def main(argv):
     if len(argv) == 1:
         omnibus()
         return
-    process(argv[1])
+    process(argv[1], False)
 
 
 if __name__ == "__main__":
