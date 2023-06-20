@@ -67,6 +67,8 @@ def main(argv):
         if not os.path.isdir(mydir):
             os.makedirs(mydir)
         subprocess.call(["cp", copyfn, fn])
+        # Now fix the header to match its location
+        subprocess.call(["python", "edit_cli_header.py", fn])
     LOG.info("added %s files", created)
 
 

@@ -64,7 +64,43 @@ def _rfactor(times, points, return_rfactor_metric=True):
     return np.sum(e_r * p_r) * Imax * unitconv
 
 
-def read_cli(filename, compute_rfactor=False, return_rfactor_metric=True):
+def intensity(times, points, compute_intensity_over) -> dict:
+    """Returns dict of computed intensities over the given minute intervals."""
+    entry = {}
+    for interval in compute_intensity_over:
+        entry[f"i{interval}_mm"] = 0
+    if not times:
+        return entry
+
+    # Optimize, a two length times can be directly computed
+    if len(times) == 2:
+        rate_mmhr = points[1] / (times[1] - times[0])
+        for interval in compute_intensity_over:
+            entry[f"i{interval}_mm"] = rate_mmhr * interval / 60.0
+        return entry
+
+    # Rectify times to integer minutes
+    times = (np.array(times) * 60.0).astype(int)
+    # Resample to every minute
+    df = (
+        pd.DataFrame({"pcpn": points}, index=times)
+        .reindex(np.arange(0, 24 * 60.0))
+        .interpolate()
+        .fillna(0)
+    )
+    for interval in compute_intensity_over:
+        entry[f"i{interval}_mm"] = (
+            df["pcpn"].shift(0 - interval) - df["pcpn"]
+        ).max()
+    return entry
+
+
+def read_cli(
+    filename,
+    compute_rfactor=False,
+    return_rfactor_metric=True,
+    compute_intensity_over=[],
+):
     """Read WEPP CLI File, Return DataFrame
 
     Args:
@@ -73,6 +109,8 @@ def read_cli(filename, compute_rfactor=False, return_rfactor_metric=True):
         well, adds computational expense and default is False.
       return_rfactor_metric (bool, optional): should the R-factor be
         computed as the common metric value.  Default is True.
+      compute_intensity_over (list, optional): list of minute values to compute
+        the max intensity over.  Adds `i{minute}_mm` in returned DataFrame.
 
     Returns:
       pandas.DataFrame
@@ -103,28 +141,29 @@ def read_cli(filename, compute_rfactor=False, return_rfactor_metric=True):
                 maxr = rate
         linenum += breakpoints + 1
         dates.append(datetime.date(int(year), int(mo), int(da)))
-        rows.append(
-            {
-                "tmax": float(tmax),
-                "tmin": float(tmin),
-                "rad": float(rad),
-                "wvl": float(wvl),
-                "wdir": float(wdir),
-                "tdew": float(tdew),
-                "maxr": maxr,
-                "bpcount": breakpoints,
-                "pcpn": float(accum),
-                "rfactor": (
-                    np.nan
-                    if not compute_rfactor
-                    else _rfactor(
-                        times,
-                        points,
-                        return_rfactor_metric=return_rfactor_metric,
-                    )
-                ),
-            }
-        )
+        row = {
+            "tmax": float(tmax),
+            "tmin": float(tmin),
+            "rad": float(rad),
+            "wvl": float(wvl),
+            "wdir": float(wdir),
+            "tdew": float(tdew),
+            "maxr": maxr,
+            "bpcount": breakpoints,
+            "pcpn": float(accum),
+            "rfactor": (
+                np.nan
+                if not compute_rfactor
+                else _rfactor(
+                    times,
+                    points,
+                    return_rfactor_metric=return_rfactor_metric,
+                )
+            ),
+        }
+        if compute_intensity_over:
+            row.update(intensity(times, points, compute_intensity_over))
+        rows.append(row)
 
     return pd.DataFrame(rows, index=pd.DatetimeIndex(dates))
 
