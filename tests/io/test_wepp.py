@@ -3,6 +3,7 @@ import datetime
 import os
 
 from pydep.io.wepp import (
+    intensity,
     read_cli,
     read_crop,
     read_env,
@@ -16,6 +17,24 @@ def get_path(name):
     """helper"""
     basedir = os.path.dirname(__file__)
     return os.path.join(basedir, "..", "data", name)
+
+
+def test_intensity():
+    """Test basic intensity calculations."""
+    times = [0.5, 1.5]
+    points = [0, 10]
+    res = intensity(times, points, [10, 20])
+    assert abs(res["i10_mm"] - 10 / 6.0) < 0.01
+    assert abs(res["i20_mm"] - 10 / 3.0) < 0.01
+
+
+def test_intensity2():
+    """Test intensity calculations."""
+    times = [0.5, 1.5, 2.0]
+    points = [0, 10, 20]
+    res = intensity(times, points, [10, 20])
+    assert abs(res["i10_mm"] - 10 / 3.0) < 0.01
+    assert abs(res["i20_mm"] - 10 / 1.5) < 0.01
 
 
 def test_crop():
@@ -56,8 +75,9 @@ def test_yld():
 
 def test_cli():
     """read a CLI file please"""
-    df = read_cli(get_path("cli.txt"))
+    df = read_cli(get_path("cli.txt"), compute_intensity_over=[80, 120])
     assert len(df.index) == 4018
+    assert (df["i80_mm"].max() - 51.12) < 0.01
 
 
 def test_cli_rfactor():
