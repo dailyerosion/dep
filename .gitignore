@@ -10,6 +10,7 @@
 **/*.pdf
 **/*.xlsx
 **/*.txt
+**/*.pptx
 /.vscode
 prj2wepp/wepp/hill.slp
 prj2wepp/wepp/data/managements

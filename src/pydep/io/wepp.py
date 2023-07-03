@@ -80,7 +80,7 @@ def intensity(times, points, compute_intensity_over) -> dict:
         return entry
 
     # Rectify times to integer minutes
-    times = (np.array(times) * 60.0).astype(int)
+    times = (np.array(times) * 60.0).round(0)
     # Resample to every minute
     df = (
         pd.DataFrame({"pcpn": points}, index=times)

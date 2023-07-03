@@ -19,6 +19,15 @@ def get_path(name):
     return os.path.join(basedir, "..", "data", name)
 
 
+def test_intensity_rounding():
+    """Test we can handle time resolution pain."""
+    times = [5.73, 23.9667, 23.9833]
+    points = [0.0, 12.62, 14.0]
+    res = intensity(times, points, [10, 20])
+    assert abs(res["i10_mm"] - 1.48) < 0.01
+    assert abs(res["i20_mm"] - 1.6) < 0.01
+
+
 def test_intensity():
     """Test basic intensity calculations."""
     times = [0.5, 1.5]
