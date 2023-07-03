@@ -30,6 +30,7 @@ from pyiem.util import convert_value, logger, ncopen
 from scipy.interpolate import NearestNDInterpolator
 from tqdm import tqdm
 
+gdal.UseExceptions()
 LOG = logger()
 CENTRAL = ZoneInfo("America/Chicago")
 UTC = datetime.timezone.utc
@@ -222,7 +223,8 @@ def qc_precip(data, valid, xtile, ytile, tile_bounds):
     bring it to near the stage IV value.
     """
     hires_total = np.sum(data["precip"], 2)
-    if valid.year >= 2015:
+    # Only do this check for tiles west of -101, likely too crude for east
+    if valid.year >= 2015 and xtile < 5:
         # Do an assessment of the hires_total (A2M MRMS), it may have too many
         # zeros where stage IV has actual data.
         a2m_zeros = hires_total < 0.01
