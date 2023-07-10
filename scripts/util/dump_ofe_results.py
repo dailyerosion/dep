@@ -18,8 +18,8 @@ def fpmagic(cursor, scenario, envfn, rows, huc12, fpath, mlrarsym):
     df = read_env(envfn)
     # Only want 2016 through 2021
     df = df[
-        (df["date"] < datetime.datetime(2022, 1, 1))
-        & (df["date"] >= datetime.datetime(2016, 1, 1))
+        (df["date"] < datetime.datetime(2023, 1, 1))
+        & (df["date"] >= datetime.datetime(2017, 1, 1))
     ]
     cursor.execute(
         "SELECT real_length, bulk_slope, max_slope from flowpaths "
@@ -41,7 +41,7 @@ def fpmagic(cursor, scenario, envfn, rows, huc12, fpath, mlrarsym):
         "length[m]": fplen,
         "delivery[t/a/yr]": df["delivery"].sum() / YEARS * 4.463,
     }
-    for year in range(2016, 2022):
+    for year in range(2017, 2023):
         df2 = df[df["year"] == year]
         res[f"delivery_{year}_t/a"] = df2["delivery"].sum() * 4.463
     rows.append(res)
@@ -89,8 +89,8 @@ def main(argv):
             )
             # Just 2016-2021
             ofedf = ofedf[
-                (ofedf["date"] < datetime.datetime(2022, 1, 1))
-                & (ofedf["date"] >= datetime.datetime(2016, 1, 1))
+                (ofedf["date"] < datetime.datetime(2023, 1, 1))
+                & (ofedf["date"] >= datetime.datetime(2017, 1, 1))
             ]
             # Figure out the crop string
             huc12rows = oferows.setdefault(huc12, [])
@@ -119,12 +119,12 @@ def main(argv):
             accum_length = 0
             lastdelivery = 0
             lastdelivery_byyear = {
-                2016: 0,
                 2017: 0,
                 2018: 0,
                 2019: 0,
                 2020: 0,
                 2021: 0,
+                2022: 0,
             }
             for ofe in ofedf["ofe"].unique():  # Assuming this is sorted(?)
                 myofe = ofedf[ofedf["ofe"] == ofe]
@@ -163,7 +163,7 @@ def main(argv):
                     ),
                 }
                 lastdelivery = thisdelivery
-                for year in range(2016, 2022):
+                for year in range(2017, 2023):
                     df2 = myofe[myofe["year"] == year]
                     thisdelivery = df2["sedleave"].sum() / accum_length * 4.463
                     res[f"delivery_{year}[t/a]"] = thisdelivery
@@ -176,11 +176,11 @@ def main(argv):
 
     for huc12, frows in oferows.items():
         df = pd.DataFrame(frows)
-        df.to_csv(f"oferesults_{huc12}_230418.csv", index=False)
+        df.to_csv(f"oferesults_{huc12}_230710.csv", index=False)
 
     for huc12, hrows in fprows.items():
         df = pd.DataFrame(hrows)
-        df.to_csv(f"fpresults_{huc12}_230418.csv", index=False)
+        df.to_csv(f"fpresults_{huc12}_230710.csv", index=False)
 
 
 if __name__ == "__main__":
