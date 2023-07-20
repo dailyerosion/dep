@@ -16,5 +16,6 @@ scipy
 # GIS work
 shapely
 sqlalchemy
-twython
+# daily auto-tweeter
+tweepy
 reportlab
