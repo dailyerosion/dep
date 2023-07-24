@@ -228,10 +228,10 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
     cursor.execute(
         """
         INSERT into flowpath_ofes (flowpath, ofe, geom, bulk_slope, max_slope,
-        gssurgo_id, fbndid, management, landuse, real_length, genlu)
+        gssurgo_id, fbndid, management, landuse, real_length)
         values (%s, %s, %s, %s, %s,
         (select id from gssurgo where fiscal_year = %s and mukey = %s::int),
-        %s, %s, %s, %s, %s)
+        %s, %s, %s, %s)
         """,
         (
             db_fid,
@@ -248,7 +248,6 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
             firstpt["management"],
             firstpt["landuse"],
             (lastpt["len"] - firstpt["len"]) / 100.0,
-            get_genlu_code(cursor, firstpt["GenLU"]),
         ),
     )
 
@@ -411,8 +410,8 @@ def process_fields(cursor, scenario, huc12, fld_df):
         cursor.execute(
             """
             INSERT into fields (scenario, huc12, fbndid, acres, isag, geom,
-            management, landuse)
-            VALUES (%s, %s, %s, %s, %s, st_multi(%s), %s, %s)
+            management, landuse, genlu)
+            VALUES (%s, %s, %s, %s, %s, st_multi(%s), %s, %s, %s)
             """,
             (
                 scenario,
@@ -423,6 +422,7 @@ def process_fields(cursor, scenario, huc12, fld_df):
                 row["geometry"].wkt,
                 row["management"],
                 row["landuse"],
+                get_genlu_code(cursor, row["GenLU"]),
             ),
         )
     PROCESSING_COUNTS["fields_inserted"] += len(fld_df.index)
