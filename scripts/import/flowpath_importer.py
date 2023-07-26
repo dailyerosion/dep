@@ -113,12 +113,11 @@ def get_data(filename):
 
 def delete_previous(cursor, scenario, huc12):
     """This file is the authority, so we cull previous content."""
-    for table in ["flowpath_points", "flowpath_ofes"]:
-        cursor.execute(
-            f"DELETE from {table} p USING flowpaths f WHERE "
-            "p.flowpath = f.fid and f.huc_12 = %s and f.scenario = %s",
-            (huc12, scenario),
-        )
+    cursor.execute(
+        "DELETE from flowpath_ofes p USING flowpaths f WHERE "
+        "p.flowpath = f.fid and f.huc_12 = %s and f.scenario = %s",
+        (huc12, scenario),
+    )
     cursor.execute(
         "DELETE from flowpaths WHERE scenario = %s and huc_12 = %s",
         (scenario, huc12),
@@ -252,36 +251,6 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
     )
 
 
-def insert_points(cursor, gdf, db_fid):
-    """Insert into point database."""
-    # Insert point information
-    for segid, row in gdf.iterrows():
-        args = (
-            db_fid,
-            segid,
-            row["elev"] / 100.0,
-            row["len"] / 100.0,
-            SOILFY,
-            row[SOILCOL],
-            row["slope"],
-            row["geometry"].x,
-            row["geometry"].y,
-            row["gorder"],
-            row["ofe"],
-        )
-        cursor.execute(
-            """
-            INSERT into flowpath_points(flowpath, segid, elevation, length,
-            gssurgo_id, slope, geom, gridorder, ofe)
-            values(%s, %s, %s, %s,
-            (select id from gssurgo
-             where fiscal_year = %s and mukey = %s::int),
-            %s, 'SRID=5070;POINT(%s %s)', %s, %s)
-            """,
-            args,
-        )
-
-
 def process_flowpath(cursor, scenario, huc12, db_fid, df) -> pd.DataFrame:
     """Do one flowpath please."""
     rename = {
@@ -345,7 +314,6 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df) -> pd.DataFrame:
     for ofe, gdf in df.reset_index().groupby("ofe"):
         # Insert OFE information
         insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts)
-        insert_points(cursor, gdf, db_fid)
 
     # Update flowpath info
     ls = LineString(zip(df.geometry.x, df.geometry.y))
