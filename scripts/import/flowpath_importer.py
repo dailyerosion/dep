@@ -93,7 +93,7 @@ def get_data(filename):
     Returns:
       gpd.DataFrame with the geojson data included.
     """
-    df = gpd.read_file(filename, index="OBJECTID")
+    df = gpd.read_file(filename, engine="pyogrio")
     if "irrigated" not in df.columns:
         LOG.info("%s had no irrigated column", filename)
         df["irrigated"] = 0
@@ -104,7 +104,7 @@ def get_data(filename):
     fldfn = filename.replace("smpl3m_mean18", "FB")
     if os.path.isfile(fldfn):
         # Get the field bounds dataframe as well
-        fld_df = gpd.read_file(fldfn, index="OBJECTID")
+        fld_df = gpd.read_file(fldfn, engine="pyogrio")
         fillout_codes(fld_df)
     else:
         LOG.warning("Missing %s", fldfn)
