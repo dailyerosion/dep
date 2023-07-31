@@ -33,7 +33,7 @@ def main(argv):
         """
         with data as (
             select huc_12, regexp_split_to_table(management, '') as ch
-            from flowpaths p JOIN flowpath_points t on (p.fid = t.flowpath)
+            from flowpaths p JOIN flowpath_ofes t on (p.fid = t.flowpath)
             where p.scenario = %s
             ORDER by management desc, flowpath, fpath),
         agg as (select ch, huc_12, count(*) from data
