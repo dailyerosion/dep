@@ -93,7 +93,7 @@ def get_data(filename):
     Returns:
       gpd.DataFrame with the geojson data included.
     """
-    df = gpd.read_file(filename, index="OBJECTID")
+    df = gpd.read_file(filename, engine="pyogrio")
     if "irrigated" not in df.columns:
         LOG.info("%s had no irrigated column", filename)
         df["irrigated"] = 0
@@ -104,7 +104,14 @@ def get_data(filename):
     fldfn = filename.replace("smpl3m_mean18", "FB")
     if os.path.isfile(fldfn):
         # Get the field bounds dataframe as well
-        fld_df = gpd.read_file(fldfn, index="OBJECTID")
+        fld_df = gpd.read_file(fldfn, engine="pyogrio")
+        # Check for bad geometries
+        if not fld_df["geometry"].is_valid.all():
+            LOG.info(
+                "Found %s invalid geomtries, calling buffer(0)",
+                len(fld_df.index) - fld_df["geometry"].is_valid.sum(),
+            )
+            fld_df["geometry"] = fld_df["geometry"].buffer(0)
         fillout_codes(fld_df)
     else:
         LOG.warning("Missing %s", fldfn)
@@ -113,12 +120,11 @@ def get_data(filename):
 
 def delete_previous(cursor, scenario, huc12):
     """This file is the authority, so we cull previous content."""
-    for table in ["flowpath_points", "flowpath_ofes"]:
-        cursor.execute(
-            f"DELETE from {table} p USING flowpaths f WHERE "
-            "p.flowpath = f.fid and f.huc_12 = %s and f.scenario = %s",
-            (huc12, scenario),
-        )
+    cursor.execute(
+        "DELETE from flowpath_ofes p USING flowpaths f WHERE "
+        "p.flowpath = f.fid and f.huc_12 = %s and f.scenario = %s",
+        (huc12, scenario),
+    )
     cursor.execute(
         "DELETE from flowpaths WHERE scenario = %s and huc_12 = %s",
         (scenario, huc12),
@@ -228,10 +234,10 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
     cursor.execute(
         """
         INSERT into flowpath_ofes (flowpath, ofe, geom, bulk_slope, max_slope,
-        gssurgo_id, fbndid, management, landuse, real_length, genlu)
+        gssurgo_id, fbndid, management, landuse, real_length)
         values (%s, %s, %s, %s, %s,
         (select id from gssurgo where fiscal_year = %s and mukey = %s::int),
-        %s, %s, %s, %s, %s)
+        %s, %s, %s, %s)
         """,
         (
             db_fid,
@@ -248,39 +254,8 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
             firstpt["management"],
             firstpt["landuse"],
             (lastpt["len"] - firstpt["len"]) / 100.0,
-            get_genlu_code(cursor, firstpt["GenLU"]),
         ),
     )
-
-
-def insert_points(cursor, gdf, db_fid):
-    """Insert into point database."""
-    # Insert point information
-    for segid, row in gdf.iterrows():
-        args = (
-            db_fid,
-            segid,
-            row["elev"] / 100.0,
-            row["len"] / 100.0,
-            SOILFY,
-            row[SOILCOL],
-            row["slope"],
-            row["geometry"].x,
-            row["geometry"].y,
-            row["gorder"],
-            row["ofe"],
-        )
-        cursor.execute(
-            """
-            INSERT into flowpath_points(flowpath, segid, elevation, length,
-            gssurgo_id, slope, geom, gridorder, ofe)
-            values(%s, %s, %s, %s,
-            (select id from gssurgo
-             where fiscal_year = %s and mukey = %s::int),
-            %s, 'SRID=5070;POINT(%s %s)', %s, %s)
-            """,
-            args,
-        )
 
 
 def process_flowpath(cursor, scenario, huc12, db_fid, df) -> pd.DataFrame:
@@ -346,7 +321,6 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df) -> pd.DataFrame:
     for ofe, gdf in df.reset_index().groupby("ofe"):
         # Insert OFE information
         insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts)
-        insert_points(cursor, gdf, db_fid)
 
     # Update flowpath info
     ls = LineString(zip(df.geometry.x, df.geometry.y))
@@ -411,8 +385,8 @@ def process_fields(cursor, scenario, huc12, fld_df):
         cursor.execute(
             """
             INSERT into fields (scenario, huc12, fbndid, acres, isag, geom,
-            management, landuse)
-            VALUES (%s, %s, %s, %s, %s, st_multi(%s), %s, %s)
+            management, landuse, genlu)
+            VALUES (%s, %s, %s, %s, %s, st_multi(%s), %s, %s, %s)
             """,
             (
                 scenario,
@@ -423,6 +397,7 @@ def process_fields(cursor, scenario, huc12, fld_df):
                 row["geometry"].wkt,
                 row["management"],
                 row["landuse"],
+                get_genlu_code(cursor, row["GenLU"]),
             ),
         )
     PROCESSING_COUNTS["fields_inserted"] += len(fld_df.index)

@@ -97,21 +97,18 @@ def main(argv):
             with get_sqlalchemy_conn("idep") as conn:
                 meta = pd.read_sql(
                     """
-                    with data as (
                         select ofe,
                         o.bulk_slope,
                         o.max_slope,
                         landuse, management,
                         mukey as surgo,
                         kwfact, hydrogroup, fbndid,
-                        o.real_length as length, o.genlu
+                        o.real_length as length
                         from flowpath_ofes o JOIN flowpaths f on
                         (o.flowpath = f.fid)
                         JOIN gssurgo g on (o.gssurgo_id = g.id)
                         WHERe f.scenario = %s
-                        and f.huc_12 = %s  and fpath = %s)
-                    select d.*, g.label from data d JOIN general_landuse g on
-                    (d.genlu = g.id)
+                        and f.huc_12 = %s  and fpath = %s
                     """,
                     conn,
                     params=(scenario, huc12, fpath),
@@ -156,7 +153,6 @@ def main(argv):
                     "length[m]": length,
                     "delivery[t/a/yr]": thisdelivery,
                     "ofe_loss[t/a/yr]": thisdelivery - lastdelivery,
-                    "genlanduse": meta_ofe["label"].values[0],
                     "management": meta_ofe["management"].values[0],
                     "tillage_code_2022": (
                         meta_ofe["management"].values[0][2022 - 2007]

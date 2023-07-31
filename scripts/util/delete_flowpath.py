@@ -31,7 +31,7 @@ def do_delete(huc12, fpath, scenario):
     fid = cursor.fetchone()[0]
     # Delete flowpath points
     cursor.execute(
-        "DELETE from flowpath_points where flowpath = %s and scenario = %s",
+        "DELETE from flowpath_ofes where flowpath = %s and scenario = %s",
         (fid, scenario),
     )
     # Delete flowpath
