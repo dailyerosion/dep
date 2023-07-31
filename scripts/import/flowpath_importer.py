@@ -105,6 +105,13 @@ def get_data(filename):
     if os.path.isfile(fldfn):
         # Get the field bounds dataframe as well
         fld_df = gpd.read_file(fldfn, engine="pyogrio")
+        # Check for bad geometries
+        if not fld_df["geometry"].is_valid.all():
+            LOG.info(
+                "Found %s invalid geomtries, calling buffer(0)",
+                len(fld_df.index) - fld_df["geometry"].is_valid.sum(),
+            )
+            fld_df["geometry"] = fld_df["geometry"].buffer(0)
         fillout_codes(fld_df)
     else:
         LOG.warning("Missing %s", fldfn)
