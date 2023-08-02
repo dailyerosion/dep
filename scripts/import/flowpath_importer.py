@@ -358,8 +358,7 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df) -> pd.DataFrame:
 
 def delete_flowpath(cursor, fid):
     """Delete the flowpath."""
-    for c in ["points", "ofes"]:
-        cursor.execute(f"DELETE from flowpath_{c} where flowpath = %s", (fid,))
+    cursor.execute("DELETE from flowpath_ofes where flowpath = %s", (fid,))
     cursor.execute("DELETE from flowpaths where fid = %s", (fid,))
 
 
