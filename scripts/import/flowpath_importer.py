@@ -221,14 +221,16 @@ def compute_slope(df):
 
 def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
     """Add database entry."""
-    pts = list(zip(gdf.geometry.x, gdf.geometry.y))
+    pts = list(zip(gdf.geometry.x, gdf.geometry.y, gdf.elev.values / 100.0))
     next_ofe = ofe + 1
     firstpt = gdf.iloc[0]
     lastpt = gdf.iloc[-1]
     if next_ofe in ofe_starts.index:
         lastpt = ofe_starts.loc[next_ofe]
         # append on next
-        pts.extend([(lastpt.geometry.x, lastpt.geometry.y)])
+        pts.extend(
+            [(lastpt.geometry.x, lastpt.geometry.y, lastpt.elev / 100.0)]
+        )
     line = LineString(pts)
 
     cursor.execute(
@@ -358,8 +360,7 @@ def process_flowpath(cursor, scenario, huc12, db_fid, df) -> pd.DataFrame:
 
 def delete_flowpath(cursor, fid):
     """Delete the flowpath."""
-    for c in ["points", "ofes"]:
-        cursor.execute(f"DELETE from flowpath_{c} where flowpath = %s", (fid,))
+    cursor.execute("DELETE from flowpath_ofes where flowpath = %s", (fid,))
     cursor.execute("DELETE from flowpaths where fid = %s", (fid,))
 
 
@@ -466,12 +467,20 @@ def main(argv):
     fns = glob.glob(f"{datadir}/smpl3m_*.json")
     fns.sort()
     i = 0
+    # Allow for processing to restart
+    done = []
+    if os.path.isfile("myhucs.txt-done"):
+        with open("myhucs.txt-done", encoding="utf8") as fh:
+            done = [x.strip() for x in fh]
 
     progress = tqdm(fns)
     # track our work
     with open("myhucs.txt", "w", encoding="utf8") as fh:
         for fn in progress:
             progress.set_description(os.path.basename(fn))
+            huc12 = fn[-17:-5]
+            if huc12 in done:
+                continue
             # Save our work every 100 HUC12s,
             # so to keep the database transaction
             # at a reasonable size

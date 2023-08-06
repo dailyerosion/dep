@@ -37,10 +37,10 @@ import sys
 from functools import partial
 from math import atan2, degrees, pi
 
-import numpy as np
 import pandas as pd
 from pydep.util import load_scenarios
 from pyiem.util import get_dbconn, get_sqlalchemy_conn, logger
+from sqlalchemy import text
 from tqdm import tqdm
 
 LOG = logger()
@@ -311,24 +311,31 @@ def compute_aspect(x0, y0, x1, y1):
 def load_flowpath_from_db(pgconn, fid):
     """Fetch me the flowpath."""
     return pd.read_sql(
-        """
-        WITH pts as (
-            select array_agg(slope ORDER by segid ASC) as slopes,
-            array_agg(length ORDER by segid ASC) as lengths
-            from flowpath_points where flowpath = %s),
-        ofes as (
-            select o.ofe, o.management, o.landuse, o.real_length,
-            'DEP_'||mukey||'.SOL' as soilfile, st_pointn(o.geom, 1) as spt,
-            st_pointn(o.geom, -1) as ept from
-            flowpath_ofes o JOIN gssurgo g on (o.gssurgo_id = g.id)
-            WHERE o.flowpath = %s)
-        SELECT lengths, slopes, o.*, st_x(spt) as start_x,
-        st_y(spt) as start_y, st_x(ept) as end_x, st_y(ept) as end_y from
-        ofes o, pts p ORDER by ofe ASC
-    """,
+        text(
+            """
+        with data as (
+            select ofe, (st_dumppoints(geom)).* as g,
+            st_startpoint(geom) as stpt, st_endpoint(geom) as endpt,
+            management, landuse,
+            'DEP_'||mukey||'.SOL' as soilfile, real_length
+            from flowpath_ofes o JOIN gssurgo g on (o.gssurgo_id = g.id)
+            where flowpath = :fid)
+        select ofe,
+        (lag(st_z(geom)) OVER (
+             PARTITION by ofe ORDER by st_z(geom) DESC)
+        - st_z(geom)) / st_distance(geom, lag(geom) OVER (
+             PARTITION by ofe ORDER by st_z(geom) DESC)
+        ) as slope, st_z(geom), st_distance(geom, stpt) as length,
+        st_x(stpt) as start_x, st_x(endpt) as end_x,
+        st_y(stpt) as start_y, st_y(endpt) as end_y,
+        real_length, soilfile, management, landuse
+        from data
+        ORDER by ofe asc, length asc
+    """
+        ),
         pgconn,
-        params=(fid, fid),
-        index_col="ofe",
+        params={"fid": fid},
+        index_col=None,
     )
 
 
@@ -357,7 +364,7 @@ def do_flowpath(pgconn, scenario, zone, metadata):
         f"/i/{scenario}/prj/{res['huc8']}/{res['huc12'][-4:]}/"
         f"{res['huc12']}_{metadata['fpath']}.prj"
     )
-    res["length"] = df["real_length"].sum()
+    res["length"] = df.iloc[0]["real_length"]  # all rows are equal
 
     # Slope data
     # Here be dragons: dailyerosion/dep#79 dailyerosion/dep#158
@@ -365,29 +372,15 @@ def do_flowpath(pgconn, scenario, zone, metadata):
     # prj2wepp is doing with the slope files and prescribe them below
     slpdata = ""
     res["slp_dummy"] = f"2 {res['length']:.4f}\n0.00, 0.01 1.00, 0.01\n"
-    startlen = 0
-    for _ofe, row in df.iterrows():
-        endlen = startlen + row["real_length"]
-        lens = []
-        slopes = []
-        for x, s in zip(row["lengths"], row["slopes"]):
-            if (
-                abs(x - startlen) < 0.01
-                or abs(x - endlen) < 0.01
-                or startlen < x < endlen
-            ):
-                lens.append(x)
-                slopes.append(s)
-        if not lens:
-            print(df)
-            print(startlen, endlen)
-            sys.exit()
-        lens = np.array(lens) - lens[0]
-        lens = lens / lens[-1]
-        startlen = endlen
+    for _ofe, gdf in df.groupby("ofe"):
+        lens = gdf["length"].values / gdf["length"].values[-1]
+        slopes = gdf["slope"].values
+        # First value is null, so we just repeat it
+        slopes[0] = slopes[1]
         tokens = [f"{r:.6f},{s:.6f}" for r, s in zip(lens, slopes)]
         slpdata += (
-            f"{len(lens)} {row['real_length']:.4f}\n" f"{' '.join(tokens)}\n"
+            f"{len(lens)} {gdf.iloc[0]['real_length']:.4f}\n"
+            f"{' '.join(tokens)}\n"
         )
     slpfn = (
         f"/i/{scenario}/slp/{res['huc8']}/{res['huc12'][-4:]}/"
@@ -401,44 +394,32 @@ def do_flowpath(pgconn, scenario, zone, metadata):
             f"# from flowpath2prj.py {res['date']}\n"
             "#\n"
             "#\n"
-            f"{len(df.index)}\n"
+            f"{df['ofe'].max():.0f}\n"
             f"{res['aspect']:.4f} 1.000\n"
             f"{slpdata}\n"
         )
 
-    soilfiles = df["soilfile"].values
-    soillengths = df["real_length"].values
-
-    res["soilbreaks"] = len(soillengths) - 1
+    res["soilbreaks"] = df["ofe"].max() - 1
+    res["manbreaks"] = res["soilbreaks"]
     res["soils"] = ""
-
-    for s, (d, soilfn) in enumerate(zip(soillengths, soilfiles), start=1):
-        res[
-            "soils"
-        ] += f"""    soil{s} {{
-        Distance = {d:.3f}
-        File = "/i/{scenario}/sol_input/{soilfn}"
-    }}\n"""
-
-    mans = []
-    manlengths = []
-
-    # Figure out our landuse situation
-    for idx, row in df.iterrows():
-        # Management has changed, write out the old row
-        mans.append(rotation_magic(scenario, zone, idx, row, metadata))
-        manlengths.append(row["real_length"])
-
-    res["manbreaks"] = len(manlengths) - 1
     res["managements"] = ""
-
-    for i, (d, s) in enumerate(zip(manlengths, mans), start=1):
-        res[
-            "managements"
-        ] += f"""    man{i} {{
-        Distance = {d:.3f}
-        File = "{s}"
-    }}\n"""
+    s = 1
+    for _, row in df.groupby("ofe").first().iterrows():
+        soilfile = row["soilfile"]
+        soillength = row["real_length"]
+        res["soils"] += (
+            f"    soil{s} {{\n"
+            f"Distance = {soillength:.3f}\n"
+            f'File = "/i/{scenario}/sol_input/{soilfile}"\n'
+            "}\n"
+        )
+        res["managements"] += (
+            f"    man{s} {{\n"
+            f"Distance = {soillength:.3f}\n"
+            f'File = "{rotation_magic(scenario, zone, s, row, metadata)}"\n'
+            "}\n"
+        )
+        s += 1
 
     return res
 
