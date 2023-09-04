@@ -11,9 +11,11 @@ to.
 import glob
 import logging
 import os
+import re
 import sys
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import pyproj
 from pydep.util import get_cli_fname
@@ -51,6 +53,7 @@ TRANSFORMER = pyproj.Transformer.from_crs(
 TRANSFORMER.transform(223279, 2071344)
 MAX_SLOPE_RATIO = 0.9
 MIN_SLOPE = 0.003
+HUC12RE = re.compile("^fp[0-9]{12}")
 
 
 def create_flowpath_id(cursor, scenario, huc12, fpath) -> int:
@@ -94,9 +97,29 @@ def get_data(filename):
       gpd.DataFrame with the geojson data included.
     """
     df = gpd.read_file(filename, engine="pyogrio")
+    huc12 = None
+    for col in df.columns:
+        if HUC12RE.match(col):
+            huc12 = col[len(PREFIX) : (len(PREFIX) + 12)]
+            break
+
     if "irrigated" not in df.columns:
         LOG.info("%s had no irrigated column", filename)
         df["irrigated"] = 0
+    # Rename columns to make things simplier
+    rename = {
+        f"{PREFIX}Len{huc12}": "len",
+        f"ep3m{huc12}": "elev",
+        f"gord_{huc12}": "gorder",
+    }
+    df = df.rename(columns=rename)
+    # Ensure that len is not an object
+    if df["len"].dtype == object:
+        df["len"] = pd.to_numeric(df["len"])
+    # Can't deal with int32 dtypes
+    for col in df.select_dtypes(np.int32).columns:
+        df[col] = df[col].astype(int)
+
     # Any null FBndID (mostly forest?) get set to -1
     df["FBndID"] = df["FBndID"].fillna("FUNUSED_-1")
     fillout_codes(df)
@@ -260,16 +283,12 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
     )
 
 
-def process_flowpath(cursor, scenario, huc12, db_fid, df) -> pd.DataFrame:
+def process_flowpath(cursor, scenario, db_fid, df) -> pd.DataFrame:
     """Do one flowpath please."""
-    rename = {
-        f"{PREFIX}Len{huc12}": "len",
-        f"ep3m{huc12}": "elev",
-        f"gord_{huc12}": "gorder",
-    }
+
     # Sort along the length column, which orders the points from top
     # to bottom, rename columns to simplify further code.
-    df = df.rename(columns=rename).sort_values("len", ascending=True)
+    df = df.sort_values("len", ascending=True)
     if df.iloc[0]["len"] > 0:
         PROCESSING_COUNTS["flowpaths_lenzero_reset"] += 1
         df["len"] = df["len"] - df.iloc[0]["len"]
@@ -445,7 +464,7 @@ def process(cursor, scenario, huc12df, fld_df):
         # Create the flowpathid in the database
         db_fid = create_flowpath_id(cursor, scenario, huc12, flowpath_num)
         try:
-            if process_flowpath(cursor, scenario, huc12, db_fid, df) is None:
+            if process_flowpath(cursor, scenario, db_fid, df) is None:
                 delete_flowpath(cursor, db_fid)
         except Exception as exp:
             LOG.info("flowpath_num: %s hit exception", flowpath_num)

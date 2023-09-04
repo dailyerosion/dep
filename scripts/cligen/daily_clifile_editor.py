@@ -44,13 +44,13 @@ BOUNDS = namedtuple("Bounds", ["south", "north", "east", "west"])
 
 
 def check_has_clifiles(bounds: BOUNDS):
-    """Test that this tile has clifiles for editing."""
-    fn1 = get_cli_fname(bounds.west, bounds.south)
-    fn2 = get_cli_fname(bounds.west, bounds.north)
-    fn3 = get_cli_fname(bounds.east, bounds.north)
-    fn4 = get_cli_fname(bounds.east, bounds.south)
-    # Since we have constant files every 0.25 degree, we should find at 1+
-    return any(os.path.isfile(fn) for fn in [fn1, fn2, fn3, fn4])
+    """Check that a directory exists, which likely indicates clifiles exist."""
+    for lon in np.arange(bounds.west, bounds.east, 1):
+        for lat in np.arange(bounds.south, bounds.north, 1):
+            ckdir = f"/i/0/cli/{(0 - lon):03.0f}x{(lat):03.0f}"
+            if os.path.isdir(ckdir):
+                return True
+    return False
 
 
 def get_sts_ets_at_localhour(date, local_hour):
