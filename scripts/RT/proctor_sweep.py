@@ -175,10 +175,10 @@ def main(argv):
             ST_x(ST_Transform(ST_PointN(geom, 1), 4326)) as lon,
             ST_y(ST_Transform(ST_PointN(geom, 1), 4326)) as lat
             from flowpaths where scenario = %s
-            and huc_12 in %s
+            and huc_12 = ANY(%s)
         """,
             conn,
-            params=(args.scenario, tuple(HUC12S)),
+            params=(args.scenario, HUC12S),
             index_col=None,
         )
     date = datetime.datetime.strptime(args.date, "%Y-%m-%d")

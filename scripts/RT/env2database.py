@@ -208,9 +208,9 @@ def delete_previous_entries(icursor, scenario, huc12, dates):
         )
     else:
         icursor.execute(
-            "DELETE from results_by_huc12 WHERE valid in %s and "
+            "DELETE from results_by_huc12 WHERE valid = ANY(%s) and "
             "scenario = %s and huc_12 = %s",
-            (tuple(dates), scenario, huc12),
+            (dates, scenario, huc12),
         )
     return icursor.rowcount
 
@@ -236,10 +236,10 @@ def save_results(icursor, scenario, huc12, df, dates):
             min_delivery, avg_delivery, max_delivery,
             qc_precip) VALUES
             (%s, %s, %s,
-            coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
-            coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
-            coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0),
-            coalesce(%s, 0), coalesce(%s, 0), coalesce(%s, 0), %s)
+            coalesce(%s, 0.), coalesce(%s, 0.), coalesce(%s, 0.),
+            coalesce(%s, 0.), coalesce(%s, 0.), coalesce(%s, 0.),
+            coalesce(%s, 0.), coalesce(%s, 0.), coalesce(%s, 0.),
+            coalesce(%s, 0.), coalesce(%s, 0.), coalesce(%s, 0.), %s)
         """,
             (
                 huc12,
