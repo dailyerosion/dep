@@ -185,11 +185,11 @@ def main():
         sum(qc_precip) / 25.4 as precip_inch,
         sum(avg_runoff) / 25.4 as runoff_inch
         from results_by_huc12 WHERE
-        scenario = 0 and huc_12 in %s and valid >= '2007-01-01'
+        scenario = 0 and huc_12 = ANY(%s) and valid >= '2007-01-01'
         and valid < '2018-01-01' GROUP by huc_12, year
     """,
         pgconn,
-        params=(tuple(HUCS),),
+        params=(HUCS,),
     )
     writer = pd.ExcelWriter(
         "dep_yearly.xlsx", options={"remove_timezone": True}

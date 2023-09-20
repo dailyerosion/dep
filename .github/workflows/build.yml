@@ -19,7 +19,7 @@ jobs:
         sudo apt install gfortran-11
 
     - name: Build WEPP with gfortran
-      if: $${{ matrix.FC == 'gfortran' }}
+      if: ${{ matrix.FC == 'gfortran' }}
       run: |
         cd src/wepp20230117
         make FC=gfortran
