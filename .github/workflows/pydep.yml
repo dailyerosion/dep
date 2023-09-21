@@ -8,6 +8,10 @@ on:
 
 jobs:
   build:
+    defaults:
+      run:
+        # Ensures environment gets sourced right
+        shell: bash -l {0}
     name: Build and Test
     runs-on: ubuntu-latest
     strategy:

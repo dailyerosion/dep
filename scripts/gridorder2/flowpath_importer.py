@@ -39,7 +39,7 @@ def get_flowpath(cursor, huc12, fpath):
     """Get or create a database flowpath identifier
 
     Args:
-      cursor (psycopg2.cursor): database cursor
+      cursor (psycopg.cursor): database cursor
       huc12 (str): HUC12 identifier
       fpath (int): the flowpath id value for this HUC12
 
@@ -326,7 +326,7 @@ def process(cursor, filename, huc12df, snapdf):
     """Processing of a HUC12's data into the database
 
     Args:
-      cursor (psycopg2.cursor): database cursor
+      cursor (psycopg.cursor): database cursor
       filename (str): the geojson filename
       huc12df (pd.DataFrame): the dataframe containing the data
 

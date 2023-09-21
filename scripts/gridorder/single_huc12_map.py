@@ -3,7 +3,7 @@ import sys
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
-import psycopg2
+import psycopg
 from cartopy.io.img_tiles import GoogleTiles
 from geopandas import read_postgis
 
@@ -22,7 +22,7 @@ class ShadedReliefESRI(GoogleTiles):
 def main(argv):
     """Go Main"""
     huc12 = argv[1]
-    pgconn = psycopg2.connect(database="idep")
+    pgconn = psycopg.connect(dbname="idep")
     df = read_postgis(
         """
     SELECT ST_Transform(geom, 4326) as geo from huc12

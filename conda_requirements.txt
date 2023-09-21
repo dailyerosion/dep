@@ -4,7 +4,7 @@ tqdm
 pandas
 # image work
 pillow
-psycopg2
+psycopg
 # my hacky
 pyiem
 # Fast geojson reading
