@@ -1,0 +1,24 @@
+dependencies:
+  - coverage
+  - pyshp
+  - tqdm
+  - pandas
+  # image work
+  - pillow
+  - psycopg2
+  # my hacky
+  - pyiem
+  # Fast geojson reading
+  - pyogrio
+  # For testing
+  - pytest
+  - pytest-cov
+  - pytest-runner
+  # interpolation
+  - scipy
+  # GIS work
+  - shapely
+  - sqlalchemy
+  # daily auto-tweeter
+  - tweepy
+  - reportlab
