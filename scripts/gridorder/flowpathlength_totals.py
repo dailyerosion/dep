@@ -4,7 +4,7 @@ import os
 import sys
 
 import pandas as pd
-import psycopg2
+import psycopg
 from pydep.io.wepp import read_env
 from pyiem.util import get_dbconn
 from tqdm import tqdm
@@ -75,7 +75,7 @@ def compute_res(df, date, huc12, slopes, qc_precip):
 
 
 def load_lengths():
-    idep = psycopg2.connect(database="idep", host="iemdb")
+    idep = psycopg.connect(dname="idep", host="iemdb")
     icursor = idep.cursor()
     lengths = {}
     icursor.execute(

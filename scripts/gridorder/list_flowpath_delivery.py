@@ -3,12 +3,12 @@ import datetime
 import sys
 
 import pandas as pd
-import psycopg2
+import psycopg
 from pandas.io.sql import read_sql
 from pydep.io.wepp import read_env
 
 SCEN2CODE = [None, 12, 13, 14, 0, 15, 16]
-PGCONN = psycopg2.connect(database="idep")
+PGCONN = psycopg.connect(dbname="idep")
 
 
 def get_results(huc12):

@@ -60,7 +60,7 @@ def create_flowpath_id(cursor, scenario, huc12, fpath) -> int:
     """Create a database flowpath identifier
 
     Args:
-      cursor (psycopg2.cursor): database cursor
+      cursor (psycopg.cursor): database cursor
       huc12 (str): HUC12 identifier
       fpath (int): the flowpath id value for this HUC12
 
@@ -427,7 +427,7 @@ def process(cursor, scenario, huc12df, fld_df):
     """Processing of a HUC12's data into the database
 
     Args:
-      cursor (psycopg2.cursor): database cursor
+      cursor (psycopg.cursor): database cursor
         scenario (int): the scenario to process
       huc12df (pd.DataFrame): the dataframe containing the data
       fld_df (gpd.GeoDataFrame): The associated fields.

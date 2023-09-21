@@ -5,7 +5,7 @@ import os
 import sys
 from math import atan2, degrees, pi
 
-import psycopg2.extras
+from psycopg.rows import dict_row
 from pydep.util import get_cli_fname
 from pyiem.util import get_dbconn
 from tqdm import tqdm
@@ -14,9 +14,9 @@ SCENARIO = int(sys.argv[1])
 TILLAGE_CLASS = int(sys.argv[2])
 MISSED_SOILS = {}
 PGCONN = get_dbconn("idep")
-cursor = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
-cursor2 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
-cursor3 = PGCONN.cursor(cursor_factory=psycopg2.extras.DictCursor)
+cursor = PGCONN.cursor(row_factory=dict_row)
+cursor2 = PGCONN.cursor(row_factory=dict_row)
+cursor3 = PGCONN.cursor(row_factory=dict_row)
 
 
 def get_rotation(code):

@@ -10,11 +10,11 @@
 
 import numpy as np
 import pandas as pd
-import psycopg2
+import psycopg
 from geopandas import read_postgis
 from simpledbf import Dbf5
 
-PGCONN = psycopg2.connect(database="idep")
+PGCONN = psycopg.connect(dbname="idep")
 HUCS = """101702031901
 101702031904
 070600010905
