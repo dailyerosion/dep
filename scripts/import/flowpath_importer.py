@@ -261,7 +261,7 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
         INSERT into flowpath_ofes (flowpath, ofe, geom, bulk_slope, max_slope,
         gssurgo_id, fbndid, management, landuse, real_length)
         values (%s, %s, %s, %s, %s,
-        (select id from gssurgo where fiscal_year = %s and mukey = %s::int),
+        (select id from gssurgo where fiscal_year = %s and mukey = %s),
         %s, %s, %s, %s)
         """,
         (
@@ -274,7 +274,7 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
             ),
             gdf["slope"].max(),
             SOILFY,
-            firstpt[SOILCOL],
+            int(firstpt[SOILCOL]),
             firstpt["FBndID"].split("_")[1],
             firstpt["management"],
             firstpt["landuse"],
