@@ -54,6 +54,7 @@ jobs:
   
     - name: Build and test
       run: |
+        set -e
         python -m pip install . --upgrade --no-deps
         coverage run --source=pydep setup.py test
         coverage xml

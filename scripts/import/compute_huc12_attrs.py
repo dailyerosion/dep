@@ -34,7 +34,8 @@ def main(argv):
         with data as (
             select huc_12, regexp_split_to_table(management, '') as ch
             from flowpaths p JOIN flowpath_ofes t on (p.fid = t.flowpath)
-            where p.scenario = %s
+            where p.scenario = %s and
+            substr(management, 1, 1) in ('0', '1', '2', '3', '4', '5', '6')
             ORDER by management desc, flowpath, fpath),
         agg as (select ch, huc_12, count(*) from data
             WHERE ch != '0' GROUP by ch, huc_12),

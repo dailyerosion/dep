@@ -52,7 +52,6 @@ TRANSFORMER = pyproj.Transformer.from_crs(
 # First call returns inf for unknown reasons
 TRANSFORMER.transform(223279, 2071344)
 MAX_SLOPE_RATIO = 0.9
-MIN_SLOPE = 0.003
 HUC12RE = re.compile("^fp[0-9]{12}")
 
 
@@ -237,8 +236,6 @@ def compute_slope(df):
     )
     # Duplicate the first value, for now?
     df.iat[0, df.columns.get_loc("slope")] = df["slope"].values[1]
-    # Ensure we are non-zero, min slope threshold
-    df.loc[df["slope"] < MIN_SLOPE, "slope"] = MIN_SLOPE
     return df
 
 
@@ -261,7 +258,7 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
         INSERT into flowpath_ofes (flowpath, ofe, geom, bulk_slope, max_slope,
         gssurgo_id, fbndid, management, landuse, real_length)
         values (%s, %s, %s, %s, %s,
-        (select id from gssurgo where fiscal_year = %s and mukey = %s::int),
+        (select id from gssurgo where fiscal_year = %s and mukey = %s),
         %s, %s, %s, %s)
         """,
         (
@@ -274,7 +271,7 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
             ),
             gdf["slope"].max(),
             SOILFY,
-            firstpt[SOILCOL],
+            int(firstpt[SOILCOL]),
             firstpt["FBndID"].split("_")[1],
             firstpt["management"],
             firstpt["landuse"],

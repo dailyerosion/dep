@@ -46,6 +46,8 @@ from tqdm import tqdm
 LOG = logger()
 MISSED_SOILS = {}
 YEARS = 2023 - 2006
+# WEPP can not handle a zero slope, so we ensure that all slopes are >= 0.3%
+MIN_SLOPE = 0.003
 
 # Note that the default used below is
 INITIAL_COND_DEFAULT = "IniCropDef.Default"
@@ -321,11 +323,11 @@ def load_flowpath_from_db(pgconn, fid):
             from flowpath_ofes o JOIN gssurgo g on (o.gssurgo_id = g.id)
             where flowpath = :fid)
         select ofe,
-        (lag(st_z(geom)) OVER (
+        greatest((lag(st_z(geom)) OVER (
              PARTITION by ofe ORDER by st_z(geom) DESC)
         - st_z(geom)) / st_distance(geom, lag(geom) OVER (
              PARTITION by ofe ORDER by st_z(geom) DESC)
-        ) as slope, st_z(geom), st_distance(geom, stpt) as length,
+        ), :min_slope) as slope, st_z(geom), st_distance(geom, stpt) as length,
         st_x(stpt) as start_x, st_x(endpt) as end_x,
         st_y(stpt) as start_y, st_y(endpt) as end_y,
         real_length, soilfile, management, landuse
@@ -334,7 +336,7 @@ def load_flowpath_from_db(pgconn, fid):
     """
         ),
         pgconn,
-        params={"fid": fid},
+        params={"fid": fid, "min_slope": MIN_SLOPE},
         index_col=None,
     )
 
