@@ -75,9 +75,6 @@ def main(argv):
             index_col="id",
         )
         ofes["del_tonnes"] = oferesults["delivery_2010[t/a/yr]"] * 2.24
-    # fields["color"] = '#EEEEEE'
-    # fields.loc[fields["fbndid"].isin(ofes["fbndid"]), "color"] = '#00cc00'
-    # fields.loc[fields["isag"] & fields["color"] == "#EEEEEE", "color"] = '#cc0000'
     extent = df.total_bounds
     buffer = 0.01
     huc10 = df.dissolve(aggfunc="mean").copy()
@@ -91,8 +88,9 @@ def main(argv):
         logo="dep",
         nocaption=True,
         title="DEP 2010 Iowa Hillslope Soil Delivery",
-        subtitle=f"Iowa Avg: {huc10['del_tonnes'].values[0]:.2f} tonnes/hectare"
-        # subtitle="HUC12: 071000081505. Note: Flowpath/OFE size not to scale.",
+        subtitle=(
+            f"Iowa Avg: {huc10['del_tonnes'].values[0]:.2f} tonnes/hectare"
+        ),
     )
     cmap = mpcolors.ListedColormap(
         "#FFFF80 #FCDD60 #E69729 #B35915 #822507".split(),

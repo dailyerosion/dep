@@ -160,8 +160,9 @@ def load_iemre(nc, data, valid):
     nn = NearestNDInterpolator(
         (np.ravel(lons), np.ravel(lats)), np.ravel(ncdata)
     )
+    # 30 found to be too high (13 Sep 2008)
     data["wind"][:] = iemre_bounds_check(
-        "wind_speed", nn(data["lon"], data["lat"]), 0, 30
+        "wind_speed", nn(data["lon"], data["lat"]), 0, 40
     )
 
 

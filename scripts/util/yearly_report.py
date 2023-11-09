@@ -53,11 +53,16 @@ def main(argv):
             ha="center",
         )
     ax.axhline(
-        df["detachment_ta"].mean(), label="mean", zorder=5, color="k", lw=1.5
+        df["detachment_ta"].mean(),
+        label=f"mean {df['detachment_ta'].mean():.2f}",
+        zorder=5,
+        color="k",
+        lw=1.5,
     )
     ax.legend(loc="best")
     ax.grid(True)
     ax.set_xlim(df.index.values[0] - 0.5, df.index.values[-1] + 0.5)
+    ax.set_ylim(0, 3.5)
     ax.set_ylabel("Yearly Detatchment [tons/acre]")
     ax.set_title(
         f"{state_names[state]} Daily Erosion Project Iowa's Yearly Detachment"
