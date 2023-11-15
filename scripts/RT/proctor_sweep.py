@@ -183,7 +183,7 @@ def main(argv):
         )
     date = datetime.datetime.strptime(args.date, "%Y-%m-%d")
     df["date"] = pd.Timestamp(date)
-    df["erosion"] = -1
+    df["erosion"] = -1.0
     LOG.info("found %s flowpaths to run for %s", len(df.index), date)
     jobs = list(df.iterrows())
     with Pool() as pool:
