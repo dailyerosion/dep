@@ -53,11 +53,11 @@ def run_command(cmd: str) -> bool:
     return True
 
 
-def get_wind_obs(date, lon, lat):
+def get_wind_obs(date, lon, lat) -> list:
     """Get what we need from IEMRE."""
     uri = f"{IEMRE}/{date:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
     try:
-        res = requests.get(uri).json()
+        res = requests.get(uri, timeout=30).json()
     except Exception as exp:
         print(uri)
         LOG.exception(exp)
