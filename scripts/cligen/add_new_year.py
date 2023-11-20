@@ -50,7 +50,7 @@ def workflow(filename, newyear, analogyear):
     with open(f"/tmp/{filename}", "w", encoding="ascii") as fh:
         # careful here to get the line feeds right
         fh.write(data + content.replace(str(analogyear), str(newyear)))
-    subprocess.call(f"mv /tmp/{filename} {filename}", shell=True)
+    subprocess.call(["mv", f"/tmp/{filename}", filename])
 
 
 def compute_analog_year(year):
