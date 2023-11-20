@@ -53,11 +53,11 @@ def run_command(cmd: str) -> bool:
     return True
 
 
-def get_wind_obs(date, lon, lat):
+def get_wind_obs(date, lon, lat) -> list:
     """Get what we need from IEMRE."""
     uri = f"{IEMRE}/{date:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
     try:
-        res = requests.get(uri).json()
+        res = requests.get(uri, timeout=30).json()
     except Exception as exp:
         print(uri)
         LOG.exception(exp)
@@ -183,7 +183,7 @@ def main(argv):
         )
     date = datetime.datetime.strptime(args.date, "%Y-%m-%d")
     df["date"] = pd.Timestamp(date)
-    df["erosion"] = -1
+    df["erosion"] = -1.0
     LOG.info("found %s flowpaths to run for %s", len(df.index), date)
     jobs = list(df.iterrows())
     with Pool() as pool:

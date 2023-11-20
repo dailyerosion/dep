@@ -1,7 +1,6 @@
 """Generate the requested output."""
 
 import pandas as pd
-from pandas.io.sql import read_sql
 from pydep.io.wepp import read_env
 from pyiem.util import get_dbconn
 from tqdm import tqdm
@@ -27,7 +26,7 @@ XREF = {
 
 def get_flowpath_lengths(pgconn):
     """Load some metadata."""
-    df = read_sql(
+    df = pd.read_sql(
         "SELECT scenario, huc_12, fpath, bulk_slope,"
         "ST_LENGTH(geom) as len from flowpaths "
         "WHERE scenario >= 91 and scenario <= 101 and huc_12 in %s"
@@ -111,7 +110,7 @@ def main():
             ]
             if opts["individual"]:
                 fpaths = fdf["fpath"].values
-            for flowpath in fpaths:
+            for _ in fpaths:
                 for year in range(2011, 2021):
                     key = (scenario, huc_12, year)
                     if key not in result_full.index:

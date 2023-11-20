@@ -1,11 +1,10 @@
 """Dump some monthly data"""
 
 import pandas as pd
-from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
+from pyiem.util import get_sqlalchemy_conn
 
 # East Nish
-DATA = """102400030603
+DATA4 = """102400030603
 102400030704
 102400030701
 102400030702
@@ -38,7 +37,7 @@ DATA = """102400030603
 102400030708
 102400030703
 102400030706"""
-DATA = """102400020402
+DATA3 = """102400020402
 102400020607
 102400020505
 102400020703
@@ -83,7 +82,7 @@ DATA = """102400020402
 102400020806
 102400020706"""
 # Beaver Creek
-DATA = """071000040901
+DATA2 = """071000040901
 071000040902
 071000040903
 071000040904
@@ -176,42 +175,39 @@ HUCS = [x.strip() for x in DATA.split("\n")]
 
 def main():
     """Go Main Go"""
-    pgconn = get_dbconn("idep")
-    df = read_sql(
-        """
-        SELECT huc_12, extract(year from valid) as year,
-        sum(avg_loss) * 4.463 as loss_ton_per_acre,
-        sum(avg_delivery) * 4.463 as delivery_ton_per_acre,
-        sum(qc_precip) / 25.4 as precip_inch,
-        sum(avg_runoff) / 25.4 as runoff_inch
-        from results_by_huc12 WHERE
-        scenario = 0 and huc_12 = ANY(%s) and valid >= '2007-01-01'
-        and valid < '2018-01-01' GROUP by huc_12, year
-    """,
-        pgconn,
-        params=(HUCS,),
-    )
-    writer = pd.ExcelWriter(
-        "dep_yearly.xlsx", options={"remove_timezone": True}
-    )
-    df.to_excel(writer, "Yearly Totals", index=False)
-    gdf = df.groupby("huc_12").mean()
-    gdf[
-        [
-            "loss_ton_per_acre",
-            "delivery_ton_per_acre",
-            "precip_inch",
-            "runoff_inch",
-        ]
-    ].to_excel(writer, "Yearly Averages")
-    format1 = writer.book.add_format({"num_format": "0.00"})
-    worksheet = writer.sheets["Yearly Totals"]
-    worksheet.set_column("A:A", 18)
-    worksheet.set_column("C:F", 20, format1)
-    worksheet = writer.sheets["Yearly Averages"]
-    worksheet.set_column("A:A", 18)
-    worksheet.set_column("B:E", 20, format1)
-    writer.save()
+    with get_sqlalchemy_conn("idep") as pgconn:
+        df = pd.read_sql(
+            """
+            SELECT huc_12, extract(year from valid) as year,
+            sum(avg_loss) * 4.463 as loss_ton_per_acre,
+            sum(avg_delivery) * 4.463 as delivery_ton_per_acre,
+            sum(qc_precip) / 25.4 as precip_inch,
+            sum(avg_runoff) / 25.4 as runoff_inch
+            from results_by_huc12 WHERE
+            scenario = 0 and huc_12 = ANY(%s) and valid >= '2007-01-01'
+            and valid < '2018-01-01' GROUP by huc_12, year
+        """,
+            pgconn,
+            params=(HUCS,),
+        )
+    with pd.ExcelWriter("dep_yearly.xlsx") as writer:
+        df.to_excel(writer, "Yearly Totals", index=False)
+        gdf = df.groupby("huc_12").mean()
+        gdf[
+            [
+                "loss_ton_per_acre",
+                "delivery_ton_per_acre",
+                "precip_inch",
+                "runoff_inch",
+            ]
+        ].to_excel(writer, "Yearly Averages")
+        format1 = writer.book.add_format({"num_format": "0.00"})
+        worksheet = writer.sheets["Yearly Totals"]
+        worksheet.set_column("A:A", 18)
+        worksheet.set_column("C:F", 20, format1)
+        worksheet = writer.sheets["Yearly Averages"]
+        worksheet.set_column("A:A", 18)
+        worksheet.set_column("B:E", 20, format1)
 
 
 if __name__ == "__main__":
