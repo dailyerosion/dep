@@ -16,7 +16,7 @@ YEARS = 6.0
 def fpmagic(cursor, scenario, envfn, rows, huc12, fpath, mlrarsym):
     """Do the computations for the flowpath."""
     df = read_env(envfn)
-    # Only want 2016 through 2021
+    # Only want 2017 through 2022
     df = df[
         (df["date"] < datetime.datetime(2023, 1, 1))
         & (df["date"] >= datetime.datetime(2017, 1, 1))
@@ -62,12 +62,13 @@ def main(argv):
                 """
             SELECT huc_12, max(mlrarsym) as mlrarsym
                 from huc12 h JOIN mlra m on
-            (h.mlra_id = m.mlra_id) WHERE h.scenario = :scen and huc_12 in :h
+            (h.mlra_id = m.mlra_id) WHERE h.scenario = :scen and
+            huc_12 = Any(:h)
             GROUP by huc_12
             """
             ),
             conn,
-            params={"scen": scenario, "h": tuple(myhucs)},
+            params={"scen": scenario, "h": myhucs},
             index_col="huc_12",
         )
     for root, _d, files in tqdm(os.walk(f"/i/{scenario}/ofe"), disable=True):
@@ -87,7 +88,7 @@ def main(argv):
                 fpath,
                 huc12df.at[huc12, "mlrarsym"],
             )
-            # Just 2016-2021
+            # Just 2017-2022
             ofedf = ofedf[
                 (ofedf["date"] < datetime.datetime(2023, 1, 1))
                 & (ofedf["date"] >= datetime.datetime(2017, 1, 1))
@@ -172,11 +173,11 @@ def main(argv):
 
     for huc12, frows in oferows.items():
         df = pd.DataFrame(frows)
-        df.to_csv(f"oferesults_{huc12}_230710.csv", index=False)
+        df.to_csv(f"oferesults_{huc12}_231127.csv", index=False)
 
     for huc12, hrows in fprows.items():
         df = pd.DataFrame(hrows)
-        df.to_csv(f"fpresults_{huc12}_230710.csv", index=False)
+        df.to_csv(f"fpresults_{huc12}_231127.csv", index=False)
 
 
 if __name__ == "__main__":
