@@ -71,6 +71,18 @@ def main(argv):
             params={"scen": scenario, "h": myhucs},
             index_col="huc_12",
         )
+        fieldsdf = pd.read_sql(
+            text(
+                """
+            select huc12, fbndid, isag, g.label as genlanduse from
+            fields f, general_landuse g WHERE f.genlu = g.id and
+            f.scenario = :scen and huc12 = Any(:h)
+            """
+            ),
+            conn,
+            params={"scen": scenario, "h": myhucs},
+        )
+
     for root, _d, files in tqdm(os.walk(f"/i/{scenario}/ofe"), disable=True):
         for filename in files:
             ofefn = f"{root}/{filename}"
@@ -130,6 +142,10 @@ def main(argv):
                 if meta_ofe.empty:
                     print(ofe, huc12, fpath)
                     sys.exit()
+                field_meta = fieldsdf[
+                    (fieldsdf["fbndid"] == meta_ofe["fbndid"].values[0])
+                    & (fieldsdf["huc12"] == huc12)
+                ]
                 length = meta_ofe["length"].values[0]
                 accum_length += length
                 thisdelivery = (
@@ -141,6 +157,8 @@ def main(argv):
                     "mlrarsym": huc12df.at[huc12, "mlrarsym"],
                     "fpath": fpath,
                     "ofe": ofe,
+                    "genlanduse": field_meta["genlanduse"].values[0],
+                    "isag": field_meta["isag"].values[0],
                     "fbndid": meta_ofe["fbndid"].values[0],
                     "CropRotationString": meta_ofe["landuse"].values[0],
                     "bulk_slope[1]": meta_ofe["bulk_slope"].values[0],
