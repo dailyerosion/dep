@@ -149,6 +149,20 @@ def read_file(scenario, zone, prevcode, code, nextcode, cfactor, year):
             f"{data}"
         )
 
+    # Anhydrous ammonia application when we are going into Corn
+    if nextcode == "C":
+        # HACK: look for a present 1 Nov operation and insert this before it
+        pos = data.find("11  1")
+        extra = ""
+        if pos > 0:
+            extra = data[pos:].replace("11  1", "11  8")
+            data = data[:pos]
+        data = (
+            f"{data}"
+            f"11  1  {year}  1 Tillage   OpCropDef.ANHYDROS    {0.203200, 1}\n"
+            f"{extra}"
+        )
+
     # TODO:
     # Tillage code 5 - move TAND0002 before FCSTACDP and add another
     # TAND0002 in spring after soy, remove FCSTACDP and TAND0002 after corn,
