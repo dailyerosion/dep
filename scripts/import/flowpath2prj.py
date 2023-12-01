@@ -149,6 +149,16 @@ def read_file(scenario, zone, prevcode, code, nextcode, cfactor, year):
             f"{data}"
         )
 
+    # The fall tillage operation is governed by the next year crop
+    if cfactor == 5 and nextcode == "C":
+        # Replace 11  1 operation with plow
+        pos = data.find("11  1")
+        if pos > 0:
+            data = (
+                f"{data[:pos]}"
+                "11  1  %(yr)s  1 Tillage      OpCropDef.MOPL  {0.203200, 1}\n"
+            )
+
     # Anhydrous ammonia application when we are going into Corn
     if nextcode == "C":
         # HACK: look for a present 1 Nov operation and insert this before it
@@ -163,23 +173,6 @@ def read_file(scenario, zone, prevcode, code, nextcode, cfactor, year):
             f"{extra}"
         )
 
-    # TODO:
-    # Tillage code 5 - move TAND0002 before FCSTACDP and add another
-    # TAND0002 in spring after soy, remove FCSTACDP and TAND0002 after corn,
-    # switch MOPL after soy to CHISSTSP
-    # Tillage code 6 - start with revised tillage code 5 as a guide then switch
-    # CHISSTSP after soy to MOPL. Then add in two TAND0002 and FCSTACDP after
-    # corn. This will be a little different than DEP documentation
-    # (an extra disking after plowing corn) but as we discussed, that is
-    # more similar to what farmers do.
-
-    # Add spring operation after corn
-    if prevcode == "C" and cfactor == 4:
-        data = (
-            "%(pdatem15)s  %(yr)s  1 Tillage  OpCropDef.TAND0002      "
-            "{0.101600, 2}\n"
-            f"{data}"
-        )
     pdate = ""
     pdatem5 = ""
     pdatem10 = ""
