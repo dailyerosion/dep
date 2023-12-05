@@ -148,6 +148,11 @@ def read_file(scenario, zone, prevcode, code, nextcode, cfactor, year):
             f"4  15 {year} 1 Plant-Perennial CropDef.ALFALFA  {{0.000000}}\n"
             f"{data}"
         )
+    # Remove fall chisel after corn when going into soybeans for 2
+    if cfactor == 2 and nextcode == "B":
+        pos = data.find("11  1")
+        if pos > 0:
+            data = data[:pos]
 
     # The fall tillage operation is governed by the next year crop
     if cfactor == 5 and nextcode == "C":
