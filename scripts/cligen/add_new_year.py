@@ -8,8 +8,9 @@ if it is, then pick a year four years ago, if it isn't, use last year
 import glob
 import os
 import subprocess
-import sys
+from datetime import date
 
+import click
 from pyiem.util import logger
 from tqdm import tqdm
 
@@ -24,17 +25,14 @@ def parse_filename(filename):
 
 def workflow(filename, newyear, analogyear):
     """Effort this file, please"""
-    # Figure out what this file's lon/lat values are
-    lon, lat = parse_filename(filename)
-    # LOG.debug("%s -> %.2f %.2f", filename, lon, lat)
     with open(filename, encoding="ascii") as fh:
         lines = fh.readlines()
     # Replace the header information denoting years simulated
     years_simulated = int((newyear - 2007) + 1)
-    lines[4] = (
-        f"    {lat:.2f}   {lon:.2f}         289          {years_simulated}"
-        f"        2007              {years_simulated}\n"
-    )
+    tokens = lines[4].strip().split()
+    tokens[3] = str(years_simulated)
+    tokens[5] = str(years_simulated)
+    lines[4] = f"{' '.join(tokens)}\n"
     data = "".join(lines)
     if data.find(f"1\t1\t{newyear}") > 0:
         LOG.info("%s already has %s data", filename, newyear)
@@ -65,10 +63,11 @@ def compute_analog_year(year):
     return analogyear
 
 
-def main(argv):
+@click.command()
+@click.option("--scenario", type=int, default=0)
+@click.option("--year", type=int, default=date.today().year + 1)
+def main(scenario, year):
     """Go Main Go"""
-    scenario = argv[1]
-    year = int(argv[2])
     analogyear = compute_analog_year(year)
     LOG.info("Using analog year %s for new year %s", analogyear, year)
     os.chdir(f"/i/{scenario}/cli")
@@ -80,4 +79,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()

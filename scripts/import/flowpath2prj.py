@@ -45,7 +45,7 @@ from tqdm import tqdm
 
 LOG = logger()
 MISSED_SOILS = {}
-YEARS = 2023 - 2006
+YEARS = 2024 - 2006
 # WEPP can not handle a zero slope, so we ensure that all slopes are >= 0.3%
 MIN_SLOPE = 0.003
 
@@ -224,27 +224,27 @@ def do_rotation(scenario, zone, rotfn, landuse, management):
       None
     """
     # Dictionary of values used to fill out the file template below
-    data = {}
+    data = {"yearly": ""}
     data["name"] = f"{landuse}-{management}"
     # Special hack for forest
     if landuse[0] == "F" and landuse == len(landuse) * landuse[0]:
         data["initcond"] = FOREST[management[0]]
-        for i in range(1, 18):
+        for i in range(1, YEARS):
             # Reset roughness each year
             data[
-                f"year{i}"
-            ] = f"1 2 {i} 1 Tillage OpCropDef.Old_6807 {{0.001, 2}}"
+                "yearly"
+            ] += f"1 2 {i} 1 Tillage OpCropDef.Old_6807 {{0.001, 2}}"
     else:
         data["initcond"] = INITIAL_COND.get(landuse[0], INITIAL_COND_DEFAULT)
         prevcode = "C" if landuse[0] not in INITIAL_COND else landuse[0]
-        f = partial(read_file, scenario, zone)
+        func = partial(read_file, scenario, zone)
         # 2007
-        data["year1"] = f(
+        data["yearly"] += func(
             prevcode, landuse[0], landuse[1], int(management[0]), 1
         )
-        for i in range(1, 17):
-            nextcode = "" if i == 16 else landuse[i + 1]
-            data[f"year{i + 1}"] = f(
+        for i in range(1, YEARS):
+            nextcode = "" if i == (YEARS - 1) else landuse[i + 1]
+            data["yearly"] += func(
                 landuse[i - 1], landuse[i], nextcode, int(management[i]), i + 1
             )
 
@@ -264,23 +264,7 @@ LandUse = 1
 InitialConditions = {data['initcond']}
 
 Operations {{
-{data['year1']}
-{data['year2']}
-{data['year3']}
-{data['year4']}
-{data['year5']}
-{data['year6']}
-{data['year7']}
-{data['year8']}
-{data['year9']}
-{data['year10']}
-{data['year11']}
-{data['year12']}
-{data['year13']}
-{data['year14']}
-{data['year15']}
-{data['year16']}
-{data['year17']}
+{data['yearly']}
 }}
 """
         )
