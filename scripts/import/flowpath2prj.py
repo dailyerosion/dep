@@ -524,8 +524,8 @@ def main(argv):
 def generate_combos():
     """Create rotation files for Eduardo inspection."""
     for cfactor in range(1, 7):
-        for rot in "CCC CBC CCB BCB BBC BCB BBB".split():
-            res = read_file(0, "IA_NORTH", rot[0], rot[1], rot[2], cfactor, 2)
+        for rot in "CC CB BC BB".split():
+            res = read_file(0, "IA_NORTH", "M", rot[0], rot[1], cfactor, 1)
             with open(f"ex_{rot}_{cfactor}.rot", "w", encoding="utf8") as fh:
                 fh.write(res)
 
