@@ -45,7 +45,7 @@ from tqdm import tqdm
 
 LOG = logger()
 MISSED_SOILS = {}
-YEARS = 2023 - 2006
+YEARS = 2024 - 2006
 # WEPP can not handle a zero slope, so we ensure that all slopes are >= 0.3%
 MIN_SLOPE = 0.003
 
@@ -148,24 +148,36 @@ def read_file(scenario, zone, prevcode, code, nextcode, cfactor, year):
             f"4  15 {year} 1 Plant-Perennial CropDef.ALFALFA  {{0.000000}}\n"
             f"{data}"
         )
+    # Remove fall chisel after corn when going into soybeans for 2
+    if cfactor == 2 and nextcode == "B":
+        pos = data.find("11  1")
+        if pos > 0:
+            data = data[:pos]
 
-    # TODO:
-    # Tillage code 5 - move TAND0002 before FCSTACDP and add another
-    # TAND0002 in spring after soy, remove FCSTACDP and TAND0002 after corn,
-    # switch MOPL after soy to CHISSTSP
-    # Tillage code 6 - start with revised tillage code 5 as a guide then switch
-    # CHISSTSP after soy to MOPL. Then add in two TAND0002 and FCSTACDP after
-    # corn. This will be a little different than DEP documentation
-    # (an extra disking after plowing corn) but as we discussed, that is
-    # more similar to what farmers do.
+    # The fall tillage operation is governed by the next year crop
+    if cfactor == 5 and nextcode == "C":
+        # Replace 11  1 operation with plow
+        pos = data.find("11  1")
+        if pos > 0:
+            data = (
+                f"{data[:pos]}"
+                "11  1  %(yr)s  1 Tillage      OpCropDef.MOPL  {0.203200, 1}\n"
+            )
 
-    # Add spring operation after corn
-    if prevcode == "C" and cfactor == 4:
+    # Anhydrous ammonia application when we are going into Corn
+    if nextcode == "C":
+        # HACK: look for a present 1 Nov operation and insert this before it
+        pos = data.find("11  1")
+        extra = ""
+        if pos > 0:
+            extra = data[pos:].replace("11  1", "11  8")
+            data = data[:pos]
         data = (
-            "%(pdatem15)s  %(yr)s  1 Tillage  OpCropDef.TAND0002      "
-            "{0.101600, 2}\n"
             f"{data}"
+            f"11  1  {year}  1 Tillage   OpCropDef.ANHYDROS    {0.203200, 1}\n"
+            f"{extra}"
         )
+
     pdate = ""
     pdatem5 = ""
     pdatem10 = ""
@@ -217,27 +229,27 @@ def do_rotation(scenario, zone, rotfn, landuse, management):
       None
     """
     # Dictionary of values used to fill out the file template below
-    data = {}
+    data = {"yearly": ""}
     data["name"] = f"{landuse}-{management}"
     # Special hack for forest
     if landuse[0] == "F" and landuse == len(landuse) * landuse[0]:
         data["initcond"] = FOREST[management[0]]
-        for i in range(1, 18):
+        for i in range(1, YEARS):
             # Reset roughness each year
             data[
-                f"year{i}"
-            ] = f"1 2 {i} 1 Tillage OpCropDef.Old_6807 {{0.001, 2}}"
+                "yearly"
+            ] += f"1 2 {i} 1 Tillage OpCropDef.Old_6807 {{0.001, 2}}"
     else:
         data["initcond"] = INITIAL_COND.get(landuse[0], INITIAL_COND_DEFAULT)
         prevcode = "C" if landuse[0] not in INITIAL_COND else landuse[0]
-        f = partial(read_file, scenario, zone)
+        func = partial(read_file, scenario, zone)
         # 2007
-        data["year1"] = f(
+        data["yearly"] += func(
             prevcode, landuse[0], landuse[1], int(management[0]), 1
         )
-        for i in range(1, 17):
-            nextcode = "" if i == 16 else landuse[i + 1]
-            data[f"year{i + 1}"] = f(
+        for i in range(1, YEARS):
+            nextcode = "" if i == (YEARS - 1) else landuse[i + 1]
+            data["yearly"] += func(
                 landuse[i - 1], landuse[i], nextcode, int(management[i]), i + 1
             )
 
@@ -257,23 +269,7 @@ LandUse = 1
 InitialConditions = {data['initcond']}
 
 Operations {{
-{data['year1']}
-{data['year2']}
-{data['year3']}
-{data['year4']}
-{data['year5']}
-{data['year6']}
-{data['year7']}
-{data['year8']}
-{data['year9']}
-{data['year10']}
-{data['year11']}
-{data['year12']}
-{data['year13']}
-{data['year14']}
-{data['year15']}
-{data['year16']}
-{data['year17']}
+{data['yearly']}
 }}
 """
         )
@@ -530,5 +526,15 @@ def main(argv):
         workflow(pgconn, scenario)
 
 
+def generate_combos():
+    """Create rotation files for Eduardo inspection."""
+    for cfactor in range(1, 7):
+        for rot in "CC CB BC BB".split():
+            res = read_file(0, "IA_NORTH", "M", rot[0], rot[1], cfactor, 1)
+            with open(f"ex_{rot}_{cfactor}.rot", "w", encoding="utf8") as fh:
+                fh.write(res)
+
+
 if __name__ == "__main__":
     main(sys.argv)
+    # generate_combos()

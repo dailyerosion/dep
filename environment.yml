@@ -1,4 +1,6 @@
 dependencies:
+  # command line stuff
+  - click
   - coverage
   - pyshp
   - tqdm

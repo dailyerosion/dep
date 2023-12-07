@@ -76,14 +76,12 @@ def create_flowpath_id(cursor, scenario, huc12, fpath) -> int:
 
 def fillout_codes(df):
     """ "Get the right full-string codes."""
-    # Compute full rotation string
-    # 2022 is repeating -2 (2020)
-    # 2023 is repeating -2 (2021)
-    col = "CropRotatn" if "CropRotatn" in df.columns else "CropRotatn_CY_2022"
-    s = df[col]
-    df["landuse"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2]
-    s = df["Management_CY_2022"]
-    df["management"] = s.str[1] + s.str[0] + s.str[1] + s + s.str[-2]
+    col = "CropRotatn_CY_2022"
+    s = df[col].str
+    # TODO, this isn't right!
+    df["landuse"] = s[1] + s[0] + s[1] + s + s[-2] + s[-1]
+    s = df["Management_CY_2022"].str
+    df["management"] = s[1] + s[0] + s[1] + s + s[-2] + s[-1]
 
 
 def get_data(filename):
