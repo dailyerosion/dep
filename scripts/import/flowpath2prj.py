@@ -174,7 +174,7 @@ def read_file(scenario, zone, prevcode, code, nextcode, cfactor, year):
             data = data[:pos]
         data = (
             f"{data}"
-            f"11  1  {year}  1 Tillage   OpCropDef.ANHYDROS    {0.203200, 1}\n"
+            f"11  1  {year}  1 Tillage   OpCropDef.ANHYDROS  {{0.101600, 2}}\n"
             f"{extra}"
         )
 
