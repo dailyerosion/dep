@@ -28,6 +28,7 @@ print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")
 print(" * VERIFY that the GeoJSON is the 5070 grid value")
 print(" * This will generate a `myhucs.txt` file with found HUCs")
 
+YEARS = 2024 - 2007 + 1
 SOILFY = 2023
 SOILCOL = f"SOL_FY_{SOILFY}"
 PREFIX = "fp"
@@ -76,12 +77,14 @@ def create_flowpath_id(cursor, scenario, huc12, fpath) -> int:
 
 def fillout_codes(df):
     """ "Get the right full-string codes."""
-    col = "CropRotatn_CY_2022"
-    s = df[col].str
-    # TODO, this isn't right!
-    df["landuse"] = s[1] + s[0] + s[1] + s + s[-2] + s[-1]
+    s = df["CropRotatn_CY_2022"].str
+    df["landuse"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1]
+    if df["landuse"].str.len().min() != YEARS:
+        raise ValueError(f"landuse is not {YEARS} chars")
     s = df["Management_CY_2022"].str
-    df["management"] = s[1] + s[0] + s[1] + s + s[-2] + s[-1]
+    df["management"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1]
+    if df["management"].str.len().min() != YEARS:
+        raise ValueError(f"management is not {YEARS} chars")
 
 
 def get_data(filename):

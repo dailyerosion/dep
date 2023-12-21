@@ -625,23 +625,23 @@ def main(argv):
         def _errorback(exp):
             """We hit trouble."""
             LOG.exception(exp)
-            if errors["cnt"] > 10:
-                LOG.warning("Too many errors")
-                pool.terminate()
             errors["cnt"] += 1
 
         def _callback(res):
             """We got a result."""
-            if errors["cnt"] > 10:
-                LOG.warning("Too many errors")
-                pool.terminate()
             if not res:
                 errors["cnt"] += 1
             progress.update(1)
 
+        def _proxy(xidx, yidx, clifn, data, valid):
+            """Proxy."""
+            if errors["cnt"] > 10:
+                return None
+            return edit_clifile(xidx, yidx, clifn, data, valid)
+
         for _, (xidx, yidx, clifn) in enumerate(queue):
             pool.apply_async(
-                edit_clifile,
+                _proxy,
                 (xidx, yidx, clifn, data, valid),
                 callback=_callback,
                 error_callback=_errorback,

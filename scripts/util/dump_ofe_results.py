@@ -189,13 +189,14 @@ def main(argv):
 
                 huc12rows.append(res)
 
+    today = datetime.date.today()
     for huc12, frows in oferows.items():
         df = pd.DataFrame(frows)
-        df.to_csv(f"oferesults_{huc12}_231127.csv", index=False)
+        df.to_csv(f"oferesults_{huc12}_{today:%Y%m%d}.csv", index=False)
 
     for huc12, hrows in fprows.items():
         df = pd.DataFrame(hrows)
-        df.to_csv(f"fpresults_{huc12}_231127.csv", index=False)
+        df.to_csv(f"fpresults_{huc12}_{today:%Y%m%d}.csv", index=False)
 
 
 if __name__ == "__main__":
