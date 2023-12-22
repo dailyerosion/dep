@@ -25,7 +25,7 @@ def main():
             proc.communicate()
 
         df = read_env("wepp_env.txt")
-        avg_det = df["av_det"].sum() / 15.0 * 4.163
+        avg_det = df["av_det"].sum() / 15.0 * 4.463
         with open("answer.json", "r", encoding="ascii") as fh:
             answer = json.load(fh)
         failed = abs(avg_det - answer["av_det"]) > 0.01
