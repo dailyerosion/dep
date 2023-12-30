@@ -61,7 +61,7 @@ def get_wind_obs(date, lon, lat) -> list:
     except Exception as exp:
         print(uri)
         LOG.exception(exp)
-        sys.exit()
+        return []
     hourly = []
     for entry in res["data"]:
         try:
