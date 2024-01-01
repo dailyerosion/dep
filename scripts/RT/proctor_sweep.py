@@ -56,12 +56,18 @@ def run_command(cmd: str) -> bool:
 def get_wind_obs(date, lon, lat) -> list:
     """Get what we need from IEMRE."""
     uri = f"{IEMRE}/{date:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
-    try:
-        res = requests.get(uri, timeout=30).json()
-    except Exception as exp:
-        print(uri)
-        LOG.exception(exp)
-        return []
+    attempts = 0
+    while attempts < 3:
+        try:
+            res = requests.get(uri, timeout=30).json()
+            break
+        except Exception as exp:
+            print(uri)
+            LOG.exception(exp)
+        attempts += 1
+        if attempts == 3:
+            LOG.warning("Failed to get %s, returning 1s", uri)
+            return [1.0] * 24
     hourly = []
     for entry in res["data"]:
         try:
