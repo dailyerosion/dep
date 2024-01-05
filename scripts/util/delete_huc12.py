@@ -12,7 +12,9 @@ def do_delete(huc12, scenario):
     cursor = pgconn.cursor()
 
     # Remove any flowpath points, ofes
-    for table in ["points", "ofes"]:
+    for table in [
+        "ofes",
+    ]:
         cursor.execute(
             f"""
         delete from flowpath_{table} pts using flowpaths f where
@@ -62,10 +64,7 @@ def do_delete(huc12, scenario):
         print(f"Removed {len(files)} files from {dirname}")
 
         # Try to remove the huc8 folder
-        try:
-            os.rmdir(f"/i/{scenario}/{prefix}/{huc12[:8]}")
-        except OSError:
-            pass
+        os.rmdir(f"/i/{scenario}/{prefix}/{huc12[:8]}")
 
     cursor.close()
     pgconn.commit()

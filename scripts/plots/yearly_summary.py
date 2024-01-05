@@ -51,7 +51,7 @@ def main():
     elif v in ["avg_loss"]:
         c = ["#cbe3bb", "#c4ff4d", "#ffff4d", "#ffc44d", "#ff4d4d", "#c34dee"]
     # suggested for delivery
-    elif v in ["avg_delivery"]:
+    else:  # v in ["avg_delivery"]:
         c = ["#ffffd2", "#ffff4d", "#ffe0a5", "#eeb74d", "#ba7c57", "#96504d"]
     cmap = mpcolors.ListedColormap(c, "james")
     cmap.set_under("white")

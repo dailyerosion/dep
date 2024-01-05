@@ -79,7 +79,7 @@ def main(argv):
             "#c34dee",
         ]
     # suggested for delivery
-    elif v in ["avg_delivery", "avg_delivery_metric"]:
+    else:  # v in ["avg_delivery", "avg_delivery_metric"]:
         colors = [
             "#ffffd2",
             "#ffff4d",
@@ -115,19 +115,15 @@ def main(argv):
     )
 
     df = read_postgis(
-        """
+        f"""
     WITH data as (
       SELECT huc_12, extract(year from valid) as yr,
-      sum("""
-        + v.replace("_metric", "")
-        + """)  as d from results_by_huc12
+      sum({v.replace('_metric', '')})  as d from results_by_huc12
       WHERE scenario = %s and valid >= %s and valid <= %s
       GROUP by huc_12, yr),
 
     agg as (
-      SELECT huc_12, """
-        + agg
-        + """(d) as d from data GROUP by huc_12)
+      SELECT huc_12, {agg}(d) as d from data GROUP by huc_12)
 
     SELECT ST_Transform(simple_geom, 4326) as geo, coalesce(d.d, 0) as data
     from huc12 i LEFT JOIN agg d
