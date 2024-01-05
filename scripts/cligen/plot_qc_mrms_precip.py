@@ -49,8 +49,6 @@ def do(valid):
     outqcprecip = load_precip(valid, "outqcprecip")
     multiplier = load_precip(valid, "multiplier")
 
-    yidx = int((43.27 - SOUTH) / 0.01)
-    xidx = int((-94.39 - WEST) / 0.01)
     projection = ccrs.Mercator()
     pgconn = get_dbconn("idep")
     df = read_postgis(

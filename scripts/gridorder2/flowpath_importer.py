@@ -157,7 +157,7 @@ def get_data(filename):
 
 
 def delete_previous(cursor, huc12):
-    """This file is the authority for the HUC12, so we cull previous content."""
+    """This file is the authority for the HUC12."""
     cursor.execute(
         """
         DELETE from flowpath_points p USING flowpaths f WHERE

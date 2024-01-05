@@ -1,0 +1,7 @@
+# Systemd cronjob for the daily realtime run
+[Unit]
+Description=Daily DEP Realtime Run
+
+[Service]
+ExecStart=/bin/bash -l -c 'REALTIME.sh | mail -s "DEP Realtime" akrherz@iastate.edu'
+WorkingDirectory=/opt/dep/scripts

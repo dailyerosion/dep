@@ -47,8 +47,8 @@ def myread(filename):
         date = datetime.date(int(tokens[2]), 1, 1)
         date = date + datetime.timedelta(days=(int(tokens[1]) - 1))
         mydict = dict(date=date)
-        for i in range(3, 3 + len(COLS)):
-            mydict[COLS[i - 3]] = float(tokens[i])
+        for j in range(3, 3 + len(COLS)):
+            mydict[COLS[j - 3]] = float(tokens[i])
         rows.append(mydict)
 
     return pd.DataFrame(rows)

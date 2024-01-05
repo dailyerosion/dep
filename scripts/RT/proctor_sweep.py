@@ -57,6 +57,7 @@ def get_wind_obs(date, lon, lat) -> list:
     """Get what we need from IEMRE."""
     uri = f"{IEMRE}/{date:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
     attempts = 0
+    res = {"data": []}
     while attempts < 3:
         try:
             res = requests.get(uri, timeout=30).json()
