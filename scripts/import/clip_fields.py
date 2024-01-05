@@ -28,7 +28,8 @@ def main():
                 xcheck as (
                     select min(d.newacres) from flowpath_ofes o, flowpaths f,
                     data d where o.flowpath = f.fid and f.huc_12 = d.huc12 and
-                    f.scenario = 0 and o.fbndid = d.fbndid order by newacres asc
+                    f.scenario = 0 and o.fbndid = d.fbndid order by newacres
+                    asc
                 """
                 ),
                 conn,
