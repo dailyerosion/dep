@@ -1,0 +1,7 @@
+# Our evening reprocessing
+[Unit]
+Description=DEP Evening reprocessing
+
+[Service]
+ExecStart=/bin/bash -l -c 'python reprocess.py | mail -s "DEP Reprocessing" akrherz@iastate.edu'
+WorkingDirectory=/opt/dep/scripts/RT
