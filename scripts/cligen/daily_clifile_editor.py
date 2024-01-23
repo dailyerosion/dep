@@ -206,7 +206,7 @@ def load_stage4(data, valid, xtile, ytile):
         LOG.warning("No StageIV data found, aborting...")
         sys.exit(3)
     # set a small non-zero number to keep things non-zero
-    totals = np.where(totals > 0.001, totals, 0.001)
+    totals[totals < 0.001] = 0.001
 
     nn = NearestNDInterpolator(
         (lons.flatten(), lats.flatten()), totals.flatten()
@@ -237,7 +237,7 @@ def qc_precip(data, valid, xtile, ytile, tile_bounds):
             hires_total = np.sum(data["precip"], 2)
 
     # prevent zeros
-    hires_total = np.where(hires_total < 0.01, 0.01, hires_total)
+    hires_total[hires_total < 0.01] = 0.01
     write_grid(hires_total, valid, xtile, ytile, "inqcprecip")
     multiplier = data["stage4"] / hires_total
 

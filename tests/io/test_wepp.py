@@ -54,6 +54,12 @@ def test_crop():
     assert abs(df["avg_temp_c"].max() - 24.30) < 0.01
 
 
+def test_reading_depenv():
+    """We should be backwards compatible with DEP files."""
+    df = read_env(get_path("env_year4_dep.txt"))
+    assert df["date"].max().year == 2023
+
+
 def test_empty():
     """don't error out on an empty ENV"""
     df = read_env(get_path("empty_env.txt"))
