@@ -162,7 +162,7 @@ def load_precip(dates, huc12s):
             pcp = np.flipud(np.load(file=fh))
         # nodata here represents the value that is set to missing within the
         # source dataset!, setting to zero has strange side affects
-        pcp = np.where(pcp < 0, np.nan, pcp)
+        pcp[pcp < 0] = np.nan
         zs = czs.gen_stats(
             pcp,
             geometries=huc12df["geo"],
