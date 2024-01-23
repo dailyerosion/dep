@@ -480,8 +480,8 @@ c 1000 format (3(1x,i2),1x,i3,1x,f6.1,1x,f6.1,3(1x,f6.2),f5.2,1x,f6.2,1x,
 c     1    f5.1,1x,f6.2,1x,f5.2,3(1x,f5.1),6(1x,f5.2))
  1000 format (3(1x,i2),1x,i4,1x,f8.3,1x,f8.3,3(1x,f7.3),f6.3,1x,f7.3,1x,
      1    f7.3,1x,f7.3,1x,f6.3,4(1x,f8.3),5(1x,f6.3),1x,f8.3)
- 1100 format (2(1x,i4),1x,i5,1x,f5.1,1x,f7.1,1x,f7.3,2(1x,f6.2),1x,f6.1,
-     1    2(1x,f7.2),1x,f6.1,1x,f7.1,1x,f5.2,2(1x,f7.3))
+ 1100 format (3(i0,1x),f0.1,1x,f0.1,1x,f0.1,1x,f0.3,2(1x,f0.2),1x,f0.1,
+     1    2(1x,f0.2),1x,f0.1,1x,f0.1,1x,f0.2,2(1x,f0.3))
  1200 format (3(f7.1,1x,f9.1,1x,i2,5x))
  1250 format (3(f7.2,1x,f9.3,1x,i2,5x))
  1300 format (///2x,'C.  SOIL LOSS/DEPOSITION ALONG SLOPE PROFILE',//,10
