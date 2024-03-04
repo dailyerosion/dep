@@ -1,4 +1,5 @@
 """Too complicated to do this right."""
+
 import sys
 
 from pandas.io.sql import read_sql

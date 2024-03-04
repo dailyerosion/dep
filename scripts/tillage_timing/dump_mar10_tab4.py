@@ -1,6 +1,5 @@
-"""Dump for tab2 of requested 10 march 2020 spreadsheet.
+"""Dump for tab2 of requested 10 march 2020 spreadsheet."""
 
-"""
 import glob
 
 import pandas as pd

@@ -3,6 +3,7 @@ Bootstrap and Add a Climate File.
 
     python add_clifile.py <scenario> <lon> <lat>
 """
+
 import os
 import shutil
 import subprocess

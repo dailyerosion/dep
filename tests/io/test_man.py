@@ -1,4 +1,5 @@
 """Test management reading."""
+
 import os
 
 from pydep.io.man import man2df, read_man

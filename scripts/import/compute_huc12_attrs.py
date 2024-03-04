@@ -1,4 +1,5 @@
 """Compute attributes associated with the huc12 table."""
+
 # stdlib
 import sys
 

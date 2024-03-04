@@ -1,4 +1,5 @@
 """We have Nones in our soil files, lets squash until fixed upstream"""
+
 import glob
 
 

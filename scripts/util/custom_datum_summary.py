@@ -1,4 +1,5 @@
 """Generate DEP for a custom datum."""
+
 from calendar import month_abbr
 
 import pandas as pd

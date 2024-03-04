@@ -1,4 +1,5 @@
 """Example script to download daily shapefiles from the dailyerosion site"""
+
 import datetime
 
 import requests

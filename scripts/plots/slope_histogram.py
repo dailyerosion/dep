@@ -1,4 +1,5 @@
 """Plot a histogram of slopes used in DEP"""
+
 import glob
 import os
 

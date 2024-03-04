@@ -1,4 +1,5 @@
 """Publish messages to twitter denoting interesting things"""
+
 import datetime
 from io import BytesIO
 

@@ -1,4 +1,5 @@
 """Generate a report for the yearly DEP totals"""
+
 import datetime
 import sys
 

@@ -1,4 +1,5 @@
 """Generate DEP summary."""
+
 from calendar import month_abbr
 
 import pandas as pd

@@ -1,6 +1,7 @@
 """
 Utility to plot some residue values from WEPP crop output
 """
+
 import datetime
 
 import matplotlib.dates as mdates

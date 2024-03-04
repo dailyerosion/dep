@@ -1,4 +1,5 @@
 """Utility script to delete a flowpath from the database and on-disk"""
+
 import os
 import sys
 

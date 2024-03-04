@@ -4,6 +4,7 @@ Process DEP Soil Moisture to create a state file.
 Division of labor and this can run much earlier for the Dynamic Tillage
 workflow.
 """
+
 import os
 import sys
 from multiprocessing import cpu_count

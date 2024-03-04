@@ -1,4 +1,5 @@
 """Dump a days worth of output to file."""
+
 # stdlib
 import datetime
 import os

@@ -1,4 +1,5 @@
 """We do work when jobs are placed in the queue."""
+
 import json
 import os
 import re

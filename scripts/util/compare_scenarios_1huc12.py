@@ -1,4 +1,5 @@
 """Tease out some differences."""
+
 import glob
 
 import numpy as np

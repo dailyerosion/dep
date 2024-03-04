@@ -1,4 +1,5 @@
 """Draw a fancy map"""
+
 import sys
 
 import cartopy.crs as ccrs

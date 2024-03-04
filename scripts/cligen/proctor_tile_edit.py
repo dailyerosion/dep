@@ -3,6 +3,7 @@
 Usage:
     python proctor_tile_edit.py <scenario> <yyyy> <mm> <dd>
 """
+
 import datetime
 import gzip
 import os

@@ -2,6 +2,7 @@
 
 see GH #39
 """
+
 import os
 import sys
 from multiprocessing.pool import ThreadPool

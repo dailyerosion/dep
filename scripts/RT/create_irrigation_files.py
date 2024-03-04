@@ -2,6 +2,7 @@
 
 https://www.ars.usda.gov/ARSUserFiles/50201000/WEPP/usersum.pdf page 60
 """
+
 from datetime import date
 
 LASTYEAR = date.today().year

@@ -1,4 +1,5 @@
 """Map."""
+
 import sys
 
 import matplotlib.colors as mpcolors

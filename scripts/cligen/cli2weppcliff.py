@@ -3,6 +3,7 @@
 DT_1,PRECIP,DT_3,MAX_TEMP,MIN_TEMP,SO_RAD,W_VEL,W_DIR,DP_TEMP,STATION,LAT,LON,
 ELEV
 """
+
 import sys
 from datetime import date, datetime
 

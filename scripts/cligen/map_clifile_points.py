@@ -1,4 +1,5 @@
 """Create a map of where we have climate files!"""
+
 import glob
 import os
 

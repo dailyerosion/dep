@@ -1,11 +1,11 @@
 """Answer a data request with the following
 
- 1) lat/lon of 'F0' first point
- 2) Picture of location?  Hmmm, I did huc12 previously
- 3) elevation of F0 and G1 through G6 nodes
- 4) horizontal distance from F0 to G1-G6
- 5) OFE positions along this path
- 6) Generic properties, perhaps can ignore?
+1) lat/lon of 'F0' first point
+2) Picture of location?  Hmmm, I did huc12 previously
+3) elevation of F0 and G1 through G6 nodes
+4) horizontal distance from F0 to G1-G6
+5) OFE positions along this path
+6) Generic properties, perhaps can ignore?
 """
 
 import numpy as np

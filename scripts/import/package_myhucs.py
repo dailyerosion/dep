@@ -1,4 +1,5 @@
 """Collate up the myhucs.txt data."""
+
 import os
 import subprocess
 import sys

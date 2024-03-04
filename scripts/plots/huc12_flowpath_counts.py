@@ -1,4 +1,5 @@
 """Diagnostic on HUC12 flowpath counts."""
+
 import sys
 
 import geopandas as gpd

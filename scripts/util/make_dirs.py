@@ -1,4 +1,5 @@
-""" Setup the necessary directory structure, so that other codes need not """
+"""Setup the necessary directory structure, so that other codes need not"""
+
 import os
 import sys
 

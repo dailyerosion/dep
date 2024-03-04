@@ -1,4 +1,5 @@
 """Diagnose some Water Balance stuff"""
+
 import sys
 
 import pandas as pd

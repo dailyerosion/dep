@@ -1,4 +1,5 @@
 """Plot of 5 day averaged precipitation."""
+
 import calendar
 
 from pandas.io.sql import read_sql

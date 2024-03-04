@@ -1,4 +1,5 @@
 """Simple plot of data."""
+
 from matplotlib import rcParams
 from pyiem.plot import figure_axes
 

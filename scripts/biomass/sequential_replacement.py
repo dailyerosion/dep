@@ -1,4 +1,5 @@
 """Sequential Replacement."""
+
 import sys
 
 import matplotlib.pyplot as plt
