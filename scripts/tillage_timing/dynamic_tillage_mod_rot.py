@@ -1,4 +1,5 @@
 """Yikes, inspect WB file, do dynamic tillage dates for 2018."""
+
 import datetime
 import sys
 

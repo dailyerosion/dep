@@ -1,4 +1,5 @@
 """Test reading pydep.io.dep stuff."""
+
 import os
 
 from pydep.io.dep import read_env, read_wb

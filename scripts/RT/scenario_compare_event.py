@@ -1,4 +1,5 @@
 """Compare scenarios."""
+
 import glob
 import os
 

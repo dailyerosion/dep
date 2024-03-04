@@ -1,4 +1,5 @@
-""" Generate WEPP project files, which we then hand off to prj2wepp for run"""
+"""Generate WEPP project files, which we then hand off to prj2wepp for run"""
+
 import os
 import shutil
 import subprocess

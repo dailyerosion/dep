@@ -1,4 +1,5 @@
 """Suck in the yield data!"""
+
 # stdlib
 import datetime
 import multiprocessing

@@ -1,4 +1,5 @@
 """Update the database storage to add another value."""
+
 import sys
 
 from pyiem.util import get_dbconn, logger

@@ -2,6 +2,7 @@
 
 Run from systemd dep-reprocess.timer
 """
+
 import datetime
 import os
 import subprocess

@@ -1,4 +1,5 @@
 """Plot of 5 day averaged precipitation."""
+
 import datetime
 
 import pandas as pd

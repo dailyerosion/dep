@@ -2,6 +2,7 @@
 
 The 2007, 2008, and 2009 data looks wonky now, lets just do 2010 thru 2015
 """
+
 import matplotlib.pyplot as plt
 from pandas.io.sql import read_sql
 from pyiem.util import get_dbconn

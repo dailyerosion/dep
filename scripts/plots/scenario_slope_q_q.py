@@ -1,4 +1,5 @@
 """Plot a Q-Q plot of slopes."""
+
 import glob
 import os
 import sys

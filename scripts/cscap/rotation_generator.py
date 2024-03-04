@@ -2,6 +2,7 @@
 
 These are for idealized scenarios and need to generate each phase of the two
 year scenario."""
+
 import sys
 
 # These are the building blocks to the rotation puzzle

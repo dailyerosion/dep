@@ -1,6 +1,5 @@
-"""Copy and modify the scenario 0 prj files
+"""Copy and modify the scenario 0 prj files"""
 
-"""
 import glob
 import os
 import re

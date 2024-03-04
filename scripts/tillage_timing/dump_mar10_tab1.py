@@ -1,6 +1,5 @@
-"""Dump for tab1 of requested 10 march 2020 spreadsheet.
+"""Dump for tab1 of requested 10 march 2020 spreadsheet."""
 
-"""
 import datetime
 import glob
 

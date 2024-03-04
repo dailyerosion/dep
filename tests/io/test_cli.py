@@ -1,4 +1,5 @@
 """Test pydep.io.cli stuff."""
+
 from datetime import date
 
 from pydep.io.cli import daily_formatter

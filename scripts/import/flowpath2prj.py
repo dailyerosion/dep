@@ -31,6 +31,7 @@ Here's a listing of project landuse codes used
 
 
 """
+
 import datetime
 import os
 import sys
@@ -236,9 +237,9 @@ def do_rotation(scenario, zone, rotfn, landuse, management):
         data["initcond"] = FOREST[management[0]]
         for i in range(1, YEARS):
             # Reset roughness each year
-            data[
-                "yearly"
-            ] += f"1 2 {i} 1 Tillage OpCropDef.Old_6807 {{0.001, 2}}"
+            data["yearly"] += (
+                f"1 2 {i} 1 Tillage OpCropDef.Old_6807 {{0.001, 2}}"
+            )
     else:
         data["initcond"] = INITIAL_COND.get(landuse[0], INITIAL_COND_DEFAULT)
         prevcode = "C" if landuse[0] not in INITIAL_COND else landuse[0]

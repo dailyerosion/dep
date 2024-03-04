@@ -1,4 +1,5 @@
 """Make plots of monthly values or differences"""
+
 import calendar
 
 import matplotlib.pyplot as plt

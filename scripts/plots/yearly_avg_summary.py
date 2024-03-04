@@ -1,4 +1,5 @@
 """Period of record plot summaries"""
+
 import datetime
 import sys
 

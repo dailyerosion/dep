@@ -1,4 +1,5 @@
 """Verify that a climate file is well formed."""
+
 import datetime
 import sys
 

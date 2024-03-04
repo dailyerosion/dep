@@ -1,4 +1,5 @@
 """A plot of the deltas for erosion between scenarios."""
+
 import os
 import sys
 

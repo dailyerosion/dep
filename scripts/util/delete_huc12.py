@@ -1,4 +1,5 @@
 """Delete all traces of a HUC12"""
+
 import glob
 import os
 import sys

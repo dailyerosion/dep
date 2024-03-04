@@ -1,7 +1,8 @@
-"""  Crop is Swi_2785
+"""Crop is Swi_2785
 
 IDEP2/CSCAP/SWITCHGRASS.rot
 """
+
 import glob
 import os
 import sys

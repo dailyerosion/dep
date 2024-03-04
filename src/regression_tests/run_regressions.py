@@ -1,4 +1,5 @@
 """Run Regression tests."""
+
 import json
 import os
 import subprocess

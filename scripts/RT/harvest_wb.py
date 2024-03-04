@@ -1,4 +1,5 @@
 """Collect the water balance for a given today"""
+
 import datetime
 import multiprocessing
 import os

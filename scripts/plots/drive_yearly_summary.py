@@ -1,4 +1,5 @@
 """Generate plots."""
+
 import subprocess
 from datetime import date
 

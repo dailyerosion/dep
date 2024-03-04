@@ -1,4 +1,5 @@
 """Keep the CLI file headers in sync."""
+
 # stdlib
 import os
 import sys

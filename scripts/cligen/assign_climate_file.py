@@ -1,4 +1,5 @@
 """Make sure our database has things right with climate_file."""
+
 import sys
 
 from pydep.util import get_cli_fname
