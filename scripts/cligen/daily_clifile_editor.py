@@ -6,7 +6,7 @@ Usage:
 
 Where tiles start in the lower left corner and are 5x5 deg in size
 
-development laptop has data for 3 March 2019, 23 May 2009, and 8 Jun 2009
+development laptop has data for 3 March 2019
 
 """
 
@@ -17,7 +17,9 @@ except ImportError:
 import datetime
 import os
 import sys
+import traceback
 from collections import namedtuple
+from io import StringIO
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
@@ -42,6 +44,8 @@ ZEROHOUR = datetime.datetime(2000, 1, 1, 0, 0)
 CPUCOUNT = min([4, int(cpu_count() / 4)])
 MEMORY = {"stamp": datetime.datetime.now()}
 BOUNDS = namedtuple("Bounds", ["south", "north", "east", "west"])
+# An estimate of the number of years of data we have in our climate files
+ESTIMATED_YEARS = datetime.date.today().year - 2007 + 1
 
 
 def check_has_clifiles(bounds: BOUNDS):
@@ -486,12 +490,23 @@ def precip_workflow(data, valid, xtile, ytile, tile_bounds):
     write_grid(np.sum(data["precip"], 2), valid, xtile, ytile)
 
 
-def edit_clifile(xidx, yidx, clifn, data, valid):
+def edit_clifile(xidx, yidx, clifn, data, valid) -> bool:
     """Edit the climate file, run from thread."""
     # Okay we have work to do
     with open(clifn, "r", encoding="utf8") as fh:
         clidata = fh.read()
-    pos = clidata.find(valid.strftime("%-d\t%-m\t%Y"))
+    # Optimization, take a guess as how far into the file we need to go
+    # to find this date
+    pos = -1
+    if valid.year > 2007:
+        offset = int(
+            len(clidata) / ESTIMATED_YEARS * (valid.year - 2007 - 0.5)
+        )
+        pos = clidata[offset:].find(valid.strftime("%-d\t%-m\t%Y"))
+        if pos != -1:
+            pos += offset
+    if pos == -1:
+        pos = clidata.find(valid.strftime("%-d\t%-m\t%Y"))
     if pos == -1:
         LOG.warning("Date find failure for %s", clifn)
         return False
@@ -623,11 +638,6 @@ def main(argv):
 
     with ThreadPool(CPUCOUNT) as pool:
 
-        def _errorback(exp):
-            """We hit trouble."""
-            LOG.exception(exp)
-            errors["cnt"] += 1
-
         def _callback(res):
             """We got a result."""
             if not res:
@@ -637,15 +647,26 @@ def main(argv):
         def _proxy(xidx, yidx, clifn, data, valid):
             """Proxy."""
             if errors["cnt"] > 10:
-                return None
-            return edit_clifile(xidx, yidx, clifn, data, valid)
+                return False
+            try:
+                return edit_clifile(xidx, yidx, clifn, data, valid)
+            except Exception as _exp:
+                with StringIO() as sio:
+                    traceback.print_exc(file=sio)
+                    LOG.error(
+                        "edit_clifile(%s, %s, %s) failed: %s",
+                        xidx,
+                        yidx,
+                        clifn,
+                        sio.getvalue(),
+                    )
+            return False
 
         for _, (xidx, yidx, clifn) in enumerate(queue):
             pool.apply_async(
                 _proxy,
                 (xidx, yidx, clifn, data, valid),
                 callback=_callback,
-                error_callback=_errorback,
             )
         pool.close()
         pool.join()
