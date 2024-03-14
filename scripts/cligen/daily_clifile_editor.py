@@ -495,18 +495,7 @@ def edit_clifile(xidx, yidx, clifn, data, valid) -> bool:
     # Okay we have work to do
     with open(clifn, "r", encoding="utf8") as fh:
         clidata = fh.read()
-    # Optimization, take a guess as how far into the file we need to go
-    # to find this date
-    pos = -1
-    if valid.year > 2007:
-        offset = int(
-            len(clidata) / ESTIMATED_YEARS * (valid.year - 2007 - 0.5)
-        )
-        pos = clidata[offset:].find(valid.strftime("%-d\t%-m\t%Y"))
-        if pos != -1:
-            pos += offset
-    if pos == -1:
-        pos = clidata.find(valid.strftime("%-d\t%-m\t%Y"))
+    pos = clidata.find(valid.strftime("%-d\t%-m\t%Y"))
     if pos == -1:
         LOG.warning("Date find failure for %s", clifn)
         return False
