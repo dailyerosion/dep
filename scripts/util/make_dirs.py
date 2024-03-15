@@ -4,12 +4,13 @@ import os
 import sys
 
 from pydep.util import load_scenarios
-from pyiem.util import get_dbconn, logger
+from pyiem.database import get_dbconn
+from pyiem.util import logger
 
 LOG = logger()
 PREFIXES = (
     "crop env man prj run slp sol wb error ofe yld rot grph out "
-    "sweepin sweepout"
+    "sweepin sweepout meta"
 ).split()
 
 

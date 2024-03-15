@@ -14,6 +14,8 @@ SCENARIO2TILLAGE = {
     161: "All 5",
     162: "All 6",
     154: "Plus 1",
+    164: "All 1.5",
+    165: "All Pasture",
 }
 
 

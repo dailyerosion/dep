@@ -10,6 +10,7 @@ to.
 """
 
 import glob
+import json
 import logging
 import os
 import re
@@ -20,7 +21,8 @@ import numpy as np
 import pandas as pd
 import pyproj
 from pydep.util import get_cli_fname
-from pyiem.util import get_dbconn, logger
+from pyiem.database import get_dbconn
+from pyiem.util import logger
 from shapely.geometry import LineString
 from tqdm import tqdm
 
@@ -348,12 +350,16 @@ def process_flowpath(cursor, scenario, db_fid, df) -> pd.DataFrame:
         PROCESSING_COUNTS["flowpaths_invalidgeom"] += 1
         return
     # pylint: disable=not-an-iterable
+    clifn = get_cli_fname(
+        *TRANSFORMER.transform(df.iloc[0].geometry.x, df.iloc[0].geometry.y),
+        scenario,
+    )
     cursor.execute(
         """
         UPDATE flowpaths SET geom = %s, irrigated = %s,
         max_slope = %s, bulk_slope = %s, ofe_count = %s, climate_file = %s,
         real_length = %s
-        WHERE fid = %s
+        WHERE fid = %s returning huc_12, fpath
         """,
         (
             f"SRID=5070;{ls.wkt}",
@@ -362,16 +368,20 @@ def process_flowpath(cursor, scenario, db_fid, df) -> pd.DataFrame:
             (df["elev"].max() - df["elev"].min())
             / (df["len"].max() - df["len"].min()),
             df["ofe"].max(),
-            get_cli_fname(
-                *TRANSFORMER.transform(
-                    df.iloc[0].geometry.x, df.iloc[0].geometry.y
-                ),
-                scenario,
-            ),
+            clifn,
             df["len"].max() / 100.0,
             db_fid,
         ),
     )
+    huc12, fpath = cursor.fetchone()
+    # Write metadata file
+    with open(
+        f"/i/{scenario}/meta/{huc12[:8]}/{huc12[8:]}/{huc12}_{fpath}.json",
+        "w",
+        encoding="ascii",
+    ) as fh:
+        meta = {"climate_file": clifn}
+        json.dump(meta, fh)
     PROCESSING_COUNTS["flowpaths_good"] += 1
     return df
 
