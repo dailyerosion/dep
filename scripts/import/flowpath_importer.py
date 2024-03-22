@@ -350,10 +350,11 @@ def process_flowpath(cursor, scenario, db_fid, df) -> pd.DataFrame:
         PROCESSING_COUNTS["flowpaths_invalidgeom"] += 1
         return
     # pylint: disable=not-an-iterable
-    clifn = get_cli_fname(
-        *TRANSFORMER.transform(df.iloc[0].geometry.x, df.iloc[0].geometry.y),
-        scenario,
+    lon, lat = TRANSFORMER.transform(
+        df.iloc[0].geometry.x,
+        df.iloc[0].geometry.y,
     )
+    clifn = get_cli_fname(lon, lat, scenario)
     cursor.execute(
         """
         UPDATE flowpaths SET geom = %s, irrigated = %s,
@@ -375,12 +376,25 @@ def process_flowpath(cursor, scenario, db_fid, df) -> pd.DataFrame:
     )
     huc12, fpath = cursor.fetchone()
     # Write metadata file
-    with open(
-        f"/i/{scenario}/meta/{huc12[:8]}/{huc12[8:]}/{huc12}_{fpath}.json",
-        "w",
-        encoding="ascii",
-    ) as fh:
-        meta = {"climate_file": clifn}
+    # grab first row to get some OFE metadata for bundling
+    ofemeta = (
+        df[["ofe", "landuse", "management", "FBndID"]]
+        .groupby("ofe")
+        .first()
+        .assign(
+            FBndID=lambda x: x["FBndID"].str.split("_").str[1],
+        )
+        .reset_index()
+        .to_dict(orient="records")
+    )
+    jsonfn = f"/i/{scenario}/meta/{huc12[:8]}/{huc12[8:]}/{huc12}_{fpath}.json"
+    with open(jsonfn, "w", encoding="ascii") as fh:
+        meta = {
+            "lon": round(lon, 2),
+            "lat": round(lat, 2),
+            "climate_file": clifn,
+            "ofes": ofemeta,
+        }
         json.dump(meta, fh)
     PROCESSING_COUNTS["flowpaths_good"] += 1
     return df
