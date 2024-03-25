@@ -16,7 +16,6 @@ Here's a listing of project landuse codes used
   L - Double Crop  (started previous year) (winter wheat + soybea)
   W - Wheat
   S - Durum/Spring Wheat
-  N - Small Grain
   E - Sugarbeets
   J - Rice
   N - Cotton
