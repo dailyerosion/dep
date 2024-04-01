@@ -1,22 +1,24 @@
-"""
-Our Dynamic Tillage Workflow!
+"""Dynamic Tillage Workflow.
+
+On a given date between 15 April and 4 June, we will attempt to plant or till
+fields within a HUC12.  We run this script at 9 PM and needs to be done by
+about 12:30 AM.
 
 """
 
-import sys
 from datetime import date, timedelta
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
+import click
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 from matplotlib.patches import Rectangle
-
-# The MRMS netcdf file use the IEMRE grid domain
+from pyiem.database import get_dbconn, get_sqlalchemy_conn
 from pyiem.iemre import SOUTH, WEST, daily_offset
 from pyiem.plot import MapPlot, figure_axes
-from pyiem.util import get_dbconn, get_sqlalchemy_conn, logger, ncopen
+from pyiem.util import logger, ncopen
 from sqlalchemy import text
 from tqdm import tqdm
 
@@ -156,7 +158,7 @@ def edit_rotfile(year, huc12, ofedf):
     yearindex = str(year - 2007 + 1)
     for _, row in ofedf.iterrows():
         dates = []
-        for col in ["till1", "till2", "plant", "plant"]:  # Hack dupe plant
+        for col in ["till1", "till2", "till3", "plant", "plant"]:  # Why HACK
             if not pd.isna(row[col]):
                 dates.append(row[col])
         rotfn = (
@@ -173,10 +175,7 @@ def edit_rotfile(year, huc12, ofedf):
             if (
                 tokens[2] == yearindex
                 and int(tokens[0]) < 6
-                and (
-                    tokens[4].startswith("Tillage")
-                    or tokens[4].startswith("Plant")
-                )
+                and tokens[4].startswith(("Tillage", "Plant"))
             ):
                 lines[i] = (
                     f"{dates.pop(0):%m %d} {yearindex} "
@@ -206,7 +205,7 @@ def do_huc12(year, huc12, smdf):
                 f.management, f.acres, f.field_id
                 from fields f JOIN myofes m on (f.fbndid = m.fbndid)
                 WHERE f.huc12 = :huc12 ORDER by fpath, ofe)
-            select a.*, o.till1, o.till2, o.plant
+            select a.*, o.till1, o.till2, o.till3, o.plant
             from agg a LEFT JOIN field_operations o on
             (a.field_id = o.field_id and o.year = :year)
             """
@@ -231,6 +230,7 @@ def do_huc12(year, huc12, smdf):
     fields.loc[fields["plant"].notna(), "status"] += 1
     fields.loc[fields["till1"].notna(), "status"] += 1
     fields.loc[fields["till2"].notna(), "status"] += 1
+    fields.loc[fields["till3"].notna(), "status"] += 1
     fields["operations"] = 1
     fields.loc[fields["tillage"] == "2", "operations"] = 2
     fields.loc[fields["tillage"].isin(["3", "4", "5", "6"]), "operations"] = 3
@@ -255,8 +255,8 @@ def do_huc12(year, huc12, smdf):
     else:
         startdate = pd.Timestamp(f"{year}/04/15")
     # NOTE once we get to 1 June, everything goes into the ground, so we need
-    # three days to clear the backlog...
-    for i, dt in enumerate(pd.date_range(startdate, f"{year}/06/03")):
+    # four days to clear the backlog...
+    for i, dt in enumerate(pd.date_range(startdate, f"{year}/06/04")):
         acres_not_planted.append(fields[fields["plant"].isna()]["acres"].sum())
         # Can we plant upto 10% of the acreage today?
         running = 0
@@ -315,7 +315,7 @@ def do_huc12(year, huc12, smdf):
         )
     # Merge field info back into main dataframe
     df = df[["ofe", "fpath", "fbndid"]].merge(
-        fields[["till1", "till2", "plant", "crop", "tillage"]],
+        fields[["till1", "till2", "till3", "plant", "crop", "tillage"]],
         left_on="fbndid",
         right_index=True,
     )
@@ -360,26 +360,26 @@ def estimate_rainfall(huc12df):
         huc12df.at[idx, "precip_mm"] = p01d[y, x]
 
 
-def main(argv):
+@click.command()
+@click.argument("scenario", type=int, default=0)
+@click.argument("year", type=int, default=date.today().year)
+@click.argument("huc12", type=str, required=False)
+def main(scenario, year, huc12):
     """Go Main Go."""
-    scenario = int(argv[1])
-    year = int(argv[2])
+    huc12_filter = "" if huc12 is None else " and huc_12 = :huc12"
     with get_sqlalchemy_conn("idep") as conn:
         huc12df = gpd.read_postgis(
-            """
+            text(f"""
             SELECT geom, huc_12,
             ST_x(st_transform(st_centroid(geom), 4326)) as lon,
             ST_y(st_transform(st_centroid(geom), 4326)) as lat
-            from huc12 where scenario = %s
-            """,
+            from huc12 where scenario = :scenario {huc12_filter}
+            """),
             conn,
-            params=(scenario,),
+            params={"scenario": scenario, "huc12": huc12},
             geom_col="geom",
             index_col="huc_12",
         )
-    # Allows for isolated testing.
-    if len(argv) == 4:
-        huc12df = huc12df.loc[[argv[3]]]
     # Estimate today's rainfall so to delay triggers
     estimate_rainfall(huc12df)
     # Any HUC12 over 10mm gets skipped
@@ -416,4 +416,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
