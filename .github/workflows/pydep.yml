@@ -56,12 +56,13 @@ jobs:
       run: |
         set -e
         python -m pip install . --upgrade --no-deps
-        coverage run --source=pydep setup.py test
-        coverage xml
+        python -m pytest --cov=pydep tests
+        python -m coverage xml
+
 
     - name: Upload codecov
       if: ${{ env.PYTHON_VERSION == '3.12' }}
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: coverage.xml
