@@ -60,6 +60,7 @@ def job(huc12, dt):
         df = pd.concat(dfs)
         df["huc12"] = huc12
         return df
+    return None
 
 
 @click.command()
