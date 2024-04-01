@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        PYTHON_VERSION: ["3.9", "3.10", "3.11"]
+        PYTHON_VERSION: ["3.9", "3.11", "3.12"]
     env:
       PYTHON_VERSION: ${{ matrix.PYTHON_VERSION }}
     steps:
@@ -60,7 +60,7 @@ jobs:
         coverage xml
 
     - name: Upload codecov
-      if: ${{ env.PYTHON_VERSION == '3.11' }}
+      if: ${{ env.PYTHON_VERSION == '3.12' }}
       uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
