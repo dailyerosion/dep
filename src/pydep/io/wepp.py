@@ -100,7 +100,7 @@ def read_cli(
     filename,
     compute_rfactor=False,
     return_rfactor_metric=True,
-    compute_intensity_over=[],
+    compute_intensity_over=None,
 ):
     """Read WEPP CLI File, Return DataFrame
 
@@ -162,7 +162,7 @@ def read_cli(
                 )
             ),
         }
-        if compute_intensity_over:
+        if compute_intensity_over is not None:
             row.update(intensity(times, points, compute_intensity_over))
         rows.append(row)
 

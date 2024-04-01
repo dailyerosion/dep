@@ -5,7 +5,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 from scipy import stats
 
 YEAR = int(sys.argv[1])
@@ -62,7 +62,7 @@ for huc12 in ["070600060701"]:  # HUC12s:
     (fig, ax) = plt.subplots(1, 1, figsize=(8, 6))
 
     averages = []
-    for i in range(10):
+    for _ in range(10):
         averages.append([])
 
     for i in range(10):

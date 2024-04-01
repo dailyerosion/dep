@@ -3,7 +3,7 @@
 import sys
 
 from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 
 pgconn = get_dbconn("idep")
 
@@ -29,7 +29,7 @@ pgconn = get_dbconn("postgis")
 cursor = pgconn.cursor()
 
 DONE = []
-for i, row in df.iterrows():
+for _, row in df.iterrows():
     cursor.execute(
         """SELECT name from ugcs where end_ts is null and
     state = 'IA' and substr(ugc, 3, 1) = 'C' and
