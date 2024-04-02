@@ -26,6 +26,12 @@ jobs:
       run: |
         cat .github/workflows/etchosts.txt | sudo tee -a /etc/hosts
 
+    # daryl is a hack
+    - name: Create symlink
+      run: |
+        set -e
+        sudo ln -s `pwd` /opt/dep
+
     # setup conda-forge with micromamba
     - name: Setup Python
       uses: mamba-org/setup-micromamba@v1
