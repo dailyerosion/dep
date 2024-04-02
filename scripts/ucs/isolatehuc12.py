@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 
 pgconn = get_dbconn("idep")
 df = read_sql(
@@ -21,7 +21,7 @@ for scenario, label in zip(
     x = []
     y = []
     accum = 0
-    for i, row in df2.iterrows():
+    for _, row in df2.iterrows():
         x.append(row["valid"])
         accum += row["avg_loss"] * 4.463
         y.append(accum)

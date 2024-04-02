@@ -8,7 +8,7 @@ from math import atan2, degrees, pi
 
 from psycopg.rows import dict_row
 from pydep.util import get_cli_fname
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 from tqdm import tqdm
 
 SCENARIO = int(sys.argv[1])
@@ -52,7 +52,7 @@ def simplify(rows):
     newrows = []
     lrow = rows[0]
     newrows.append(lrow)
-    for i, row in enumerate(rows):
+    for _, row in enumerate(rows):
         # If they are the 'same', continue
         if row["landuse"] == "UUUUUUUUUU":
             continue

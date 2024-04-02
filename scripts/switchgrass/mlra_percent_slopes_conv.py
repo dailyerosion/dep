@@ -1,7 +1,7 @@
 """Print out the percentage of slopes converted."""
 
 from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 
 LABELS = {
     36: "Slopes > 3% to Switchgrass",
@@ -24,7 +24,7 @@ def main(argv):
     )
 
     print("%s," % (mlraxref.at[mlra_id, "mlra_name"],), end="")
-    for col, scenario in enumerate(range(36, 39)):
+    for _, scenario in enumerate(range(36, 39)):
         df = read_sql(
             """
         with myhucs as (

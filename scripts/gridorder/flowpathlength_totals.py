@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     # Begin the processing work now!
     pool = multiprocessing.Pool()
-    for df, huc12, slopes in tqdm(
+    for df, huc12, _slopes in tqdm(
         pool.imap_unordered(do_huc12, huc12s),
         total=len(huc12s),
         disable=(not sys.stdout.isatty()),

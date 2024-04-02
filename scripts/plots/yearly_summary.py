@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from geopandas import read_postgis
 from matplotlib.patches import Polygon
+from pyiem.database import get_dbconn
 from pyiem.plot import MapPlot
-from pyiem.util import get_dbconn
 
 V2NAME = {
     "avg_loss": "Detachment",
@@ -104,7 +104,7 @@ def main():
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
 
     # m.ax.add_geometries(df['geo'], ccrs.PlateCarree())
-    for i, row in df.iterrows():
+    for _, row in df.iterrows():
         c = cmap(norm([row["data"]]))[0]
         arr = np.asarray(row["geo"].exterior)
         points = m.ax.projection.transform_points(

@@ -67,7 +67,7 @@ def main(argv):
         geom_col="geo",
         index_col="fpath",
     )
-    for fpath, row in df.iterrows():
+    for _fpath, row in df.iterrows():
         points = row["geo"].xy
         ax.plot(
             points[0],

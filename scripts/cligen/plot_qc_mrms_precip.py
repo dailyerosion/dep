@@ -10,6 +10,7 @@ import netCDF4
 import numpy as np
 from geopandas import read_postgis
 from matplotlib.patches import Polygon
+from pyiem.database import get_dbconn
 from pyiem.iemre import (
     EAST,
     NORTH,
@@ -19,7 +20,6 @@ from pyiem.iemre import (
     get_daily_mrms_ncname,
 )
 from pyiem.plot import MapPlot
-from pyiem.util import get_dbconn
 
 YS = np.arange(SOUTH, NORTH, 0.01)
 XS = np.arange(WEST, EAST, 0.01)
@@ -92,7 +92,7 @@ def do(valid):
         geom_col="geom",
         index_col="fpath",
     )
-    for fpath, row in df.iterrows():
+    for _fpath, row in df.iterrows():
         mp.ax.plot(row["geom"].xy[0], row["geom"].xy[1], c="k")
 
     df = read_postgis(

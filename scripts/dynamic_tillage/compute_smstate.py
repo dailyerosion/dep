@@ -6,21 +6,22 @@ workflow.
 """
 
 import os
-import sys
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
+import click
 import geopandas as gpd
 import pandas as pd
 from pydep.io.dep import read_wb
-from pyiem.util import get_sqlalchemy_conn, logger
+from pyiem.database import get_sqlalchemy_conn
+from pyiem.util import logger
 from sqlalchemy import text
 from tqdm import tqdm
 
 LOG = logger()
 
 
-def job(huc12, year):
+def job(huc12, dt):
     """Do work for a HUC12"""
     with get_sqlalchemy_conn("idep") as conn:
         # Build up cross reference of fields and flowpath/OFEs
@@ -38,8 +39,6 @@ def job(huc12, year):
             index_col=None,
         )
     dfs = []
-    sts = pd.Timestamp(f"{year}/04/14")  # Need "yesterday"
-    ets = pd.Timestamp(f"{year}/06/01")
     for flowpath in df["fpath"].unique():
         flowpath = int(flowpath)
         wbfn = f"/i/0/wb/{huc12[:8]}/{huc12[8:]}/{huc12}_{flowpath}.wb"
@@ -49,7 +48,7 @@ def job(huc12, year):
             smdf = read_wb(wbfn)
         except Exception as exp:
             raise ValueError(f"Read {wbfn} failed") from exp
-        smdf = smdf[(smdf["date"] >= sts) & (smdf["date"] <= ets)]
+        smdf = smdf[smdf["date"] == pd.Timestamp(dt)]
         # Each flowpath + ofe should be associated with a fbndid
         for ofe, gdf in smdf.groupby("ofe"):
             fbndid = df[(df["fpath"] == flowpath) & (df["ofe"] == ofe)].iloc[
@@ -61,20 +60,26 @@ def job(huc12, year):
         df = pd.concat(dfs)
         df["huc12"] = huc12
         return df
+    return None
 
 
-def main(argv):
+@click.command()
+@click.option("--date", "dt", type=click.DateTime(), help="Date to process")
+@click.option("--huc12", type=str, help="HUC12 to process")
+def main(dt, huc12):
     """Go Main Go."""
-    year = int(argv[1])
+    dt = dt.date()
+    huc12limiter = "" if huc12 is None else " and huc_12 = :huc12"
     with get_sqlalchemy_conn("idep") as conn:
         huc12df = gpd.read_postgis(
-            """
+            text(f"""
             SELECT geom, huc_12,
             ST_x(st_transform(st_centroid(geom), 4326)) as lon,
             ST_y(st_transform(st_centroid(geom), 4326)) as lat
-            from huc12 where scenario = 0
-            """,
+            from huc12 where scenario = 0 {huc12limiter}
+            """),
             conn,
+            params={"huc12": huc12},
             geom_col="geom",
             index_col="huc_12",
         )
@@ -94,16 +99,16 @@ def main(argv):
             print(error)
             pool.terminate()
 
-        for huc12 in huc12df.index.values:
+        for _huc12 in huc12df.index.values:
             pool.apply_async(
-                job, (huc12, year), callback=_cb, error_callback=_eb
+                job, (_huc12, dt), callback=_cb, error_callback=_eb
             )
         pool.close()
         pool.join()
 
     df = pd.concat(dfs).reset_index().drop(columns=["index"])
-    df.to_feather(f"smstate{year}.feather")
+    df.to_feather(f"smstate{dt:%Y%m%d}.feather")
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
