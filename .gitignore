@@ -11,6 +11,7 @@
 **/*.xlsx
 **/*.txt
 **/*.pptx
+**/*.png
 **/*.feather
 /.vscode
 prj2wepp/wepp/hill.slp
