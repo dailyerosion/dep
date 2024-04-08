@@ -1,9 +1,69 @@
 """Plot accumulated acres diagnostic."""
 
+import geopandas as gpd
+import numpy as np
 import pandas as pd
+from matplotlib.colors import BoundaryNorm
 from matplotlib.patches import Rectangle
 from pyiem.database import get_sqlalchemy_conn
-from pyiem.plot import MapPlot, figure_axes
+from pyiem.plot import MapPlot, figure_axes, get_cmap
+from sqlalchemy import text
+
+
+def plot_map_progress(i, dt):
+    """Make a map diagnostic."""
+    charidx = dt.year - 2007 + 1
+    with get_sqlalchemy_conn("idep") as conn:
+        huc12df = gpd.read_postgis(
+            text("""
+            with data as (
+                select huc12, sum(acres) as total,
+                sum(case when o.plant is not null then acres else 0 end)
+                    as planted from fields f LEFT JOIN field_operations o
+                on (f.field_id = o.field_id and o.year = :year and
+                o.plant <= :dt) where scenario = 0 and
+                substr(landuse, :charidx, 1) = 'C' GROUP by huc12
+            )
+            select huc_12, ST_Transform(simple_geom, 4326) as geom,
+            total, planted
+            from huc12 h JOIN data d on (h.huc_12 = d.huc12)
+            where scenario = 0
+        """),
+            conn,
+            params={"year": dt.year, "dt": dt, "charidx": charidx},
+            index_col="huc_12",
+            geom_col="geom",
+        )
+    huc12df["progress"] = huc12df["planted"] / huc12df["total"] * 100.0
+    bins = np.arange(0, 101, 10)
+    cmap = get_cmap("jet")
+    cmap.set_under("white")
+    cmap.set_over("black")
+    norm = BoundaryNorm(bins, cmap.N)
+    huc12df["color"] = cmap(norm(huc12df["progress"].values)).tolist()
+    minx, miny, maxx, maxy = huc12df["geom"].to_crs(4326).total_bounds
+    buffer = 0.01
+
+    mp = MapPlot(
+        title=f"DEP Corn Planting Progress on {dt:%Y %b %d}",
+        logo="dep",
+        sector="custom",
+        west=minx - buffer,
+        north=maxy + buffer,
+        south=miny - buffer,
+        east=maxx + buffer,
+        caption="Daily Erosion Project",
+        continentalcolor="white",
+    )
+    huc12df.to_crs(mp.panels[0].crs).plot(
+        ax=mp.panels[0].ax,
+        aspect=None,
+        color=huc12df["color"],
+        zorder=100,
+    )
+    mp.draw_colorbar(bins, cmap, norm, units="Percent", extend="max")
+    mp.fig.savefig(f"plant{i:04.0f}.png")
+    mp.close()
 
 
 def plot_map(i, dt, huc12df, fields):
@@ -162,4 +222,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    for _i, _dt in enumerate(pd.date_range("2023-04-15", "2023-06-04")):
+        plot_map_progress(_i, _dt)

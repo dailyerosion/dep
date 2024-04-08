@@ -6,8 +6,9 @@ workflow.
 """
 
 import os
+from functools import partial
 from multiprocessing import cpu_count
-from multiprocessing.pool import ThreadPool
+from multiprocessing.pool import Pool
 
 import click
 import geopandas as gpd
@@ -21,7 +22,7 @@ from tqdm import tqdm
 LOG = logger()
 
 
-def job(huc12, dt):
+def job(dates, huc12):
     """Do work for a HUC12"""
     with get_sqlalchemy_conn("idep") as conn:
         # Build up cross reference of fields and flowpath/OFEs
@@ -48,7 +49,7 @@ def job(huc12, dt):
             smdf = read_wb(wbfn)
         except Exception as exp:
             raise ValueError(f"Read {wbfn} failed") from exp
-        smdf = smdf[smdf["date"] == pd.Timestamp(dt)]
+        smdf = smdf[smdf["date"].isin(dates)]
         # Each flowpath + ofe should be associated with a fbndid
         for ofe, gdf in smdf.groupby("ofe"):
             fbndid = df[(df["fpath"] == flowpath) & (df["ofe"] == ofe)].iloc[
@@ -59,16 +60,20 @@ def job(huc12, dt):
     if dfs:
         df = pd.concat(dfs)
         df["huc12"] = huc12
-        return df
+        return df.to_dict(orient="records")
     return None
 
 
 @click.command()
 @click.option("--date", "dt", type=click.DateTime(), help="Date to process")
 @click.option("--huc12", type=str, help="HUC12 to process")
-def main(dt, huc12):
+@click.option("--year", type=int, help="Year to process 4/14 through 6/5")
+def main(dt, huc12, year):
     """Go Main Go."""
-    dt = dt.date()
+    if dt is None:
+        dates = pd.date_range(f"{year}-04-14", f"{year}-06-05")
+    else:
+        dates = [pd.Timestamp(dt.date())]
     huc12limiter = "" if huc12 is None else " and huc_12 = :huc12"
     with get_sqlalchemy_conn("idep") as conn:
         huc12df = gpd.read_postgis(
@@ -84,30 +89,19 @@ def main(dt, huc12):
             index_col="huc_12",
         )
     progress = tqdm(total=len(huc12df.index))
-    dfs = []
-
-    def _cb(res):
-        """Success."""
-        progress.update()
-        if res is not None:
-            dfs.append(res)
-
-    with ThreadPool(min([4, cpu_count() / 2])) as pool:
-
-        def _eb(error):
-            """Failure."""
-            print(error)
-            pool.terminate()
-
-        for _huc12 in huc12df.index.values:
-            pool.apply_async(
-                job, (_huc12, dt), callback=_cb, error_callback=_eb
-            )
+    rows = []
+    func = partial(job, dates)
+    with Pool(min([4, cpu_count() / 2])) as pool:
+        for res in pool.imap_unordered(func, huc12df.index.values):
+            progress.update(1)
+            if res is not None:
+                rows.extend(res)
         pool.close()
         pool.join()
 
-    df = pd.concat(dfs).reset_index().drop(columns=["index"])
-    df.to_feather(f"smstate{dt:%Y%m%d}.feather")
+    df = pd.DataFrame(rows)
+    for ddt, dfdate in df.groupby("date"):
+        dfdate.to_feather(f"smstate{ddt:%Y%m%d}.feather")
 
 
 if __name__ == "__main__":

@@ -17,6 +17,7 @@ LOG = logger()
 @click.option("--scenario", type=int, default=0)
 def main(year, scenario):
     """Run for the given year."""
+    dbcolidx = year - 2007 + 1
     with get_sqlalchemy_conn("idep") as conn:
         # Delete current year's data
         res = conn.execute(
@@ -29,16 +30,22 @@ def main(year, scenario):
         )
         LOG.info("deleted %s field operation rows", res.rowcount)
         conn.commit()
-        # figure out the fields we need to compute
+        # The isAg field is not reliable, we need to look at the landuse
+        # column which we control planting dates for.
         fields = read_sql(
             text("""
                 select field_id, landuse, management,
                 st_y(st_centroid(st_transform(geom, 4326))) as lat
                 from fields where scenario = :scenario
-                and isag and landuse is not null and management is not null
+                and substr(landuse, :dbcolidx, 1) = ANY(:crops)
+                and management is not null
             """),
             conn,
-            params={"scenario": scenario},
+            params={
+                "scenario": scenario,
+                "dbcolidx": dbcolidx,
+                "crops": ["B", "C", "L", "W"],
+            },
             index_col="field_id",
         )
     LOG.info("Processing %s fields", len(fields.index))
