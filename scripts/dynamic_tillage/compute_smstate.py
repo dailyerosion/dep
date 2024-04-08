@@ -6,8 +6,9 @@ workflow.
 """
 
 import os
+from functools import partial
 from multiprocessing import cpu_count
-from multiprocessing.pool import ThreadPool
+from multiprocessing.pool import Pool
 
 import click
 import geopandas as gpd
@@ -21,7 +22,7 @@ from tqdm import tqdm
 LOG = logger()
 
 
-def job(huc12, dates):
+def job(dates, huc12):
     """Do work for a HUC12"""
     with get_sqlalchemy_conn("idep") as conn:
         # Build up cross reference of fields and flowpath/OFEs
@@ -59,7 +60,7 @@ def job(huc12, dates):
     if dfs:
         df = pd.concat(dfs)
         df["huc12"] = huc12
-        return df
+        return df.to_dict(orient="records")
     return None
 
 
@@ -88,29 +89,17 @@ def main(dt, huc12, year):
             index_col="huc_12",
         )
     progress = tqdm(total=len(huc12df.index))
-    dfs = []
-
-    def _cb(res):
-        """Success."""
-        progress.update()
-        if res is not None:
-            dfs.append(res)
-
-    with ThreadPool(min([4, cpu_count() / 2])) as pool:
-
-        def _eb(error):
-            """Failure."""
-            print(error)
-            pool.terminate()
-
-        for _huc12 in huc12df.index.values:
-            pool.apply_async(
-                job, (_huc12, dates), callback=_cb, error_callback=_eb
-            )
+    rows = []
+    func = partial(job, dates)
+    with Pool(min([4, cpu_count() / 2])) as pool:
+        for res in pool.imap_unordered(func, huc12df.index.values):
+            progress.update(1)
+            if res is not None:
+                rows.extend(res)
         pool.close()
         pool.join()
 
-    df = pd.concat(dfs).reset_index().drop(columns=["index"])
+    df = pd.DataFrame(rows)
     for ddt, dfdate in df.groupby("date"):
         dfdate.to_feather(f"smstate{ddt:%Y%m%d}.feather")
 
