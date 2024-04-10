@@ -9,3 +9,8 @@ lint.select = [
 ]
 target-version = "py39"
 
+# per memory issues microsoft/pylance-release/issues/5739
+[tool.pyright]
+autoSearchPaths = false
+exclude = ["data/", "prj2wepp/"]
+ignore = ["data/", "prj2wepp/"]
