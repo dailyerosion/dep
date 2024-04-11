@@ -176,7 +176,8 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
     if pd.isnull(acres_tilled):
         acres_tilled = 0
 
-    if dt.month < 6:
+    mud_it_in = f"{dt:%m%d}" >= "0610"
+    if not mud_it_in:
         # Soil Moisture check.  We are not modeling every field, so we are a
         # bit generous here, are 50% of **model** fields above plastic_limit?
         fields["sw1"] = pd.Series(fieldsw)
@@ -198,7 +199,7 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
     fields["tillage"] = fields["management"].str.slice(char_at - 1, char_at)
 
     total_acres = fields["acres"].sum()
-    limit = total_acres / 10.0 if dt.month < 6 else total_acres + 1
+    limit = (total_acres / 10.0) if not mud_it_in else total_acres + 1
 
     # Work on tillage first, so to avoid planting on tilled fields
     for fbndid, row in fields[fields["till_needed"]].iterrows():
@@ -244,11 +245,12 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
     )
     cursor.close()
     conn.commit()
-    return acres_planted, acres_tilled
     # Update the .rot files, when necessary
-    df2 = df[(df["field_id"].isin(df2["field_id"])) & (df["ofe"].notna())]
-    for _, row in df2.iterrows():
-        edit_rotfile(dt.year, huc12, row)
+    if dt.month == 6 and dt.day == 14:
+        df2 = df[(df["field_id"].isin(df2["field_id"])) & (df["ofe"].notna())]
+        for _, row in df2.iterrows():
+            edit_rotfile(dt.year, huc12, row)
+    return acres_planted, acres_tilled
     for fpath in df2["fpath"].unique():
         prj2wepp(huc12, fpath)
 
@@ -309,8 +311,8 @@ def main(scenario, dt, huc12):
             geom_col="geom",
             index_col="huc_12",
         )
-    # In June, we mud it in.
-    if dt.month < 6:
+    # After June 10th, we mud it in.
+    if f"{dt:%m%d}" < "0610":
         # Estimate today's rainfall so to delay triggers
         estimate_rainfall(huc12df, dt)
         # Any HUC12 over 10mm gets skipped
