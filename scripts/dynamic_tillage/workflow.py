@@ -31,6 +31,7 @@ from tqdm import tqdm
 pd.set_option("future.no_silent_downcasting", True)
 LOG = logger()
 CPU_COUNT = min([4, cpu_count() / 2])
+HUC12STATUSDIR = "/mnt/idep2/data/huc12status"
 PROJDIR = "/opt/dep/prj2wepp"
 EXE = f"{PROJDIR}/prj2wepp"
 
@@ -112,6 +113,7 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
     Returns the number of acres planted and tilled.  A negative value is a
     sentinel that the HUC12 failed due to soil moisture constraint.
     """
+    dbcolidx = dt.year - 2007 + 1
     with get_sqlalchemy_conn("idep") as conn:
         # build up the cross reference of everyhing we need to know
         df = pd.read_sql(
@@ -126,7 +128,9 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
                 SELECT ofe, fpath, f.fbndid, plastic_limit, f.landuse,
                 f.management, f.acres, f.field_id
                 from fields f LEFT JOIN myofes m on (f.fbndid = m.fbndid)
-                WHERE f.huc12 = :huc12 and f.isag ORDER by fpath, ofe)
+                WHERE f.huc12 = :huc12 and
+                substr(landuse, :dbcolidx, 1) = ANY(:crops)
+                ORDER by fpath, ofe)
             select a.*, o.till1, o.till2, o.till3, o.plant, o.year,
             plant >= :dt as plant_needed,
             coalesce(
@@ -138,7 +142,13 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
             """
             ),
             conn,
-            params={"huc12": huc12, "year": dt.year, "dt": dt},
+            params={
+                "huc12": huc12,
+                "year": dt.year,
+                "dt": dt,
+                "crops": ["B", "C", "L", "W"],
+                "dbcolidx": dbcolidx,
+            },
             index_col=None,
         )
     if df.empty:
@@ -171,15 +181,16 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
         # bit generous here, are 50% of **model** fields above plastic_limit?
         fields["sw1"] = pd.Series(fieldsw)
         modelled = (fields["sw1"] > 0).sum()
-        hits = (fields["sw1"] > fields["plastic_limit"]).sum()
-        if hits > modelled / 2:
-            LOG.debug(
-                "HUC12: %s has %s/%s fields above plastic limit",
-                huc12,
-                hits,
-                modelled,
-            )
-            return -1, -1
+        if modelled > 1:
+            hits = (fields["sw1"] > fields["plastic_limit"]).sum()
+            if hits > modelled / 2:
+                LOG.debug(
+                    "HUC12: %s has %s/%s fields above plastic limit",
+                    huc12,
+                    hits,
+                    modelled,
+                )
+                return -1, -1
 
     # Compute things for year
     char_at = (dt.year - 2007) + 1
@@ -244,7 +255,7 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
 
 def estimate_soiltemp(huc12df, dt):
     """Write mean GFS soil temperature C into huc12df."""
-    ppath = f"{dt:%Y/%m/%d}/model/gfs/gfs_{dt:%Y%m%d}00_iemre.nc"
+    ppath = f"{dt:%Y/%m/%d}/model/gfs/gfs_{dt:%Y%m%d}12_iemre.nc"
     with archive_fetch(ppath) as ncfn, ncopen(ncfn) as nc:
         tsoil = np.mean(nc.variables["tsoil"][1:7], axis=0) - 273.15
         y = np.digitize(huc12df["lat"].values, nc.variables["lat"][:])
@@ -349,6 +360,7 @@ def main(scenario, dt, huc12):
             progress.update()
             if planted < 0:
                 huc12df.at[huc12, "limited_by_soilmoisture"] = True
+                huc12df.at[huc12, "limited"] = True
             else:
                 total_planted += planted
                 total_tilled += tilled
@@ -364,6 +376,13 @@ def main(scenario, dt, huc12):
         huc12df["limited_by_precip"].sum(),
         huc12df["limited_by_soiltemp"].sum(),
     )
+
+    # save a debug output file
+    mydir = f"{HUC12STATUSDIR}/{dt:%Y}"
+    os.makedirs(mydir, exist_ok=True)
+    if len(huc12df.index) == 1:  # Don't save when run for single huc12
+        return
+    huc12df.drop(columns="geom").to_feather(f"{mydir}/{dt:%Y%m%d}.feather")
 
 
 if __name__ == "__main__":

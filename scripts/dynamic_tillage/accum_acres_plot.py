@@ -222,5 +222,5 @@ def main():
 
 
 if __name__ == "__main__":
-    for _i, _dt in enumerate(pd.date_range("2023-04-15", "2023-06-04")):
+    for _i, _dt in enumerate(pd.date_range("2008-04-15", "2008-06-05")):
         plot_map_progress(_i, _dt)
