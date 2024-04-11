@@ -179,11 +179,12 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
     mud_it_in = f"{dt:%m%d}" >= "0610"
     if not mud_it_in:
         # Soil Moisture check.  We are not modeling every field, so we are a
-        # bit generous here, are 50% of **model** fields above plastic_limit?
+        # bit generous here, are 50% of **model** fields above
+        # (plastic_limit * 0.8) ?
         fields["sw1"] = pd.Series(fieldsw)
         modelled = (fields["sw1"] > 0).sum()
         if modelled > 1:
-            hits = (fields["sw1"] > fields["plastic_limit"]).sum()
+            hits = (fields["sw1"] > (fields["plastic_limit"] * 0.8)).sum()
             if hits > modelled / 2:
                 LOG.debug(
                     "HUC12: %s has %s/%s fields above plastic limit",
