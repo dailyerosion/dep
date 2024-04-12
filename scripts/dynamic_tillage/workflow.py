@@ -156,7 +156,11 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
         return 0, 0
 
     # Screen out when there are no fields that need planting or tilling
-    if not df["plant_needed"].any() and not df["till_needed"].any():
+    if (
+        not df["plant_needed"].any()
+        and not df["till_needed"].any()
+        and f"{dt:%m%d}" < "0614"
+    ):
         LOG.debug("No fields need planting or tilling for %s", huc12)
         return 0, 0
 
@@ -235,23 +239,24 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
 
     # Update the database
     df2 = fields[fields["operation_done"]].reset_index()
-    if df2.empty:
-        return acres_planted, acres_tilled
-    conn, cursor = get_dbconnc("idep")
-    cursor.executemany(
-        "update field_operations set plant = %s, till1 = %s, "
-        "till2 = %s, till3 = %s where field_id = %s and year = %s",
-        df2[
-            ["plant", "till1", "till2", "till3", "field_id", "year"]
-        ].itertuples(index=False),
-    )
-    cursor.close()
-    conn.commit()
-    # Update the .rot files, when necessary
+    if not df2.empty:
+        conn, cursor = get_dbconnc("idep")
+        cursor.executemany(
+            "update field_operations set plant = %s, till1 = %s, "
+            "till2 = %s, till3 = %s where field_id = %s and year = %s",
+            df2[
+                ["plant", "till1", "till2", "till3", "field_id", "year"]
+            ].itertuples(index=False),
+        )
+        cursor.close()
+        conn.commit()
+    # Update all the .rot files
     if dt.month == 6 and dt.day == 14:
+        df2 = df[df["ofe"].notna()]
+    elif not df2.empty:
         df2 = df[(df["field_id"].isin(df2["field_id"])) & (df["ofe"].notna())]
-        for _, row in df2.iterrows():
-            edit_rotfile(dt.year, huc12, row)
+    for _, row in df2.iterrows():
+        edit_rotfile(dt.year, huc12, row)
     return acres_planted, acres_tilled
     for fpath in df2["fpath"].unique():
         prj2wepp(huc12, fpath)
@@ -313,7 +318,7 @@ def main(scenario, dt, huc12):
             false as limited_by_soiltemp,
             false as limited_by_soilmoisture,
             false as limited,
-            99 as tsoil,
+            99.9 as tsoil,
             ST_x(st_transform(st_centroid(geom), 4326)) as lon,
             ST_y(st_transform(st_centroid(geom), 4326)) as lat
             from huc12 where scenario = :scenario {huc12_filter}
