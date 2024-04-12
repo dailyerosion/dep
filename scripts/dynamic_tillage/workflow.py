@@ -13,7 +13,7 @@ import os
 import shutil
 import subprocess
 import threading
-from datetime import timedelta
+from datetime import datetime, timedelta
 from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
 from typing import Tuple
@@ -258,13 +258,22 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
 
 def estimate_soiltemp(huc12df, dt):
     """Write mean GFS soil temperature C into huc12df."""
-    ppath = f"{dt:%Y/%m/%d}/model/gfs/gfs_{dt:%Y%m%d}12_iemre.nc"
-    with archive_fetch(ppath) as ncfn, ncopen(ncfn) as nc:
-        tsoil = np.mean(nc.variables["tsoil"][1:7], axis=0) - 273.15
-        y = np.digitize(huc12df["lat"].values, nc.variables["lat"][:])
-        x = np.digitize(huc12df["lon"].values, nc.variables["lon"][:])
-        for i, idx in enumerate(huc12df.index.values):
-            huc12df.at[idx, "tsoil"] = tsoil[y[i], x[i]]
+    # Look back from 12z at most 24 hours for a file to use
+    z12 = datetime(dt.year, dt.month, dt.day, 12)
+    for offset in range(0, 25, 6):
+        now = z12 - timedelta(hours=offset)
+        ppath = f"{now:%Y/%m/%d}/model/gfs/gfs_{now:%Y%m%d%H}_iemre.nc"
+        with archive_fetch(ppath) as ncfn:
+            if ncfn is None:
+                continue
+            LOG.info("Using GFS@%s for soil temperature", now)
+            with ncopen(ncfn) as nc:
+                tsoil = np.mean(nc.variables["tsoil"][1:7], axis=0) - 273.15
+                y = np.digitize(huc12df["lat"].values, nc.variables["lat"][:])
+                x = np.digitize(huc12df["lon"].values, nc.variables["lon"][:])
+                for i, idx in enumerate(huc12df.index.values):
+                    huc12df.at[idx, "tsoil"] = tsoil[y[i], x[i]]
+                break
 
 
 def estimate_rainfall(huc12df, dt):
@@ -303,6 +312,7 @@ def main(scenario, dt, huc12):
             false as limited_by_soiltemp,
             false as limited_by_soilmoisture,
             false as limited,
+            99 as tsoil,
             ST_x(st_transform(st_centroid(geom), 4326)) as lon,
             ST_y(st_transform(st_centroid(geom), 4326)) as lat
             from huc12 where scenario = :scenario {huc12_filter}
