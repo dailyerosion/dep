@@ -13,7 +13,7 @@ import os
 import shutil
 import subprocess
 import threading
-from datetime import timedelta
+from datetime import datetime, timedelta
 from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
 from typing import Tuple
@@ -156,7 +156,11 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
         return 0, 0
 
     # Screen out when there are no fields that need planting or tilling
-    if not df["plant_needed"].any() and not df["till_needed"].any():
+    if (
+        not df["plant_needed"].any()
+        and not df["till_needed"].any()
+        and f"{dt:%m%d}" < "0614"
+    ):
         LOG.debug("No fields need planting or tilling for %s", huc12)
         return 0, 0
 
@@ -176,13 +180,15 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
     if pd.isnull(acres_tilled):
         acres_tilled = 0
 
-    if dt.month < 6:
+    mud_it_in = f"{dt:%m%d}" >= "0610"
+    if not mud_it_in:
         # Soil Moisture check.  We are not modeling every field, so we are a
-        # bit generous here, are 50% of **model** fields above plastic_limit?
+        # bit generous here, are 50% of **model** fields above
+        # (plastic_limit * 0.8) ?
         fields["sw1"] = pd.Series(fieldsw)
         modelled = (fields["sw1"] > 0).sum()
         if modelled > 1:
-            hits = (fields["sw1"] > fields["plastic_limit"]).sum()
+            hits = (fields["sw1"] > (fields["plastic_limit"] * 0.8)).sum()
             if hits > modelled / 2:
                 LOG.debug(
                     "HUC12: %s has %s/%s fields above plastic limit",
@@ -198,7 +204,8 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
     fields["tillage"] = fields["management"].str.slice(char_at - 1, char_at)
 
     total_acres = fields["acres"].sum()
-    limit = total_acres / 10.0 if dt.month < 6 else total_acres + 1
+    # NB: Crude assessment of NASS peak daily planting rate, was 10%
+    limit = (total_acres * 0.06) if not mud_it_in else total_acres + 1
 
     # Work on tillage first, so to avoid planting on tilled fields
     for fbndid, row in fields[fields["till_needed"]].iterrows():
@@ -232,36 +239,47 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
 
     # Update the database
     df2 = fields[fields["operation_done"]].reset_index()
-    if df2.empty:
-        return acres_planted, acres_tilled
-    conn, cursor = get_dbconnc("idep")
-    cursor.executemany(
-        "update field_operations set plant = %s, till1 = %s, "
-        "till2 = %s, till3 = %s where field_id = %s and year = %s",
-        df2[
-            ["plant", "till1", "till2", "till3", "field_id", "year"]
-        ].itertuples(index=False),
-    )
-    cursor.close()
-    conn.commit()
-    return acres_planted, acres_tilled
-    # Update the .rot files, when necessary
-    df2 = df[(df["field_id"].isin(df2["field_id"])) & (df["ofe"].notna())]
+    if not df2.empty:
+        conn, cursor = get_dbconnc("idep")
+        cursor.executemany(
+            "update field_operations set plant = %s, till1 = %s, "
+            "till2 = %s, till3 = %s where field_id = %s and year = %s",
+            df2[
+                ["plant", "till1", "till2", "till3", "field_id", "year"]
+            ].itertuples(index=False),
+        )
+        cursor.close()
+        conn.commit()
+    # Update all the .rot files
+    if dt.month == 6 and dt.day == 14:
+        df2 = df[df["ofe"].notna()]
+    elif not df2.empty:
+        df2 = df[(df["field_id"].isin(df2["field_id"])) & (df["ofe"].notna())]
     for _, row in df2.iterrows():
         edit_rotfile(dt.year, huc12, row)
+    return acres_planted, acres_tilled
     for fpath in df2["fpath"].unique():
         prj2wepp(huc12, fpath)
 
 
 def estimate_soiltemp(huc12df, dt):
     """Write mean GFS soil temperature C into huc12df."""
-    ppath = f"{dt:%Y/%m/%d}/model/gfs/gfs_{dt:%Y%m%d}12_iemre.nc"
-    with archive_fetch(ppath) as ncfn, ncopen(ncfn) as nc:
-        tsoil = np.mean(nc.variables["tsoil"][1:7], axis=0) - 273.15
-        y = np.digitize(huc12df["lat"].values, nc.variables["lat"][:])
-        x = np.digitize(huc12df["lon"].values, nc.variables["lon"][:])
-        for i, idx in enumerate(huc12df.index.values):
-            huc12df.at[idx, "tsoil"] = tsoil[y[i], x[i]]
+    # Look back from 12z at most 24 hours for a file to use
+    z12 = datetime(dt.year, dt.month, dt.day, 12)
+    for offset in range(0, 25, 6):
+        now = z12 - timedelta(hours=offset)
+        ppath = f"{now:%Y/%m/%d}/model/gfs/gfs_{now:%Y%m%d%H}_iemre.nc"
+        with archive_fetch(ppath) as ncfn:
+            if ncfn is None:
+                continue
+            LOG.info("Using GFS@%s for soil temperature", now)
+            with ncopen(ncfn) as nc:
+                tsoil = np.mean(nc.variables["tsoil"][1:7], axis=0) - 273.15
+                y = np.digitize(huc12df["lat"].values, nc.variables["lat"][:])
+                x = np.digitize(huc12df["lon"].values, nc.variables["lon"][:])
+                for i, idx in enumerate(huc12df.index.values):
+                    huc12df.at[idx, "tsoil"] = tsoil[y[i], x[i]]
+                break
 
 
 def estimate_rainfall(huc12df, dt):
@@ -300,6 +318,7 @@ def main(scenario, dt, huc12):
             false as limited_by_soiltemp,
             false as limited_by_soilmoisture,
             false as limited,
+            99.9 as tsoil,
             ST_x(st_transform(st_centroid(geom), 4326)) as lon,
             ST_y(st_transform(st_centroid(geom), 4326)) as lat
             from huc12 where scenario = :scenario {huc12_filter}
@@ -309,8 +328,8 @@ def main(scenario, dt, huc12):
             geom_col="geom",
             index_col="huc_12",
         )
-    # In June, we mud it in.
-    if dt.month < 6:
+    # After June 10th, we mud it in.
+    if f"{dt:%m%d}" < "0610":
         # Estimate today's rainfall so to delay triggers
         estimate_rainfall(huc12df, dt)
         # Any HUC12 over 10mm gets skipped
