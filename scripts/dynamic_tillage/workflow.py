@@ -200,7 +200,8 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
     fields["tillage"] = fields["management"].str.slice(char_at - 1, char_at)
 
     total_acres = fields["acres"].sum()
-    limit = (total_acres / 10.0) if not mud_it_in else total_acres + 1
+    # NB: Crude assessment of NASS peak daily planting rate, was 10%
+    limit = (total_acres * 0.06) if not mud_it_in else total_acres + 1
 
     # Work on tillage first, so to avoid planting on tilled fields
     for fbndid, row in fields[fields["till_needed"]].iterrows():
