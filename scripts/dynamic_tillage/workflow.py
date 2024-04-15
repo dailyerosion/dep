@@ -34,6 +34,10 @@ CPU_COUNT = min([4, cpu_count() / 2])
 HUC12STATUSDIR = "/mnt/idep2/data/huc12status"
 PROJDIR = "/opt/dep/prj2wepp"
 EXE = f"{PROJDIR}/prj2wepp"
+RUNTIME = {
+    "edit_rotfile": False,
+    "run_prj2wepp": False,
+}
 
 
 def setup_thread():
@@ -255,11 +259,13 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
         df2 = df[df["ofe"].notna()]
     elif not df2.empty:
         df2 = df[(df["field_id"].isin(df2["field_id"])) & (df["ofe"].notna())]
-    for _, row in df2.iterrows():
-        edit_rotfile(dt.year, huc12, row)
+    if RUNTIME["edit_rotfile"] or f"{dt:%m%d}" == "0614":
+        for _, row in df2.iterrows():
+            edit_rotfile(dt.year, huc12, row)
+        if RUNTIME["run_prj2wepp"]:
+            for fpath in df2["fpath"].unique():
+                prj2wepp(huc12, fpath)
     return acres_planted, acres_tilled
-    for fpath in df2["fpath"].unique():
-        prj2wepp(huc12, fpath)
 
 
 def estimate_soiltemp(huc12df, dt):
@@ -280,9 +286,12 @@ def estimate_soiltemp(huc12df, dt):
                 y = np.digitize(huc12df["lat"].values, nc.variables["lat"][:])
                 x = np.digitize(huc12df["lon"].values, nc.variables["lon"][:])
                 for i, idx in enumerate(huc12df.index.values):
-                    huc12df.at[idx, "tsoil_min"] = tmin[y[i], x[i]]
-                    huc12df.at[idx, "tsoil_avg"] = tavg[y[i], x[i]]
-                    huc12df.at[idx, "tsoil_max"] = tmax[y[i], x[i]]
+                    # The crude GFS may have this cell in the great lakes, so
+                    # we do a crude check
+                    off = 0 if tmin[y[i], x[i]] > -40 else 5
+                    huc12df.at[idx, "tsoil_min"] = tmin[y[i] - off, x[i] - off]
+                    huc12df.at[idx, "tsoil_avg"] = tavg[y[i] - off, x[i] - off]
+                    huc12df.at[idx, "tsoil_max"] = tmax[y[i] - off, x[i] - off]
                 break
 
 
@@ -308,8 +317,12 @@ def job(arg):
 @click.option("--scenario", type=int, default=0)
 @click.option("--date", "dt", type=click.DateTime(), required=True)
 @click.option("--huc12", type=str, required=False)
-def main(scenario, dt, huc12):
+@click.option("--edit_rotfile", type=bool, default=False)
+@click.option("--run_prj2wepp", type=bool, default=False)
+def main(scenario, dt, huc12, edit_rotfile, run_prj2wepp):
     """Go Main Go."""
+    RUNTIME["edit_rotfile"] = edit_rotfile
+    RUNTIME["run_prj2wepp"] = run_prj2wepp
     # Deal with dates not datetime
     dt = dt.date()
     LOG.info("Processing %s for scenario %s", dt, scenario)
@@ -334,6 +347,7 @@ def main(scenario, dt, huc12):
             geom_col="geom",
             index_col="huc_12",
         )
+
     # After June 10th, we mud it in.
     if f"{dt:%m%d}" < "0610":
         # Estimate today's rainfall so to delay triggers
@@ -369,7 +383,7 @@ def main(scenario, dt, huc12):
     total_tilled = 0
     queue = []
     for huc12, gdf in smdf.groupby("huc12"):
-        if huc12df.at[huc12, "limited"]:
+        if huc12 not in huc12df.index or huc12df.at[huc12, "limited"]:
             continue
         smdict = (
             gdf[["fbndid", "sw1"]].groupby("fbndid").min().to_dict()["sw1"]
