@@ -3,6 +3,8 @@ Process DEP Soil Moisture to create a state file.
 
 Division of labor and this can run much earlier for the Dynamic Tillage
 workflow.
+
+Crontab entry at 3 PM Central for the previous date.
 """
 
 import os
@@ -74,6 +76,10 @@ def main(dt, huc12, year):
         dates = pd.date_range(f"{year}-04-14", f"{year}-06-05")
     else:
         dates = [pd.Timestamp(dt.date())]
+
+    outdir = f"/mnt/idep2/data/smstate/{dates[0]:%Y}"
+    os.makedirs(outdir, exist_ok=True)
+
     huc12limiter = "" if huc12 is None else " and huc_12 = :huc12"
     with get_sqlalchemy_conn("idep") as conn:
         huc12df = gpd.read_postgis(
@@ -101,7 +107,7 @@ def main(dt, huc12, year):
 
     df = pd.DataFrame(rows)
     for ddt, dfdate in df.groupby("date"):
-        dfdate.to_feather(f"smstate{ddt:%Y%m%d}.feather")
+        dfdate.to_feather(f"{outdir}/smstate{ddt:%Y%m%d}.feather")
 
 
 if __name__ == "__main__":
