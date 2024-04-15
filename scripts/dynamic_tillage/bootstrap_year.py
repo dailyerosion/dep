@@ -78,19 +78,19 @@ def main(year, scenario):
         # till1, till2, till3, plant
         dates = [None, None, None, None]
         if events == 1:
-            dates[3] = date(year, 6, 1)
+            dates[3] = date(year, 6, 10)
         elif events == 2:
-            dates[0] = date(year, 6, 1)
-            dates[3] = date(year, 6, 2)
+            dates[0] = date(year, 6, 10)
+            dates[3] = date(year, 6, 11)
         elif events == 3:
-            dates[0] = date(year, 6, 1)
-            dates[1] = date(year, 6, 2)
-            dates[3] = date(year, 6, 3)
+            dates[0] = date(year, 6, 10)
+            dates[1] = date(year, 6, 11)
+            dates[3] = date(year, 6, 12)
         elif events == 4:
-            dates[0] = date(year, 6, 1)
-            dates[1] = date(year, 6, 2)
-            dates[2] = date(year, 6, 3)
-            dates[3] = date(year, 6, 4)
+            dates[0] = date(year, 6, 10)
+            dates[1] = date(year, 6, 11)
+            dates[2] = date(year, 6, 12)
+            dates[3] = date(year, 6, 13)
         elif events > 4:
             LOG.info("events: %s", events)
             LOG.info("res: %s", res)
