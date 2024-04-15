@@ -274,11 +274,15 @@ def estimate_soiltemp(huc12df, dt):
                 continue
             LOG.info("Using GFS@%s for soil temperature", now)
             with ncopen(ncfn) as nc:
-                tsoil = np.mean(nc.variables["tsoil"][1:7], axis=0) - 273.15
+                tmin = np.min(nc.variables["tsoil"][1:7], axis=0) - 273.15
+                tavg = np.mean(nc.variables["tsoil"][1:7], axis=0) - 273.15
+                tmax = np.max(nc.variables["tsoil"][1:7], axis=0) - 273.15
                 y = np.digitize(huc12df["lat"].values, nc.variables["lat"][:])
                 x = np.digitize(huc12df["lon"].values, nc.variables["lon"][:])
                 for i, idx in enumerate(huc12df.index.values):
-                    huc12df.at[idx, "tsoil"] = tsoil[y[i], x[i]]
+                    huc12df.at[idx, "tsoil_min"] = tmin[y[i], x[i]]
+                    huc12df.at[idx, "tsoil_avg"] = tavg[y[i], x[i]]
+                    huc12df.at[idx, "tsoil_max"] = tmax[y[i], x[i]]
                 break
 
 
@@ -318,7 +322,9 @@ def main(scenario, dt, huc12):
             false as limited_by_soiltemp,
             false as limited_by_soilmoisture,
             false as limited,
-            99.9 as tsoil,
+            99.9 as tsoil_min,
+            99.9 as tsoil_avg,
+            99.9 as tsoil_max,
             ST_x(st_transform(st_centroid(geom), 4326)) as lon,
             ST_y(st_transform(st_centroid(geom), 4326)) as lat
             from huc12 where scenario = :scenario {huc12_filter}
@@ -337,7 +343,7 @@ def main(scenario, dt, huc12):
         # Estimate soil temperature via GFS forecast
         estimate_soiltemp(huc12df, dt)
         # Any HUC12 under 6C gets skipped
-        huc12df.loc[huc12df["tsoil"] < 6, "limited_by_soiltemp"] = True
+        huc12df.loc[huc12df["tsoil_avg"] < 6, "limited_by_soiltemp"] = True
 
     # restrict to HUC12s that are not limited
     huc12df["limited"] = (
