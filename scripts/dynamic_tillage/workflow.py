@@ -391,7 +391,7 @@ def main(scenario, dt, huc12, edit_rotfile, run_prj2wepp):
         queue.append((dt, huc12, smdict))
 
     LOG.warning("%s processes for %s huc12s", CPU_COUNT, len(queue))
-    progress = tqdm(total=len(queue))
+    progress = tqdm(total=len(queue), disable=not os.isatty(1))
 
     with Pool(CPU_COUNT, initializer=setup_thread) as pool:
         for huc12, planted, tilled in pool.imap_unordered(job, queue):
@@ -407,7 +407,7 @@ def main(scenario, dt, huc12, edit_rotfile, run_prj2wepp):
         pool.close()
         pool.join()
 
-    LOG.info(
+    LOG.warning(
         "Planted: %.1f Tilled: %.1f Limited SM: %s Precip: %s Temp: %s",
         total_planted,
         total_tilled,
