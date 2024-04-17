@@ -94,7 +94,7 @@ def main(dt, huc12, year):
             geom_col="geom",
             index_col="huc_12",
         )
-    progress = tqdm(total=len(huc12df.index))
+    progress = tqdm(total=len(huc12df.index), disable=not os.isatty(1))
     rows = []
     func = partial(job, dates)
     with Pool(min([4, cpu_count() / 2])) as pool:
