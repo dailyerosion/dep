@@ -96,7 +96,7 @@ def do_rotation(scenario, zone, rotfn, landuse, management):
         for i in range(1, YEARS):
             # Reset roughness each year
             data["yearly"] += (
-                f"1 2 {i} 1 Tillage OpCropDef.Old_6807 {{0.001, 2}}"
+                f"1 2 {i} 1 Tillage OpCropDef.Old_6807 {{0.001, 2}}\n"
             )
     else:
         data["initcond"] = INITIAL_COND.get(landuse[0], INITIAL_COND_DEFAULT)
