@@ -111,7 +111,7 @@ def edit_rotfile(year, huc12, row):
         fh.write("".join(lines))
 
 
-def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
+def do_huc12(dt, huc12) -> Tuple[int, int]:
     """Process a HUC12.
 
     Returns the number of acres planted and tilled.  A negative value is a
@@ -124,12 +124,12 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
             text(
                 """
             with myofes as (
-                select o.ofe, p.fpath, o.fbndid, g.plastic_limit
+                select o.ofe, p.fpath, o.fbndid
                 from flowpaths p, flowpath_ofes o, gssurgo g
                 WHERE o.flowpath = p.fid and p.huc_12 = :huc12
                 and p.scenario = 0 and o.gssurgo_id = g.id),
             agg as (
-                SELECT ofe, fpath, f.fbndid, plastic_limit, f.landuse,
+                SELECT ofe, fpath, f.fbndid, f.landuse,
                 f.management, f.acres, f.field_id
                 from fields f LEFT JOIN myofes m on (f.fbndid = m.fbndid)
                 WHERE f.huc12 = :huc12 and
@@ -168,9 +168,8 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
         LOG.debug("No fields need planting or tilling for %s", huc12)
         return 0, 0
 
+    # Some logic below, we just want the field information and no dups
     fields = df.groupby("fbndid").first().copy()
-    # Ensure we have a plastic limit, unsure why db has nulls
-    fields["plastic_limit"] = fields["plastic_limit"].fillna(0)
 
     # We could be re-running for a given date, so we first total up the acres
     acres_planted = fields[fields["plant"] == dt]["acres"].sum()
@@ -185,22 +184,6 @@ def do_huc12(dt, huc12, fieldsw) -> Tuple[int, int]:
         acres_tilled = 0
 
     mud_it_in = f"{dt:%m%d}" >= "0610"
-    if not mud_it_in:
-        # Soil Moisture check.  We are not modeling every field, so we are a
-        # bit generous here, are 50% of **model** fields above
-        # (plastic_limit * 0.8) ?
-        fields["sw1"] = pd.Series(fieldsw)
-        modelled = (fields["sw1"] > 0).sum()
-        if modelled > 1:
-            hits = (fields["sw1"] > (fields["plastic_limit"] * 0.8)).sum()
-            if hits > modelled / 2:
-                LOG.debug(
-                    "HUC12: %s has %s/%s fields above plastic limit",
-                    huc12,
-                    hits,
-                    modelled,
-                )
-                return -1, -1
 
     # Compute things for year
     char_at = (dt.year - 2007) + 1
@@ -308,8 +291,8 @@ def estimate_rainfall(huc12df, dt):
 
 def job(arg):
     """Do the job."""
-    dt, huc12, fieldsw = arg
-    planted, tilled = do_huc12(dt, huc12, fieldsw)
+    dt, huc12 = arg
+    planted, tilled = do_huc12(dt, huc12)
     return huc12, planted, tilled
 
 
@@ -347,6 +330,8 @@ def main(scenario, dt, huc12, edit_rotfile, run_prj2wepp):
             geom_col="geom",
             index_col="huc_12",
         )
+    huc12df["tilled"] = pd.NA
+    huc12df["planted"] = pd.NA
 
     # After June 10th, we mud it in.
     if f"{dt:%m%d}" < "0610":
@@ -358,10 +343,25 @@ def main(scenario, dt, huc12, edit_rotfile, run_prj2wepp):
         estimate_soiltemp(huc12df, dt)
         # Any HUC12 under 6C gets skipped
         huc12df.loc[huc12df["tsoil_avg"] < 6, "limited_by_soiltemp"] = True
+        # The soil moisture state is the day before
+        yesterday = dt - timedelta(days=1)
+        smdf = pd.read_feather(
+            f"/mnt/idep2/data/smstate/{yesterday:%Y}/"
+            f"smstate{yesterday:%Y%m%d}.feather"
+        )
+        for huc12, gdf in smdf.groupby("huc12"):
+            if huc12 not in huc12df.index:
+                continue
+            # Require that 50% of modelled OFEs are 0.8 of plastic limit
+            toowet = gdf["sw1"].gt(gdf["plastic_limit"] * 0.8).sum()
+            if toowet > len(gdf.index) / 2:
+                huc12df.at[huc12, "limited_by_soilmoisture"] = True
 
     # restrict to HUC12s that are not limited
     huc12df["limited"] = (
-        huc12df["limited_by_precip"] | huc12df["limited_by_soiltemp"]
+        huc12df["limited_by_precip"]
+        | huc12df["limited_by_soiltemp"]
+        | huc12df["limited_by_soilmoisture"]
     )
     LOG.info(
         "%s/%s HUC12s failed precip + soiltemp check",
@@ -369,26 +369,12 @@ def main(scenario, dt, huc12, edit_rotfile, run_prj2wepp):
         len(huc12df.index),
     )
 
-    # The soil moisture state is the day before
-    yesterday = dt - timedelta(days=1)
-    smdf = pd.read_feather(
-        f"/mnt/idep2/data/smstate/{yesterday:%Y}/"
-        f"smstate{yesterday:%Y%m%d}.feather"
-    )
-
     # Need to run from project dir so local userdb is found
     os.chdir(PROJDIR)
 
-    total_planted = 0
-    total_tilled = 0
     queue = []
-    for huc12, gdf in smdf.groupby("huc12"):
-        if huc12 not in huc12df.index or huc12df.at[huc12, "limited"]:
-            continue
-        smdict = (
-            gdf[["fbndid", "sw1"]].groupby("fbndid").min().to_dict()["sw1"]
-        )
-        queue.append((dt, huc12, smdict))
+    for huc12 in huc12df[~huc12df["limited"]].index:
+        queue.append((dt, huc12))
 
     LOG.warning("%s processes for %s huc12s", CPU_COUNT, len(queue))
     progress = tqdm(total=len(queue), disable=not os.isatty(1))
@@ -397,20 +383,16 @@ def main(scenario, dt, huc12, edit_rotfile, run_prj2wepp):
         for huc12, planted, tilled in pool.imap_unordered(job, queue):
             progress.set_description(huc12)
             progress.update()
-            if planted < 0:
-                huc12df.at[huc12, "limited_by_soilmoisture"] = True
-                huc12df.at[huc12, "limited"] = True
-            else:
-                total_planted += planted
-                total_tilled += tilled
+            huc12df.at[huc12, "planted"] = planted
+            huc12df.at[huc12, "tilled"] = tilled
 
         pool.close()
         pool.join()
 
     LOG.warning(
         "Planted: %.1f Tilled: %.1f Limited SM: %s Precip: %s Temp: %s",
-        total_planted,
-        total_tilled,
+        huc12df["planted"].sum(),
+        huc12df["tilled"].sum(),
         huc12df["limited_by_soilmoisture"].sum(),
         huc12df["limited_by_precip"].sum(),
         huc12df["limited_by_soiltemp"].sum(),

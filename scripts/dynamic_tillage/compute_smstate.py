@@ -28,10 +28,11 @@ def job(dates, huc12):
     """Do work for a HUC12"""
     with get_sqlalchemy_conn("idep") as conn:
         # Build up cross reference of fields and flowpath/OFEs
-        df = pd.read_sql(
+        huc12df = pd.read_sql(
             text(
                 """
-                select o.ofe, p.fpath, o.fbndid, g.plastic_limit
+                select o.ofe, p.fpath, o.fbndid, g.plastic_limit,
+                p.fpath || '_' || o.ofe as combo, p.huc_12 as huc12
                 from flowpaths p, flowpath_ofes o, gssurgo g
                 WHERE o.flowpath = p.fid and p.huc_12 = :huc12
                 and p.scenario = 0 and o.gssurgo_id = g.id
@@ -41,9 +42,16 @@ def job(dates, huc12):
             params={"huc12": huc12},
             index_col=None,
         )
-    dfs = []
-    for flowpath in df["fpath"].unique():
-        flowpath = int(flowpath)
+    huc12df["sw1"] = pd.NA
+    # expand the cross reference to include the dates, so the original
+    # data frame now has one row per date per metadata row
+    entries = len(huc12df.index)
+    huc12df = huc12df.loc[huc12df.index.repeat(len(dates))]
+    huc12df["date"] = pd.concat([dates] * entries, ignore_index=True).values
+    # need to have a valid index to make magic below work
+    huc12df = huc12df.reset_index(drop=True)
+
+    for flowpath, flowpathdf in huc12df.groupby("fpath"):
         wbfn = f"/i/0/wb/{huc12[:8]}/{huc12[8:]}/{huc12}_{flowpath}.wb"
         if not os.path.isfile(wbfn):
             continue
@@ -52,19 +60,11 @@ def job(dates, huc12):
         except Exception as exp:
             raise ValueError(f"Read {wbfn} failed") from exp
         smdf = smdf[smdf["date"].isin(dates)]
-        smdf["fpath"] = flowpath
-        # Each flowpath + ofe should be associated with a fbndid
         for ofe, gdf in smdf.groupby("ofe"):
-            fbndid = df[(df["fpath"] == flowpath) & (df["ofe"] == ofe)].iloc[
-                0
-            ]["fbndid"]
-            smdf.loc[gdf.index, "fbndid"] = fbndid
-        dfs.append(smdf[["fbndid", "date", "sw1", "fpath", "ofe"]])
-    if dfs:
-        df = pd.concat(dfs)
-        df["huc12"] = huc12
-        return df.to_dict(orient="records")
-    return None
+            ofedf = flowpathdf[flowpathdf["ofe"] == ofe]
+            # assume that we are aligned here, gasp
+            huc12df.loc[ofedf.index, "sw1"] = gdf["sw1"].values
+    return huc12df.to_dict(orient="records")
 
 
 @click.command()
@@ -74,7 +74,7 @@ def job(dates, huc12):
 def main(dt, huc12, year):
     """Go Main Go."""
     if dt is None:
-        dates = pd.date_range(f"{year}-04-14", f"{year}-06-05")
+        dates = pd.Series(pd.date_range(f"{year}-04-14", f"{year}-06-05"))
     else:
         dates = [pd.Timestamp(dt.date())]
 
