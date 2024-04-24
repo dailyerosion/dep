@@ -52,13 +52,14 @@ def job(dates, huc12):
         except Exception as exp:
             raise ValueError(f"Read {wbfn} failed") from exp
         smdf = smdf[smdf["date"].isin(dates)]
+        smdf["fpath"] = flowpath
         # Each flowpath + ofe should be associated with a fbndid
         for ofe, gdf in smdf.groupby("ofe"):
             fbndid = df[(df["fpath"] == flowpath) & (df["ofe"] == ofe)].iloc[
                 0
             ]["fbndid"]
             smdf.loc[gdf.index, "fbndid"] = fbndid
-        dfs.append(smdf[["fbndid", "date", "sw1"]])  # save space
+        dfs.append(smdf[["fbndid", "date", "sw1", "fpath", "ofe"]])
     if dfs:
         df = pd.concat(dfs)
         df["huc12"] = huc12
