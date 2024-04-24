@@ -330,6 +330,8 @@ def main(scenario, dt, huc12, edit_rotfile, run_prj2wepp):
             geom_col="geom",
             index_col="huc_12",
         )
+    huc12df["tilled"] = pd.NA
+    huc12df["planted"] = pd.NA
 
     # After June 10th, we mud it in.
     if f"{dt:%m%d}" < "0610":
@@ -370,8 +372,6 @@ def main(scenario, dt, huc12, edit_rotfile, run_prj2wepp):
     # Need to run from project dir so local userdb is found
     os.chdir(PROJDIR)
 
-    total_planted = 0
-    total_tilled = 0
     queue = []
     for huc12 in huc12df[~huc12df["limited"]].index:
         queue.append((dt, huc12))
@@ -383,16 +383,16 @@ def main(scenario, dt, huc12, edit_rotfile, run_prj2wepp):
         for huc12, planted, tilled in pool.imap_unordered(job, queue):
             progress.set_description(huc12)
             progress.update()
-            total_planted += planted
-            total_tilled += tilled
+            huc12df.at[huc12, "planted"] = planted
+            huc12df.at[huc12, "tilled"] = tilled
 
         pool.close()
         pool.join()
 
     LOG.warning(
         "Planted: %.1f Tilled: %.1f Limited SM: %s Precip: %s Temp: %s",
-        total_planted,
-        total_tilled,
+        huc12df["planted"].sum(),
+        huc12df["tilled"].sum(),
         huc12df["limited_by_soilmoisture"].sum(),
         huc12df["limited_by_precip"].sum(),
         huc12df["limited_by_soiltemp"].sum(),
