@@ -78,9 +78,9 @@ def job(dates, tmpdir, huc12) -> int:
 def main(dt, huc12, year):
     """Go Main Go."""
     if dt is None:
-        dates = pd.Series(pd.date_range(f"{year}-04-14", f"{year}-06-05"))
+        dates = pd.Series(pd.date_range(f"{year}-04-14", f"{year}-06-15"))
     else:
-        dates = [pd.Timestamp(dt.date())]
+        dates = pd.Series([pd.Timestamp(dt.date())])
 
     outdir = f"/mnt/idep2/data/smstate/{dates[0]:%Y}"
     os.makedirs(outdir, exist_ok=True)
