@@ -8,6 +8,7 @@ Crontab entry at 3 PM Central for the previous date.
 """
 
 import os
+import tempfile
 from functools import partial
 from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
@@ -24,7 +25,7 @@ from tqdm import tqdm
 LOG = logger()
 
 
-def job(dates, huc12):
+def job(dates, tmpdir, huc12) -> int:
     """Do work for a HUC12"""
     with get_sqlalchemy_conn("idep") as conn:
         # Build up cross reference of fields and flowpath/OFEs
@@ -51,11 +52,13 @@ def job(dates, huc12):
     # need to have a valid index to make magic below work
     huc12df = huc12df.reset_index(drop=True)
 
+    reads = 0
     for flowpath, flowpathdf in huc12df.groupby("fpath"):
         wbfn = f"/i/0/wb/{huc12[:8]}/{huc12[8:]}/{huc12}_{flowpath}.wb"
         if not os.path.isfile(wbfn):
             continue
         try:
+            reads += 1
             smdf = read_wb(wbfn)
         except Exception as exp:
             raise ValueError(f"Read {wbfn} failed") from exp
@@ -64,7 +67,8 @@ def job(dates, huc12):
             ofedf = flowpathdf[flowpathdf["ofe"] == ofe]
             # assume that we are aligned here, gasp
             huc12df.loc[ofedf.index, "sw1"] = gdf["sw1"].values
-    return huc12df.to_dict(orient="records")
+    huc12df.to_feather(f"{tmpdir}/{huc12}.feather")
+    return reads
 
 
 @click.command()
@@ -96,17 +100,20 @@ def main(dt, huc12, year):
             index_col="huc_12",
         )
     progress = tqdm(total=len(huc12df.index), disable=not os.isatty(1))
-    rows = []
-    func = partial(job, dates)
-    with Pool(min([4, cpu_count() / 2])) as pool:
-        for res in pool.imap_unordered(func, huc12df.index.values):
+    with (
+        Pool(min([4, cpu_count() / 2])) as pool,
+        tempfile.TemporaryDirectory() as tmpdir,
+    ):
+        func = partial(job, dates, tmpdir)
+        for _ in pool.imap_unordered(func, huc12df.index.values):
             progress.update(1)
-            if res is not None:
-                rows.extend(res)
         pool.close()
         pool.join()
 
-    df = pd.DataFrame(rows)
+        df = pd.concat(
+            pd.read_feather(f"{tmpdir}/{huc12}.feather")
+            for huc12 in huc12df.index.values
+        )
     for ddt, dfdate in df.groupby("date"):
         dfdate.to_feather(f"{outdir}/smstate{ddt:%Y%m%d}.feather")
 
