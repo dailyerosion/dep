@@ -101,7 +101,7 @@ def main(dt, huc12, year):
         )
     progress = tqdm(total=len(huc12df.index), disable=not os.isatty(1))
     with (
-        Pool(min([4, cpu_count() / 2])) as pool,
+        Pool(min([8, int(cpu_count() / 2)])) as pool,
         tempfile.TemporaryDirectory() as tmpdir,
     ):
         func = partial(job, dates, tmpdir)
