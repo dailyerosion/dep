@@ -145,23 +145,25 @@ def main(year, district, state):
             geom_col="geom",
             parse_dates="plant",
         )
-        fields_old = gpd.read_postgis(
-            text("""
-            select st_transform(geom, 4326) as geom, plant, huc12, fbndid,
-            acres from fields f LEFT JOIN field_operations_round1 o
-            on (f.field_id = o.field_id and o.year = :year)
-            where scenario = 0 and
-            substr(landuse, :charidx, 1) = 'C'
-            """),
-            conn,
-            params={"year": year, "charidx": charidx},
-            geom_col="geom",
-            parse_dates="plant",
-        )
+        if year < 2024:
+            fields_old = gpd.read_postgis(
+                text("""
+                select st_transform(geom, 4326) as geom, plant, huc12, fbndid,
+                acres from fields f LEFT JOIN field_operations_round1 o
+                on (f.field_id = o.field_id and o.year = :year)
+                where scenario = 0 and
+                substr(landuse, :charidx, 1) = 'C'
+                """),
+                conn,
+                params={"year": year, "charidx": charidx},
+                geom_col="geom",
+                parse_dates="plant",
+            )
 
     # Spatially filter fields that are inside the climdiv region
     fields = gpd.sjoin(fields, boundsdf, predicate="intersects")
-    fields_old = gpd.sjoin(fields_old, boundsdf, predicate="intersects")
+    if year < 2024:
+        fields_old = gpd.sjoin(fields_old, boundsdf, predicate="intersects")
 
     daily_limits = compute_limits(fields["huc12"].unique(), year)
 
@@ -172,13 +174,16 @@ def main(year, district, state):
         pd.date_range(f"{year}-04-15", f"{year}-06-23")
     ).ffill()
 
-    accum_old = fields_old[["plant", "acres"]].groupby("plant").sum().cumsum()
-    accum_old["percent"] = (
-        accum_old["acres"] / fields_old["acres"].sum() * 100.0
-    )
-    accum_old = accum_old.reindex(
-        pd.date_range(f"{year}-04-15", f"{year}-06-23")
-    ).ffill()
+    if year < 2024:
+        accum_old = (
+            fields_old[["plant", "acres"]].groupby("plant").sum().cumsum()
+        )
+        accum_old["percent"] = (
+            accum_old["acres"] / fields_old["acres"].sum() * 100.0
+        )
+        accum_old = accum_old.reindex(
+            pd.date_range(f"{year}-04-15", f"{year}-06-23")
+        ).ffill()
 
     if state is not None:
         title = f"state of {state_names[state]}"
@@ -290,11 +295,12 @@ def main(year, district, state):
         accum["acres"] / fields["acres"].sum() * 100.0,
         label="DEP DynTillv2",
     )
-    ax2.plot(
-        accum_old.index,
-        accum_old["acres"] / fields_old["acres"].sum() * 100.0,
-        label="DEP DynTillv1",
-    )
+    if year < 2024:
+        ax2.plot(
+            accum_old.index,
+            accum_old["acres"] / fields_old["acres"].sum() * 100.0,
+            label="DEP DynTillv1",
+        )
     key = district if district is not None else "num_value"
     ax2.scatter(
         nass["valid"],
