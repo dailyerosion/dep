@@ -13,7 +13,7 @@ import os
 import shutil
 import subprocess
 import threading
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
 from typing import Tuple
@@ -23,7 +23,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from pyiem.database import get_dbconnc, get_sqlalchemy_conn
-from pyiem.iemre import SOUTH, WEST, daily_offset
+from pyiem.iemre import SOUTH, WEST, daily_offset, get_daily_mrms_ncname
 from pyiem.util import archive_fetch, logger, ncopen
 from sqlalchemy import text
 from tqdm import tqdm
@@ -278,10 +278,16 @@ def estimate_soiltemp(huc12df, dt):
                 break
 
 
-def estimate_rainfall(huc12df, dt):
+def estimate_rainfall(huc12df: pd.DataFrame, dt: date):
     """Figure out our rainfall estimate."""
     tidx = daily_offset(dt)
-    with ncopen(f"/mesonet/data/mrms/{dt:%Y}_mrms_daily.nc") as nc:
+    ncfn = get_daily_mrms_ncname(dt.year)
+    depncfn = ncfn.replace("daily", "dep")
+    if os.path.isfile(depncfn):
+        ncfn = depncfn
+        tidx = daily_offset(dt) - daily_offset(dt.replace(month=4, day=15))
+    LOG.info("Using %s[tidx:%s] for precip", ncfn, tidx)
+    with ncopen(ncfn) as nc:
         p01d = nc.variables["p01d"][tidx].filled(0)
     for idx, row in huc12df.iterrows():
         y = int((row["lat"] - SOUTH) * 100.0)
