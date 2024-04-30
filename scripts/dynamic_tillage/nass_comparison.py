@@ -26,7 +26,7 @@ XREF = {
 def compute_limits(huc12s, year):
     """Figure out how our algorithm worked."""
     rows = []
-    for dt in pd.date_range(f"{year}-04-15", f"{year}-06-09"):
+    for dt in pd.date_range(f"{year}-04-11", f"{year}-04-28"):
         status = pd.read_feather(
             f"/mnt/idep2/data/huc12status/{year}/{dt:%Y%m%d}.feather"
         )
@@ -171,7 +171,7 @@ def main(year, district, state):
     accum = fields[["plant", "acres"]].groupby("plant").sum().cumsum()
     accum["percent"] = accum["acres"] / fields["acres"].sum() * 100.0
     accum = accum.reindex(
-        pd.date_range(f"{year}-04-15", f"{year}-06-23")
+        pd.date_range(f"{year}-04-11", f"{year}-06-23")
     ).ffill()
 
     if year < 2024:
@@ -182,7 +182,7 @@ def main(year, district, state):
             accum_old["acres"] / fields_old["acres"].sum() * 100.0
         )
         accum_old = accum_old.reindex(
-            pd.date_range(f"{year}-04-15", f"{year}-06-23")
+            pd.date_range(f"{year}-04-11", f"{year}-06-23")
         ).ffill()
 
     if state is not None:
@@ -192,7 +192,7 @@ def main(year, district, state):
     fig = figure(
         logo="dep",
         title=f"{year} DEP Dynamic Tillage Corn Planting Progress",
-        subtitle=("Comparison with USDA NASS Weekly Progress " f"for {title}"),
+        subtitle=f"Comparison with USDA NASS Weekly Progress for {title}",
         figsize=(10.24, 7.68),
     )
 
