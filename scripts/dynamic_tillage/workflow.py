@@ -1,6 +1,6 @@
 """Dynamic Tillage Workflow.
 
-On a given date between 15 April and 4 June, we will attempt to plant or till
+On a given date between 11 April and 10 June, we will attempt to plant or till
 fields within a HUC12.  We run this script at 9 PM and needs to be done by
 about 12:30 AM.
 
@@ -118,6 +118,12 @@ def do_huc12(dt, huc12) -> Tuple[int, int]:
     sentinel that the HUC12 failed due to soil moisture constraint.
     """
     dbcolidx = dt.year - 2007 + 1
+    crops = ["B", "C", "L", "W"]
+    maxrate = 0.06
+    # If before April 20, we only plant corn
+    if f"{dt:%m%d}" < "0420":
+        crops = ["C"]
+        maxrate = 0.03  # Life choice
     with get_sqlalchemy_conn("idep") as conn:
         # build up the cross reference of everyhing we need to know
         df = pd.read_sql(
@@ -150,7 +156,7 @@ def do_huc12(dt, huc12) -> Tuple[int, int]:
                 "huc12": huc12,
                 "year": dt.year,
                 "dt": dt,
-                "crops": ["B", "C", "L", "W"],
+                "crops": crops,
                 "dbcolidx": dbcolidx,
             },
             index_col=None,
@@ -192,7 +198,7 @@ def do_huc12(dt, huc12) -> Tuple[int, int]:
 
     total_acres = fields["acres"].sum()
     # NB: Crude assessment of NASS peak daily planting rate, was 10%
-    limit = (total_acres * 0.06) if not mud_it_in else total_acres + 1
+    limit = (total_acres * maxrate) if not mud_it_in else total_acres + 1
 
     # Work on tillage first, so to avoid planting on tilled fields
     for fbndid, row in fields[fields["till_needed"]].iterrows():
@@ -285,7 +291,7 @@ def estimate_rainfall(huc12df: pd.DataFrame, dt: date):
     depncfn = ncfn.replace("daily", "dep")
     if os.path.isfile(depncfn):
         ncfn = depncfn
-        tidx = daily_offset(dt) - daily_offset(dt.replace(month=4, day=15))
+        tidx = daily_offset(dt) - daily_offset(dt.replace(month=4, day=11))
     LOG.info("Using %s[tidx:%s] for precip", ncfn, tidx)
     with ncopen(ncfn) as nc:
         p01d = nc.variables["p01d"][tidx].filled(0)

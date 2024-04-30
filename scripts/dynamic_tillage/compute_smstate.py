@@ -74,11 +74,11 @@ def job(dates, tmpdir, huc12) -> int:
 @click.command()
 @click.option("--date", "dt", type=click.DateTime(), help="Date to process")
 @click.option("--huc12", type=str, help="HUC12 to process")
-@click.option("--year", type=int, help="Year to process 4/14 through 6/5")
+@click.option("--year", type=int, help="Year to process 4/10 through 6/15")
 def main(dt, huc12, year):
     """Go Main Go."""
     if dt is None:
-        dates = pd.Series(pd.date_range(f"{year}-04-14", f"{year}-06-15"))
+        dates = pd.Series(pd.date_range(f"{year}-04-10", f"{year}-06-15"))
     else:
         dates = pd.Series([pd.Timestamp(dt.date())])
 
