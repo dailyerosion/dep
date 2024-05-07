@@ -26,7 +26,8 @@ XREF = {
 def compute_limits(huc12s, year):
     """Figure out how our algorithm worked."""
     rows = []
-    for dt in pd.date_range(f"{year}-04-11", f"{year}-04-28"):
+    # June 10th is mud-it-in and we have no estimates then
+    for dt in pd.date_range(f"{year}-04-11", f"{year}-06-09"):
         status = pd.read_feather(
             f"/mnt/idep2/data/huc12status/{year}/{dt:%Y%m%d}.feather"
         )
@@ -83,19 +84,20 @@ def get_geo_bounds(district, state):
         )
 
 
-def get_nass(year, district, state):
+def get_nass(year, state, crop):
     if state is not None:
         with get_sqlalchemy_conn("coop") as conn:
             return pd.read_sql(
                 text(
-                    """
+                    f"""
                 select num_value,
                 case when statisticcat_desc = 'DAYS SUITABLE'
-                then 'days suitable' else 'corn planted' end as metric,
+                then 'days suitable' else '{crop} planted' end as metric,
                 week_ending as valid from nass_quickstats where
                 state_alpha = :state and 
                 (statisticcat_desc = 'DAYS SUITABLE' or
-                 short_desc = 'CORN - PROGRESS, MEASURED IN PCT PLANTED')
+                 short_desc =
+                 '{crop.upper()} - PROGRESS, MEASURED IN PCT PLANTED')
                 and extract(year from week_ending) = :year
                 order by week_ending asc
                 """
@@ -107,8 +109,8 @@ def get_nass(year, district, state):
     with get_sqlalchemy_conn("coop") as conn:
         return pd.read_sql(
             text(
-                """
-            select * from nass_iowa where metric in ('corn planted',
+                f"""
+            select * from nass_iowa where metric in ('{crop} planted',
             'days suitable')
             and extract(year from valid) = :year ORDER by valid ASc
             """
@@ -122,13 +124,19 @@ def get_nass(year, district, state):
 @click.option("--year", type=int, help="Year to plot")
 @click.option("--district", type=str, help="NASS District")
 @click.option("--state", type=str, help="State to Process.")
-def main(year, district, state):
+@click.option(
+    "--crop",
+    type=click.Choice(["corn", "soybeans"]),
+    default="corn",
+    help="Crop to Process",
+)
+def main(year, district, state, crop):
     """Go Main Go."""
     charidx = year - 2007 + 1
     boundsdf = get_geo_bounds(district, state)
-    nass = get_nass(year, district, state)
+    nass = get_nass(year, state, crop)
     days_suitable = nass[nass["metric"] == "days suitable"]
-    nass = nass[nass["metric"] == "corn planted"]
+    nass = nass[nass["metric"] == f"{crop} planted"]
 
     # Figure out the planting dates
     with get_sqlalchemy_conn("idep") as conn:
@@ -138,10 +146,14 @@ def main(year, district, state):
             acres from fields f LEFT JOIN field_operations o
             on (f.field_id = o.field_id and o.year = :year)
             where scenario = 0 and
-            substr(landuse, :charidx, 1) = 'C'
+            substr(landuse, :charidx, 1) = :ccode
             """),
             conn,
-            params={"year": year, "charidx": charidx},
+            params={
+                "year": year,
+                "ccode": "C" if crop == "corn" else "B",
+                "charidx": charidx,
+            },
             geom_col="geom",
             parse_dates="plant",
         )
@@ -152,10 +164,14 @@ def main(year, district, state):
                 acres from fields f LEFT JOIN field_operations_round1 o
                 on (f.field_id = o.field_id and o.year = :year)
                 where scenario = 0 and
-                substr(landuse, :charidx, 1) = 'C'
+                substr(landuse, :charidx, 1) = :ccode
                 """),
                 conn,
-                params={"year": year, "charidx": charidx},
+                params={
+                    "year": year,
+                    "ccode": "C" if crop == "corn" else "B",
+                    "charidx": charidx,
+                },
                 geom_col="geom",
                 parse_dates="plant",
             )
@@ -191,7 +207,10 @@ def main(year, district, state):
         title = f"Iowa District {district.upper()}"
     fig = figure(
         logo="dep",
-        title=f"{year} DEP Dynamic Tillage Corn Planting Progress",
+        title=(
+            f"{year} DEP Dynamic Tillage {crop.capitalize()} "
+            "Planting Progress"
+        ),
         subtitle=f"Comparison with USDA NASS Weekly Progress for {title}",
         figsize=(10.24, 7.68),
     )
@@ -255,14 +274,11 @@ def main(year, district, state):
             va="center",
         ).set_clip_on(True)
         # Value estimted from daily_limits
-        depdays = 7.0 - (
-            daily_limits.loc[
-                row["valid"] - pd.Timedelta(days=6) : row["valid"]
-            ]["limited"].mean()
-            / 100.0
-            * 7
-        )
-        if pd.notna(depdays):
+        thisweek = daily_limits.loc[
+            row["valid"] - pd.Timedelta(days=6) : row["valid"]
+        ]["limited"]
+        depdays = 7.0 - thisweek.mean() / 100.0 * 7
+        if pd.notna(depdays) and len(thisweek.index) == 7:
             ax3.add_patch(
                 Rectangle(
                     (row["valid"] - pd.Timedelta(days=7), 1),
@@ -338,7 +354,7 @@ def main(year, district, state):
 
     ss = f"state_{state}"
     fig.savefig(
-        f"corn_progress_{year}_"
+        f"{crop}_progress_{year}_"
         f"{district if district is not None else ss}.png"
     )
 
