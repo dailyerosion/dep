@@ -63,7 +63,7 @@ def make_tillage(scenario, zone, prevcode, code, nextcode, cfactor, year):
       prevcode (str): the previous crop code
       code (str): the crop code
       nextcode (str): The next year's crop code.
-      cfactor (int): the c-factor for tillage
+      cfactor (str): the c-factor for tillage
       year (int): the year of this crop
 
     Returns:
@@ -83,13 +83,13 @@ def make_tillage(scenario, zone, prevcode, code, nextcode, cfactor, year):
             f"{data}"
         )
     # Remove fall chisel after corn when going into soybeans for 2
-    if cfactor == 2 and nextcode == "B":
+    if cfactor == "2" and nextcode == "B":
         pos = data.find("11  1")
         if pos > 0:
             data = data[:pos]
 
     # The fall tillage operation is governed by the next year crop
-    if cfactor == 5 and nextcode == "C":
+    if cfactor == "5" and nextcode == "C":
         # Replace 11  1 operation with plow
         pos = data.find("11  1")
         if pos > 0:
