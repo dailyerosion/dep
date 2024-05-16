@@ -104,12 +104,12 @@ def do_rotation(scenario, zone, rotfn, landuse, management):
         func = partial(make_tillage, scenario, zone)
         # 2007
         data["yearly"] += func(
-            prevcode, landuse[0], landuse[1], int(management[0]), 1
+            prevcode, landuse[0], landuse[1], management[0], 1
         )
         for i in range(1, YEARS):
             nextcode = "" if i == (YEARS - 1) else landuse[i + 1]
             data["yearly"] += func(
-                landuse[i - 1], landuse[i], nextcode, int(management[i]), i + 1
+                landuse[i - 1], landuse[i], nextcode, management[i], i + 1
             )
 
     with open(rotfn, "w", encoding="utf8") as fh:

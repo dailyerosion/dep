@@ -2,7 +2,21 @@
 #
 #  Database modified: Wed Oct 30, 2002
 #
-103
+104
+#
+# Added 16 May 2024 for Tillage Code 1.5 work
+#
+COULTE_386426
+comment: Coulter caddy, with smooth coulters
+(from WEPP LMOD service)
+comment...
+
+1  #landuse
+0.0657 0.0054 0
+4 # pcode - other 
+0.0127 0.2032 0.0657 0.0054 0.0076 0.2500 0.0508 0.0025 0.0025
+
+
 #
 # Record 1 of 90
 #
