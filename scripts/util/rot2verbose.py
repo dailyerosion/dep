@@ -16,16 +16,36 @@ def main(huc12):
             open(fn, encoding="ascii") as fh,
             open(fn.replace(".rot", ".txt"), "w") as outfh,
         ):
+            lastdt = None
+            lastline = ""
             for line in fh:
                 if len(line) > 10 and line.endswith("}\n"):
-                    tokens = line.split(maxsplit=6)
+                    tokens = line.strip().split(maxsplit=6)
                     dt = datetime(
                         int(tokens[2]) + 2006, int(tokens[0]), int(tokens[1])
                     )
                     while now < dt:
+                        if lastline != "":
+                            outfh.write(f"{lastline}\n")
+                            lastline = ""
                         outfh.write(f"{now:%Y %03j} 0\n")
                         now = now + timedelta(days=1)
-                    outfh.write(f"{dt:%Y %03j} 1 {tokens[5]:>20s} {tokens[6]}")
+                    # Need to accumulate the data per Grace needs
+                    if dt == lastdt:
+                        outfh.write(
+                            f"{lastline} {tokens[5]:>20s} {tokens[6]}\n"
+                        )
+                        lastline = ""
+                    elif lastline != "":
+                        outfh.write(f"{lastline}\n")
+                        lastline = ""
+                    else:
+                        lastline = (
+                            f"{dt:%Y %03j} 1 {tokens[5]:>20s} {tokens[6]}"
+                        )
+                    lastdt = dt
+            if lastline != "":
+                outfh.write(f"{lastline}\n")
             while now < datetime(2025, 1, 1):
                 outfh.write(f"{now:%Y %03j} 0\n")
                 now = now + timedelta(days=1)

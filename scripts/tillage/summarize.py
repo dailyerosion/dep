@@ -16,6 +16,7 @@ SCENARIO2TILLAGE = {
     154: "Plus 1",
     164: "All 1.5",
     165: "All Pasture",
+    167: "All Coulter",
 }
 
 
@@ -53,7 +54,8 @@ def iowa():
             conn,
             params={"scenarios": list(SCENARIO2TILLAGE.keys())},
         )
-    # df["State"] = "Iowa"
+    df["State"] = "Iowa"
+    df = df.drop(columns=["mlra_id", "huc_12"])
     df = df.rename(
         columns={
             "mlra_id": "MLRA",
@@ -66,11 +68,10 @@ def iowa():
             "detachment_ta": "Annual_Det_T/ac",
         }
     )
-    """
     l6 = (
         df[(df["Year"] >= 2017) & (df["Year"] < 2023)]
         .drop(columns=["Year"])
-        .groupby(["scenario", "HUC12"])
+        .groupby(["scenario", "State"])
         .mean()
         .reset_index()
         .copy()
@@ -84,9 +85,8 @@ def iowa():
         )
     )
     lt = (
-        df
-        .drop(columns=["Year"])
-        .groupby(["scenario", "HUC12"])
+        df.drop(columns=["Year"])
+        .groupby(["scenario", "State"])
         .mean()
         .reset_index()
         .copy()
@@ -99,23 +99,25 @@ def iowa():
             }
         )
     )
-    df = pd.merge(lt, l6, on=["scenario", "HUC12"])
+    df = pd.merge(lt, l6, on=["scenario", "State"])
     df["Till_Code"] = df["scenario"].map(SCENARIO2TILLAGE)
-    df["HUC8"] = df["HUC12"].str.slice(0, 8)
-    df.drop(columns=["MLRA_x", "Slope_x"]).rename(columns={
-        "MLRA_y": "MLRA",
-        "Slope_y": "Slope",
-    }).to_csv("HUC12_LongTerm.csv", index=False)
+    # df["HUC8"] = df["HUC12"].str.slice(0, 8)
+    df.drop(columns=["Slope_x"]).rename(
+        columns={
+            # "MLRA_y": "MLRA",
+            "Slope_y": "Slope",
+        }
+    ).to_csv("IA_LongTerm.csv", index=False)
     """
     # reorder
-    df = df.groupby(["HUC12", "Year", "scenario"]).mean().reset_index().copy()
+    df = df.groupby(["State", "Year", "scenario"]).mean().reset_index().copy()
     df["Till_Code"] = df["scenario"].map(SCENARIO2TILLAGE)
-    df["HUC8"] = df["HUC12"].str.slice(0, 8)
+    #df["HUC8"] = df["HUC12"].str.slice(0, 8)
     df[
         [
-            "HUC12",
-            "MLRA",
-            "HUC8",
+            "State",
+            #"MLRA",
+            #"HUC8",
             "Till_Code",
             "scenario",
             "Slope",
@@ -125,7 +127,8 @@ def iowa():
             "Annual_Det_T/ac",
             "Annual_Del_T/ac",
         ]
-    ].to_csv("HUC12_annual.csv", index=False)
+    ].to_csv("IA_annual.csv", index=False)
+    """
 
 
 if __name__ == "__main__":

@@ -34,7 +34,7 @@ USE DEPSoils2020
 IF OBJECT_ID('dbo.DEP_SoilFractions') IS NOT NULL 
         DROP TABLE dbo.DEP_SoilFractions
 
-set search_path=gssurgo23;
+set search_path=gssurgo24;
 SELECT mukey
       , cokey
       , compname
