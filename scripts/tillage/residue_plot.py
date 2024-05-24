@@ -94,17 +94,10 @@ def main():
     if not os.path.isfile("residue.feather"):
         curate()
     fields = pd.read_feather("residue.feather")
-    print(fields[fields["residue"] == 0].groupby("year").count())
-    return
     fields = fields[
         (fields["prevlanduse"].isin(["C"]))
         & (fields["landuse"].isin(["C", "B"]) & (fields["residue"] >= 0))
     ]
-    # print(fields)
-    # print(fields.groupby("man").count())
-    # trouble = fields[(fields["residue"] < 20) & (fields["man"] == 1)]
-    print(fields[fields["field_id"] == 50617646])
-    return
     fig, ax = figure_axes(
         title="DEP Tillage Code Assignment after Corn with Residue",
         logo="dep",
@@ -117,7 +110,6 @@ def main():
         x="man",
         y="residue",
         hue="landuse",
-        # split=True, inner="quart", fill=False,
         palette={"C": "g", "B": "r"},
         ax=ax,
     )
