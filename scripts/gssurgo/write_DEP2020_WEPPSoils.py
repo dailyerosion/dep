@@ -32,7 +32,7 @@ from pyiem.util import get_dbconn, utc
 def main():
     """Main loop."""
     #
-    outPath = "/i/0/sol_input_fy2023"
+    outPath = "/i/0/sol_input_fy2024"
 
     # SQL Server connect
     cxn = get_dbconn("idep")
@@ -40,7 +40,7 @@ def main():
     Pcursor = cxn.cursor()
     Pcursor.execute(
         """Select mukey, compname, Albedo, Texture, HrzCount, KI, KR, TC, KB
-        From gssurgo23.DEP_SoilParameters
+        From gssurgo24.DEP_SoilParameters
         Where HrzCount > 0 AND Albedo Is Not Null AND compname != 'Aquolls'
         AND KI Is Not Null AND KR Is Not Null AND TC Is Not Null
         AND KB Is Not Null
@@ -64,7 +64,7 @@ def main():
             outf.write("#\n")
             outf.write("# DEP SOL\n")
             outf.write(f"# daryl {utc():%Y-%m-%dT%H:%M:%SZ}\n")
-            outf.write("# Source: US gSSURGO CONUS FY2023\n")
+            outf.write("# Source: US gSSURGO CONUS FY2024\n")
             outf.write("#\n")
             outf.write(f"SSURGO MUKEY: {row[0]}\n")
             outf.write("1 1\n")
@@ -79,7 +79,7 @@ def main():
             zCount = 0
             HrzCursor.execute(
                 """SELECT DepthTo_mm, Sand, Clay, OM, CEC7, FragTot
-                    FROM gssurgo23.DEP_SoilFractions
+                    FROM gssurgo24.DEP_SoilFractions
                                     WHERE mukey = %s
                                     ORDER by DepthTo_mm""",
                 (row[0],),
