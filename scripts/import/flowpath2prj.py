@@ -221,7 +221,8 @@ def do_flowpath(pgconn, scenario, zone, metadata):
         f"/i/{scenario}/prj/{res['huc8']}/{res['huc12'][-4:]}/"
         f"{res['huc12']}_{metadata['fpath']}.prj"
     )
-    res["length"] = df.iloc[0]["real_length"]  # all rows are equal
+    # Add up the OFEs to get the total length
+    res["length"] = df.groupby("ofe").first()["real_length"].sum()
 
     # Slope data
     # Here be dragons: dailyerosion/dep#79 dailyerosion/dep#158
