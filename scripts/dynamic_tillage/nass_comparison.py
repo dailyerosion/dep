@@ -180,9 +180,7 @@ def main(year, district, state, crop):
     ldate = f"{year}-06-09"
     if ldate >= f"{date.today():%Y-%m-%d}":
         ldate = f"{(date.today() - timedelta(days=1)):%Y-%m-%d}"
-    accum = accum.reindex(
-        pd.date_range(f"{year}-04-11", f"{year}-06-09")
-    ).ffill()
+    accum = accum.reindex(pd.date_range(f"{year}-04-11", ldate)).ffill()
 
     if state is not None:
         title = f"state of {state_names[state]}"
