@@ -1,5 +1,8 @@
 """Plot our planting progress vs that of NASS."""
 
+import os
+from datetime import date, timedelta
+
 import click
 import geopandas as gpd
 import numpy as np
@@ -28,9 +31,10 @@ def compute_limits(huc12s, year):
     rows = []
     # June 10th is mud-it-in and we have no estimates then
     for dt in pd.date_range(f"{year}-04-11", f"{year}-06-09"):
-        status = pd.read_feather(
-            f"/mnt/idep2/data/huc12status/{year}/{dt:%Y%m%d}.feather"
-        )
+        pfn = f"/mnt/idep2/data/huc12status/{year}/{dt:%Y%m%d}.feather"
+        if not os.path.isfile(pfn):
+            continue
+        status = pd.read_feather(pfn)
         status = status.loc[huc12s]
         sz = len(huc12s)
         rows.append(
@@ -173,8 +177,11 @@ def main(year, district, state, crop):
     # accumulate acres planted by date
     accum = fields[["plant", "acres"]].groupby("plant").sum().cumsum()
     accum["percent"] = accum["acres"] / fields["acres"].sum() * 100.0
+    ldate = f"{year}-06-09"
+    if ldate >= f"{date.today():%Y-%m-%d}":
+        ldate = f"{(date.today() - timedelta(days=1)):%Y-%m-%d}"
     accum = accum.reindex(
-        pd.date_range(f"{year}-04-11", f"{year}-05-08")
+        pd.date_range(f"{year}-04-11", f"{year}-06-09")
     ).ffill()
 
     if state is not None:

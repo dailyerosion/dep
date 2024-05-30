@@ -89,15 +89,8 @@ def curate():
     fields.to_feather("residue.feather")
 
 
-def main():
-    """Go Main."""
-    if not os.path.isfile("residue.feather"):
-        curate()
-    fields = pd.read_feather("residue.feather")
-    fields = fields[
-        (fields["prevlanduse"].isin(["C"]))
-        & (fields["landuse"].isin(["C", "B"]) & (fields["residue"] >= 0))
-    ]
+def plot_assignment(fields):
+    """"""
     fig, ax = figure_axes(
         title="DEP Tillage Code Assignment after Corn with Residue",
         logo="dep",
@@ -117,6 +110,38 @@ def main():
     ax.set_xlabel("Assigned Tillage Code")
     ax.set_ylabel("Residue Cover [%]")
     ax.set_yticks(range(0, 101, 10))
+    ax.grid(True)
+
+    fig.savefig("test.png")
+
+
+def main():
+    """Go Main."""
+    if not os.path.isfile("residue.feather"):
+        curate()
+    fields = pd.read_feather("residue.feather")
+    fields = fields[
+        (fields["prevlanduse"].isin(["C", "B"]))
+        & (fields["landuse"].isin(["C", "B"]) & (fields["residue"] >= 0))
+    ]
+    fig, ax = figure_axes(
+        title=(
+            "2017-2022 Distribution of Residue "
+            "Cover Estimate after Given Crop"
+        ),
+        logo="dep",
+        figsize=(8, 6),
+    )
+
+    sns.despine(fig)
+
+    sns.histplot(
+        fields,
+        x="residue",
+        hue="prevlanduse",
+        element="step",
+        bins=100,
+    )
     ax.grid(True)
 
     fig.savefig("test.png")
