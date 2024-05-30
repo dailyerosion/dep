@@ -28,7 +28,8 @@ def main(huc12):
                         if lastline != "":
                             outfh.write(f"{lastline}\n")
                             lastline = ""
-                        outfh.write(f"{now:%Y %03j} 0\n")
+                        else:
+                            outfh.write(f"{now:%Y %03j} 0\n")
                         now = now + timedelta(days=1)
                     # Need to accumulate the data per Grace needs
                     if dt == lastdt:
@@ -36,9 +37,11 @@ def main(huc12):
                             f"{lastline} {tokens[5]:>20s} {tokens[6]}\n"
                         )
                         lastline = ""
+                        now = now + timedelta(days=1)
                     elif lastline != "":
                         outfh.write(f"{lastline}\n")
                         lastline = ""
+                        now = now + timedelta(days=1)
                     else:
                         lastline = (
                             f"{dt:%Y %03j} 1 {tokens[5]:>20s} {tokens[6]}"
