@@ -27,10 +27,10 @@ def iowa():
             text(
                 """
         WITH iahuc12 as (
-            SELECT huc_12, mlra_id, average_slope_ratio from huc12
-            where states = 'IA' and scenario = 0
+            SELECT huc_12, mlra_id, average_slope_ratio,
+            substr(states, 1, 2) as state from huc12 where scenario = 0
         ), agg as (
-            SELECT r.huc_12, i.mlra_id, i.average_slope_ratio,
+            SELECT r.huc_12, i.mlra_id, i.state, i.average_slope_ratio,
             r.scenario, extract(year from valid)::int as yr,
             sum(qc_precip) as precip, sum(avg_runoff) as runoff,
             sum(avg_delivery) as delivery,
@@ -38,15 +38,17 @@ def iowa():
             on (r.huc_12 = i.huc_12) WHERE r.scenario = ANY(:scenarios)
             and r.valid >= '2008-01-01'
             and r.valid <= '2024-01-01'
-            GROUP by r.huc_12, r.scenario, i.mlra_id, i.average_slope_ratio, yr
+            GROUP by r.huc_12, i.state, r.scenario, i.mlra_id,
+            i.average_slope_ratio, yr
         )
 
-        SELECT yr, huc_12, scenario, mlra_id, average_slope_ratio,
+        SELECT yr, state, huc_12, scenario, mlra_id, average_slope_ratio,
         round((avg(precip) / 25.4)::numeric, 2) as precip_in,
         round((avg(runoff) / 25.4)::numeric, 2) as runoff_in,
         round((avg(delivery) * 4.463)::numeric, 2) as delivery_ta,
         round((avg(detachment) * 4.463)::numeric, 2) as detachment_ta
-        from agg GROUP by yr, huc_12, scenario, mlra_id, average_slope_ratio
+        from agg GROUP by yr, huc_12, state, scenario, mlra_id,
+        average_slope_ratio
         ORDER by yr, scenario
 
         """
@@ -54,7 +56,6 @@ def iowa():
             conn,
             params={"scenarios": list(SCENARIO2TILLAGE.keys())},
         )
-    df["State"] = "Iowa"
     df = df.drop(columns=["mlra_id", "huc_12"])
     df = df.rename(
         columns={
@@ -68,10 +69,11 @@ def iowa():
             "detachment_ta": "Annual_Det_T/ac",
         }
     )
+    """
     l6 = (
         df[(df["Year"] >= 2017) & (df["Year"] < 2023)]
         .drop(columns=["Year"])
-        .groupby(["scenario", "State"])
+        .groupby(["scenario", "HUC12"])
         .mean()
         .reset_index()
         .copy()
@@ -86,7 +88,7 @@ def iowa():
     )
     lt = (
         df.drop(columns=["Year"])
-        .groupby(["scenario", "State"])
+        .groupby(["scenario", "HUC12"])
         .mean()
         .reset_index()
         .copy()
@@ -99,25 +101,25 @@ def iowa():
             }
         )
     )
-    df = pd.merge(lt, l6, on=["scenario", "State"])
+    df = pd.merge(lt, l6, on=["scenario", "HUC12"])
     df["Till_Code"] = df["scenario"].map(SCENARIO2TILLAGE)
-    # df["HUC8"] = df["HUC12"].str.slice(0, 8)
+    df["HUC8"] = df["HUC12"].str.slice(0, 8)
     df.drop(columns=["Slope_x"]).rename(
         columns={
             # "MLRA_y": "MLRA",
             "Slope_y": "Slope",
         }
-    ).to_csv("IA_LongTerm.csv", index=False)
+    ).to_csv("HUC12_LongTerm.csv", index=False)
     """
     # reorder
-    df = df.groupby(["State", "Year", "scenario"]).mean().reset_index().copy()
+    df = df.groupby(["state", "Year", "scenario"]).mean().reset_index().copy()
     df["Till_Code"] = df["scenario"].map(SCENARIO2TILLAGE)
-    #df["HUC8"] = df["HUC12"].str.slice(0, 8)
+    # df["HUC8"] = df["HUC12"].str.slice(0, 8)
     df[
         [
-            "State",
-            #"MLRA",
-            #"HUC8",
+            "state",
+            # "MLRA",
+            # "HUC8",
             "Till_Code",
             "scenario",
             "Slope",
@@ -127,8 +129,7 @@ def iowa():
             "Annual_Det_T/ac",
             "Annual_Del_T/ac",
         ]
-    ].to_csv("IA_annual.csv", index=False)
-    """
+    ].to_csv("State_annual.csv", index=False)
 
 
 if __name__ == "__main__":
