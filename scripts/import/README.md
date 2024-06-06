@@ -4,7 +4,7 @@ Gelder Data Import Procedure
 Brian Gelder provides me a 7zip file with individual flowpaths included.  There
 is one file per HUC12.
 
-1. `python flowpath_importer.py <scenario> <dirname in ../../data/>`
+1. `python flowpath_importer.py --scenario=<scenario> --datadir=<dirname in ../../data/>`
 1. `python clear_files.py <scenario>`
 1. go to ../util and run `python make_dirs.py <scenario>`
 1. cd to ../import and run `python flowpath2prj.py <scenario>`

@@ -2,6 +2,15 @@
 
 import pytest
 from pydep import util
+from pyiem.database import get_dbconnc
+
+
+def test_clear_huc12data():
+    """Can we clear data?"""
+    dbconn, cursor = get_dbconnc("idep")
+    util.clear_huc12data(cursor, "123456789012", 0)
+    cursor.close()
+    dbconn.close()
 
 
 def test_cli_fname():

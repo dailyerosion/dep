@@ -4,9 +4,6 @@ Brian Gelder provides me some archive of processed HUC12s, this archive is
 dumped to disk and then glob'd by this script.  It then creates a `myhucs.txt`
 file, which provides the downstream scripts the data domain to limit processing
 to.
-
-    python flowpath_importer.py <scenario> <path to geojsons in ../../data/>
-
 """
 
 import glob
@@ -14,13 +11,13 @@ import json
 import logging
 import os
 import re
-import sys
 
+import click
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pyproj
-from pydep.util import get_cli_fname
+from pydep.util import clear_huc12data, get_cli_fname
 from pyiem.database import get_dbconn
 from pyiem.util import logger
 from shapely.geometry import LineString
@@ -110,12 +107,13 @@ def get_data(filename):
         LOG.info("%s had no irrigated column", filename)
         df["irrigated"] = 0
     # Rename columns to make things simplier
-    rename = {
-        f"{PREFIX}Len{huc12}": "len",
-        f"ep3m{huc12}": "elev",
-        f"gord_{huc12}": "gorder",
-    }
-    df = df.rename(columns=rename)
+    df = df.rename(
+        columns={
+            f"{PREFIX}Len{huc12}": "len",
+            f"ep3m{huc12}": "elev",
+            f"gord_{huc12}": "gorder",
+        }
+    )
     # Ensure that len is not an object
     if df["len"].dtype == object:
         df["len"] = pd.to_numeric(df["len"])
@@ -124,13 +122,20 @@ def get_data(filename):
         df[col] = df[col].astype(int)
 
     # Any null FBndID (mostly forest?) get set to -1
-    df["FBndID"] = df["FBndID"].fillna("FUNUSED_-1")
+    df["FBndID"] = (
+        df["FBndID"].fillna("FUNUSED_-1").str.split("_").str[1].astype(int)
+    )
     fillout_codes(df)
     fld_df = None
     fldfn = filename.replace("smpl3m_mean18", "FB")
     if os.path.isfile(fldfn):
         # Get the field bounds dataframe as well
-        fld_df = gpd.read_file(fldfn, engine="pyogrio")
+        fld_df = gpd.read_file(fldfn, engine="pyogrio").drop(
+            columns=["OBJECTID"],
+        )
+        fld_df.index = fld_df["FBndID"].str.split("_").str[1].astype(int)
+        # Placeholder for capturing database insert
+        fld_df["field_id"] = -1
         # Check for bad geometries
         if not fld_df["geometry"].is_valid.all():
             LOG.info(
@@ -142,19 +147,6 @@ def get_data(filename):
     else:
         LOG.warning("Missing %s", fldfn)
     return df, fld_df
-
-
-def delete_previous(cursor, scenario, huc12):
-    """This file is the authority, so we cull previous content."""
-    cursor.execute(
-        "DELETE from flowpath_ofes p USING flowpaths f WHERE "
-        "p.flowpath = f.fid and f.huc_12 = %s and f.scenario = %s",
-        (huc12, scenario),
-    )
-    cursor.execute(
-        "DELETE from flowpaths WHERE scenario = %s and huc_12 = %s",
-        (scenario, huc12),
-    )
 
 
 def load_genlu_codes(cursor):
@@ -260,10 +252,10 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
     cursor.execute(
         """
         INSERT into flowpath_ofes (flowpath, ofe, geom, bulk_slope, max_slope,
-        gssurgo_id, fbndid, management, landuse, real_length)
+        gssurgo_id, fbndid, management, landuse, real_length, field_id)
         values (%s, %s, %s, %s, %s,
         (select id from gssurgo where fiscal_year = %s and mukey = %s),
-        %s, %s, %s, %s)
+        %s, %s, %s, %s, %s)
         """,
         (
             db_fid,
@@ -276,15 +268,18 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
             gdf["slope"].max(),
             SOILFY,
             int(firstpt[SOILCOL]),
-            firstpt["FBndID"].split("_")[1],
+            firstpt["FBndID"],
             firstpt["management"],
             firstpt["landuse"],
             (lastpt["len"] - firstpt["len"]) / 100.0,
+            firstpt["field_id"],
         ),
     )
 
 
-def process_flowpath(cursor, scenario, db_fid, df) -> pd.DataFrame:
+def process_flowpath(
+    cursor, scenario, db_fid, df: pd.DataFrame
+) -> pd.DataFrame:
     """Do one flowpath please."""
 
     # Sort along the length column, which orders the points from top
@@ -381,9 +376,6 @@ def process_flowpath(cursor, scenario, db_fid, df) -> pd.DataFrame:
         df[["ofe", "landuse", "management", "FBndID"]]
         .groupby("ofe")
         .first()
-        .assign(
-            FBndID=lambda x: x["FBndID"].str.split("_").str[1],
-        )
         .reset_index()
         .to_dict(orient="records")
     )
@@ -408,20 +400,7 @@ def delete_flowpath(cursor, fid):
 
 def process_fields(cursor, scenario, huc12, fld_df):
     """Database update this information."""
-    cursor.execute(
-        """
-        DELETE from field_operations o USING fields f where
-        o.field_id = f.field_id and f.scenario = %s and f.huc12 = %s
-        """,
-        (scenario, huc12),
-    )
-    cursor.execute(
-        "DELETE from fields where scenario = %s and huc12 = %s",
-        (scenario, huc12),
-    )
-    PROCESSING_COUNTS["fields_deleted"] += cursor.rowcount
-
-    for _, row in fld_df.iterrows():
+    for fbndid, row in fld_df.iterrows():
         if row["geometry"] is None:
             print("null geom", row)
             continue
@@ -430,11 +409,12 @@ def process_fields(cursor, scenario, huc12, fld_df):
             INSERT into fields (scenario, huc12, fbndid, acres, isag, geom,
             management, landuse, genlu)
             VALUES (%s, %s, %s, %s, %s, st_multi(%s), %s, %s, %s)
+            RETURNING field_id
             """,
             (
                 scenario,
                 huc12,
-                row["FBndID"].split("_")[1],
+                fbndid,
                 row["Acres"],
                 bool(row["isAG"]),
                 row["geometry"].wkt,
@@ -443,6 +423,7 @@ def process_fields(cursor, scenario, huc12, fld_df):
                 get_genlu_code(cursor, row["GenLU"]),
             ),
         )
+        fld_df.at[fbndid, "field_id"] = cursor.fetchone()[0]
     PROCESSING_COUNTS["fields_inserted"] += len(fld_df.index)
 
 
@@ -468,13 +449,20 @@ def process(cursor, scenario, huc12df, fld_df):
             break
     if huc12 is None or len(huc12) != 12:
         raise ValueError(f"Could not find huc12 from {huc12df.columns}")
+    (
+        PROCESSING_COUNTS["flowpath_ofes_deleted"],
+        PROCESSING_COUNTS["flowpaths_deleted"],
+        PROCESSING_COUNTS["field_operations_deleted"],
+        PROCESSING_COUNTS["fields_deleted"],
+    ) = clear_huc12data(cursor, huc12, scenario)
     if fld_df is not None:
         process_fields(cursor, scenario, huc12, fld_df)
+    # With fields processed, we can join the field_id to the flowpath points
+    huc12df["field_id"] = huc12df["FBndID"].map(fld_df["field_id"])
     newid_schema = f"fp_id_{huc12}" in huc12df.columns
     if newid_schema:
         fpcol = f"fp_id_{huc12}"
 
-    delete_previous(cursor, scenario, huc12)
     # the inbound dataframe has lots of data, one row per flowpath point
     # We group the dataframe by the column which uses a PREFIX and the huc8
     for flowpath_num, df in huc12df.groupby(fpcol):
@@ -493,18 +481,18 @@ def process(cursor, scenario, huc12df, fld_df):
             LOG.info("flowpath_num: %s hit exception", flowpath_num)
             logging.error(exp, exc_info=True)
             delete_flowpath(cursor, db_fid)
-            # print(df)
-            # sys.exit()
     return huc12
 
 
-def main(argv):
+@click.command()
+@click.option("--scenario", "-s", type=int, required=True)
+@click.option("--datadir", "-d", type=str, required=True)
+def main(scenario, datadir):
     """Our main function, the starting point for code execution"""
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     load_genlu_codes(cursor)
-    scenario = int(argv[1])
-    datadir = os.path.join("..", "..", "data", argv[2])
+    datadir = os.path.join("..", "..", "data", datadir)
     # collect up the GeoJSONs in that directory
     fns = glob.glob(f"{datadir}/smpl3m_*.json")
     fns.sort()
@@ -546,4 +534,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
