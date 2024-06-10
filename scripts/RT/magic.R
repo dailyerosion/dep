@@ -30,8 +30,8 @@ if (length(args) == 0) {
   weppsoilfile=args[3];
   Year=as.numeric(args[4]);
   weppmgmt=args[5]
-  DayofYear=as.numeric(args[5]);
-  CropCode=args[6];
+  DayofYear=as.numeric(args[6]);
+  CropCode=args[7];
 }
 generic_template_in.in<-paste(generic_template_in, ".in", sep="")
 print(paste('Template File In: ', generic_template_in.in, sep=""))
@@ -87,7 +87,7 @@ m_colnames<-c("year","day","mgmt_flag","operation","details1","op2","details2")
 # set m_colwidths vector to read in management file ("Mgmt_0.txt") as a fixed width file
 widths<-c(4,4,2,21,14,17,11) #4 columns for year, 4 day, 2 mgmt flag, 21 mgmt file name, 14 mgmt file specifics, 17 2nd op, 11 2nd specifics
 widths<-as.integer(widths) #changes from numeric to integer
-WEPProt<- read_fwf(dir5, col_positions = fwf_widths(widths, col_names = m_colnames),
+WEPProt<- read_fwf(weppmgmt, col_positions = fwf_widths(widths, col_names = m_colnames),
                    col_types = "iiicccc")
 
 #***************WEPP soil variables
@@ -274,10 +274,8 @@ if (SEag < 0.1){
     gmd0<-(cslagm_0-cslmin)/(cslmax-cslmin)
     
     #management not occuring, nondimensional gmd does not need to be adjusted  
-  }else{ 
-    gmd0<-gmd0
   }
-  
+ 
   gmd00<-gmd0  
   #} #this bracket closes the gmd adjusted by management for testing purposes
   #testing
