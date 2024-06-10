@@ -5,9 +5,11 @@
 # updated: Dec 2019
 # currently: not updating the wind speed/direction data - that will happen at IA State
 # for testing purposes, the WEPS file has high wind speed for every day of the year
+  #June 2024: Is this still true regarding the wind speed, or is it using measured wind speed values now?
 
 # required input files: grph_0 (WEPP daily output file - obtained from Darryl H. at IA State)
 # required input files: p0 (WEPP soil properties file - obtained from Darryl H. at IA State)
+# required input file: "Mgmt.txt" (WEPP management information)
 
 args = commandArgs(trailingOnly = TRUE)
 
@@ -17,6 +19,7 @@ if (length(args) == 0) {
   generic_template_in <- 'WEPStest';
   weppgraphfile <- 'grph_0.txt';
   weppsoilfile <- 'p0.sol';
+  weppmgmt<-"Mgmt.txt";
   Year <- 2019;
   DayofYear <- 365;
   CropCode <- 'C';
@@ -26,8 +29,9 @@ if (length(args) == 0) {
   weppgraphfile=args[2];
   weppsoilfile=args[3];
   Year=as.numeric(args[4]);
-  DayofYear=as.numeric(args[5]);
-  CropCode=args[6];
+  weppmgmt=args[5]
+  DayofYear=as.numeric(args[6]);
+  CropCode=args[7];
 }
 generic_template_in.in<-paste(generic_template_in, ".in", sep="")
 print(paste('Template File In: ', generic_template_in.in, sep=""))
@@ -35,6 +39,7 @@ print(paste('WEPP graph file: ', weppgraphfile, sep=""))
 print(paste('WEPP soil file: ', weppsoilfile, sep = ""))
 print(paste('Year: ', Year, sep = ""))
 print(paste('Day of Year: ', DayofYear, sep = ""))
+print(paste('WEPP mgmt file: ', weppmgmt, sep = ""))
 
 require(readr)
 require(dplyr)
@@ -77,6 +82,14 @@ WEPPout$Precip_mm<-WEPPout$Precip_in*25.4
 WEPPout$IrrDpth_mm<-WEPPout$IrrDpth_in*25.4
 WEPPout$SnwMeltWater_mm<-WEPPout$SnwMeltWater_in*25.4
 
+#****DEP management information
+m_colnames<-c("year","day","mgmt_flag","operation","details1","op2","details2")
+# set m_colwidths vector to read in management file ("Mgmt_0.txt") as a fixed width file
+widths<-c(4,4,2,21,14,17,11) #4 columns for year, 4 day, 2 mgmt flag, 21 mgmt file name, 14 mgmt file specifics, 17 2nd op, 11 2nd specifics
+widths<-as.integer(widths) #changes from numeric to integer
+WEPProt<- read_fwf(weppmgmt, col_positions = fwf_widths(widths, col_names = m_colnames),
+                   col_types = "iiicccc")
+
 #***************WEPP soil variables
 WEPPsoil<- read.table(weppsoilfile, skip = 4, nrows = 1, sep = " ")
 Depthmm<-round(as.numeric(WEPPsoil[1,4]),digits=2)
@@ -109,12 +122,50 @@ CaCO3pct<-CaCO3gkg/1000 #to get back into proper units for WEPS calculations
 CaCO3pct<-0.00 #based on soils data for WAUKON FSL in WEPS model for comparison here
 #################remove this later####################################################Sept24_2019
 
-# compute soil bulk desity from a pedo transfer function by Martin et al., 2017 (PTF4 from Table 2)
-# pb = 1.70398 - 0.00313*silt + 0.00261*clay - 0.11245*OrgC
-# Martin, M.A., M. Reyes, and F.J. Taguas. 2017. Estimating soil bulk density with information metrics of soil texture
-# Geoderma 287, 66-70.
-# pb<- 1.70398 - 0.00313*Siltpct + 0.00261*Claypct - 0.11245*Organicpct
-# turns out I don't need this pedotransfer function, there is a bulk density value in WEPP outputs
+##****Soil aggregate calculation parameters (Added June 2024)
+k4f <- 1.4 #water migration & freezing expansion coef for agg stab
+k4fs <- 4.25 #freezing solidification coef. for agg. stability
+k4fd <-5.08 # drying while frozen coef. for agg. stabilityu
+k4w<-1.0 # wetting process coef. modified by current dry stability
+c4p<-0.6
+c4f<-0
+
+#initialize soil aggregate calc. parameters
+HRwc0 <- 0
+#se0 <-0.5 #what would be a good initial value here?
+soil_temp_prior <-1
+
+#average aggregate stability
+SEag_mean <- 0.83 + 15.7*Claypct - 23.8*Claypct^2
+#adjustments for absolute range allowed in SWEEP document page 17
+if (SEag_mean < 0.1){
+  SEag_mean <- 0.1
+} else if (SEag_mean > 7.0){
+  SEag_mean <- 7.0
+}
+
+#Set se0 initial
+#cseagmx and cseagmn (maximum and minimum aggregate stability) from eq 27 and 28 in WEPS documentation
+cseagmx<-SEag_mean+2*0.16*SEag_mean
+cseagmn<-SEag_mean-2*0.16*SEag_mean
+cseags=SEag_mean #2 #cseags=SEag_mean; setting to a specific value for testing purposes 
+se0 <- (cseags - cseagmn)/(cseagmx - cseagmn)
+
+#NEW 2/5/24: set abnormal lognormal aggregate size distribution (ASD) representation
+#set average and stdev aggregate size fraction less than 0.84mm (eq 50 WEPS)
+if(Sandpct<0.15){
+  SF84_m<-0.2909+0.31*Sandpct+0.17*Siltpct+0.00333*(Sandpct/Claypct)-4.66*Organicpct-0.95*CaCO3pct
+} else{
+  SF84_m<-0.2909+0.31*Sandpct+0.17*Siltpct+0.01*(Sandpct/Claypct)-4.66*Organicpct-0.95*CaCO3pct
+}
+SF84_std<-(0.41-0.22*Sandpct)*SF84_m #standard deviation of aggregate size fraction less than 0.84mm
+#max and min values for geometric mean diameter:
+cslmin<-exp(3.44-7.21*(SF84_m+2*SF84_std)) #min value for geometric mean aggregate diamter (WEPS eq 53)
+cslmax<-exp(3.44-7.21*(SF84_m-2*SF84_std)) #max value for geometric mean aggregate diameter (WEPS eq 54)
+#initial geometric mean diameter (WEPS eq 52)
+cslagm_0<-exp(3.44-7.21*SF84_m) 
+#non-dimensional aggregate geometric mean diameter
+gmd0<-(cslagm_0-cslmin)/(cslmax-cslmin) 
 
 #Extract daily data from "grph_0.txt", write WEPS.in file and run SWEEP 
 
@@ -126,7 +177,8 @@ print(i)
 WEPS<-readLines(generic_template_in, n=-1)
 # substitute WEPS parameter values on a line-by-line basis
 
-### Compute SWEEP soil crust and aggregate parameters based on equations from SWEEP technical documentation
+### Compute SWEEP soil crust and aggregate parameters based on equations from SWEEP technical documentation;
+  ##gmd calculations from WEPS logic (regression for management effects and WEPS soil documentation for freeze/thaw and wet/dry)
 ### Comment numbers in brackets refer to [page number, equation number] from:
 ### WEPS technical documentation, BETA release 95-08 (downloaded pdf from WEPS website)
 ### OR SWEEP documentation; default is WEPS documentation. If SWEEP documentation, it'll be noted
@@ -166,26 +218,213 @@ if (SEag < 0.1){
   SEag <- 7.0
 }
   
-#Slagm = Aggregate Geometric Mean Diameter [SWEEP document page 17]
-Slagm <- exp(1.343-2.235*Sandpct-1.226*Siltpct-0.0238*(Sandpct/Claypct)^3 
-             + 33.6*Organicpct+6.85*CaCO3pct)*(1+0.006*Depthmm)
-#adjustments for absolute range allowed in SWEEP document page 17
-if (Slagm < 0.03){
-  Slagm <- 0.03
-} else if (Slagm > 30.0){
-  Slagm <- 30.0
-}
+#Obsolete as of 5/3/24 (using WEPS-based aggregate equations instead)
+  #Slagm = Aggregate Geometric Mean Diameter [SWEEP document page 17]
+  #Slagm <- exp(1.343-2.235*Sandpct-1.226*Siltpct-0.0238*(Sandpct/Claypct)^3 
+  #           + 33.6*Organicpct+6.85*CaCO3pct)*(1+0.006*Depthmm)
+  #adjustments for absolute range allowed in SWEEP document page 17
+  #if (Slagm < 0.03){
+  # Slagm <- 0.03
+#  } else if (Slagm > 30.0){
+#  Slagm <- 30.0
+#}
 
+  #S0ags = Aggregate Geometric Standard Deviation (that's a zero "0", not an "O") [SWEEP document page 17]
+  #S0ags <- 1.0 / (0.0203 + 0.00193*Slagm + 0.074 / Slagm^0.5)
+  #adjustments for absolute range allowed in SWEEP document page 17
+  #if (S0ags < 1.0){
+    #S0ags <- 1.0
+  #} else if (S0ags > 20.0){
+    #S0ags <- 20.0
+  #}
 
-#S0ags = Aggregate Geometric Standard Deviation (that's a zero "0", not an "O") [SWEEP document page 17]
-S0ags <- 1.0 / (0.0203 + 0.00193*Slagm + 0.074 / Slagm^0.5)
-#adjustments for absolute range allowed in SWEEP document page 17
-if (S0ags < 1.0){
-  S0ags <- 1.0
-} else if (S0ags > 20.0){
-  S0ags <- 20.0
-}
-
+#*****NEW AGGREGATE CALCULATIONS (From "WEPS_test2")
+  #*****Management Decisions***** I believe matches the WEPS calculations (5/3/24)
+  #*This currently only works for corn; need some kind of flag to determine what crop is growing?
+  management <- WEPProt$mgmt_flag[i]
+  operation<-WEPProt$operation[i]
+  details1<-WEPProt$details1[i]
+  
+  if (management==1){
+    #adjust nondimensional gmd based on the management occuring
+    x<-log(cslagm_0)
+    #chisel plow
+    #if (operation<-"OpCropDef.CHISSTSP"){
+    #y<-0.6924*x+0.1634
+    if (operation=="OpCropDef.FCSTACDP") {#spring disk (avg corn and soy)
+      y<-0.688*x-0.00665
+      
+    } else if (operation=="OpCropDef.PLDDO") { #field finisher (no field finisher for WEPS, assuming its the same as cultivate)
+      y<-0.8097*x-0.11675
+      
+      #} else if (op2=="CropDef.Cor_0967"){ #plant corn
+      #y<-0.8752*x-0.3286
+      
+      #}else if (op2=="CropDef.Soy_2194"){ #plant soybean
+      #y<-0.8293*x-0.2664
+    } else if (operation=="OpCropDef.CHISSTSP" && details1=="{0.203200, 2}") { #soybean fall chisel
+      y<-0.7768*x-0.3976
+    }else if (operation=="OpCropDef.CHISSTSP" && details1=="{0.203200, 1}"){ #corn fall chisel
+      y<-0.6924*x+0.1634
+    }else
+      y<-log(cslagm_0)
+    
+    
+    cslagm_0<-exp(y)
+    gmd0<-(cslagm_0-cslmin)/(cslmax-cslmin)
+    
+    #management not occuring, nondimensional gmd does not need to be adjusted  
+  }
+ 
+  gmd00<-gmd0  
+  #} #this bracket closes the gmd adjusted by management for testing purposes
+  #testing
+  #print(cslagm_0)
+  #print(management) 
+  #print(operation)
+  #print(x)
+  #print(gmd0)
+  
+  #******Soil Aggregate Decisions*******
+  #NEW as of June 2024
+  #*#set parameters
+  #Soil_temp = 0 means no frost depth = UNFROZEN
+  #Soil_temp>0 means frost depth = FROZEN
+  #Hrwc1>Hrwc0 means wetting
+  #Hrwc1<HRwc0 means drying
+  #HRwc1=Hrwc0 means no soil moisture change
+  
+  #wet/dry freeze/thaw variables
+  k4td <- 0.4*(1+0.00333*(Depthmm))
+  k4td <- min(k4td,0.667)
+  k4d  <- 0.6*(1+0.00333*(Depthmm))
+  k4d  <- min(k4d, 1.0)  
+  
+  
+  #Soil Temp and Moisture
+  #!!!soil is frozen if frost depth is > 0 
+  soil_temp<-WEPPout$FrstDepth_in[i] 
+  bulkdensity<-round((WEPPout$`BlkDens_lbs-ft3`[i]*16018.47/1000000),digits=2) #g/cm3
+  SoilWater<-WEPPout$SoilWaterLyr1[i]*2.54 #assume water density of 1g/cm3; gives water in cm
+  Volwater<-SoilWater/10 #assumes top layer depth of Wepp output is 10cm
+  Soilpb<-as.numeric(bulkdensity)
+  SoilMass<-(Depthmm/10)*Soilpb  #soil mass in top layer from SSURGO file (not necessarily the same layer depth as WEPP output)
+  GravWaterContent<-round((Volwater/Soilpb),digits=2) #assumes water densit of 1 g/cm3
+  #GravWaterContent<-round((SoilWater/SoilMass),digits=2) #old calculation
+  wilting_point<-0.22 #JOhnston soil=0.123 probably volumetric #bearden silt loam =0.22; crete 0.11
+  field_capacity<-0.41 #Johnston=0.216 volumetric; 0.41 bearden silt loam? SSURGO value is 0.34; crete 0.24
+  HRwcw<-(wilting_point)/Soilpb
+  HRwcs<-(field_capacity)/Soilpb #needs to use saturated content not FC
+  HRwc<-(GravWaterContent-HRwcw)/(HRwcs-HRwcw) #non-dimensional soil moisture content
+  if (HRwc < 0){
+    HRwc <- 0
+  } else if (HRwc > 1){
+    HRwc <- 1
+  } else {
+    HRwc<-HRwc
+  }
+  
+  
+  #***Calculate sEag1*:
+  #*#*Variable definitions:                        
+  #se1=current day relative aggregate stability
+  #se0=prior day relative aggregate stability
+  #se, se2, se3, se4, se5, se6=relative stability with partial update
+  #se & se2 partial updates for unfrozen-frozen
+  #se3 partial update to se0 value considering freezing (se0 then becomes se4 freezing-freezing)
+  #se5 and se 6 are partial updates for frozen-unfrozen
+  
+  se00<-se0
+  
+  #If statements to calculate se1 based on soil temp and soil moisture
+  
+  if (soil_temp_prior<=0 && soil_temp<=0) { #unfrozen-unfrozen 
+    if(HRwc<HRwc0){#drying
+      se1 <- se0 + k4d*(HRwc0-HRwc)
+    } else {#wetting
+      se1<-se0*(1.0001-k4w*HRwc)/(1.0001-k4w*HRwc0) #should it be "se0+..." or "se0*..."?? (* is what was originally done)
+    }
+    se1<-min(se1,1) #for unfrozen, limit size so can't go above 1
+    
+  } else if (soil_temp_prior<=0 &&soil_temp>0){#unfrozen_frozen
+    if(HRwc<=HRwc0){ #drying
+      se2<-se0+k4d*(HRwc0-HRwc)
+    }else {
+      se2<-se0*(1.0001-k4w*HRwc)/(1.0001-k4w*HRwc) #wetting; calculating se2 correctly ##se0+ or se0*?
+    }
+    se<-se2*(1.0001-k4w*k4f*HRwc)/(1.0001-k4w*HRwc)  #se2* or se2+?
+    se<-max(0,se)
+    se1<-se+k4fs*k4f*HRwc+0.5 # seems to be calculating lines 269-279 correctly
+    se1<-min(se1,10) #for frozen, limit ability to go above out of range value
+    
+    
+    #Frozen-frozen
+  } else if (soil_temp_prior>0 && soil_temp>0){#frozen_frozen
+    se3<-se0*(1.0001-k4w*k4f*HRwc0)/(1.0001-k4w*HRwc0) #se0* or se0+?
+    se3<-max(0,se3)
+    se4<-se3+k4fs*k4f*HRwc0+0.5
+    if(HRwc<HRwc0){ #drying
+      se1<-se4+k4fd*k4f*(HRwc-HRwc0)
+      se1<-max(se1,0)
+    }else if (HRwc>HRwc0) { #setting (do I need to consider se1=max(se4,0)?)
+      se1<-se4+k4fs*k4f*(HRwc-HRwc0)
+    }else {
+      se1<-se4
+    }
+    se1<-min(se1,10) #for frozen, limit ability to go above out of range value
+    
+  } else {#frozen-unfrozen #currently testing on 11/11/23
+    pud<-HRwc0*k4f  
+    if(pud>1){ #puddling
+      se5<-max(0.01,(0.999-k4td*HRwc0))
+    }else {
+      se3<-se0*(1.0001-k4w*k4f*HRwc0)/(1.0001-k4w*HRwc0) #se0* or se0+?
+      se3<-max(0,se3)
+      se4<-se3+k4fs*k4f*HRwc0+0.5
+      se6<-se4-k4fs*k4f*HRwc0-0.5
+      se6=max(se6,0)
+      se5<-se6+k4td*HRwc0*(k4f-1)
+    }
+    if(HRwc<HRwc0){#drying
+      se1 <- se5 + k4d*(HRwc0-HRwc)
+    } else {#wetting
+      se1<-se5*(1.0001-k4w*HRwc)/(1.0001-k4w*HRwc0) #se5* or se5+
+    }
+    se1<-min(se1,1) #for unfrozen, limit ability to go above 1 (max se)
+  
+  #add if statement so that se1 can not go below minimum value of 0.01
+  if(se1<0.01){
+    se1<-0.01
+  } else {
+    se1<-se1
+  }
+  
+  #undimensioned gmd calculations (noted as gmd1 for current day, gmd0 for previous day)
+  gmd1_avg <-1-exp(-((se1/c4p)^2))
+  gmd0_avg<-(1-exp(-(se0/c4p)^2))*(1-c4f)+c4f
+  
+  if(se0<1 && se1>1){ #freeze drying
+    gmd1<-gmd0+se1  
+  }else if (se0>1 && se1<1){ #soil thaws
+    gmd1<-gmd1_avg
+  }else if(se0==1 && se1==1){#unfrozen dry soil
+    gmd1 <-(gmd1_avg+gmd0)/2
+  }else if (se0 == se1){
+    gmd1<-gmd1_avg*0.2+gmd0*0.8
+  }else{
+    slp0<-(gmd1_avg-gmd0)/(se1-se0)
+    slp_avg<-(gmd1_avg-gmd0_avg)/(se1-se0)
+    slp<-(slp0+slp_avg)/2
+    gmd1<-gmd0+slp*(se1-se0)
+  }
+  #dimensioned gmd--> VALUE USED FOR REST OF CALCULATIONS
+  cslagm_2 <- ((cslmax-cslmin)*gmd1)+cslmin
+  cslagm_1 <- max(cslmin,cslagm_2)
+  
+  #calculate gsd (cs0ags) based on value of gmd (cslagm) (WEPS eq 65)
+  cs0ags_1 <- 1.0 + 1.0 / (0.012448 + 0.002463*cslagm_1 + 0.093467/(cslagm_1)^0.5)
+  
+  ##***Resumes calculations of other soil parameters (pre-June 2024 changes/not new WEPS calculations):  
 
 #SDbko = Settled bulk density at 300mm depth [S-15, 51]
 SDbko <- SDag
@@ -230,8 +469,8 @@ if (SMlos < 0){
 }
 
 #Slagx = Soil Layer Maximum Aggregate Size [SWEEP document page 17]
-p <- 1.52 * S0ags^-0.449
-Slagx <- S0ags * Slagm + 0.84^p
+p <- 1.52 * cs0ags_1^-0.449
+Slagx <- cs0ags_1 * cslamg_1 + 0.84^p
 #adjustments for absolute range allowed in SWEEP document page 17
 if (Slagx < 1.0){
   Slagx <- 1.0
@@ -337,10 +576,10 @@ WEPS[139]<-paste(" ",(round((Rockpct),digits=2)),sep="")
 # new in spring/summer 2019 (this note is just to help with trouble shooting)
 WEPS[142]<-paste(" ",(round((SDag), digits=2)),sep="") #Soil layer aggregate density (Mg/m^3)
 WEPS[144]<-paste(" ",(round((SEag), digits=2)),sep="") #Soil layer aggregate stability (ln(K/kg))
-WEPS[146]<-paste(" ",(round((Slagm), digits=2)),sep="") #Soil layer geometric mean diameter (mm)
+WEPS[146]<-paste(" ",(round((cslagm_1), digits=2)),sep="") #Soil layer geometric mean diameter (mm)
 WEPS[148]<-paste(" ",(round((Slagn), digits=2)),sep="") #Soil layer minimum aggregate size (mm)
 WEPS[150]<-paste(" ",(round((Slagx), digits=2)),sep="") #Soil layer maximum aggregate size (mm)
-WEPS[152]<-paste(" ",(round((S0ags), digits=2)),sep="") #Soil layer geometric std deviation (mm/mm)
+WEPS[152]<-paste(" ",(round((cs0ags_1), digits=2)),sep="") #Soil layer geometric std deviation (mm/mm)
 
 #next line contains: Surface Crust Fraction, Surface Crust Thickness, Fraction Loose Material on Surface,
 #Mass of loose material on the crust, soil crust density, soil crust stability
@@ -356,15 +595,19 @@ WEPS[166]<-paste(" ",(round((WEPPout$RndRough_in[i]*25.4),digits=2)),sep="") #Al
 WEPS[178]<-paste(" ",(round((WEPPout$SnwDepth_in[i]*25.4),digits=2)),sep="") #snow depth converted to mm
 
 #convert soil water to proper units (Mg/Mg)
-SoilWatercm<-WEPPout$SoilWaterLyr1[i]*2.54 #assume water density of 1g/cc
+#SoilWatercm<-WEPPout$SoilWaterLyr1[i]*2.54 #assume water density of 1g/cc
+SoilWatercm<-0 #assumes very top layer is dry for wind erosion calculations
 Soilpb<-as.numeric(bulkdensity)
 SoilMass<-Depthmm/10*Soilpb
+    
 Layer1WaterContent<-round((SoilWatercm/SoilMass),digits=2)
 WEPS[184]<-paste(" ",Layer1WaterContent,sep="")
-
+Volwater_cm<-SoilWatercm/10 #assumes top layer depth of wepp output is 10cm
+  GravWaterContent_cm<-round((Volwater_cm/Soilpb),digits=2) #assumes water densit of 1 g/cm3
+  Layer1WaterContent<-GravWaterContent_cm
 SurfaceLayerWaterContent<-(c(rep(Layer1WaterContent,12))) #daily WEPP value, repeated here for hourly WEPS input
-WEPS[190]<-paste(" ",SurfaceLayerWaterContent,collapse="")
-WEPS[191]<-paste(" ",SurfaceLayerWaterContent,collapse="")
+#WEPS[190]<-paste(" ",SurfaceLayerWaterContent,collapse="")
+#WEPS[191]<-paste(" ",SurfaceLayerWaterContent,collapse="")
 
 ### WEPS.IN +++ WEATHER +++  
 #this will be where wind data are input
@@ -374,4 +617,12 @@ if (i == DayofYear){
     break
 }
 
+  #set current value as previous for next date in loop  
+  gmd0<-gmd1
+  soil_temp_prior<-soil_temp 
+  HRwc0<-HRwc
+  se0<-se1
+  cslagm00<-cslagm_0
+  cslagm_0<-cslagm_1    
+    
 } # End of loop

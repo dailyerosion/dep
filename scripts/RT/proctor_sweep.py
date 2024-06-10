@@ -143,8 +143,11 @@ def workflow(arg):
     cmd = (
         f"Rscript --vanilla magic.R {sweepinfn} "
         f"{sweepinfn.replace('sweepin', 'grph')} "
-        f"{sweepinfn.replace('sweepin', 'sol')} {row['date'].year} "
-        f"{row['date']:%j} {cropcode}"
+        f"{sweepinfn.replace('sweepin', 'sol')} "
+        f"{row['date'].year} "
+        f"{sweepinfn.replace('sweepin', 'rot')[:-3]}txt "
+        f"{row['date']:%j} "
+        f"{cropcode}"
     )
     if not run_command(cmd):
         return None, None
