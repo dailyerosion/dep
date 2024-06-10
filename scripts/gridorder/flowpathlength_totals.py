@@ -55,7 +55,7 @@ def do_huc12(huc12):
 def load_lengths():
     idep = psycopg.connect(dname="idep", host="iemdb")
     icursor = idep.cursor()
-    lengths = {}
+    res = {}
     icursor.execute(
         """
     SELECT huc_12, fpath, ST_Length(geom) from flowpaths where
@@ -64,9 +64,9 @@ def load_lengths():
         (SCENARIO,),
     )
     for row in icursor:
-        lengths["%s_%s" % (row[0], row[1])] = row[2]
+        res["%s_%s" % (row[0], row[1])] = row[2]
     print("load_lengths() loaded %s entries" % (len(lengths),))
-    return lengths
+    return res
 
 
 if __name__ == "__main__":
@@ -79,12 +79,12 @@ if __name__ == "__main__":
 
     # Begin the processing work now!
     pool = multiprocessing.Pool()
-    for df, huc12, _slopes in tqdm(
+    for _df, _huc12, _slopes in tqdm(
         pool.imap_unordered(do_huc12, huc12s),
         total=len(huc12s),
         disable=(not sys.stdout.isatty()),
     ):
-        if df is None:
-            print("ERROR: huc12 %s returned 0 data" % (huc12,))
+        if _df is None:
+            print("ERROR: huc12 %s returned 0 data" % (_huc12,))
             continue
-        df.to_csv("dfs/%s.csv" % (huc12,))
+        _df.to_csv("dfs/%s.csv" % (_huc12,))

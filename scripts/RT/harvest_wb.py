@@ -151,21 +151,21 @@ if __name__ == "__main__":
         key = _date.strftime("%Y%m%d")
         FPS[key] = open("%s_wb.csv" % (_date.strftime("%Y%m%d"),), "w")
         FPS[key].write("HUC12,VALID,PRECIP_MM,ET_MM,RUNOFF_MM\n")
-    for res in tqdm(
+    for _res in tqdm(
         POOL.imap_unordered(do_huc12, HUC12S),
         total=len(HUC12S),
         disable=(not sys.stdout.isatty()),
     ):
-        for date, huc12, et, runoff in res:
+        for date, _huc12, et, runoff in _res:
             if et is None or np.isnan(et):
                 continue
             key = date.strftime("%Y%m%d")
             FPS[key].write(
                 ("%s,%s,%.2f,%.2f,%.2f\n")
                 % (
-                    huc12,
+                    _huc12,
                     date.strftime("%Y-%m-%d"),
-                    PRECIP[date][huc12],
+                    PRECIP[date][_huc12],
                     et,
                     runoff,
                 )
