@@ -52,29 +52,6 @@ def do_huc12(huc12):
     return df, huc12, len(frames)
 
 
-def compute_res(df, date, huc12, slopes, qc_precip):
-    """Compute things"""
-    allhits = slopes == len(df.index)
-    slopes = float(slopes)
-    return dict(
-        date=date,
-        huc12=huc12,
-        min_precip=(df.precip.min() if allhits else 0),
-        avg_precip=(df.precip.sum() / slopes),
-        max_precip=df.precip.max(),
-        min_loss=(df.av_det.min() if allhits else 0),
-        avg_loss=(df.av_det.sum() / slopes),
-        max_loss=df.av_det.max(),
-        min_runoff=(df.runoff.min() if allhits else 0),
-        avg_runoff=(df.runoff.sum() / slopes),
-        max_runoff=df.runoff.max(),
-        min_delivery=(df.delivery.min() if allhits else 0),
-        avg_delivery=(df.delivery.sum() / slopes),
-        max_delivery=df.delivery.max(),
-        qc_precip=qc_precip,
-    )
-
-
 def load_lengths():
     idep = psycopg.connect(dname="idep", host="iemdb")
     icursor = idep.cursor()
