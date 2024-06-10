@@ -73,29 +73,6 @@ def determine_dates(argv):
     return res
 
 
-def compute_res(df, mydate, _huc12, slopes, qc_precip):
-    """Compute things"""
-    allhits = slopes == len(df.index)
-    slopes = float(slopes)
-    return dict(
-        date=mydate,
-        huc12=_huc12,
-        min_precip=(df.precip.min() if allhits else 0),
-        avg_precip=(df.precip.sum() / slopes),
-        max_precip=df.precip.max(),
-        min_loss=(df.av_det.min() if allhits else 0),
-        avg_loss=(df.av_det.sum() / slopes),
-        max_loss=df.av_det.max(),
-        min_runoff=(df.runoff.min() if allhits else 0),
-        avg_runoff=(df.runoff.sum() / slopes),
-        max_runoff=df.runoff.max(),
-        min_delivery=(df.delivery.min() if allhits else 0),
-        avg_delivery=(df.delivery.sum() / slopes),
-        max_delivery=df.delivery.max(),
-        qc_precip=qc_precip,
-    )
-
-
 def load_precip():
     """Compute the HUC12 spatially averaged precip
 
@@ -174,21 +151,21 @@ if __name__ == "__main__":
         key = _date.strftime("%Y%m%d")
         FPS[key] = open("%s_wb.csv" % (_date.strftime("%Y%m%d"),), "w")
         FPS[key].write("HUC12,VALID,PRECIP_MM,ET_MM,RUNOFF_MM\n")
-    for res in tqdm(
+    for _res in tqdm(
         POOL.imap_unordered(do_huc12, HUC12S),
         total=len(HUC12S),
         disable=(not sys.stdout.isatty()),
     ):
-        for date, huc12, et, runoff in res:
+        for date, _huc12, et, runoff in _res:
             if et is None or np.isnan(et):
                 continue
             key = date.strftime("%Y%m%d")
             FPS[key].write(
                 ("%s,%s,%.2f,%.2f,%.2f\n")
                 % (
-                    huc12,
+                    _huc12,
                     date.strftime("%Y-%m-%d"),
-                    PRECIP[date][huc12],
+                    PRECIP[date][_huc12],
                     et,
                     runoff,
                 )
