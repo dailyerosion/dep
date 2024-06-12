@@ -470,7 +470,7 @@ if (SMlos < 0){
 
 #Slagx = Soil Layer Maximum Aggregate Size [SWEEP document page 17]
 p <- 1.52 * cs0ags_1^-0.449
-Slagx <- cs0ags_1 * cslamg_1 + 0.84^p
+Slagx <- cs0ags_1 * cslagm_1 + 0.84^p
 #adjustments for absolute range allowed in SWEEP document page 17
 if (Slagx < 1.0){
   Slagx <- 1.0
@@ -597,15 +597,16 @@ WEPS[178]<-paste(" ",(round((WEPPout$SnwDepth_in[i]*25.4),digits=2)),sep="") #sn
 #convert soil water to proper units (Mg/Mg)
 #SoilWatercm<-WEPPout$SoilWaterLyr1[i]*2.54 #assume water density of 1g/cc
 SoilWatercm<-0 #assumes very top layer is dry for wind erosion calculations
-Soilpb<-as.numeric(bulkdensity)
-SoilMass<-Depthmm/10*Soilpb
+#Soilpb<-as.numeric(bulkdensity)
+#SoilMass<-Depthmm/10*Soilpb
     
-Layer1WaterContent<-round((SoilWatercm/SoilMass),digits=2)
-WEPS[184]<-paste(" ",Layer1WaterContent,sep="")
-Volwater_cm<-SoilWatercm/10 #assumes top layer depth of wepp output is 10cm
-  GravWaterContent_cm<-round((Volwater_cm/Soilpb),digits=2) #assumes water densit of 1 g/cm3
-  Layer1WaterContent<-GravWaterContent_cm
-SurfaceLayerWaterContent<-(c(rep(Layer1WaterContent,12))) #daily WEPP value, repeated here for hourly WEPS input
+Layer1WaterContent<-0 #assumes very top layer is dry for wind erosion estimates
+#Layer1WaterContent<-round((SoilWatercm/SoilMass),digits=2)
+#WEPS[184]<-paste(" ",Layer1WaterContent,sep="")
+#Volwater_cm<-SoilWatercm/10 #assumes top layer depth of wepp output is 10cm
+#  GravWaterContent_cm<-round((Volwater_cm/Soilpb),digits=2) #assumes water densit of 1 g/cm3
+#  Layer1WaterContent<-GravWaterContent_cm
+SurfaceLayerWaterContent<-(c(rep(Layer1WaterContent,12))) #top layer of soil (not WEPP top layer) is dry for wind erosion estimates
 #WEPS[190]<-paste(" ",SurfaceLayerWaterContent,collapse="")
 #WEPS[191]<-paste(" ",SurfaceLayerWaterContent,collapse="")
 
