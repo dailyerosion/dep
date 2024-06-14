@@ -391,7 +391,7 @@ if (SEag < 0.1){
       se1<-se5*(1.0001-k4w*HRwc)/(1.0001-k4w*HRwc0) #se5* or se5+
     }
     se1<-min(se1,1) #for unfrozen, limit ability to go above 1 (max se)
-  
+}  
   #add if statement so that se1 can not go below minimum value of 0.01
   if(se1<0.01){
     se1<-0.01
