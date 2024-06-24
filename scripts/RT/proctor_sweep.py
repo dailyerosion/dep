@@ -18,18 +18,20 @@ Output fields (kg/m2)
   - PM2.5 soil loss
 """
 
-import argparse
-import datetime
 import os
 import shutil
 import subprocess
 import sys
+from datetime import date
 from multiprocessing import Pool
 
+import click
 import pandas as pd
 import requests
 from pydep.io.man import man2df, read_man
-from pyiem.util import get_sqlalchemy_conn, logger
+from pyiem.database import get_sqlalchemy_conn
+from pyiem.util import logger
+from sqlalchemy import text
 from tqdm import tqdm
 
 HUC12S = ["090201081101", "090201081102", "090201060605"]
@@ -54,9 +56,9 @@ def run_command(cmd: str) -> bool:
     return True
 
 
-def get_wind_obs(date, lon, lat) -> list:
+def get_wind_obs(dt, lon, lat) -> list:
     """Get what we need from IEMRE."""
-    uri = f"{IEMRE}/{date:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
+    uri = f"{IEMRE}/{dt:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
     attempts = 0
     res = {"data": []}
     while attempts < 3:
@@ -145,7 +147,7 @@ def workflow(arg):
         f"{sweepinfn.replace('sweepin', 'grph')} "
         f"{sweepinfn.replace('sweepin', 'sol')} "
         f"{row['date'].year} "
-        f"{sweepinfn.replace('sweepin', 'rot')[:-3]}txt "
+        f"{sweepinfn.replace('sweepin', 'rot')[:-4]}_1.txt "
         f"{row['date']:%j} "
         f"{cropcode}"
     )
@@ -167,35 +169,57 @@ def workflow(arg):
     return idx, erosion
 
 
-def usage():
-    """Create the argparse instance."""
-    parser = argparse.ArgumentParser("Send WEPP env info to the database")
-    parser.add_argument("-s", "--scenario", required=True, type=int)
-    parser.add_argument("-d", "--date", required=True)
-    return parser
+def write_database(scenario: int, dt: date, results: pd.DataFrame):
+    """Write things to the database."""
+    with get_sqlalchemy_conn("idep") as conn:
+        res = conn.execute(
+            text("""
+                 delete from wind_results_by_huc12 where scenario = :scenario
+                 and valid = :dt
+            """),
+            {"scenario": scenario, "dt": dt},
+        )
+        LOG.info("deleted %s result rows", res.rowcount)
+        for huc12, row in results.iterrows():
+            if row[("erosion", "mean")] == 0:
+                continue
+            conn.execute(
+                text("""
+                insert into wind_results_by_huc12
+                (scenario, valid, huc_12, avg_loss) VALUES
+                (:scenario, :valid, :huc12, :avg_loss)
+                     """),
+                {
+                    "scenario": scenario,
+                    "valid": dt,
+                    "huc12": huc12,
+                    "avg_loss": row[("erosion", "mean")],
+                },
+            )
+        conn.commit()
 
 
-def main(argv):
+@click.command()
+@click.option("--scenario", "-s", default=0, type=int, help="Scenario to run")
+@click.option("--date", "dt", type=click.DateTime(), help="Date to run")
+def main(scenario, dt):
     """Go Main Go."""
-    parser = usage()
-    args = parser.parse_args(argv[1:])
     with get_sqlalchemy_conn("idep") as conn:
         df = pd.read_sql(
-            """
+            text("""
             SELECT huc_12, fpath, scenario,
             ST_x(ST_Transform(ST_PointN(geom, 1), 4326)) as lon,
             ST_y(ST_Transform(ST_PointN(geom, 1), 4326)) as lat
-            from flowpaths where scenario = %s
-            and huc_12 = ANY(%s)
-        """,
+            from flowpaths where scenario = :scenario
+            and huc_12 = ANY(:huc12s)
+        """),
             conn,
-            params=(args.scenario, HUC12S),
+            params={"scenario": scenario, "huc12s": HUC12S},
             index_col=None,
         )
-    date = datetime.datetime.strptime(args.date, "%Y-%m-%d")
-    df["date"] = pd.Timestamp(date)
+    df["date"] = pd.Timestamp(dt)
     df["erosion"] = -1.0
-    LOG.info("found %s flowpaths to run for %s", len(df.index), date)
+    LOG.info("found %s flowpaths to run for %s", len(df.index), dt)
     jobs = list(df.iterrows())
     with Pool() as pool:
         progress = tqdm(
@@ -208,8 +232,9 @@ def main(argv):
                 break
             df.at[idx, "erosion"] = erosion
 
-    print(df[["huc_12", "erosion"]].groupby("huc_12").describe())
+    results = df[["huc_12", "erosion"]].groupby("huc_12").describe()
+    write_database(scenario, dt, results)
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
