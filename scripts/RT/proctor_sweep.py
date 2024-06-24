@@ -56,9 +56,9 @@ def run_command(cmd: str) -> bool:
     return True
 
 
-def get_wind_obs(date, lon, lat) -> list:
+def get_wind_obs(dt, lon, lat) -> list:
     """Get what we need from IEMRE."""
-    uri = f"{IEMRE}/{date:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
+    uri = f"{IEMRE}/{dt:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
     attempts = 0
     res = {"data": []}
     while attempts < 3:
