@@ -22,6 +22,7 @@ import os
 import shutil
 import subprocess
 import sys
+from datetime import date
 from multiprocessing import Pool
 
 import click
@@ -146,7 +147,7 @@ def workflow(arg):
         f"{sweepinfn.replace('sweepin', 'grph')} "
         f"{sweepinfn.replace('sweepin', 'sol')} "
         f"{row['date'].year} "
-        f"{sweepinfn.replace('sweepin', 'rot')[:-3]}txt "
+        f"{sweepinfn.replace('sweepin', 'rot')[:-4]}_1.txt "
         f"{row['date']:%j} "
         f"{cropcode}"
     )
@@ -166,6 +167,36 @@ def workflow(arg):
         # TODO: units
         erosion = float(tokens[0])
     return idx, erosion
+
+
+def write_database(scenario: int, dt: date, results: pd.DataFrame):
+    """Write things to the database."""
+    with get_sqlalchemy_conn("idep") as conn:
+        res = conn.execute(
+            text("""
+                 delete from wind_results_by_huc12 where scenario = :scenario
+                 and valid = :dt
+            """),
+            {"scenario": scenario, "dt": dt},
+        )
+        LOG.info("deleted %s result rows", res.rowcount)
+        for huc12, row in results.iterrows():
+            if row[("erosion", "mean")] == 0:
+                continue
+            conn.execute(
+                text("""
+                insert into wind_results_by_huc12
+                (scenario, valid, huc_12, avg_loss) VALUES
+                (:scenario, :valid, :huc12, :avg_loss)
+                     """),
+                {
+                    "scenario": scenario,
+                    "valid": dt,
+                    "huc12": huc12,
+                    "avg_loss": row[("erosion", "mean")],
+                },
+            )
+        conn.commit()
 
 
 @click.command()
@@ -201,7 +232,8 @@ def main(scenario, dt):
                 break
             df.at[idx, "erosion"] = erosion
 
-    print(df[["huc_12", "erosion"]].groupby("huc_12").describe())
+    results = df[["huc_12", "erosion"]].groupby("huc_12").describe()
+    write_database(scenario, dt, results)
 
 
 if __name__ == "__main__":
