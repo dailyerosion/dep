@@ -26,6 +26,7 @@ from datetime import date
 from multiprocessing import Pool
 
 import click
+import numpy as np
 import pandas as pd
 import requests
 from pydep.io.man import man2df, read_man
@@ -218,7 +219,7 @@ def main(scenario, dt):
             index_col=None,
         )
     df["date"] = pd.Timestamp(dt)
-    df["erosion"] = -1.0
+    df["erosion"] = np.nan
     LOG.info("found %s flowpaths to run for %s", len(df.index), dt)
     jobs = list(df.iterrows())
     with Pool() as pool:
@@ -232,7 +233,12 @@ def main(scenario, dt):
                 break
             df.at[idx, "erosion"] = erosion
 
+    if df["erosion"].isna().any():
+        LOG.warning("Some jobs failed, not writing to database")
+        return
+
     results = df[["huc_12", "erosion"]].groupby("huc_12").describe()
+    LOG.warning(results[("erosion", "mean")])
     write_database(scenario, dt, results)
 
 
