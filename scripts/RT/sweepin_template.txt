@@ -209,7 +209,7 @@
 #     wzoflg, I (global variable) zo location flag
 #               (flag =0 - zo fixed at wx sta. location)
 #               (flag = 1 - zo variable at field location)
- 5 25.0 0
+ 10 25.0 0
 #     wflg, I, (local variable) Wind/Weibull flag
 #              (0 - read in Weibull parameters, 1 - read in wind speeds)
  1 0.0 0.0 0.0
