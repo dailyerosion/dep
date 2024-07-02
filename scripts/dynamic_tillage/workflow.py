@@ -162,7 +162,13 @@ def do_huc12(dt, huc12) -> Tuple[int, int]:
             index_col=None,
         )
     if df.empty:
-        LOG.debug("No fields found for %s", huc12)
+        LOG.debug(
+            "No fields found for %s %s %s %s",
+            huc12,
+            dt,
+            crops,
+            dbcolidx,
+        )
         return 0, 0
 
     # Screen out when there are no fields that need planting or tilling
@@ -174,7 +180,7 @@ def do_huc12(dt, huc12) -> Tuple[int, int]:
         LOG.debug("No fields need planting or tilling for %s", huc12)
         return 0, 0
 
-    # Some logic below, we just want the field information and no dups
+    # There is an entry per OFE + field combination, but we only want 1
     fields = df.groupby("fbndid").first().copy()
 
     # We could be re-running for a given date, so we first total up the acres
@@ -213,7 +219,8 @@ def do_huc12(dt, huc12) -> Tuple[int, int]:
 
     # Now we need to plant
     for fbndid, row in fields[fields["plant_needed"]].iterrows():
-        if row["operation_done"]:
+        # We can't plant fields that were tilled or need tillage GH251
+        if row["operation_done"] or row["till_needed"]:
             continue
         acres_planted += row["acres"]
         fields.at[fbndid, "plant"] = dt
