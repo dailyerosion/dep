@@ -71,7 +71,6 @@ def setup_thread():
         subprocess.call(
             ["ln", "-s", f"{PROJDIR}/wepp/{dn}"], cwd=f"{tmpdir}/wepp"
         )
-    subprocess.call(["ln", "-s", f"{PROJDIR}/userdb"], cwd=tmpdir)
 
 
 def main(argv):
