@@ -12,6 +12,7 @@ dates and dates that may not be needed given the actual tillage in play.
 import os
 import shutil
 import subprocess
+import tempfile
 import threading
 from datetime import date, datetime, timedelta
 from multiprocessing import cpu_count
@@ -42,16 +43,19 @@ RUNTIME = {
 
 def setup_thread():
     """Ensure that we have temp folders and sym links constructed."""
-    mydir = f"tmp{threading.get_native_id()}"
-    os.makedirs(f"{mydir}/wepp/runs", exist_ok=True)
+    tmpdir = tempfile.mkdtemp()
+    # Store the reference for later use
+    threading.current_thread().tmpdir = tmpdir
+    os.makedirs(f"{tmpdir}/wepp/runs", exist_ok=True)
     for dn in ["data", "output", "wepp", "weppwin"]:
-        subprocess.call(["ln", "-s", f"../../wepp/{dn}"], cwd=f"{mydir}/wepp")
-    subprocess.call(["ln", "-s", "../userdb"], cwd=mydir)
+        subprocess.call(
+            ["ln", "-s", f"{PROJDIR}/wepp/{dn}"], cwd=f"{tmpdir}/wepp"
+        )
 
 
 def prj2wepp(huc12, fpath):
     """Run prj2wepp."""
-    mydir = f"tmp{threading.get_native_id()}"
+    mydir = threading.current_thread().tmpdir
     fn = f"/i/0/prj/{huc12[:8]}/{huc12[8:]}/{huc12}_{fpath:.0f}.prj"
     testfn = os.path.basename(fn)[:-4]
     cmd = [EXE, fn, testfn, f"{PROJDIR}/{mydir}/wepp", "no"]
@@ -319,11 +323,11 @@ def job(arg):
 @click.option("--scenario", type=int, default=0)
 @click.option("--date", "dt", type=click.DateTime(), required=True)
 @click.option("--huc12", type=str, required=False)
-@click.option("--edit_rotfile", type=bool, default=False)
+@click.option("--edit_rotfile", "edr", type=bool, default=False)
 @click.option("--run_prj2wepp", type=bool, default=False)
-def main(scenario, dt, huc12, edit_rotfile, run_prj2wepp):
+def main(scenario, dt, huc12, edr, run_prj2wepp):
     """Go Main Go."""
-    RUNTIME["edit_rotfile"] = edit_rotfile
+    RUNTIME["edit_rotfile"] = edr
     RUNTIME["run_prj2wepp"] = run_prj2wepp
     # Deal with dates not datetime
     dt = dt.date()

@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
@@ -33,9 +34,9 @@ def find_prjs(scenario, myhucs):
 
 def prj_job(fn) -> bool:
     """Process this proj!"""
-    mydir = f"tmp{threading.get_native_id()}"
+    mydir = threading.current_thread().tmpdir
     testfn = os.path.basename(fn)[:-4]
-    cmd = [EXE, fn, testfn, f"{PROJDIR}/{mydir}/wepp", "no"]
+    cmd = [EXE, fn, testfn, f"{mydir}/wepp", "no"]
     with subprocess.Popen(
         cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE, cwd=mydir
     ) as proc:
@@ -62,11 +63,14 @@ def prj_job(fn) -> bool:
 
 def setup_thread():
     """Ensure that we have temp folders and sym links constructed."""
-    mydir = f"tmp{threading.get_native_id()}"
-    os.makedirs(f"{mydir}/wepp/runs", exist_ok=True)
+    tmpdir = tempfile.mkdtemp()
+    # Store the reference for later use
+    threading.current_thread().tmpdir = tmpdir
+    os.makedirs(f"{tmpdir}/wepp/runs", exist_ok=True)
     for dn in ["data", "output", "wepp", "weppwin"]:
-        subprocess.call(["ln", "-s", f"../../wepp/{dn}"], cwd=f"{mydir}/wepp")
-    subprocess.call(["ln", "-s", "../userdb"], cwd=mydir)
+        subprocess.call(
+            ["ln", "-s", f"{PROJDIR}/wepp/{dn}"], cwd=f"{tmpdir}/wepp"
+        )
 
 
 def main(argv):
