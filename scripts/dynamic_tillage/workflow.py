@@ -323,11 +323,11 @@ def job(arg):
 @click.option("--scenario", type=int, default=0)
 @click.option("--date", "dt", type=click.DateTime(), required=True)
 @click.option("--huc12", type=str, required=False)
-@click.option("--edit_rotfile", type=bool, default=False)
+@click.option("--edit_rotfile", "edr", type=bool, default=False)
 @click.option("--run_prj2wepp", type=bool, default=False)
-def main(scenario, dt, huc12, edit_rotfile, run_prj2wepp):
+def main(scenario, dt, huc12, edr, run_prj2wepp):
     """Go Main Go."""
-    RUNTIME["edit_rotfile"] = edit_rotfile
+    RUNTIME["edit_rotfile"] = edr
     RUNTIME["run_prj2wepp"] = run_prj2wepp
     # Deal with dates not datetime
     dt = dt.date()
