@@ -4,6 +4,9 @@ import glob
 from datetime import datetime, timedelta
 
 import click
+from pyiem.util import logger
+
+LOG = logger()
 
 
 @click.command()
@@ -24,6 +27,9 @@ def main(huc12):
                     dt = datetime(
                         int(tokens[2]) + 2006, int(tokens[0]), int(tokens[1])
                     )
+                    if dt < now:
+                        LOG.warning("%s out of order %s<%s", fn, dt, now)
+                        continue
                     while now < dt:
                         if lastline != "":
                             outfh.write(f"{lastline}\n")
