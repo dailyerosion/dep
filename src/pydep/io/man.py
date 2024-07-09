@@ -1,8 +1,18 @@
 """Specific to reading management files."""
 
 import datetime
+from typing import Tuple
 
 import pandas as pd
+
+
+def _read_till_int(lines, linenum) -> Tuple[int, int]:
+    """Read until we find a line that is an integer."""
+    while linenum < len(lines):
+        if len(lines[linenum]) > 0 and lines[linenum][0].isdigit():
+            break
+        linenum += 1
+    return int(lines[linenum]), linenum + 1
 
 
 def man2df(mandict: dict, year1: int = 1) -> pd.DataFrame:
@@ -128,12 +138,9 @@ def read_man(filename):
             linenum += 4
         linenum += 4
     linenum += 2
-    res["ncnt"] = int(lines[linenum])
-    linenum += 7
-    res["ndrain"] = int(lines[linenum])
-    linenum += 7
-    res["nmscen"] = int(lines[linenum])
-    linenum += 4
+    for col in ["ncnt", "ndrain", "nmscen"]:
+        res[col], linenum = _read_till_int(lines, linenum)
+    linenum += 3
     res["scens"] = [None] * res["nmscen"]
     for scen in range(res["nmscen"]):
         res["scens"][scen] = {

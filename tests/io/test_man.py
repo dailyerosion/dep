@@ -11,6 +11,12 @@ def get_path(name):
     return os.path.join(basedir, "..", "data", name)
 
 
+def test_240709_man5():
+    """Test a read_man failure."""
+    mandf = man2df(read_man(get_path("man5.txt")))
+    assert len(mandf.index) == 18
+
+
 def test_230511_man2df_index_error():
     """Fix a index error found."""
     df = man2df(read_man(get_path("man4.txt")))
