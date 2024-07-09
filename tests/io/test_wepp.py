@@ -117,5 +117,4 @@ def test_ofe():
     assert abs(df["precip"].max() - 107.56) < 0.01
 
     df = read_ofe(get_path("ofe2.txt"))
-    print(df["sedleave"].sum())
     assert abs(df["sedleave"].sum() - 400257.48) < 0.01

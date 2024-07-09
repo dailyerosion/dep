@@ -30,9 +30,9 @@ def main():
         with open("answer.json", "r", encoding="ascii") as fh:
             answer = json.load(fh)
         failed = abs(avg_det - answer["av_det"]) > 0.01
-        print(
+        sys.stdout.write(
             f"{'FAILED' if failed else 'PASS'}: {fn}, "
-            f"expected {answer['av_det']:.3f}, got {avg_det:.3f}"
+            f"expected {answer['av_det']:.3f}, got {avg_det:.3f}\n"
         )
         if failed:
             sys.exit(3)

@@ -6,8 +6,14 @@ lint.select = [
     "F",
     "I",
     # "PD",  # pandas
+    "T20",  # print
 ]
 target-version = "py39"
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/**/*.py" = [
+    "T20",  # print
+]
 
 # per memory issues microsoft/pylance-release/issues/5739
 [tool.pyright]
