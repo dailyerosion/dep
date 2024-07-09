@@ -110,13 +110,13 @@ Rockpct<-Rockpct/100 #don't think I need this, but including here for consistenc
 Siltpct<-round((1-(Sandpct+Claypct)),digits=2)
 
 #wilting point & saturation calculations using pedotransfer functions from Saxton and Rawls 2006
-wilting_point_i<-(-0.024*Sandpct+0.487*Claypct+0.006*Organicpct+0.0005*(Sandpct*Organicpct)-0.013(Claypct*Organicpct)+0.068*(Sandpct*Claypct)+0.31)
-wilting_point<-(wilting_point_i+(0.14*wilting_point_i-0.02))
-theta_s1<-0.278*Sandpct+0.034*Claypct+0.022*Organicpct-0.018*Sandpct*Claypct-0.027*Claypct*Organicpct-0.584*Sandpct*Claypct+0.078
-theta_s2<-theta_s1+0.636*theta_s1-0.107
-field_capacity1<-(-0.251*Sandpct+0.195*Claypct+0.011*Organicpct+0.006*Sandpct*Organicpct-0.027*Claypct*Organicpct+0.452*Sandpct*Claypct+0.299)
+wilting_point1<-(-0.024*Sandpct+0.487*Claypct+0.006*Organicpct+(0.005*Sandpct*Organicpct)-(0.013*Claypct*Organicpct)+(0.068*Sandpct*Claypct)+0.031)
+wilting_point<-(wilting_point1+(0.14*wilting_point1-0.02))
+theta_s1<-0.278*Sandpct+0.034*Claypct+0.022*Organicpct-(0.018*Sandpct*Organicpct)-(0.027*Claypct*Organicpct)-(0.584*Sandpct*Claypct)+0.078
+theta_s2<-theta_s1+(0.636*theta_s1-0.107)
+field_capacity1<-(-0.251*Sandpct+0.195*Claypct+0.011*Organicpct+(0.006*Sandpct*Organicpct)-(0.027*Claypct*Organicpct)+(0.452*Sandpct*Claypct)+0.299)
 field_capacity<-field_capacity1+(1.283*field_capacity1^2)-0.374*field_capacity1-0.015
-theta_s<-field_capacity+theta_s2-0.097*Sandpct+0.045
+theta_s<-field_capacity+theta_s2-0.097*Sandpct+0.043
 
 # Compute soil CaCO3 based on pedotransfer function found in:
 # Wang, Q., Y. Li, and W. Klassen. 2005. Determination of Cation Exchange Capacity on Low to Highly
