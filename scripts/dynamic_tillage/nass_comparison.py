@@ -124,7 +124,7 @@ def get_nass(year, state, district, crop) -> pd.DataFrame:
     nass["valid"] = pd.to_datetime(nass["valid"])
     nass = nass.pivot(index="valid", columns="metric", values="num_value")
     # Create space for DEP to store things
-    nass["dep_planted"] = np.nan
+    nass[f"dep_{crop}_planted"] = np.nan
     nass["dep_days_suitable"] = np.nan
     return nass
 
@@ -138,10 +138,9 @@ def get_fields(year, district, state, crop) -> gpd.GeoDataFrame:
         fields = gpd.read_postgis(
             text("""
             select st_transform(geom, 4326) as geom, plant, huc12, fbndid,
-            acres from fields f LEFT JOIN field_operations o
+            acres from fields f JOIN field_operations o
             on (f.field_id = o.field_id and o.year = :year)
-            where scenario = 0 and
-            substr(landuse, :charidx, 1) = :ccode
+            where scenario = 0 and substr(landuse, :charidx, 1) = :ccode
             """),
             conn,
             params={
@@ -177,7 +176,8 @@ def main(year, district, state, crop):
     # accumulate acres planted by date
     accum = fields[["plant", "acres"]].groupby("plant").sum().cumsum()
     accum["percent"] = accum["acres"] / fields["acres"].sum() * 100.0
-    ldate = f"{year}-06-09"
+    # Need to forward fill so that we have comparables with NASS
+    ldate = f"{year}-06-22"
     if ldate >= f"{date.today():%Y-%m-%d}":
         ldate = f"{(date.today() - timedelta(days=1)):%Y-%m-%d}"
     accum = accum.reindex(pd.date_range(f"{year}-04-11", ldate)).ffill()
@@ -308,7 +308,7 @@ def main(year, district, state, crop):
         if valid not in accum.index:
             continue
         dep = accum.at[valid, "percent"]
-        nass.at[valid, "dep_planted"] = dep
+        nass.at[valid, f"dep_{crop}_planted"] = dep
         val = row[f"{crop} planted"]
         txt.append(f"{valid:%Y-%m-%d} | {val:.0f} | {dep:.1f}")
     ax2.text(
