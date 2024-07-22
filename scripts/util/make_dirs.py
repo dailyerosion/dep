@@ -1,8 +1,8 @@
 """Setup the necessary directory structure, so that other codes need not"""
 
 import os
-import sys
 
+import click
 from pydep.util import load_scenarios
 from pyiem.database import get_dbconn
 from pyiem.util import logger
@@ -18,22 +18,23 @@ def do_huc12(scenario, huc12):
     """Directory creator!"""
     created = 0
     for prefix in PREFIXES:
-        newdir = "/i/%s/%s/%s/%s" % (scenario, prefix, huc12[:8], huc12[8:])
+        newdir = f"/i/{scenario}/{prefix}/{huc12[:8]}/{huc12[8:]}"
         if not os.path.isdir(newdir):
             created += 1
             os.makedirs(newdir)
     return created
 
 
-def main(argv):
+@click.command()
+@click.option("--scenario", "-s", required=True, type=int)
+def main(scenario):
     """Do Main"""
-    scenario = int(argv[1])
     sdf = load_scenarios()
     # Go Main Go
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     cursor.execute(
-        "SELECT distinct huc_12 from flowpaths WHERE scenario = %s",
+        "SELECT huc_12 from huc12 WHERE scenario = %s",
         (int(sdf.at[scenario, "huc12_scenario"]),),
     )
     added = 0
@@ -48,4 +49,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
