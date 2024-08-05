@@ -12,6 +12,10 @@ from pydep.io.wepp import read_cli
 from pyiem.iemre import hourly_offset
 from pyiem.util import c2f, mm2inch
 
+LDATE = (datetime.date.today() - datetime.timedelta(days=1)).strftime(
+    "%Y-%m-%d"
+)
+
 
 def compute_stage4(lon, lat, year):
     """Build a daily dataframe for the stage4 data"""
@@ -28,9 +32,7 @@ def compute_stage4(lon, lat, year):
     nc.close()
     df = pd.DataFrame(
         {"precip": 0.0},
-        index=pd.date_range(
-            "%s-01-01" % (year,), "%s-12-31" % (year,), tz="America/Chicago"
-        ),
+        index=pd.date_range(f"{year}-01-01", min(LDATE, f"{year}-12-31")),
     )
     for date in df.index.values:
         date2 = datetime.datetime.utcfromtimestamp(date.tolist() / 1e9)
@@ -99,18 +101,19 @@ def do_qc(fn, df, year):
             )
         )
 
-    monthly = df[df.index.year == year]["pcpn"].resample("M").sum().copy()
+    monthly = df[df.index.year == year]["pcpn"].resample("ME").sum().copy()
     monthly = pd.DataFrame(
-        {"dep": mm2inch(monthly.values)}, index=range(1, 13)
+        {"dep": mm2inch(monthly.values)},
+        index=range(1, len(monthly.values) + 1),
     )
 
     # Get prism, for a bulk comparison
     prism = requests.get(
         (
-            "http://mesonet.agron.iastate.edu/json/prism/"
-            "%.2f/%.2f/%s0101-%s1231"
+            "http://mesonet.agron.iastate.edu/json/prism.py?"
+            "lon=%.2f&lat=%.2f&sdate=%s-01-01&edate=%s"
         )
-        % (lon, lat, year, year)
+        % (lon, lat, year, min(LDATE, f"{year}-12-31"))
     ).json()
     rows = []
     for entry in prism["data"]:
@@ -124,15 +127,15 @@ def do_qc(fn, df, year):
         )
     prismdf = pd.DataFrame(rows)
     prismdf = prismdf.set_index("date")
-    monthly["prism"] = prismdf["precip"].resample("M").sum().copy().values
+    monthly["prism"] = prismdf["precip"].resample("ME").sum().copy().values
 
     # Compare daily values
     iemjson = requests.get(
         (
             "http://mesonet.agron.iastate.edu/iemre/multiday/"
-            "%s-01-01/%s-12-31/%s/%s/json"
+            "%s-01-01/%s/%s/%s/json"
         )
-        % (year, year, lat, lon)
+        % (year, min(LDATE, f"{year}-12-31"), lat, lon)
     ).json()
     rows = []
     for entry in iemjson["data"]:
@@ -144,18 +147,26 @@ def do_qc(fn, df, year):
         )
     iemdf = pd.DataFrame(rows)
     iemdf = iemdf.set_index("date")
-    print("PRISM %s precip is: %.2f" % (year, prismdf["precip"].sum()))
-    print("IEMRE sum precip is: %.2f" % (iemdf["precip"].sum(),))
-    print("StageIV sum precip is: %.2f" % (stage4["precip"].sum(),))
-    monthly["stage4"] = stage4["precip"].resample("M").sum().copy().values
-    monthly["iemre"] = iemdf["precip"].resample("M").sum().copy().values
+    print(f"{year} Overall totals")
+    print(f"PRISM precip is: {prismdf['precip'].sum():.2f}")
+    print(f"IEMRE precip is: {iemdf['precip'].sum():.2f}")
+    print(f"StageIV precip is: {stage4['precip'].sum():.2f}")
+    ldate = f"{year}-12-31"
+    today = (datetime.date.today() - datetime.timedelta(days=1)).strftime(
+        "%Y-%m-%d"
+    )
+    ldate = min(ldate, today)
+    thisyear = df.loc[slice(f"{year}-01-01", ldate)]
+    print(f"DEP precip is: {thisyear['pcpn_in'].sum():.2f}")
+    monthly["stage4"] = stage4["precip"].resample("ME").sum().copy().values
+    monthly["iemre"] = iemdf["precip"].resample("ME").sum().copy().values
     monthly["prism-dep"] = monthly["prism"] - monthly["dep"]
     monthly["iemre-dep"] = monthly["iemre"] - monthly["dep"]
 
     print(" --------- %s Monthly Totals --------" % (year,))
     print(monthly)
     df.at[
-        slice(datetime.date(year, 1, 1), datetime.date(year, 12, 31)),
+        slice(f"{year}-01-01", ldate),
         "stage4_precip",
     ] = stage4["precip"].values
     df["iemre_precip"] = iemdf["precip"]
@@ -207,7 +218,7 @@ def do_qc(fn, df, year):
     print(" vvv job listing based on the above vvv")
     for dt in df.sort_values(by="diff_stage4", ascending=True).head(10).index:
         print(
-            "python daily_clifile_editor.py 0 %s %s %s"
+            "python proctor_tile_edit.py 0 %s %s %s"
             % (dt.year, dt.month, dt.day)
         )
     df2 = df.loc[slice(datetime.date(year, 1, 1), datetime.date(year, 1, 31))][
@@ -221,7 +232,7 @@ def main(argv):
     """Do Stuff"""
     fn = argv[1]
     year = int(argv[2])
-    df = read_cli(fn)
+    df = read_cli(fn).loc[:LDATE]
     df["pcpn_in"] = mm2inch(df["pcpn"].values)
     do_qc(fn, df, year)
 
