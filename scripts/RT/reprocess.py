@@ -36,10 +36,8 @@ def main():
         [
             "python",
             "proctor_tile_edit.py",
-            "0",
-            f"{d9:%Y}",
-            f"{d9:%m}",
-            f"{d9:%d}",
+            "--scenario=0",
+            f"--date={d9:%Y-%m-%d}",
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
