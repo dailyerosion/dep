@@ -11,7 +11,7 @@ find /i/0/error -type f -exec rm {} \;
 
 cd cligen
 # usage of 1 day ago here is problematic during spring CST -> CDT
-python proctor_tile_edit.py 0 $(date --date '16 hours ago' +'%Y %m %d') || exit
+python proctor_tile_edit.py -s 0 --date=$(date --date '16 hours ago' +'%Y-%m-%d') || exit
 
 cd ../RT
 python enqueue_jobs.py 0 && python env2database.py -s 0 --date $(date --date '16 hours ago' +'%Y-%m-%d') && python spam_twitter.py

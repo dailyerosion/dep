@@ -217,10 +217,7 @@ def do_qc(fn, df, year):
     )
     print(" vvv job listing based on the above vvv")
     for dt in df.sort_values(by="diff_stage4", ascending=True).head(10).index:
-        print(
-            "python proctor_tile_edit.py 0 %s %s %s"
-            % (dt.year, dt.month, dt.day)
-        )
+        print(f"python proctor_tile_edit.py -s 0 --date={dt:%Y-%m-%d}")
     df2 = df.loc[slice(datetime.date(year, 1, 1), datetime.date(year, 1, 31))][
         ["diff_precip", "pcpn_in", "iemre_precip", "stage4_precip"]
     ].sort_values(by="diff_precip")
