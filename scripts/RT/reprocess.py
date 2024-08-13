@@ -1,5 +1,8 @@
 """Daily Reprocessing.
 
+Careful of the timing here.  IEMRE reruns -10 days at Noon, so we should
+reprocess that date here too.
+
 Run from systemd dep-reprocess.timer
 """
 
@@ -10,15 +13,15 @@ import subprocess
 
 def main():
     """Go Main Go."""
-    d9 = datetime.datetime.now() - datetime.timedelta(days=9)
     d10 = datetime.datetime.now() - datetime.timedelta(days=10)
+    d11 = datetime.datetime.now() - datetime.timedelta(days=11)
     # Run env2database from 10 days ago
     with subprocess.Popen(
         [
             "python",
             "env2database.py",
             "--date",
-            d10.strftime("%Y-%m-%d"),
+            d11.strftime("%Y-%m-%d"),
             "-s",
             "0",
         ],
@@ -37,7 +40,7 @@ def main():
             "python",
             "proctor_tile_edit.py",
             "--scenario=0",
-            f"--date={d9:%Y-%m-%d}",
+            f"--date={d10:%Y-%m-%d}",
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
