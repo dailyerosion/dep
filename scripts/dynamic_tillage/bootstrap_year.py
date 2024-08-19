@@ -4,10 +4,11 @@ from datetime import date
 
 import click
 from pandas.io.sql import read_sql
-from pydep.tillage import make_tillage
 from pyiem.database import get_dbconnc, get_sqlalchemy_conn
 from pyiem.util import logger
 from sqlalchemy import text
+
+from pydep.tillage import make_tillage
 
 LOG = logger()
 

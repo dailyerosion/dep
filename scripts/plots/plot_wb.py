@@ -6,9 +6,10 @@ import sys
 
 import pandas as pd
 import seaborn as sns
-from pydep.io.dep import read_wb
 from pyiem.plot.use_agg import plt
 from tqdm import tqdm
+
+from pydep.io.dep import read_wb
 
 
 def main(argv):

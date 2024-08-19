@@ -7,10 +7,11 @@ import sys
 
 import click
 import pandas as pd
-from pydep.io.wepp import read_env, read_ofe
 from pyiem.util import get_dbconn, get_sqlalchemy_conn
 from sqlalchemy import text
 from tqdm import tqdm
+
+from pydep.io.wepp import read_env, read_ofe
 
 # 2007 is skipped
 YEARS = 6.0

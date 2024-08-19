@@ -38,12 +38,13 @@ from functools import partial
 from math import atan2, degrees, pi
 
 import pandas as pd
-from pydep.tillage import make_tillage
-from pydep.util import load_scenarios
 from pyiem.database import get_dbconn, get_sqlalchemy_conn
 from pyiem.util import logger
 from sqlalchemy import text
 from tqdm import tqdm
+
+from pydep.tillage import make_tillage
+from pydep.util import load_scenarios
 
 LOG = logger()
 MISSED_SOILS = {}

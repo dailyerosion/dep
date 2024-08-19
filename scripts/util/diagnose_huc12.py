@@ -6,8 +6,9 @@ import sys
 
 import pandas as pd
 from pandas.io.sql import read_sql
-from pydep.io.wepp import read_env
 from pyiem.util import get_dbconn
+
+from pydep.io.wepp import read_env
 
 YEARS = datetime.date.today().year - 2007 + 1
 CONV = 4.463

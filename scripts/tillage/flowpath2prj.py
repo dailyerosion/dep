@@ -7,9 +7,10 @@ import sys
 from math import atan2, degrees, pi
 
 from psycopg.rows import dict_row
-from pydep.util import get_cli_fname
 from pyiem.database import get_dbconn
 from tqdm import tqdm
+
+from pydep.util import get_cli_fname
 
 SCENARIO = int(sys.argv[1])
 TILLAGE_CLASS = int(sys.argv[2])
@@ -176,8 +177,6 @@ def do_flowpath(zone, huc_12, fid, fpath):
             maxmanagement = row["management"]
         if row["slope"] < 0.00001:
             row["slope"] = 0.00001
-        # hard coded...
-        # row['slope'] = slope
         rows.append(row)
 
     if x is None:
@@ -199,7 +198,6 @@ def do_flowpath(zone, huc_12, fid, fpath):
             "%s %3i %4.1f %5.1f %5.1f"
             % (huc_12, fpath, maxslope, rows[-1]["length"], s)
         )
-    # SLP.write("%s,%.6f\n" % (fid, maxslope))
 
     if rows[-1]["length"] < 1:
         print("%s,%s has zero length, deleting" % (huc_12, fpath))
@@ -215,7 +213,6 @@ def do_flowpath(zone, huc_12, fid, fpath):
         (res["clifile"], fpath, huc_12, SCENARIO),
     )
 
-    # return
     res["huc8"] = huc_12[:8]
     res["huc12"] = huc_12
     res["envfn"] = "/i/%s/env/%s/%s_%s.env" % (

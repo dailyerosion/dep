@@ -11,9 +11,10 @@ import sys
 
 import pandas as pd
 import requests
+from pyiem.util import convert_value, logger
+
 from pydep.io.wepp import read_cli
 from pydep.util import get_cli_fname
-from pyiem.util import convert_value, logger
 
 LOG = logger()
 

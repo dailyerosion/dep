@@ -4,9 +4,10 @@ import os
 import sys
 
 import numpy as np
-from pydep.io.wepp import read_env
 from pyiem.util import get_dbconn, logger
 from tqdm import tqdm
+
+from pydep.io.wepp import read_env
 
 LOG = logger()
 

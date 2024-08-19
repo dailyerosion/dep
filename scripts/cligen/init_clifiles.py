@@ -9,9 +9,10 @@ import shutil
 import subprocess
 
 import numpy as np
-from pydep.util import get_cli_fname
 from pyiem.iemre import EAST, NORTH, SOUTH, WEST
 from pyiem.util import get_dbconn
+
+from pydep.util import get_cli_fname
 
 
 def finder(lon, lat, clscenario):

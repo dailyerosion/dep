@@ -3,8 +3,9 @@
 import calendar
 import sys
 
-from pydep.io.dep import read_wb
 from pyiem.plot.use_agg import plt
+
+from pydep.io.dep import read_wb
 
 
 def main(argv):

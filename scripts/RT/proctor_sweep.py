@@ -29,11 +29,12 @@ import click
 import numpy as np
 import pandas as pd
 import requests
-from pydep.io.man import man2df, read_man
 from pyiem.database import get_sqlalchemy_conn
 from pyiem.util import logger
 from sqlalchemy import text
 from tqdm import tqdm
+
+from pydep.io.man import man2df, read_man
 
 HUC12S = ["090201081101", "090201081102", "090201060605"]
 LOG = logger()

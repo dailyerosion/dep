@@ -1,8 +1,9 @@
 """test pydep.util"""
 
 import pytest
-from pydep import util
 from pyiem.database import get_dbconnc
+
+from pydep import util
 
 
 def test_clear_huc12data():

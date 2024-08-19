@@ -3,9 +3,10 @@
 import glob
 
 import pandas as pd
+from pyiem.util import logger
+
 from pydep.io.dep import read_wb
 from pydep.io.wepp import read_env
-from pyiem.util import logger
 
 LOG = logger()
 

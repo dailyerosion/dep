@@ -12,12 +12,13 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from affine import Affine
-from pydep.io.wepp import read_env
-from pydep.util import load_scenarios
 from pyiem.iemre import NORTH, WEST
 from pyiem.util import get_dbconn, logger
 from rasterstats import zonal_stats
 from tqdm import tqdm
+
+from pydep.io.wepp import read_env
+from pydep.util import load_scenarios
 
 LOG = logger()
 PRECIP_AFF = Affine(0.01, 0.0, WEST, 0.0, -0.01, NORTH)
