@@ -7,12 +7,12 @@ import subprocess
 import sys
 import time
 from concurrent.futures import ProcessPoolExecutor
-from datetime import date
+from datetime import date, datetime
 from multiprocessing import cpu_count
 
 import click
 import numpy as np
-from pyiem.iemre import EAST, NORTH, SOUTH, WEST
+from pyiem import iemre
 from pyiem.util import logger
 
 LOG = logger()
@@ -26,12 +26,13 @@ def get_fn(dt: date):
 
 def assemble_grids(tilesz, dt: date):
     """Build back the grid from the tiles."""
-    YS = int((NORTH - SOUTH) * 100.0)
-    XS = int((EAST - WEST) * 100.0)
+    dom = iemre.DOMAINS[""]
+    YS = int((dom["north"] - dom["south"]) * 100.0)
+    XS = int((dom["east"] - dom["west"]) * 100.0)
     res = np.zeros((YS, XS))
     basedir = f"{DATADIR}/{dt.year}"
-    for i, _lon in enumerate(np.arange(WEST, EAST, tilesz)):
-        for j, _lat in enumerate(np.arange(SOUTH, NORTH, tilesz)):
+    for i, _lo in enumerate(np.arange(dom["west"], dom["east"], tilesz)):
+        for j, _la in enumerate(np.arange(dom["south"], dom["north"], tilesz)):
             fn = f"{basedir}/{dt:%Y%m%d}.tile_{i}_{j}.npy"
             if not os.path.isfile(fn):
                 continue
@@ -44,16 +45,16 @@ def assemble_grids(tilesz, dt: date):
         np.save(file=fh, arr=res)
 
 
-def myjob(cmd):
+def myjob(cmd: list):
     """Run this command and return any result."""
     proc = subprocess.Popen(
-        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     stdout, stderr = proc.communicate()
     if stdout != b"" or stderr != b"":
         LOG.warning(
             "CMD: %s\nSTDOUT: %s\nSTDERR: %s",
-            cmd,
+            " ".join(cmd),
             stdout.decode("ascii", "ignore").strip(),
             stderr.decode("ascii", "ignore").strip(),
         )
@@ -62,8 +63,20 @@ def myjob(cmd):
 
 @click.command()
 @click.option("--scenario", "-s", type=int, default=0, help="Scenario")
-@click.option("--date", "dt", type=click.DateTime(), help="Date to process")
-def main(scenario, dt):
+@click.option(
+    "--date",
+    "dt",
+    type=click.DateTime(),
+    help="Date to process",
+    required=True,
+)
+@click.option(
+    "--domain",
+    type=str,
+    default="",
+    help="Domain to process",
+)
+def main(scenario, dt: datetime, domain: str):
     """Go Main Go."""
     tilesz = 5
     dt = dt.date()
@@ -72,12 +85,17 @@ def main(scenario, dt):
         filets = os.stat(fn)[stat.ST_MTIME]
         LOG.warning("%s was last processed on %s", dt, time.ctime(filets))
     jobs = []
-    for i, _lon in enumerate(np.arange(WEST, EAST, tilesz)):
-        for j, _lat in enumerate(np.arange(SOUTH, NORTH, tilesz)):
-            cmd = (
-                f"python daily_clifile_editor.py {i} {j} {tilesz} "
-                f"{scenario} {dt:%Y %m %d}"
-            )
+    dom = iemre.DOMAINS[domain]
+    for i, _lo in enumerate(np.arange(dom["west"], dom["east"], tilesz)):
+        for j, _la in enumerate(np.arange(dom["south"], dom["north"], tilesz)):
+            cmd = [
+                "python",
+                "daily_clifile_editor.py",
+                f"--xtile={i}",
+                f"--ytile={j}",
+                f"--scenario={scenario}",
+                f"--date={dt:%Y-%m-%d}",
+            ]
             jobs.append(cmd)
     failed = False
     # 12 Nov 2021 audit shows per process usage in the 2-3 GB range
