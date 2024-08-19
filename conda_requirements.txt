@@ -5,8 +5,6 @@ pandas
 # image work
 pillow
 psycopg
-# my hacky
-pyiem
 # Fast geojson reading
 pyogrio
 # For testing

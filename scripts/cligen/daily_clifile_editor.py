@@ -441,7 +441,7 @@ def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
             continue
         # Need to initialize the breakpoint data
         if bp is None:
-            ts = ZEROHOUR + timedelta(minutes=(i * 2))
+            ts = ZEROHOUR + timedelta(minutes=i * 2)
             bp = [bpstr(ts, 0)]
         accum += intensity
         lasti = i
@@ -452,7 +452,7 @@ def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
             if (i + 1) == len(ar):
                 ts = ZEROHOUR.replace(hour=23, minute=59)
             else:
-                ts = ZEROHOUR + timedelta(minutes=((i + 1) * 2))
+                ts = ZEROHOUR + timedelta(minutes=(i + 1) * 2)
             bp.append(bpstr(ts, accum))
     # To append a last accumulation, we need to have something meaningful
     # so to not have redundant values, which bombs WEPP
@@ -460,7 +460,7 @@ def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
         if (lasti + 1) == len(ar):
             ts = ZEROHOUR.replace(hour=23, minute=59)
         else:
-            ts = ZEROHOUR + timedelta(minutes=((lasti + 1) * 2))
+            ts = ZEROHOUR + timedelta(minutes=(lasti + 1) * 2)
         bp.append(bpstr(ts, accum))
     return bp
 
