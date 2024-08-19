@@ -5,9 +5,10 @@ import sys
 
 import pandas as pd
 from pandas.io.sql import read_sql
-from pydep.io.dep import read_wb
 from pyiem.util import get_dbconn
 from tqdm import tqdm
+
+from pydep.io.dep import read_wb
 
 APR15 = pd.Timestamp(year=2018, month=4, day=15)
 MAY30 = pd.Timestamp(year=2018, month=5, day=30)

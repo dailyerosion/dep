@@ -9,9 +9,10 @@ from io import StringIO
 
 # third party
 import pandas as pd
-from pydep.io.wepp import read_yld
 from pyiem.util import get_dbconn
 from tqdm import tqdm
+
+from pydep.io.wepp import read_yld
 
 
 def readfile(huc12, filename):

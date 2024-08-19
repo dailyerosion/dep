@@ -4,8 +4,9 @@ import datetime
 import sys
 
 import matplotlib.dates as mdates
-from pydep.io.wepp import read_env
 from pyiem.plot.use_agg import plt
+
+from pydep.io.wepp import read_env
 
 
 def main(argv):

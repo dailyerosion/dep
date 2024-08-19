@@ -4,9 +4,10 @@ import glob
 
 import numpy as np
 import pandas as pd
-from pydep.io.wepp import read_env
 from pyiem.plot.use_agg import plt
 from tqdm import tqdm
+
+from pydep.io.wepp import read_env
 
 MYHUCS = [
     "070600060701",

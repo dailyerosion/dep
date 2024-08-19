@@ -1,9 +1,10 @@
 """Generate the requested output."""
 
 import pandas as pd
-from pydep.io.wepp import read_env
 from pyiem.util import get_dbconn
 from tqdm import tqdm
+
+from pydep.io.wepp import read_env
 
 HUCS = (
     "102400090102 102300020307 102400020604 102801020801 071000040902 "

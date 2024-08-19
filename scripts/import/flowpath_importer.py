@@ -17,11 +17,12 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pyproj
-from pydep.util import clear_huc12data, get_cli_fname
 from pyiem.database import get_dbconn
 from pyiem.util import logger
 from shapely.geometry import LineString
 from tqdm import tqdm
+
+from pydep.util import clear_huc12data, get_cli_fname
 
 LOG = logger()
 print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")

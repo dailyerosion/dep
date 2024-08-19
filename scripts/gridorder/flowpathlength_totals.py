@@ -6,9 +6,10 @@ import sys
 
 import pandas as pd
 import psycopg
-from pydep.io.wepp import read_env
 from pyiem.util import get_dbconn
 from tqdm import tqdm
+
+from pydep.io.wepp import read_env
 
 
 def find_huc12s():

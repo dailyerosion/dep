@@ -16,11 +16,12 @@ from multiprocessing.pool import Pool
 import click
 import geopandas as gpd
 import pandas as pd
-from pydep.io.dep import read_wb
 from pyiem.database import get_sqlalchemy_conn
 from pyiem.util import logger
 from sqlalchemy import text
 from tqdm import tqdm
+
+from pydep.io.dep import read_wb
 
 LOG = logger()
 

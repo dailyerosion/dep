@@ -4,8 +4,9 @@ import datetime
 import glob
 
 import pandas as pd
-from pydep.io.wepp import read_env
 from pyiem.util import logger
+
+from pydep.io.wepp import read_env
 
 LOG = logger()
 

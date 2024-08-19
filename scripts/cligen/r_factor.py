@@ -6,11 +6,12 @@ import matplotlib.colors as mpcolors
 import numpy as np
 import pandas as pd
 from matplotlib.patches import Polygon
-from pydep.io.wepp import read_cli
 from pyiem.plot import MapPlot
 from pyiem.plot.use_agg import plt
 from pyiem.util import get_sqlalchemy_conn
 from tqdm import tqdm
+
+from pydep.io.wepp import read_cli
 
 
 def plot():

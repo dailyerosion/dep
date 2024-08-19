@@ -2,9 +2,10 @@
 
 import pandas as pd
 from pandas.io.sql import read_sql
-from pydep.io.wepp import read_env
 from pyiem.util import get_dbconn
 from tqdm import tqdm
+
+from pydep.io.wepp import read_env
 
 HUCS = (
     "070801050307 070801050702 071000070104 102300030203 102400030406 "
