@@ -10,7 +10,9 @@ from pyiem.util import load_geodf
 
 
 @click.command()
-@click.option("--date", "dt", type=click.DateTime(), help="Date to plot.")
+@click.option(
+    "--date", "dt", required=True, type=click.DateTime(), help="Date to plot."
+)
 def main(dt):
     """Go Main Go."""
     with get_sqlalchemy_conn("idep") as conn:
@@ -61,7 +63,7 @@ def main(dt):
         states.plot(ax=ax, color="None", edgecolor="k", lw=0.5, aspect=None)
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
-    fig.savefig(f"huc12limiter_{dt:%Y%m%d}.png")
+    fig.savefig(f"plotsv2/huc12limiter_{dt:%Y%m%d}.png")
 
 
 if __name__ == "__main__":
