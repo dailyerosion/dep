@@ -30,18 +30,20 @@ def job(dates, tmpdir, huc12) -> int:
     """Do work for a HUC12"""
     with get_sqlalchemy_conn("idep") as conn:
         # Build up cross reference of fields and flowpath/OFEs
+        # Dates are currently always for the same year
         huc12df = pd.read_sql(
             text(
                 """
                 select o.ofe, p.fpath, o.fbndid, g.plastic_limit,
-                p.fpath || '_' || o.ofe as combo, p.huc_12 as huc12
+                p.fpath || '_' || o.ofe as combo, p.huc_12 as huc12,
+                substr(o.landuse, :charat, 1) as crop
                 from flowpaths p, flowpath_ofes o, gssurgo g
                 WHERE o.flowpath = p.fid and p.huc_12 = :huc12
                 and p.scenario = 0 and o.gssurgo_id = g.id
             """
             ),
             conn,
-            params={"huc12": huc12},
+            params={"huc12": huc12, "charat": dates[0].year - 2007 + 1},
             index_col=None,
         )
     huc12df["sw1"] = pd.NA
