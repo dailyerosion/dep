@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 
+from pydep.io.dep import read_wb
 from pydep.io.wepp import read_env
 
 
@@ -36,6 +37,17 @@ def main():
         )
         if failed:
             sys.exit(3)
+
+        df = read_wb("wepp_wb.txt")
+        max_sw1 = df["sw1"].max()
+        failed = abs(max_sw1 - answer["max_sw1"]) > 1  # forgiving
+        sys.stdout.write(
+            f"{'FAILED' if failed else 'PASS'}: {fn}, "
+            f"expected {answer['max_sw1']:.3f}, got {max_sw1:.3f}\n"
+        )
+        if failed:
+            sys.exit(3)
+
         os.chdir("..")
 
 

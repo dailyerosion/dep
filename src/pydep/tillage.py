@@ -54,7 +54,7 @@ WHEAT = {
 }
 
 
-def make_tillage(scenario, zone, prevcode, code, nextcode, cfactor, year):
+def make_tillage(scenario, zone, prevcode, code, nextcode, cfactor, year: int):
     """Read a block file and do replacements
 
     Args:
@@ -76,9 +76,11 @@ def make_tillage(scenario, zone, prevcode, code, nextcode, cfactor, year):
     with open(blockfn, "r", encoding="utf8") as fh:
         data = fh.read()
     # Special consideration for planting alfalfa
-    if code == "P" and prevcode != "P":
-        # Best we can do now is plant it on Apr 15, sigh
+    if code == "P" and (prevcode != "P" or year == 1):
+        # Best we can do now is plant it on Apr 15 with a simple disk the
+        # day before
         data = (
+            f"4  14 {year} 1 Tillage OpCropDef.FCSTACDP      {{0.101600, 2}}\n"
             f"4  15 {year} 1 Plant-Perennial CropDef.ALFALFA  {{0.000000}}\n"
             f"{data}"
         )
