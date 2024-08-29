@@ -6,6 +6,7 @@ lint.select = [
     "F",
     "I",
     # "PD",  # pandas
+    "PIE",  # perf
     "T20",  # print
 ]
 target-version = "py39"

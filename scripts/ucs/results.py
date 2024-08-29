@@ -74,7 +74,7 @@ scenario_y = []
 baseline_y = []
 key = sz / 4
 minval = [0, 1000.0]
-for i in range(0, sz):
+for i in range(sz):
     d0[i] = d7[i]
     scenario_y.append(np.average(d7[:i]) / years)
     baseline_y.append(np.average(dbaseline[:i]) / years)
