@@ -5,6 +5,7 @@ from datetime import date, timedelta
 
 import click
 import geopandas as gpd
+import matplotlib.colors as mpcolors
 import numpy as np
 import pandas as pd
 from matplotlib.patches import Rectangle
@@ -123,6 +124,16 @@ def get_nass(year, state, district, crop) -> pd.DataFrame:
             )
     nass["valid"] = pd.to_datetime(nass["valid"])
     nass = nass.pivot(index="valid", columns="metric", values="num_value")
+    # NASS does not always include 0% and 100% in their data, so we need to
+    # fill in the blanks
+    col = f"{crop} planted"
+    if nass[col].min() > 0:
+        firstrow = nass[nass[col] > 0].index[0]
+        nass.loc[firstrow - pd.Timedelta(days=7), col] = 0
+    # TODO, this may not always be right for in-progress years
+    if nass[col].max() < 100:
+        lastrow = nass[nass[col] > 0].index[-1]
+        nass.loc[lastrow + pd.Timedelta(days=7), col] = 100
     # Create space for DEP to store things
     nass[f"dep_{crop}_planted"] = np.nan
     nass["dep_days_suitable"] = np.nan
@@ -155,6 +166,17 @@ def get_fields(year, district, state, crop) -> gpd.GeoDataFrame:
     return fields
 
 
+def get_labels(year):
+    """Figure out where we should place xticks."""
+    xticks = []
+    xticklabels = []
+    for dt in pd.date_range(f"{year}-04-11", f"{year}-06-20"):
+        if dt.dayofweek == 6:
+            xticks.append(dt)
+            xticklabels.append(f"{dt:%b %-d}")
+    return xticks, xticklabels
+
+
 @click.command()
 @click.option("--year", type=int, help="Year to plot")
 @click.option("--district", type=str, help="NASS District (lowercase)")
@@ -169,6 +191,8 @@ def main(year, district, state, crop):
     """Go Main Go."""
     nass = get_nass(year, state, district, crop)
     fields = get_fields(year, district, state, crop)
+
+    xticks, xticklabels = get_labels(year)
 
     # Spatially filter fields that are inside the climdiv region
     daily_limits = compute_limits(fields["huc12"].unique(), year)
@@ -210,6 +234,7 @@ def main(year, district, state, crop):
         ]
         i += 1
     cmap = get_cmap("viridis")
+    norm = mpcolors.BoundaryNorm(np.arange(0, 101, 10), cmap.N)
     res = ax.imshow(
         data,
         extent=[
@@ -220,14 +245,15 @@ def main(year, district, state, crop):
         ],
         aspect="auto",
         interpolation="nearest",
-        vmin=0,
-        vmax=100,
+        norm=norm,
         cmap=cmap,
     )
     ax.set_yticks(range(4))
     ax.set_yticklabels(
         ["Combined", "Soil Moisture", "Soil Temp", "Precipitation"]
     )
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xticklabels)
     ax.text(0.02, 1.05, "Limiting Factors", transform=ax.transAxes)
     cax = fig.add_axes([0.92, 0.05, 0.02, 0.2])
     fig.colorbar(res, cax=cax, label="Percent of HUC12s Limited")
@@ -284,7 +310,8 @@ def main(year, district, state, crop):
 
     # ////////////////////////////////////////////////////////////
     ax2 = fig.add_axes([0.1, 0.4, 0.8, 0.5])
-    ax2.set_ylim(0, 100)
+    ax2.set_ylim(-2, 102)
+    ax2.set_yticks(range(0, 101, 10))
     ax2.set_ylabel("Percent of Acres Planted")
     ax2.grid(True)
     ax2.plot(
@@ -303,36 +330,40 @@ def main(year, district, state, crop):
     ax2.legend(loc=2)
 
     # create a table in the lower right corner with the values from
-    txt = ["Date       | NASS | DEP"]
+    txt = ["Weekly Progress", "Date   NASS DEP"]
     for valid, row in nass.iterrows():
         if valid not in accum.index:
             continue
         dep = accum.at[valid, "percent"]
         nass.at[valid, f"dep_{crop}_planted"] = dep
         val = row[f"{crop} planted"]
-        txt.append(f"{valid:%Y-%m-%d} | {val:.0f} | {dep:.1f}")
+        txt.append(f"{valid:%b %-2d}:  {val:3.0f} {dep:3.0f}")
     ax2.text(
-        0.99,
-        0.01,
+        1.05,
+        0.05,
         "\n".join(txt),
         transform=ax2.transAxes,
         fontsize=10,
+        fontfamily="monospace",
         va="bottom",
         ha="right",
         bbox=dict(facecolor="white", edgecolor="black", pad=5),
     )
+    ax2.set_xticks(xticks)
+    ax2.set_xticklabels(xticklabels)
 
     # Sync up the two xaxes
     ax.set_xlim(*ax2.get_xlim())
     ax3.set_xlim(*ax2.get_xlim())
 
     nass.to_csv(
-        f"{crop}_{year}_{district if district is not None else state}.csv"
+        f"plotsv2/{crop}_{year}_"
+        f"{district if district is not None else state}.csv"
     )
 
     ss = f"state_{state}"
     fig.savefig(
-        f"{crop}_progress_{year}_"
+        f"plotsv2/{crop}_progress_{year}_"
         f"{district if district is not None else ss}.png"
     )
 

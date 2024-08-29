@@ -3,6 +3,12 @@
 from pydep import tillage
 
 
+def test_gh266_pasture():
+    """Test that an initial planting operation is created."""
+    res = tillage.make_tillage(0, "IA_NORTH", "P", "P", "P", 1, 1)
+    assert "Plant-Perennial" in res
+
+
 def test_simple():
     """Test import of API."""
     plants = ["C", "B", "W", "P"]

@@ -10,15 +10,21 @@ from pyiem.plot import figure
 from sqlalchemy import text
 
 
-def get_plastic_limit(huc12: str) -> pd.DataFrame:
+def get_plastic_limit(huc12: str, year: int) -> pd.DataFrame:
     """Figure out what the plastic limit is."""
+    charat = year - 2007
     with get_sqlalchemy_conn("idep") as conn:
         # build up the cross reference of everyhing we need to know
         return pd.read_sql(
             text(
                 """
-                select o.ofe, p.fpath, o.fbndid, g.plastic_limit,
-                p.fpath || '_' || o.ofe as combo
+                select o.ofe, p.fpath, o.fbndid,
+                coalesce(
+                    (g.wepp_max_sw + g.wepp_min_sw) / 2.0,
+                    g.plastic_limit
+                ) as plastic_limit,
+                p.fpath || '_' || o.ofe as combo,
+                substr(landuse, :charat, 1) as crop
                 from flowpaths p, flowpath_ofes o, gssurgo g
                 WHERE o.flowpath = p.fid and p.huc_12 = :huc12
                 and p.scenario = 0 and o.gssurgo_id = g.id
@@ -27,20 +33,21 @@ def get_plastic_limit(huc12: str) -> pd.DataFrame:
             conn,
             params={
                 "huc12": huc12,
+                "charat": charat,
             },
             index_col=None,
         )
 
 
 @click.command()
-@click.option("--huc12", help="HUC12 To Plot")
-@click.option("--year", type=int, help="Year to Plot")
-def main(huc12, year):
+@click.option("--huc12", required=True, help="HUC12 To Plot")
+@click.option("--year", required=True, type=int, help="Year to Plot")
+def main(huc12: str, year: int):
     """Go Main Go."""
-    pldf = get_plastic_limit(huc12)
+    pldf = get_plastic_limit(huc12, year)
     smdfs = []
     hucstatusdfs = []
-    for dt in pd.date_range(f"{year}/04/14", f"{year}/05/31"):
+    for dt in pd.date_range(f"{year}/04/11", f"{year}/06/13"):
         fn = f"/mnt/idep2/data/smstate/{dt:%Y}/smstate{dt:%Y%m%d}.feather"
         if not os.path.isfile(fn):
             continue
@@ -54,24 +61,35 @@ def main(huc12, year):
         statusdf["date"] = dt
         hucstatusdfs.append(statusdf.loc[[huc12]])
     hucstatusdf = pd.concat(hucstatusdfs)
-    print(hucstatusdf)
     huc12sm = pd.concat(smdfs)
     huc12sm["combo"] = (
         huc12sm["fpath"].astype(str) + "_" + huc12sm["ofe"].astype(str)
     )
-    huc12sm["plastic_limit"] = (
+    huc12sm["pl0.8"] = (
         huc12sm["combo"].map(pldf.set_index("combo")["plastic_limit"]) * 0.8
     )
-    huc12sm["below_pl"] = huc12sm["sw1"] < huc12sm["plastic_limit"]
+    huc12sm["crop"] = huc12sm["combo"].map(pldf.set_index("combo")["crop"])
+    huc12sm["below_pl"] = huc12sm["sw1"] < huc12sm["pl0.8"]
 
     fig = figure(
-        title=f"DEP: {huc12} Walnut Creek Dynamic Tillage Diagnostic",
-        subtitle="15 April - 23 April 2024",
+        title=f"DEP: {huc12} Brush Creek Dynamic Tillage Diagnostic",
+        subtitle=f"11 April - 15 June {year}",
         logo="dep",
-        figsize=(8, 6),
+        figsize=(8, 8),
     )
-    yaxsize = 0.2
-    ax = fig.add_axes([0.1, 0.68, 0.8, yaxsize])
+    yaxsize = 0.15
+    # Scatter plot of Soil Moisture
+    ax0 = fig.add_axes([0.1, 0.75, 0.8, yaxsize])
+    past = huc12sm[huc12sm["crop"] == "P"]
+    ax0.scatter(past["date"], past["sw1"] - past["pl0.8"], c="r", s=2)
+    nonp = huc12sm[huc12sm["crop"] != "P"]
+    ax0.scatter(nonp["date"], nonp["sw1"] - nonp["pl0.8"], c="b", s=2)
+    ax0.xaxis.set_major_formatter(DateFormatter("%-d %b"))
+    ax0.xaxis.set_major_formatter(DateFormatter("%-d %b"))
+    ax0.grid(True)
+
+    # Percent of OFEs below 0.8*PL
+    ax = fig.add_axes([0.1, 0.51, 0.8, yaxsize], sharex=ax0)
     ax.text(
         0, 1, "* SM Evaluation using previous date", transform=ax.transAxes
     )
@@ -89,9 +107,8 @@ def main(huc12, year):
     ax.set_yticks([0, 10, 25, 50, 75, 90, 100])
     ax.grid(True)
     ax.set_ylabel("Percent of OFEs\nBelow 0.8*PL")
-    ax.xaxis.set_major_formatter(DateFormatter("%-d %b"))
 
-    ax2 = fig.add_axes([0.1, 0.4, 0.8, yaxsize], sharex=ax)
+    ax2 = fig.add_axes([0.1, 0.3, 0.8, yaxsize], sharex=ax0)
     ax2.bar(
         hucstatusdf["date"],
         hucstatusdf["precip_mm"],
@@ -103,7 +120,7 @@ def main(huc12, year):
     ax2.axhline(10, lw=2, color="k")
     ax2.grid(True)
 
-    ax3 = fig.add_axes([0.1, 0.1, 0.8, yaxsize], sharex=ax)
+    ax3 = fig.add_axes([0.1, 0.05, 0.8, yaxsize], sharex=ax0)
     ax3.bar(
         hucstatusdf["date"],
         hucstatusdf["tsoil_avg"],
@@ -130,7 +147,7 @@ def main(huc12, year):
                 color="red" if row[f"limited_by_{label}"] else "green",
             )
 
-    fig.savefig(f"sm_{huc12}_{year}.png")
+    fig.savefig(f"plotsv2/sm_{huc12}_{year}.png")
 
 
 if __name__ == "__main__":
