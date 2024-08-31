@@ -205,6 +205,9 @@ def main(year, district, state, crop):
     if ldate >= f"{date.today():%Y-%m-%d}":
         ldate = f"{(date.today() - timedelta(days=1)):%Y-%m-%d}"
     accum = accum.reindex(pd.date_range(f"{year}-04-11", ldate)).ffill()
+    nass = nass.reindex(accum.index)
+    nass.index.name = "valid"
+    nass["dep_corn_planted"] = accum["percent"]
 
     if state is not None:
         title = f"state of {state_names[state]}"
@@ -335,7 +338,6 @@ def main(year, district, state, crop):
         if valid not in accum.index:
             continue
         dep = accum.at[valid, "percent"]
-        nass.at[valid, f"dep_{crop}_planted"] = dep
         val = row[f"{crop} planted"]
         txt.append(f"{valid:%b %-2d}:  {val:3.0f} {dep:3.0f}")
     ax2.text(
@@ -353,12 +355,14 @@ def main(year, district, state, crop):
     ax2.set_xticklabels(xticklabels)
 
     # Sync up the two xaxes
+
     ax.set_xlim(*ax2.get_xlim())
     ax3.set_xlim(*ax2.get_xlim())
 
     nass.to_csv(
         f"plotsv2/{crop}_{year}_"
-        f"{district if district is not None else state}.csv"
+        f"{district if district is not None else state}.csv",
+        float_format="%.2f",
     )
 
     ss = f"state_{state}"
