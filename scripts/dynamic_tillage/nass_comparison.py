@@ -187,7 +187,8 @@ def get_labels(year):
     default="corn",
     help="Crop to Process",
 )
-def main(year, district, state, crop):
+@click.option("--plotv2", is_flag=True, help="Plot v2")
+def main(year, district, state, crop, plotv2: bool):
     """Go Main Go."""
     nass = get_nass(year, state, district, crop)
     fields = get_fields(year, district, state, crop)
@@ -265,7 +266,7 @@ def main(year, district, state, crop):
     # axes showing the days suitable as little boxes for each seven day period
     # and the value of the days suitable for that period in the middle
     ax3 = fig.add_axes([0.1, 0.25, 0.8, 0.07])
-    for valid, row in nass.iterrows():
+    for valid, row in nass[nass["days suitable"].notna()].iterrows():
         ax3.add_patch(
             Rectangle(
                 (valid - pd.Timedelta(days=7), 0),
@@ -320,8 +321,18 @@ def main(year, district, state, crop):
     ax2.plot(
         accum.index,
         accum["acres"] / fields["acres"].sum() * 100.0,
-        label="DEP DynTillv2",
+        label="DEP DynTillv3",
     )
+    if plotv2:
+        v2df = pd.read_csv(
+            f"plotsv2/{crop}_{year}_{state}.csv", parse_dates=["valid"]
+        )
+        v2df["valid"] = v2df["valid"].dt.date
+        ax2.plot(
+            v2df["valid"].values,
+            v2df[f"dep_{crop}_planted"],
+            label="DEP DynTillv2",
+        )
     ax2.scatter(
         nass.index.values,
         nass[f"{crop} planted"],
@@ -334,7 +345,7 @@ def main(year, district, state, crop):
 
     # create a table in the lower right corner with the values from
     txt = ["Weekly Progress", "Date   NASS DEP"]
-    for valid, row in nass.iterrows():
+    for valid, row in nass[nass["days suitable"].notna()].iterrows():
         if valid not in accum.index:
             continue
         dep = accum.at[valid, "percent"]
@@ -360,14 +371,14 @@ def main(year, district, state, crop):
     ax3.set_xlim(*ax2.get_xlim())
 
     nass.to_csv(
-        f"plotsv2/{crop}_{year}_"
+        f"plotsv3/{crop}_{year}_"
         f"{district if district is not None else state}.csv",
         float_format="%.2f",
     )
 
     ss = f"state_{state}"
     fig.savefig(
-        f"plotsv2/{crop}_progress_{year}_"
+        f"plotsv3/{crop}_progress_{year}_"
         f"{district if district is not None else ss}.png"
     )
 
