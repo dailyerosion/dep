@@ -7,6 +7,7 @@ Here's a listing of project landuse codes used
   F - forest            F1          F25    IniCropDef.Tre_2239
   G - Sorghum
   P - Pasture           P1          P25    IniCropDef.gra_3425
+      (If all P, then pasture.  If P intermixed, then Alfalfa see GH270)
   C - Corn              C1          C25    IniCropDef.Default
   R - Other crops (Barley?)  R1          R25    IniCropDef.Aft_12889
   T - Water (could have flooded out for one year, wetlands)
@@ -75,7 +76,7 @@ FOREST = {
 }
 
 
-def do_rotation(scenario, zone, rotfn, landuse, management):
+def do_rotation(scenario, zone, rotfn, landuse: str, management):
     """Create the rotation file.
 
     Args:
@@ -92,13 +93,22 @@ def do_rotation(scenario, zone, rotfn, landuse, management):
     data = {"yearly": ""}
     data["name"] = f"{landuse}-{management}"
     # Special hack for forest
-    if landuse[0] == "F" and landuse == len(landuse) * landuse[0]:
+    if landuse[0] == "F" and len(set(landuse)) == 1:
         data["initcond"] = FOREST[management[0]]
         for i in range(1, YEARS):
             # Reset roughness each year
             data["yearly"] += (
                 f"1 2 {i} 1 Tillage OpCropDef.Old_6807 {{0.001, 2}}\n"
             )
+    # Special hack for pasture
+    elif landuse[0] == "P" and len(set(landuse)) == 1:
+        data["initcond"] = INITIAL_COND[landuse[0]]
+        # For WEPP purposes and to our knowledge, we still need to initially
+        # do a light tillage and plant this pasture to alfalfa
+        data["yearly"] += (
+            "4  14 1 1 Tillage OpCropDef.FCSTACDP      {0.101600, 2}\n"
+            "4  15 1 1 Plant-Perennial CropDef.ALFALFA  {0.000000}\n"
+        )
     else:
         data["initcond"] = INITIAL_COND.get(landuse[0], INITIAL_COND_DEFAULT)
         prevcode = "C" if landuse[0] not in INITIAL_COND else landuse[0]
