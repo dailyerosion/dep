@@ -8,15 +8,15 @@ import pandas as pd
 def main():
     """Go main Go."""
     dfs = []
-    for csvfn in glob.glob("plotsv2/*_??.csv"):
-        crop, _year, state = csvfn[:-4].split("_")
-        if state not in ["MN", "IA"]:
+    for csvfn in glob.glob("plotsv2/corn*.csv"):
+        crop, _year, datum = csvfn.split("/")[-1][:-4].split("_")
+        if datum in ["IA", "MN", "KS", "NE"]:
             continue
         progress = pd.read_csv(csvfn, parse_dates=["valid"])
-        progress["state"] = state
+        progress["district"] = datum
         progress = progress.rename(
             columns={"dep_planted": f"{crop}_dep_planted"}
-        ).set_index(["state", "valid"])
+        ).set_index(["district", "valid"])
         dfs.append(progress)
     jumbo = pd.concat(dfs)
     rectified = jumbo[
@@ -31,8 +31,8 @@ def main():
 
     (
         rectified.reset_index()
-        .sort_values(["state", "valid"])
-        .to_csv("IA_MN_dep_vs_nass_240828.csv", index=False)
+        .sort_values(["district", "valid"])
+        .to_csv("IA_district_dep_vs_nass_240830.csv", index=False)
     )
 
 

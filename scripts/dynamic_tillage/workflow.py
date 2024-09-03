@@ -372,6 +372,8 @@ def main(scenario, dt, huc12, edr, run_prj2wepp):
             f"/mnt/idep2/data/smstate/{yesterday:%Y}/"
             f"smstate{yesterday:%Y%m%d}.feather"
         )
+        # Only consider rows that are in either Corn or Soybean
+        smdf = smdf[smdf["crop"].isin(["C", "S"])]
         for huc12, gdf in smdf.groupby("huc12"):
             if huc12 not in huc12df.index:
                 continue
