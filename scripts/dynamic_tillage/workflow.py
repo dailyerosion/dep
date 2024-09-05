@@ -123,11 +123,14 @@ def do_huc12(dt, huc12) -> Tuple[int, int]:
     """
     dbcolidx = dt.year - 2007 + 1
     crops = ["B", "C", "L", "W"]
+    tillagerate = 0.10
     maxrate = 0.06
     # If before April 20, we only plant corn
     if f"{dt:%m%d}" < "0420":
         crops = ["C"]
         maxrate = 0.03  # Life choice
+    elif f"{dt:%m%d}" > "0510":
+        maxrate = 0.10
     with get_sqlalchemy_conn("idep") as conn:
         # build up the cross reference of everyhing we need to know
         df = pd.read_sql(
@@ -208,7 +211,7 @@ def do_huc12(dt, huc12) -> Tuple[int, int]:
 
     total_acres = fields["acres"].sum()
     # NB: Crude assessment of NASS peak daily planting rate, was 10%
-    limit = (total_acres * maxrate) if not mud_it_in else total_acres + 1
+    limit = (total_acres * tillagerate) if not mud_it_in else total_acres + 1
 
     # Work on tillage first, so to avoid planting on tilled fields
     for fbndid, row in fields[fields["till_needed"]].iterrows():
@@ -221,6 +224,8 @@ def do_huc12(dt, huc12) -> Tuple[int, int]:
         if acres_tilled > limit:
             break
 
+    # Redine limit for planting
+    limit = (total_acres * maxrate) if not mud_it_in else total_acres + 1
     # Now we need to plant
     for fbndid, row in fields[fields["plant_needed"]].iterrows():
         # We can't plant fields that were tilled or need tillage GH251
