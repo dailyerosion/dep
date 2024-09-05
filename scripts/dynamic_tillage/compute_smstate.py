@@ -34,12 +34,16 @@ def job(dates, tmpdir, huc12) -> int:
         huc12df = pd.read_sql(
             text(
                 """
-                select o.ofe, p.fpath, o.fbndid, g.plastic_limit,
-                p.fpath || '_' || o.ofe as combo, p.huc_12 as huc12,
-                substr(o.landuse, :charat, 1) as crop
-                from flowpaths p, flowpath_ofes o, gssurgo g
-                WHERE o.flowpath = p.fid and p.huc_12 = :huc12
-                and p.scenario = 0 and o.gssurgo_id = g.id
+    select o.ofe, p.fpath, o.fbndid,
+    case when g.plastic_limit < 40 then
+        g.plastic_limit else
+        g.wepp_min_sw + (g.wepp_max_sw - g.wepp_min_sw) * 0.42
+    end as plastic_limit,
+    p.fpath || '_' || o.ofe as combo, p.huc_12 as huc12,
+    substr(o.landuse, :charat, 1) as crop
+    from flowpaths p, flowpath_ofes o, gssurgo g
+    WHERE o.flowpath = p.fid and p.huc_12 = :huc12
+    and p.scenario = 0 and o.gssurgo_id = g.id
             """
             ),
             conn,
