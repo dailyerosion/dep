@@ -24,7 +24,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from pyiem.database import get_dbconnc, get_sqlalchemy_conn
-from pyiem.iemre import SOUTH, WEST, daily_offset, get_daily_mrms_ncname
+from pyiem.iemre import daily_offset, get_daily_mrms_ncname
 from pyiem.util import archive_fetch, logger, ncopen
 from sqlalchemy import text
 from tqdm import tqdm
@@ -123,11 +123,14 @@ def do_huc12(dt, huc12) -> Tuple[int, int]:
     """
     dbcolidx = dt.year - 2007 + 1
     crops = ["B", "C", "L", "W"]
+    tillagerate = 0.10
     maxrate = 0.06
     # If before April 20, we only plant corn
     if f"{dt:%m%d}" < "0420":
         crops = ["C"]
         maxrate = 0.03  # Life choice
+    elif f"{dt:%m%d}" > "0510":
+        maxrate = 0.10
     with get_sqlalchemy_conn("idep") as conn:
         # build up the cross reference of everyhing we need to know
         df = pd.read_sql(
@@ -208,7 +211,7 @@ def do_huc12(dt, huc12) -> Tuple[int, int]:
 
     total_acres = fields["acres"].sum()
     # NB: Crude assessment of NASS peak daily planting rate, was 10%
-    limit = (total_acres * maxrate) if not mud_it_in else total_acres + 1
+    limit = (total_acres * tillagerate) if not mud_it_in else total_acres + 1
 
     # Work on tillage first, so to avoid planting on tilled fields
     for fbndid, row in fields[fields["till_needed"]].iterrows():
@@ -221,6 +224,8 @@ def do_huc12(dt, huc12) -> Tuple[int, int]:
         if acres_tilled > limit:
             break
 
+    # Redine limit for planting
+    limit = (total_acres * maxrate) if not mud_it_in else total_acres + 1
     # Now we need to plant
     for fbndid, row in fields[fields["plant_needed"]].iterrows():
         # We can't plant fields that were tilled or need tillage GH251
@@ -306,9 +311,11 @@ def estimate_rainfall(huc12df: pd.DataFrame, dt: date):
     LOG.info("Using %s[tidx:%s] for precip", ncfn, tidx)
     with ncopen(ncfn) as nc:
         p01d = nc.variables["p01d"][tidx].filled(0)
+        south = nc.variables["lat"][0]
+        west = nc.variables["lon"][0]
     for idx, row in huc12df.iterrows():
-        y = int((row["lat"] - SOUTH) * 100.0)
-        x = int((row["lon"] - WEST) * 100.0)
+        y = int((row["lat"] - south) * 100.0)
+        x = int((row["lon"] - west) * 100.0)
         huc12df.at[idx, "precip_mm"] = p01d[y, x]
 
 
@@ -379,7 +386,7 @@ def main(scenario, dt, huc12, edr, run_prj2wepp):
                 continue
             # Require that 50% of modelled OFEs are 0.8 of plastic limit
             toowet = gdf["sw1"].gt(gdf["plastic_limit"] * 0.8).sum()
-            if toowet > len(gdf.index) / 2:
+            if toowet > (len(gdf.index) * 0.9):
                 huc12df.at[huc12, "limited_by_soilmoisture"] = True
 
     # restrict to HUC12s that are not limited
