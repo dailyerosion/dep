@@ -24,7 +24,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from pyiem.database import get_dbconnc, get_sqlalchemy_conn
-from pyiem.iemre import SOUTH, WEST, daily_offset, get_daily_mrms_ncname
+from pyiem.iemre import daily_offset, get_daily_mrms_ncname
 from pyiem.util import archive_fetch, logger, ncopen
 from sqlalchemy import text
 from tqdm import tqdm
@@ -311,9 +311,11 @@ def estimate_rainfall(huc12df: pd.DataFrame, dt: date):
     LOG.info("Using %s[tidx:%s] for precip", ncfn, tidx)
     with ncopen(ncfn) as nc:
         p01d = nc.variables["p01d"][tidx].filled(0)
+        south = nc.variables["lat"][0]
+        west = nc.variables["lon"][0]
     for idx, row in huc12df.iterrows():
-        y = int((row["lat"] - SOUTH) * 100.0)
-        x = int((row["lon"] - WEST) * 100.0)
+        y = int((row["lat"] - south) * 100.0)
+        x = int((row["lon"] - west) * 100.0)
         huc12df.at[idx, "precip_mm"] = p01d[y, x]
 
 
