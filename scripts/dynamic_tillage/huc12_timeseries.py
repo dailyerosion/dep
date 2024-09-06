@@ -19,10 +19,9 @@ def get_plastic_limit(huc12: str, year: int) -> pd.DataFrame:
             text(
                 """
                 select o.ofe, p.fpath, o.fbndid,
-                coalesce(
-                    (g.wepp_max_sw + g.wepp_min_sw) / 2.0,
-                    g.plastic_limit
-                ) as plastic_limit,
+                g.wepp_min_sw + (g.wepp_max_sw - g.wepp_min_sw) * 0.58
+                as plastic_limit58,
+                g.plastic_limit,
                 p.fpath || '_' || o.ofe as combo,
                 substr(landuse, :charat, 1) as crop
                 from flowpaths p, flowpath_ofes o, gssurgo g
@@ -72,10 +71,10 @@ def main(huc12: str, year: int):
     huc12sm["below_pl"] = huc12sm["sw1"] < huc12sm["pl0.8"]
 
     fig = figure(
-        title=f"DEP: {huc12} Brush Creek Dynamic Tillage Diagnostic",
+        title=f"DEP: {huc12} Dynamic Tillage Diagnostic",
         subtitle=f"11 April - 15 June {year}",
         logo="dep",
-        figsize=(8, 8),
+        figsize=(8, 10),
     )
     yaxsize = 0.15
     # Scatter plot of Soil Moisture
@@ -147,7 +146,7 @@ def main(huc12: str, year: int):
                 color="red" if row[f"limited_by_{label}"] else "green",
             )
 
-    fig.savefig(f"plotsv2/sm_{huc12}_{year}.png")
+    fig.savefig(f"plotsv3/sm_{huc12}_{year}.png")
 
 
 if __name__ == "__main__":
