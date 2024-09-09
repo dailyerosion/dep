@@ -325,7 +325,11 @@ def main(year, district, state, crop, plotv2: bool):
     )
     if plotv2:
         v2df = pd.read_csv(
-            f"plotsv2/{crop}_{year}_{state}.csv", parse_dates=["valid"]
+            (
+                f"plotsv2/{crop}_{year}_{district if state is None else state}"
+                ".csv"
+            ),
+            parse_dates=["valid"],
         )
         v2df["valid"] = v2df["valid"].dt.date
         ax2.plot(

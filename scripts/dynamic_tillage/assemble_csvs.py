@@ -8,7 +8,7 @@ import pandas as pd
 def main():
     """Go main Go."""
     dfs = []
-    for csvfn in glob.glob("plotsv2/corn*.csv"):
+    for csvfn in glob.glob("plotsv3/corn*.csv"):
         crop, _year, datum = csvfn.split("/")[-1][:-4].split("_")
         if datum in ["IA", "MN", "KS", "NE"]:
             continue

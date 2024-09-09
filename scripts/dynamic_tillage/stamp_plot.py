@@ -17,7 +17,7 @@ from pyiem.plot.use_agg import plt
 def main(crop: str):
     """Go main Go."""
     dfs = []
-    for csvfn in glob.glob(f"plotsv2/{crop}_*.csv"):
+    for csvfn in glob.glob(f"plotsv3/{crop}_*.csv"):
         _, _, datum = csvfn[:-4].split("_")
         progress = pd.read_csv(csvfn, parse_dates=["valid"])
         progress["datum"] = datum
