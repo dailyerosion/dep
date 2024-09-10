@@ -101,9 +101,8 @@ def workflow(hucs):
             print("Uri: %s failed with: %s" % (uri, req.status_code))
             continue
         fn = "%s-%s.pdf" % (huc, df.at[huc, "name"].replace(" ", "_"))
-        fp = open(fn, "wb")
-        fp.write(req.content)
-        fp.close()
+        with open(fn, "wb") as fp:
+            fp.write(req.content)
         filenames.append(fn)
     return filenames
 

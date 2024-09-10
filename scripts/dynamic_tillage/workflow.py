@@ -386,7 +386,7 @@ def main(scenario, dt, huc12, edr, run_prj2wepp):
                 continue
             # Require that 50% of modelled OFEs are 0.8 of plastic limit
             toowet = gdf["sw1"].gt(gdf["plastic_limit"] * 0.8).sum()
-            if toowet > (len(gdf.index) * 0.9):
+            if toowet > (len(gdf.index) * 0.75):
                 huc12df.at[huc12, "limited_by_soilmoisture"] = True
 
     # restrict to HUC12s that are not limited

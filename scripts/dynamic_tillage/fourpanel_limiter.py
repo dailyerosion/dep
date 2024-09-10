@@ -63,7 +63,7 @@ def main(dt):
         states.plot(ax=ax, color="None", edgecolor="k", lw=0.5, aspect=None)
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
-    fig.savefig(f"plotsv2/huc12limiter_{dt:%Y%m%d}.png")
+    fig.savefig(f"plotsv3/huc12limiter_{dt:%Y%m%d}.png")
 
 
 if __name__ == "__main__":

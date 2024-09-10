@@ -115,7 +115,7 @@ def main(huc12: str, year: int):
         color="b",
         lw=2,
     )
-    ax2.set_ylabel("Precipitation [mm]")
+    ax2.set_ylabel("Precip till 6 PM [mm]")
     ax2.axhline(10, lw=2, color="k")
     ax2.grid(True)
 

@@ -3,10 +3,11 @@
 from datetime import date
 
 import click
-from pandas.io.sql import read_sql
+import pandas as pd
 from pyiem.database import get_dbconnc, get_sqlalchemy_conn
 from pyiem.util import logger
 from sqlalchemy import text
+from tqdm import tqdm
 
 from pydep.tillage import make_tillage
 
@@ -33,7 +34,7 @@ def main(year, scenario):
         conn.commit()
         # The isAg field is not reliable, we need to look at the landuse
         # column which we control planting dates for.
-        fields = read_sql(
+        fields = pd.read_sql(
             text("""
                 select field_id, landuse, management,
                 st_y(st_centroid(st_transform(geom, 4326))) as lat
@@ -53,7 +54,8 @@ def main(year, scenario):
     conn, cursor = get_dbconnc("idep")
     colidx = year - 2007
     inserts = 0
-    for field_id, row in fields.iterrows():
+    progress = tqdm(fields.iterrows(), total=len(fields.index))
+    for field_id, row in progress:
         zone = "KS_NORTH"
         if row["lat"] >= 42.5:
             zone = "IA_NORTH"
