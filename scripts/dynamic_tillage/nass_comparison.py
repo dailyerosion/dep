@@ -91,6 +91,7 @@ def get_geo_bounds(district, state):
 
 
 def get_nass(year, state, district, crop) -> pd.DataFrame:
+    """Get the NASS data."""
     with get_sqlalchemy_conn("coop") as conn:
         if state is not None:
             nass = pd.read_sql(
@@ -270,6 +271,7 @@ def plot_suitable(fig, nass, daily_limits):
 
 
 def plot_accum(fig, accum, crop, fields, nass):
+    """Plot the accumulation."""
     ax2 = fig.add_axes([0.1, 0.4, 0.8, 0.5])
     ax2.set_ylim(-2, 102)
     ax2.set_yticks(range(0, 101, 10))
