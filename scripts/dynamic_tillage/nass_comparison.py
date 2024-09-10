@@ -2,6 +2,7 @@
 
 import os
 from datetime import date, timedelta
+from typing import Optional
 
 import click
 import geopandas as gpd
@@ -177,53 +178,8 @@ def get_labels(year):
     return xticks, xticklabels
 
 
-@click.command()
-@click.option("--year", type=int, help="Year to plot")
-@click.option("--district", type=str, help="NASS District (lowercase)")
-@click.option("--state", type=str, help="State to Process.")
-@click.option(
-    "--crop",
-    type=click.Choice(["corn", "soybeans"]),
-    default="corn",
-    help="Crop to Process",
-)
-@click.option("--plotv2", is_flag=True, help="Plot v2")
-def main(year, district, state, crop, plotv2: bool):
-    """Go Main Go."""
-    nass = get_nass(year, state, district, crop)
-    fields = get_fields(year, district, state, crop)
-
-    xticks, xticklabels = get_labels(year)
-
-    # Spatially filter fields that are inside the climdiv region
-    daily_limits = compute_limits(fields["huc12"].unique(), year)
-
-    # accumulate acres planted by date
-    accum = fields[["plant", "acres"]].groupby("plant").sum().cumsum()
-    accum["percent"] = accum["acres"] / fields["acres"].sum() * 100.0
-    # Need to forward fill so that we have comparables with NASS
-    ldate = f"{year}-06-22"
-    if ldate >= f"{date.today():%Y-%m-%d}":
-        ldate = f"{(date.today() - timedelta(days=1)):%Y-%m-%d}"
-    accum = accum.reindex(pd.date_range(f"{year}-04-11", ldate)).ffill()
-    nass = nass.reindex(accum.index)
-    nass.index.name = "valid"
-    nass["dep_corn_planted"] = accum["percent"]
-
-    if state is not None:
-        title = f"state of {state_names[state]}"
-    else:
-        title = f"Iowa District {district.upper()}"
-    fig = figure(
-        logo="dep",
-        title=(
-            f"{year} DEP Dynamic Tillage {crop.capitalize()} "
-            "Planting Progress"
-        ),
-        subtitle=f"Comparison with USDA NASS Weekly Progress for {title}",
-        figsize=(10.24, 7.68),
-    )
-
+def plot_limiters(fig, daily_limits):
+    """Heatmap of limiters."""
     ax = fig.add_axes([0.1, 0.05, 0.8, 0.14])
     # Going to create a imshow plot with each day being a column and then
     # four cells per day for the four different limiting factors
@@ -256,15 +212,14 @@ def main(year, district, state, crop, plotv2: bool):
     ax.set_yticklabels(
         ["Combined", "Soil Moisture", "Soil Temp", "Precipitation"]
     )
-    ax.set_xticks(xticks)
-    ax.set_xticklabels(xticklabels)
     ax.text(0.02, 1.05, "Limiting Factors", transform=ax.transAxes)
     cax = fig.add_axes([0.92, 0.05, 0.02, 0.2])
     fig.colorbar(res, cax=cax, label="Percent of HUC12s Limited")
+    return ax
 
-    # ////////////////////////////////////////////////////////////
-    # axes showing the days suitable as little boxes for each seven day period
-    # and the value of the days suitable for that period in the middle
+
+def plot_suitable(fig, nass, daily_limits):
+    """Plot days suitable."""
     ax3 = fig.add_axes([0.1, 0.25, 0.8, 0.07])
     for valid, row in nass[nass["days suitable"].notna()].iterrows():
         ax3.add_patch(
@@ -311,8 +266,10 @@ def main(year, district, state, crop, plotv2: bool):
     ax3.set_yticklabels(["NASS", "DEP Est."])
     ax3.set_xticks([])
     ax3.text(0.02, 1.05, "Days Suitable", transform=ax3.transAxes)
+    return ax3
 
-    # ////////////////////////////////////////////////////////////
+
+def plot_accum(fig, accum, crop, fields, nass):
     ax2 = fig.add_axes([0.1, 0.4, 0.8, 0.5])
     ax2.set_ylim(-2, 102)
     ax2.set_yticks(range(0, 101, 10))
@@ -323,20 +280,6 @@ def main(year, district, state, crop, plotv2: bool):
         accum["acres"] / fields["acres"].sum() * 100.0,
         label="DEP DynTillv3",
     )
-    if plotv2:
-        v2df = pd.read_csv(
-            (
-                f"plotsv2/{crop}_{year}_{district if state is None else state}"
-                ".csv"
-            ),
-            parse_dates=["valid"],
-        )
-        v2df["valid"] = v2df["valid"].dt.date
-        ax2.plot(
-            v2df["valid"].values,
-            v2df[f"dep_{crop}_planted"],
-            label="DEP DynTillv2",
-        )
     ax2.scatter(
         nass.index.values,
         nass[f"{crop} planted"],
@@ -345,7 +288,6 @@ def main(year, district, state, crop, plotv2: bool):
         color="r",
         label="NASS",
     )
-    ax2.legend(loc=2)
 
     # create a table in the lower right corner with the values from
     txt = ["Weekly Progress", "Date   NASS DEP"]
@@ -366,8 +308,121 @@ def main(year, district, state, crop, plotv2: bool):
         ha="right",
         bbox=dict(facecolor="white", edgecolor="black", pad=5),
     )
+    return ax2
+
+
+def plot_v2(ax2, crop, year, district, state):
+    """Plot v2."""
+    v2df = pd.read_csv(
+        (
+            f"plotsv2/{crop}_{year}_{district if state is None else state}"
+            ".csv"
+        ),
+        parse_dates=["valid"],
+    )
+    v2df["valid"] = v2df["valid"].dt.date
+    ax2.plot(
+        v2df["valid"].values,
+        v2df[f"dep_{crop}_planted"],
+        label="DEP DynTillv2",
+    )
+
+
+def plot_dep(ax, year: int, state: Optional[str], district: Optional[str]):
+    """Overlay the hard coded date."""
+    progress = [100]
+    lookup = {
+        "MN": date(year, 5, 10),
+        "nw": date(year, 5, 10),
+        "nc": date(year, 5, 10),
+        "ne": date(year, 5, 10),
+        "wc": date(year, 5, 5),
+        "c": date(year, 5, 5),
+        "ec": date(year, 5, 5),
+        "sw": date(year, 4, 30),
+        "sc": date(year, 4, 30),
+        "se": date(year, 4, 30),
+    }
+    # This is not an exact science and corn only at the moment
+    if state == "IA":
+        dates = [date(year, 4, 30), date(year, 5, 5), date(year, 5, 10)]
+        progress = [33, 66, 100]
+    else:
+        key = state if state == "MN" else district
+        dates = [lookup[key]]
+    dates.insert(0, dates[0] - timedelta(days=1))
+    progress.insert(0, 0)
+    dates.append(dates[-1] + timedelta(days=1))
+    progress.append(100)
+    ax.plot(dates, progress, label="DEP Static")
+
+
+@click.command()
+@click.option("--year", type=int, help="Year to plot")
+@click.option("--district", type=str, help="NASS District (lowercase)")
+@click.option("--state", type=str, help="State to Process.")
+@click.option(
+    "--crop",
+    type=click.Choice(["corn", "soybeans"]),
+    default="corn",
+    help="Crop to Process",
+)
+@click.option("--plotv2", is_flag=True, help="Plot v2")
+@click.option("--plotdep", is_flag=True, help="Plot DEP")
+def main(year, district, state, crop, plotv2: bool, plotdep: bool):
+    """Go Main Go."""
+    nass = get_nass(year, state, district, crop)
+    fields = get_fields(year, district, state, crop)
+
+    xticks, xticklabels = get_labels(year)
+
+    # Spatially filter fields that are inside the climdiv region
+    daily_limits = compute_limits(fields["huc12"].unique(), year)
+
+    # accumulate acres planted by date
+    accum = fields[["plant", "acres"]].groupby("plant").sum().cumsum()
+    accum["percent"] = accum["acres"] / fields["acres"].sum() * 100.0
+    # Need to forward fill so that we have comparables with NASS
+    ldate = f"{year}-06-22"
+    if ldate >= f"{date.today():%Y-%m-%d}":
+        ldate = f"{(date.today() - timedelta(days=1)):%Y-%m-%d}"
+    accum = accum.reindex(pd.date_range(f"{year}-04-11", ldate)).ffill()
+    nass = nass.reindex(accum.index)
+    nass.index.name = "valid"
+    nass["dep_corn_planted"] = accum["percent"]
+
+    if state is not None:
+        title = f"state of {state_names[state]}"
+    else:
+        title = f"Iowa District {district.upper()}"
+    fig = figure(
+        logo="dep",
+        title=(
+            f"{year} DEP Dynamic Tillage {crop.capitalize()} "
+            "Planting Progress"
+        ),
+        subtitle=f"Comparison with USDA NASS Weekly Progress for {title}",
+        figsize=(10.24, 7.68),
+    )
+
+    ax = plot_limiters(fig, daily_limits)
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xticklabels)
+
+    # ////////////////////////////////////////////////////////////
+    # axes showing the days suitable as little boxes for each seven day period
+    # and the value of the days suitable for that period in the middle
+    ax3 = plot_suitable(fig, nass, daily_limits)
+
+    # ////////////////////////////////////////////////////////////
+    ax2 = plot_accum(fig, accum, crop, fields, nass)
     ax2.set_xticks(xticks)
     ax2.set_xticklabels(xticklabels)
+    if plotv2:
+        plot_v2(ax2, crop, year, district, state)
+    if plotdep:
+        plot_dep(ax2, year, state, district)
+    ax2.legend(loc=2)
 
     # Sync up the two xaxes
 

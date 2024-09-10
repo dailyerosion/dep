@@ -65,8 +65,11 @@ def main(crop: str):
             rmse = (
                 (nass["corn planted"] - nass["dep_corn_planted"]).pow(2).mean()
             ) ** 0.5
-            print(f"{year} {district} RMSE: {rmse:.2f}")
-            background_color = cmap(norm(rmse))
+            mae = (
+                (nass["corn planted"] - nass["dep_corn_planted"]).abs().mean()
+            )
+            print(f"{year} {district} RMSE: {rmse:.2f} MAE: {mae:.2f}")
+            background_color = cmap(norm(mae))
             ax.add_patch(
                 Rectangle(
                     (x0, y0),
@@ -90,7 +93,7 @@ def main(crop: str):
             ax.text(
                 x0 + 0.5 * xtilesize,
                 y0 + 0.5 * ytilesize,
-                f"{rmse:.0f}",
+                f"{mae:.0f}",
                 ha="center",
                 va="center",
                 color="b",
@@ -117,16 +120,16 @@ def main(crop: str):
     ax.set_ylim(-0.01, 1.01)
 
     # Add colorbar
-    ax2 = fig.add_axes([0.9, 0.1, 0.02, 0.8])
+    ax2 = fig.add_axes((0.9, 0.1, 0.02, 0.8))
     cb = plt.colorbar(
         mpcm.ScalarMappable(norm=norm, cmap=cmap),
         cax=ax2,
         orientation="vertical",
         alpha=0.5,
     )
-    cb.set_label("RMSE of NASS vs DEP Planting Progress [%]")
+    cb.set_label("MAE of NASS vs DEP Planting Progress [%]")
 
-    fig.savefig("test.png")
+    fig.savefig("plotsv3/stamp_plot.png")
 
 
 if __name__ == "__main__":
