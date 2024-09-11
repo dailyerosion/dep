@@ -17,7 +17,9 @@ target-version = "py39"
 ]
 
 # per memory issues microsoft/pylance-release/issues/5739
+# per type checking pain microsoft/pylance-release/issues/6373
 [tool.pyright]
 autoSearchPaths = false
 exclude = ["data/", "prj2wepp/"]
 ignore = ["data/", "prj2wepp/"]
+typeCheckingMode = "off"
