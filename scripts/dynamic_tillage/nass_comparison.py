@@ -103,7 +103,7 @@ def get_nass(year, state, district, crop) -> pd.DataFrame:
             week_ending as valid,
             state_alpha as datum
             from nass_quickstats where
-            state_alpha in ('IA', 'NE', 'KS', 'MN') and 
+            state_alpha in ('IA', 'NE', 'KS', 'MN') and
             (statisticcat_desc = 'DAYS SUITABLE' or
                 short_desc =
                 '{crop.upper()} - PROGRESS, MEASURED IN PCT PLANTED')
