@@ -293,6 +293,9 @@ def load_precip_legacy(data, valid, tile_bounds: BOUNDS):
     def _cb_pl(args):
         """callback"""
         tidx, precip = args
+        # Ensure that tidx is within bounds
+        if tidx >= m5.shape[0]:
+            return
         if precip is not None:
             # sigh
             if precip.shape[0] == 400:
@@ -395,6 +398,9 @@ def load_precip(data, dt: date, tile_bounds: BOUNDS):
     def _cb_lp(args):
         """callback"""
         tidx, grid = args
+        # If tidx is outside of bounds, just make this a no-op
+        if tidx >= data["precip"].shape[2]:
+            return
         if grid is not None:
             data["quorum"] -= 1
             data["precip"][:, :, tidx] = grid
