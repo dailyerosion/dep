@@ -399,9 +399,7 @@ def load_precip(data, dt: date, tile_bounds: BOUNDS):
         """callback"""
         tidx, grid = args
         # If tidx is outside of bounds, just make this a no-op
-        if tidx >= data["precip"].shape[2]:
-            return
-        if grid is not None:
+        if grid is not None and tidx < data["precip"].shape[2]:
             data["quorum"] -= 1
             data["precip"][:, :, tidx] = grid
 
