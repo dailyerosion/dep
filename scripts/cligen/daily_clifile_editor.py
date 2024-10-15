@@ -294,7 +294,7 @@ def load_precip_legacy(data, valid, tile_bounds: BOUNDS):
         """callback"""
         tidx, precip = args
         # Ensure that tidx is within bounds
-        if tidx >= m5.shape[0]:
+        if tidx is None or tidx >= m5.shape[0]:
             return
         if precip is not None:
             # sigh
