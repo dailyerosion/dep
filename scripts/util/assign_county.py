@@ -1,6 +1,7 @@
 """Compute the county a HUC12 belongs in."""
 
-from pyiem.util import get_dbconn, logger
+from pyiem.database import get_dbconn
+from pyiem.util import logger
 
 LOG = logger()
 
@@ -16,17 +17,17 @@ def main():
 
     cursor.execute(
         """with data as (
-        SELECT ST_Transform(ST_Centroid(geom), 4326) as geo, gid, huc_12
+        SELECT ST_Transform(ST_Centroid(geom), 4326) as geo, ctid, huc_12
         from huc12 where ugc is null)
 
-        SELECT ST_x(geo), ST_y(geo), gid, huc_12 from data
+        SELECT ST_x(geo), ST_y(geo), ctid, huc_12 from data
     """
     )
     for row in cursor:
         pcursor.execute(
             """
         select ugc from ugcs where end_ts is null and
-        ST_Contains(geom, ST_SetSrid(ST_GeomFromText('POINT(%s %s)'), 4326))
+        ST_Contains(geom, ST_POINT(%s, %s, 4326))
         and substr(ugc, 3, 1) = 'C'
         """,
             (row[0], row[1]),
@@ -36,7 +37,7 @@ def main():
             continue
         ugc = pcursor.fetchone()[0]
         cursor2.execute(
-            "UPDATE huc12 SET ugc = %s where gid = %s",
+            "UPDATE huc12 SET ugc = %s where ctid = %s",
             (ugc, row[2]),
         )
 
