@@ -2,7 +2,7 @@
 #
 # makefile for solaris 8 wepp executable.
 #
-FC_IF	  = ifort
+FC_IF	  = ifx
 FC_G95        = g95
 FC_GNU        = gfortran
 FC_2      = f2c
@@ -10,7 +10,7 @@ FFLAGS_IFORT    = -mno-avx -mno-avx2 -c -autodouble -O -align dcommons
 FFLAGS_G95    = -c -Wall -r8 -malign-double -O3 -march=pentium4 
 FFLAGS_GNU     = -c -fdefault-real-8 -Wall -malign-double -O2 
 FFLAGS_2 = -c -r
-LINK_IF    = ifort
+LINK_IF    = ifx
 LINK_G95    = g++
 LINK_GNU     = gfortran
 LINK_2    = g++
