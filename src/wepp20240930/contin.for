@@ -1358,6 +1358,8 @@ c
 c
   210       continue
 c
+c           force output
+            idout = 1
             if ((ioutpt.eq.1.or.isum.eq.1.or.ievt.eq.1.or.lun1.gt.1.or.
      1          ifofe.eq.1).and.idout.eq.1) then
 c
@@ -1407,7 +1409,8 @@ c jrf
                 if(units .eq. 0) then
                   call bigout(bigcrp(iplane),iiyear,nowcrp(iplane))
                 else
-                  call outeng(bigcrp(iplane),iiyear,nowcrp(iplane))
+                  call outeng(bigcrp(iplane),iiyear,nowcrp(iplane),
+     1                 nyears)
                 endif
   240         continue
             end if
@@ -1581,7 +1584,7 @@ c
         if (units .eq. 0) then
           call bigout(1,iiyear,nowcrp(nplane))
         else
-          call outeng(1,iiyear,nowcrp(nplane))
+          call outeng(1,iiyear,nowcrp(nplane),nyears)
         endif
       end if
 c

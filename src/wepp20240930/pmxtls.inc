@@ -4,7 +4,7 @@ c     begin include file pmxtls.inc
 c     + + + PARAMETER DECLARATIONS + + +
 
       integer           mxtlsq
-      parameter         (mxtlsq=30)
+      parameter         (mxtlsq=300)
 
 c     + + + PARAMETER DEFINITIONS + + +
 
