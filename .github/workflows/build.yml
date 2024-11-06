@@ -25,7 +25,7 @@ jobs:
     - name: Build WEPP with gfortran
       if: ${{ matrix.FC == 'gfortran' }}
       run: |
-        cd src/wepp20230117
+        cd src/wepp20240930
         make FC=gfortran
 
     - name: Install Intel Compiler
@@ -42,7 +42,7 @@ jobs:
       if: ${{ matrix.FC == 'ifx' }}
       run: |
         source /opt/intel/oneapi/setvars.sh
-        cd src/wepp20230117
+        cd src/wepp20240930
         make
 
     - name: Run Regression Tests
