@@ -24,7 +24,17 @@ def main():
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         ) as proc:
-            proc.communicate()
+            (stdout, stderr) = proc.communicate()
+            if proc.returncode:
+                sys.stdout.write(
+                    f"FAILED: {fn},\n"
+                    f"WEPP returned {proc.returncode}\n"
+                    "stdout:\n"
+                    f"{stdout.decode()}\n"
+                    "stderr:\n"
+                    f"{stderr.decode()}\n"
+                )
+                sys.exit(1)
 
         df = read_env("wepp_env.txt")
         avg_det = df["av_det"].sum() / 15.0 * 4.463

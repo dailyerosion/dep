@@ -3,7 +3,7 @@
 # makefile for solaris 8 wepp executable.
 #
 
-FC_IF	  = ifort
+FC_IF	  = ifx
 FC_G95        = g95
 FC_GNU        = gfortran
 FC_2      = f2c
@@ -12,7 +12,7 @@ FFLAGS_G95    = -c -Wall -malign-double -O3 -march=pentium4
 FFLAGS_G95    = -c -Wall -malign-double -O3 -i4 
 FFLAGS_GNU     = -c -fdefault-real-8 -Wall -malign-double -O2 
 FFLAGS_2 = -c -r
-LINK_IF    = ifort 
+LINK_IF    = ifx
 LINK_G95    = g++
 LINK_GNU     = gfortran
 LINK_2    = g++
@@ -22,10 +22,12 @@ ifeq ($(FC),gfortran)
   FFLAGS = $(FFLAGS_GNU)
   FC = $(FC_GNU)
   LINKER = $(LINK_GNU)
+  LDFLAGS =
 else
   FFLAGS = $(FFLAGS_IFORT)
   FC = $(FC_IF)
   LINKER = $(LINK_IF)
+  LDFLAGS = -static-intel
 endif
 
 
@@ -36,7 +38,7 @@ DEST      = .
 
 #LDFLAGS   = -static /usr/lib/gcc-lib/i686-pc-linux-gnu/4.1.1/libgcc.a /usr/lib/gcc-lib/i686-pc-linux-gnu/4.1.1/libgcc_eh.a /usr/lib/gcc-lib/i686-pc-linux-gnu/4.1.1/libf95.a 
 
-LDFLAGS =
+# LDFLAGS =
 
 .SUFFIXES: .for .o
 

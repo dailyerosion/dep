@@ -37,6 +37,7 @@ TRUNC_GRIDORDER_AT = 4
 MAX_POINTS_OFE = 97
 GENLU_CODES = {}
 PROCESSING_COUNTS = {
+    "flowpaths_found": 0,
     "flowpaths_good": 0,
     "flowpaths_deduped": 0,
     "flowpaths_tooshort": 0,
@@ -103,6 +104,8 @@ def get_data(filename):
         if HUC12RE.match(col):
             huc12 = col[len(PREFIX) : (len(PREFIX) + 12)]
             break
+    # Count up unique flowpaths
+    PROCESSING_COUNTS["flowpaths_found"] += len(df[f"fp{huc12}"].unique())
 
     if "irrigated" not in df.columns:
         LOG.info("%s had no irrigated column", filename)
@@ -134,6 +137,11 @@ def get_data(filename):
         fld_df = gpd.read_file(fldfn, engine="pyogrio").drop(
             columns=["OBJECTID"],
         )
+        if "CropRotatn" in fld_df.columns:
+            LOG.info("Field_df renaming CropRotatn to CropRotatn_CY_2022")
+            fld_df = fld_df.rename(
+                columns={"CropRotatn": "CropRotatn_CY_2022"}
+            )
         fld_df.index = fld_df["FBndID"].str.split("_").str[1].astype(int)
         # Placeholder for capturing database insert
         fld_df["field_id"] = -1
