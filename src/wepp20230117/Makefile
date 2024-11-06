@@ -22,10 +22,12 @@ ifeq ($(FC),gfortran)
   FFLAGS = $(FFLAGS_GNU)
   FC = $(FC_GNU)
   LINKER = $(LINK_GNU)
+  LDFLAGS =
 else
   FFLAGS = $(FFLAGS_IFORT)
   FC = $(FC_IF)
   LINKER = $(LINK_IF)
+  LDFLAGS = -static-intel
 endif
 
 
@@ -36,7 +38,7 @@ DEST      = .
 
 #LDFLAGS   = -static /usr/lib/gcc-lib/i686-pc-linux-gnu/4.1.1/libgcc.a /usr/lib/gcc-lib/i686-pc-linux-gnu/4.1.1/libgcc_eh.a /usr/lib/gcc-lib/i686-pc-linux-gnu/4.1.1/libf95.a 
 
-LDFLAGS =
+# LDFLAGS =
 
 .SUFFIXES: .for .o
 
