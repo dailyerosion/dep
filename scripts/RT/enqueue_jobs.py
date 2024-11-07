@@ -12,6 +12,7 @@ import requests
 from pyiem.util import get_dbconn, logger
 
 YEARS = datetime.date.today().year - 2006
+WEPPEXE = "wepp20240930"
 
 
 def get_rabbitmqconn():
@@ -200,7 +201,7 @@ def main(argv):
         wr = WeppRun(row[0], row[1], clfile, scenario, row[3], row[4])
         payload = {
             "wepprun": wr.make_runfile(),
-            "weppexe": "wepp2023",
+            "weppexe": WEPPEXE,
         }
         channel.basic_publish(
             exchange="",
