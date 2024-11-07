@@ -130,6 +130,13 @@ c
       frzdp = frdp(iplane)
       qdrysd = frzdp
       call locate(frzdp,layern,flyern,1) 
+c     Workaround issues at jfrankenberger/wepp#4
+      if (flyern .lt. 0) then
+          flyern = 1
+      endif
+      if (layern .gt. 9) then
+          layern = 9
+      endif
       wklyn = layern
       wkflyn = flyern
 c
