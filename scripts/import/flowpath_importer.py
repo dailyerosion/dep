@@ -388,8 +388,12 @@ def process_flowpath(
         .reset_index()
         .to_dict(orient="records")
     )
-    jsonfn = f"/i/{scenario}/meta/{huc12[:8]}/{huc12[8:]}/{huc12}_{fpath}.json"
-    with open(jsonfn, "w", encoding="ascii") as fh:
+    # A bit of chicken/egg here as this scripts initializes a list of HUC12s
+    # which may not be setup within the /i/ filesystem yet
+    metadir = f"/i/{scenario}/meta/{huc12[:8]}/{huc12[8:]}"
+    if not os.path.isdir(metadir):
+        os.makedirs(metadir, exist_ok=True)
+    with open(f"/{metadir}/{huc12}_{fpath}.json", "w", encoding="ascii") as fh:
         meta = {
             "lon": round(lon, 2),
             "lat": round(lat, 2),
