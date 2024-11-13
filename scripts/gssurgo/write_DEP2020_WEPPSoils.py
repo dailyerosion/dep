@@ -26,7 +26,8 @@ original coding: DE James 03.2013
 
 import os
 
-from pyiem.util import get_dbconn, utc
+from pyiem.database import get_dbconn
+from pyiem.util import utc
 
 
 def main():
@@ -77,11 +78,14 @@ def main():
             )
 
             zCount = 0
+            # GH293 limit is 1.8m for soil depth
             HrzCursor.execute(
-                """SELECT DepthTo_mm, Sand, Clay, OM, CEC7, FragTot
-                    FROM gssurgo24.DEP_SoilFractions
-                                    WHERE mukey = %s
-                                    ORDER by DepthTo_mm""",
+                """
+                SELECT DepthTo_mm, Sand, Clay, OM, CEC7, FragTot
+                FROM gssurgo24.DEP_SoilFractions
+                WHERE mukey = %s and depthto_mm <= 1800
+                ORDER by DepthTo_mm
+                """,
                 (row[0],),
             )
             for row2 in HrzCursor:
