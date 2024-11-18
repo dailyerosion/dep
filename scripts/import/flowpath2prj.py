@@ -49,7 +49,7 @@ from pydep.util import load_scenarios
 
 LOG = logger()
 MISSED_SOILS = {}
-YEARS = 2024 - 2006
+YEARS = 2025 - 2006
 # WEPP can not handle a zero slope, so we ensure that all slopes are >= 0.3%
 MIN_SLOPE = 0.003
 
