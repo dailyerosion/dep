@@ -58,7 +58,7 @@ def prj2wepp(huc12, fpath):
     mydir = threading.current_thread().tmpdir
     fn = f"/i/0/prj/{huc12[:8]}/{huc12[8:]}/{huc12}_{fpath:.0f}.prj"
     testfn = os.path.basename(fn)[:-4]
-    cmd = [EXE, fn, testfn, f"{PROJDIR}/{mydir}/wepp", "no"]
+    cmd = [EXE, fn, testfn, f"{mydir}/wepp", "no"]
     with subprocess.Popen(
         cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE, cwd=mydir
     ) as proc:
