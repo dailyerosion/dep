@@ -5,21 +5,22 @@ Brian Gelder provides me a 7zip file with individual flowpaths included.  There
 is one file per HUC12.
 
 1. `python flowpath_importer.py --scenario=<scenario> --datadir=<dirname in ../../data/>`
-1. `python clear_files.py <scenario>`
-1. go to ../util and run `python make_dirs.py <scenario>`
-1. cd to ../import and run `python flowpath2prj.py <scenario>`
-1. `python prj2wepp.py <scenario>`
+1. `python clear_files.py --scenario=<scenario>`
+1. go to ../util and run `python make_dirs.py --scenario=<scenario>`
+1. cd to ../import and run `python flowpath2prj.py --scenario=<scenario>`
+1. `python prj2wepp.py --scenario=<scenario>`
 1. do checks below for new HUC12s
-1. `python compute_huc12_attrs.py <scenario>`
-1. `python package_myhucs.py <scenario>`
-1. `python check_huc12_zero_flowpaths.py <scenario>`
+1. `python compute_huc12_attrs.py --scenario=<scenario>`
+1. `python package_myhucs.py --scenario=<scenario>`
+1. `python check_huc12_zero_flowpaths.py --scenario=<scenario>`
 1. If new HUC12s are present, get an updated simplified HUC12 from Dave.
 1. Copy laptop database tables `huc12`, `flowpaths`, `flowpath_ofes`, `fields`,
 and `general_landuse` to IEMDB
-1. copy `myhucs.txt` up to IEM and run `python clear_files.py <scenario>`
+1. copy `myhucs.txt` up to IEM and
+   run `python clear_files.py --scenario=<scenario>`
 1. extract the `dep.tar` file on IEM
-1. On IEM run `cligen/locate_clifile.py <scenario>`
-1. On IEM run `util/make_dirs.py <scenario>`
+1. On IEM run `cligen/locate_clifile.py --scenario=<scenario>`
+1. On IEM run `util/make_dirs.py --scenario=<scenario>`
 
 This query finds any new HUC12s and inserts the geometry into a table.
 

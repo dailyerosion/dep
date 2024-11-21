@@ -1,14 +1,16 @@
 """For each HUC12 we are processing, dump our present file database."""
 
 import os
-import sys
+
+import click
 
 TARGETS = "crop error man ofe prj run slp sol wb yld env rot out".split()
 
 
-def main(argv):
+@click.command()
+@click.option("--scenario", type=int, required=True)
+def main(scenario: int):
     """Go Main Go."""
-    scenario = int(argv[1])
     myhucs = [x.strip() for x in open("myhucs.txt", encoding="utf8")]
     for huc12 in myhucs:
         removed = 0
@@ -24,4 +26,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()

@@ -9,6 +9,7 @@ import threading
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
+import click
 from pyiem.util import logger
 from tqdm import tqdm
 
@@ -73,9 +74,10 @@ def setup_thread():
         )
 
 
-def main(argv):
+@click.command()
+@click.option("-s", "--scenario", type=int, required=True, help="Scenario ID")
+def main(scenario: int):
     """Go Main Go."""
-    scenario = int(argv[1])
     myhucs = []
     if os.path.isfile("myhucs.txt"):
         with open("myhucs.txt", encoding="utf8") as fh:
@@ -110,5 +112,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    # Go Main Go
-    main(sys.argv)
+    main()

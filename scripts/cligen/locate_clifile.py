@@ -4,7 +4,9 @@ import os
 import subprocess
 import sys
 
-from pyiem.util import get_dbconn, logger
+import click
+from pyiem.database import get_dbconn
+from pyiem.util import logger
 
 from pydep.util import get_cli_fname
 
@@ -31,9 +33,10 @@ def finder(lon, lat, clscenario):
     return None, None, None
 
 
-def main(argv):
+@click.command()
+@click.option("--scenario", type=int, required=True, help="Scenario ID")
+def main(scenario: int):
     """Go Main Go."""
-    scenario = 0 if len(argv) == 1 else int(argv[1])
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     # This given scenario may use a different climate scenario's files.
@@ -75,4 +78,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()

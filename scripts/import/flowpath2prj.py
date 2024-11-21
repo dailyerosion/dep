@@ -32,12 +32,12 @@ Here's a listing of project landuse codes used
 
 """
 
-import datetime
 import os
-import sys
+from datetime import datetime
 from functools import partial
 from math import atan2, degrees, pi
 
+import click
 import pandas as pd
 from pyiem.database import get_dbconn, get_sqlalchemy_conn
 from pyiem.util import logger
@@ -126,7 +126,7 @@ def do_rotation(scenario, zone, rotfn, landuse: str, management):
     with open(rotfn, "w", encoding="utf8") as fh:
         fh.write(
             f"""#
-# WEPP rotation saved on: {datetime.datetime.now()}
+# WEPP rotation saved on: {datetime.now()}
 #
 # Created with scripts/import/flowpath2prj.py
 #
@@ -221,7 +221,7 @@ def do_flowpath(pgconn, scenario, zone, metadata):
         f"/i/{scenario}/env/{res['huc8']}/"
         f"{res['huc12']}_{metadata['fpath']}.env"
     )
-    res["date"] = datetime.datetime.now()
+    res["date"] = datetime.now()
     res["aspect"] = compute_aspect(
         df.iloc[0]["start_x"],
         df.iloc[0]["start_y"],
@@ -390,9 +390,10 @@ def workflow(pgconn, scenario):
         print(f"{sn:6s} {fn}")
 
 
-def main(argv):
+@click.command()
+@click.option("-s", "--scenario", type=int, help="DEP Scenario", required=True)
+def main(scenario: int):
     """Go main go"""
-    scenario = int(argv[1])
     with get_sqlalchemy_conn("idep") as pgconn:
         workflow(pgconn, scenario)
 
@@ -407,5 +408,5 @@ def generate_combos():
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
     # generate_combos()
