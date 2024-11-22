@@ -3,10 +3,23 @@
 import math
 from typing import Tuple
 
+import numpy as np
 import pandas as pd
 from pyiem.database import get_sqlalchemy_conn
 from pyiem.iemre import EAST, NORTH, SOUTH, WEST
 from sqlalchemy import text
+
+from pydep.reference import KWFACT_CLASSES, SLOPE_CLASSES
+
+
+def get_kwfact_class(kwfact: float) -> int:
+    """Get kwfact class for the given kwfact."""
+    return np.digitize(kwfact, KWFACT_CLASSES, right=True)
+
+
+def get_slope_class(slope: float) -> int:
+    """Get slope class for the given slope."""
+    return np.digitize(slope, SLOPE_CLASSES, right=True)
 
 
 def clear_huc12data(cursor, huc12, scenario) -> Tuple[int, int, int, int]:
