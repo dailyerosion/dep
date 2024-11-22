@@ -1,10 +1,7 @@
 """Compute attributes associated with the huc12 table."""
 
-# stdlib
-import sys
-
-# third party
-from pyiem.util import get_dbconn
+import click
+from pyiem.database import get_dbconn
 
 
 def compute_average_slope_ratio(cursor, scenario):
@@ -23,9 +20,10 @@ def compute_average_slope_ratio(cursor, scenario):
     print(f"Updated {cursor.rowcount} rows for average_slope_ratio")
 
 
-def main(argv):
+@click.command()
+@click.option("--scenario", type=int, required=True)
+def main(scenario: int):
     """Do great things."""
-    scenario = int(argv[1])
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     compute_average_slope_ratio(cursor, scenario)
@@ -56,4 +54,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()

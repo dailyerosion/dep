@@ -2,17 +2,18 @@
 
 import os
 import subprocess
-import sys
 
+import click
 from pyiem.util import logger
 from tqdm import tqdm
 
 LOG = logger()
 
 
-def main(argv):
+@click.command()
+@click.option("--scenario", type=int, required=True, help="Scenario ID")
+def main(scenario: int):
     """Go main Go."""
-    scenario = int(argv[1])
     myhucs = [s.strip() for s in open("myhucs.txt", encoding="utf8")]
     LOG.info("Packaging %s huc12s for delivery", len(myhucs))
     os.chdir(f"/i/{scenario}")
@@ -25,4 +26,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()

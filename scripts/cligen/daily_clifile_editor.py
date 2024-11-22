@@ -214,7 +214,7 @@ def load_stage4(data, dt: date, tile_affine):
     totals[totals < 0.001] = 0.001
 
     reproject(
-        totals,
+        totals.filled(np.nan),  # rasterio does not like masked arrays
         data["stage4"],
         src_transform=stage4_affine,
         src_crs=projparams,

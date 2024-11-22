@@ -6,17 +6,20 @@ import subprocess
 # Third Party
 import geopandas as gpd
 import pyproj
+from pyiem.database import get_sqlalchemy_conn
 from pyiem.iemre import EAST, NORTH, SOUTH, WEST
 from pyiem.plot.use_agg import plt
-from pyiem.util import get_sqlalchemy_conn
+from sqlalchemy import text
 
 
 def main():
     """Go Main Go."""
     with get_sqlalchemy_conn("idep") as conn:
         gdf = gpd.read_postgis(
-            "SELECT st_transform(simple_geom, 3857) as geo from huc12 "
-            "where scenario = 0",
+            text(
+                "SELECT st_transform(simple_geom, 3857) as geo from huc12 "
+                "where scenario = 0"
+            ),
             conn,
             geom_col="geo",
         )
@@ -50,8 +53,15 @@ def main():
         )
     # Now make white color transparent
     subprocess.call(
-        "convert depdomain.png -transparent white -colors 2 depdomain.png",
-        shell=True,
+        [
+            "magick",
+            "depdomain.png",
+            "-transparent",
+            "white",
+            "-colors",
+            "2",
+            "depdomain.png",
+        ],
     )
 
 
