@@ -22,7 +22,12 @@ from pyiem.util import logger
 from shapely.geometry import LineString
 from tqdm import tqdm
 
-from pydep.util import clear_huc12data, get_cli_fname
+from pydep.util import (
+    clear_huc12data,
+    get_cli_fname,
+    get_kwfact_class,
+    get_slope_class,
+)
 
 LOG = logger()
 print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")
@@ -258,30 +263,42 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
         )
     line = LineString(pts)
 
+    bulk_slope = (firstpt["elev"] - lastpt["elev"]) / (
+        lastpt["len"] - firstpt["len"]
+    )
+    res = cursor.execute(
+        "select id, kwfact from gssurgo where fiscal_year = %s and mukey = %s",
+        (SOILFY, int(firstpt[SOILCOL])),
+    )
+    gssurgo_id, kwfact = res.fetchone()
+    # dailyerosion/dep/issues/298
+    groupid = "_".join(
+        [
+            str(get_slope_class(bulk_slope * 100.0)),
+            str(get_kwfact_class(kwfact)),
+            firstpt["management"][0],
+            firstpt["GenLU"],
+        ]
+    )
     cursor.execute(
         """
-        INSERT into flowpath_ofes (flowpath, ofe, geom, bulk_slope, max_slope,
-        gssurgo_id, fbndid, management, landuse, real_length, field_id)
-        values (%s, %s, %s, %s, %s,
-        (select id from gssurgo where fiscal_year = %s and mukey = %s),
-        %s, %s, %s, %s, %s)
+    INSERT into flowpath_ofes (flowpath, ofe, geom, bulk_slope, max_slope,
+    gssurgo_id, fbndid, management, landuse, real_length, field_id, groupid)
+    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
         (
             db_fid,
             ofe,
             f"SRID=5070;{line.wkt}",
-            (
-                (firstpt["elev"] - lastpt["elev"])
-                / (lastpt["len"] - firstpt["len"])
-            ),
+            bulk_slope,
             gdf["slope"].max(),
-            SOILFY,
-            int(firstpt[SOILCOL]),
+            gssurgo_id,
             firstpt["FBndID"],
             firstpt["management"],
             firstpt["landuse"],
             (lastpt["len"] - firstpt["len"]) / 100.0,
             firstpt["field_id"],
+            groupid,
         ),
     )
 

@@ -6,6 +6,20 @@ from pyiem.database import get_dbconnc
 from pydep import util
 
 
+def test_kwfact_class():
+    """Test kwfact classification."""
+    assert util.get_kwfact_class(0) == 1
+    assert util.get_kwfact_class(0.28) == 1
+    assert util.get_kwfact_class(0.33) == 3
+
+
+def test_slope_class():
+    """Test slope classification."""
+    assert util.get_slope_class(0) == 1
+    assert util.get_slope_class(2) == 1
+    assert util.get_slope_class(100) == 5
+
+
 def test_clear_huc12data():
     """Can we clear data?"""
     dbconn, cursor = get_dbconnc("idep")
