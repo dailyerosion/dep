@@ -1,13 +1,13 @@
 """Summarize the OFE files"""
 
-import datetime
 import glob
 import os
 import sys
+from datetime import datetime
 
 import click
 import pandas as pd
-from pyiem.util import get_dbconn, get_sqlalchemy_conn
+from pyiem.database import get_dbconn, get_sqlalchemy_conn
 from sqlalchemy import text
 from tqdm import tqdm
 
@@ -22,8 +22,8 @@ def fpmagic(cursor, scenario, envfn, rows, huc12, fpath, mlrarsym):
     df = read_env(envfn)
     # Only want 2017 through 2022
     df = df[
-        (df["date"] < datetime.datetime(2023, 1, 1))
-        & (df["date"] >= datetime.datetime(2017, 1, 1))
+        (df["date"] < datetime(2023, 1, 1))
+        & (df["date"] >= datetime(2017, 1, 1))
     ]
     cursor.execute(
         "SELECT real_length, bulk_slope, max_slope from flowpaths "
@@ -96,8 +96,8 @@ def do_huc12(cursor, scenario, huc12):
         )
         # Just 2017-2022
         ofedf = ofedf[
-            (ofedf["date"] < datetime.datetime(2023, 1, 1))
-            & (ofedf["date"] >= datetime.datetime(2017, 1, 1))
+            (ofedf["date"] < datetime(2023, 1, 1))
+            & (ofedf["date"] >= datetime(2017, 1, 1))
         ]
         # Figure out the crop string
         with get_sqlalchemy_conn("idep") as conn:
@@ -109,7 +109,7 @@ def do_huc12(cursor, scenario, huc12):
                     landuse, management,
                     mukey as surgo,
                     kwfact, hydrogroup, fbndid,
-                    o.real_length as length
+                    o.real_length as length, groupid
                     from flowpath_ofes o JOIN flowpaths f on
                     (o.flowpath = f.fid)
                     JOIN gssurgo g on (o.gssurgo_id = g.id)
@@ -144,8 +144,12 @@ def do_huc12(cursor, scenario, huc12):
             thisdelivery = (
                 myofe["sedleave"].sum() / YEARS / accum_length * 4.463
             )
+            groupid: str = meta_ofe["groupid"].values[0]
             res = {
                 "id": f"{os.path.basename(ofefn)[:-4]}_{ofe}",
+                "groupid": groupid,
+                "slope_reclass": groupid.split("_")[0],
+                "kw_reclass": groupid.split("_")[1],
                 "huc12": huc12,
                 "mlrarsym": huc12df.at[huc12, "mlrarsym"],
                 "fpath": fpath,
@@ -186,12 +190,14 @@ def do_huc12(cursor, scenario, huc12):
     df.to_csv(
         f"/i/{scenario}/ofe/{huc12[:8]}/{huc12[8:]}/oferesults_{huc12}.csv",
         index=False,
+        float_format="%.4f",
     )
 
     df = pd.DataFrame(fprows)
     df.to_csv(
         f"/i/{scenario}/ofe/{huc12[:8]}/{huc12[8:]}/fpresults_{huc12}.csv",
         index=False,
+        float_format="%.4f",
     )
 
 
