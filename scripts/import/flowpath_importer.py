@@ -446,7 +446,7 @@ def process_fields(cursor, scenario, huc12, fld_df):
                 huc12,
                 fbndid,
                 row["Acres"],
-                bool(row["isAG"]),
+                row["isAG"],
                 row["geometry"].wkt,
                 row["management"],
                 row["landuse"],
