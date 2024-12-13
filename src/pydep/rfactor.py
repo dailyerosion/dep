@@ -108,7 +108,7 @@ def compute_rfactor_from_cli(
     Returns:
         pandas.DataFrame with yearly values
     """
-    with open(filename, encoding="ascii") as fh:
+    with open(filename, encoding="ascii") as fh:  # skipcq
         lines = fh.readlines()
     (*_unused, year1, years_simuluated) = lines[4].strip().split()
     lnum = 15

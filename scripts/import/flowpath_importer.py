@@ -304,7 +304,7 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
 
 
 def get_cli_fname_and_id(cursor, lon, lat, scenario):
-    """"""
+    """Get database entry or add one."""
     clifn = get_cli_fname(lon, lat, scenario)
     cursor.execute(
         "select id from climate_files where scenario = %s and filepath = %s",
@@ -391,7 +391,7 @@ def process_flowpath(
         df.iloc[0].geometry.x,
         df.iloc[0].geometry.y,
     )
-    clifn, clifn_id = get_cli_fname_and_id(lon, lat, scenario)
+    clifn, clifn_id = get_cli_fname_and_id(cursor, lon, lat, scenario)
     cursor.execute(
         """
         UPDATE flowpaths SET geom = %s, irrigated = %s,
