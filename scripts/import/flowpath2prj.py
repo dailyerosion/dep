@@ -358,9 +358,10 @@ def workflow(pgconn, scenario):
     conn = get_dbconn("idep")
     cursor = conn.cursor()
     df = pd.read_sql(
-        "SELECT ST_ymax(ST_Transform(geom, 4326)) as lat, fpath, fid, huc_12, "
-        "climate_file from flowpaths WHERE scenario = %s "
-        "ORDER by huc_12 ASC",
+        """
+    SELECT ST_ymax(ST_Transform(geom, 4326)) as lat, fpath, fid, huc_12,
+    filepath as climate_file from flowpaths f JOIN climate_files c on
+    (f.climate_file_id = c.id) WHERE f.scenario = %s ORDER by huc_12 ASC""",
         pgconn,
         params=(get_flowpath_scenario(scenario),),
     )

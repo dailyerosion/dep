@@ -5,7 +5,8 @@ import re
 
 import numpy as np
 import pandas as pd
-from scipy.interpolate import interp1d
+
+from pydep.rfactor import calc_rfactor
 
 YLD_CROPTYPE = re.compile(r"Crop Type #\s+(?P<num>\d+)\s+is (?P<name>[^\s]+)")
 YLD_DATA = re.compile(
@@ -22,47 +23,6 @@ def _date_from_year_jday(df):
     df["date"] = pd.to_datetime(
         df["year"].astype(str) + " " + df["jday"].astype(str), format="%Y %j"
     )
-
-
-def _rfactor(times, points, return_rfactor_metric=True):
-    """Compute the R-factor.
-
-    https://www.hydrol-earth-syst-sci.net/19/4113/2015/hess-19-4113-2015.pdf
-    It would appear that a strict implementation would need to have a six
-    hour dry period around events and require more then 12mm of precipitation.
-
-    Args:
-      times (list): List of decimal time values for a date.
-      points (list): list of accumulated precip values (mm).
-      return_rfactor_metric (bool, optional): Should this return a metric
-        (default) or english unit R value.
-
-    Returns:
-      rfactor (float): Units of MJ mm ha-1 h-1
-    """
-    # No precip!
-    if not times:
-        return 0
-    # interpolate dataset into 30 minute bins
-    func = interp1d(
-        times,
-        points,
-        kind="linear",
-        fill_value=(0, points[-1]),
-        bounds_error=False,
-    )
-    accum = func(np.arange(0, 24.01, 0.5))
-    rate_mmhr = (accum[1:] - accum[0:-1]) * 2.0
-    # sum of E x I
-    # I is the 30 minute peak intensity (mm h-1), capped at 3 in/hr
-    Imax = min([3.0 * 25.4, np.max(rate_mmhr)])
-    # E is sum of e_r (MJ ha-1 mm-1) * p_r (mm)
-    e_r = 0.29 * (1.0 - 0.72 * np.exp(-0.082 * rate_mmhr))
-    # rate * times
-    p_r = rate_mmhr / 2.0
-    # MJ ha-1 * mm h-1  or MJ inch a-1 h-1
-    unitconv = 1.0 if return_rfactor_metric else (1.0 / 25.4 / 2.47105)
-    return np.sum(e_r * p_r) * Imax * unitconv
 
 
 def intensity(times, points, compute_intensity_over) -> dict:
@@ -155,7 +115,7 @@ def read_cli(
             "rfactor": (
                 np.nan
                 if not compute_rfactor
-                else _rfactor(
+                else calc_rfactor(
                     times,
                     points,
                     return_rfactor_metric=return_rfactor_metric,

@@ -303,6 +303,22 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
     )
 
 
+def get_cli_fname_and_id(cursor, lon, lat, scenario):
+    """Get database entry or add one."""
+    clifn = get_cli_fname(lon, lat, scenario)
+    cursor.execute(
+        "select id from climate_files where scenario = %s and filepath = %s",
+        (scenario, clifn),
+    )
+    if cursor.rowcount == 0:
+        cursor.execute(
+            "INSERT into climate_files(scenario, filepath) values (%s, %s) "
+            "RETURNING id",
+            (scenario, clifn),
+        )
+    return clifn, cursor.fetchone()[0]
+
+
 def process_flowpath(
     cursor, scenario, db_fid, df: pd.DataFrame
 ) -> pd.DataFrame:
@@ -375,11 +391,11 @@ def process_flowpath(
         df.iloc[0].geometry.x,
         df.iloc[0].geometry.y,
     )
-    clifn = get_cli_fname(lon, lat, scenario)
+    clifn, clifn_id = get_cli_fname_and_id(cursor, lon, lat, scenario)
     cursor.execute(
         """
         UPDATE flowpaths SET geom = %s, irrigated = %s,
-        max_slope = %s, bulk_slope = %s, ofe_count = %s, climate_file = %s,
+        max_slope = %s, bulk_slope = %s, ofe_count = %s, climate_file_id = %s,
         real_length = %s
         WHERE fid = %s returning huc_12, fpath
         """,
@@ -390,7 +406,7 @@ def process_flowpath(
             (df["elev"].max() - df["elev"].min())
             / (df["len"].max() - df["len"].min()),
             df["ofe"].max(),
-            clifn,
+            clifn_id,
             df["len"].max() / 100.0,
             db_fid,
         ),
