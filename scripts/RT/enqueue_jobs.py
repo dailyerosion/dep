@@ -9,7 +9,8 @@ from io import StringIO
 
 import pika
 import requests
-from pyiem.util import get_dbconn, logger
+from pyiem.database import get_dbconn
+from pyiem.util import logger
 
 YEARS = datetime.date.today().year - 2006
 WEPPEXE = "wepp20240930"
@@ -182,8 +183,9 @@ def main(argv):
     flscenario, _clscenario = icursor.fetchone()
 
     icursor.execute(
-        "SELECT huc_12, fpath, climate_file, ofe_count, irrigated "
-        "from flowpaths where scenario = %s",
+        "SELECT huc_12, fpath, filepath, ofe_count, irrigated "
+        "from flowpaths f JOIN climate_files c on (f.climate_file_id = c.id) "
+        "where f.scenario = %s",
         (flscenario,),
     )
     totaljobs = icursor.rowcount
