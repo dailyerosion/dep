@@ -53,6 +53,11 @@ YEARS = 2025 - 2006
 # WEPP can not handle a zero slope, so we ensure that all slopes are >= 0.3%
 MIN_SLOPE = 0.003
 
+# Things to control for
+KNOBS = {
+    "dummy_slope": True,  # Write placeholder into prj file
+}
+
 # Note that the default used below is
 INITIAL_COND_DEFAULT = "IniCropDef.Default"
 INITIAL_COND = {
@@ -240,7 +245,6 @@ def do_flowpath(pgconn, scenario, zone, metadata):
     # Current approach is that since we are defining OFEs, we subvert whatever
     # prj2wepp is doing with the slope files and prescribe them below
     slpdata = ""
-    res["slp_dummy"] = f"2 {res['length']:.4f}\n0.00, 0.01 1.00, 0.01\n"
     for _ofe, gdf in df.groupby("ofe"):
         lens = gdf["length"].values / gdf["length"].values[-1]
         slopes = gdf["slope"].values
@@ -251,6 +255,10 @@ def do_flowpath(pgconn, scenario, zone, metadata):
             f"{len(lens)} {gdf.iloc[0]['real_length']:.4f}\n"
             f"{' '.join(tokens)}\n"
         )
+    if KNOBS["dummy_slope"]:
+        res["slpdata"] = f"2 {res['length']:.4f}\n0.00, 0.01 1.00, 0.01\n"
+    else:
+        res["slpdata"] = slpdata
     slpfn = (
         f"/i/{scenario}/slp/{res['huc8']}/{res['huc12'][-4:]}/"
         f"{res['huc12']}_{metadata['fpath']}.slp"
@@ -319,7 +327,7 @@ Length = %(length).4f
 Profile {
     Data {
         %(aspect).4f  1.0
-%(slp_dummy)s
+%(slpdata)s
     }
 }
 Climate {
@@ -393,8 +401,16 @@ def workflow(pgconn, scenario):
 
 @click.command()
 @click.option("-s", "--scenario", type=int, help="DEP Scenario", required=True)
-def main(scenario: int):
+@click.option(
+    "--dummy-slope",
+    "ds",
+    default=True,
+    type=bool,
+    help="Write slope placeholder instead of real data",
+)
+def main(scenario: int, ds: bool):
     """Go main go"""
+    KNOBS["dummy_slope"] = ds
     with get_sqlalchemy_conn("idep") as pgconn:
         workflow(pgconn, scenario)
 

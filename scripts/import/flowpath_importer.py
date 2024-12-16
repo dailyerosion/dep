@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import re
+from typing import Optional
 
 import click
 import geopandas as gpd
@@ -34,12 +35,18 @@ print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")
 print(" * VERIFY that the GeoJSON is the 5070 grid value")
 print(" * This will generate a `myhucs.txt` file with found HUCs")
 
+# Things we can control via command line
+KNOBS = {
+    "MAX_POINTS_OFE": 97,
+    "CONSTANT_LANDUSE": None,
+    "CONSTANT_MANAGEMENT": None,
+}
+
 YEARS = 2025 - 2007 + 1
 SOILFY = 2023
 SOILCOL = f"SOL_FY_{SOILFY}"
 PREFIX = "fp"
 TRUNC_GRIDORDER_AT = 4
-MAX_POINTS_OFE = 97
 GENLU_CODES = {}
 PROCESSING_COUNTS = {
     "flowpaths_found": 0,
@@ -84,14 +91,20 @@ def create_flowpath_id(cursor, scenario, huc12, fpath) -> int:
 
 def fillout_codes(df):
     """ "Get the right full-string codes."""
-    s = df["CropRotatn_CY_2022"].str
-    df["landuse"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1] + s[-2]
-    if df["landuse"].str.len().min() != YEARS:
-        raise ValueError(f"landuse is not {YEARS} chars")
-    s = df["Management_CY_2022"].str
-    df["management"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1] + s[-2]
-    if df["management"].str.len().min() != YEARS:
-        raise ValueError(f"management is not {YEARS} chars")
+    if KNOBS["CONSTANT_LANDUSE"] is None:
+        s = df["CropRotatn_CY_2022"].str
+        df["landuse"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1] + s[-2]
+        if df["landuse"].str.len().min() != YEARS:
+            raise ValueError(f"landuse is not {YEARS} chars")
+    else:
+        df["landuse"] = KNOBS["CONSTANT_LANDUSE"] * YEARS
+    if KNOBS["CONSTANT_MANAGEMENT"] is None:
+        s = df["Management_CY_2022"].str
+        df["management"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1] + s[-2]
+        if df["management"].str.len().min() != YEARS:
+            raise ValueError(f"management is not {YEARS} chars")
+    else:
+        df["management"] = KNOBS["CONSTANT_MANAGEMENT"] * YEARS
 
 
 def get_data(filename):
@@ -221,7 +234,7 @@ def simplify(df):
     """WEPP can only handle 100 slope points per OFE."""
     df["useme"] = False
     for _ofe, gdf in df.groupby("ofe"):
-        if len(gdf.index) < MAX_POINTS_OFE:
+        if len(gdf.index) < KNOBS["MAX_POINTS_OFE"]:
             df.loc[gdf.index, "useme"] = True
             continue
         # Any hack is a good hack here, take the first and last point
@@ -229,7 +242,9 @@ def simplify(df):
         df.at[gdf.index[-1], "useme"] = True
         # Take the top 16 values by slope
         df.loc[
-            gdf.sort_values("slope", ascending=False).index[:MAX_POINTS_OFE],
+            gdf.sort_values("slope", ascending=False).index[
+                : KNOBS["MAX_POINTS_OFE"]
+            ],
             "useme",
         ] = True
 
@@ -358,7 +373,7 @@ def process_flowpath(
     # is necessary, we are cautious to be well below 100
     if (
         df[["ofe", "landuse"]].groupby("ofe").count().max()["landuse"]
-        > MAX_POINTS_OFE
+        > KNOBS["MAX_POINTS_OFE"]
     ):
         df = simplify(df)
         # Need to recompute slopes
@@ -533,8 +548,14 @@ def process(cursor, scenario, huc12df, fld_df):
 @click.command()
 @click.option("--scenario", "-s", type=int, required=True)
 @click.option("--datadir", "-d", type=str, required=True)
-def main(scenario, datadir):
+@click.option("--max-points-ofe", "mpe", type=int, default=97)
+@click.option("--constant-landuse", "cl", type=str, default=None)
+@click.option("--constant-management", "cm", type=str, default=None)
+def main(scenario, datadir, mpe: int, cl: Optional[str], cm: Optional[str]):
     """Our main function, the starting point for code execution"""
+    KNOBS["MAX_POINTS_OFE"] = mpe
+    KNOBS["CONSTANT_LANDUSE"] = cl
+    KNOBS["CONSTANT_MANAGEMENT"] = cm
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     load_genlu_codes(cursor)
