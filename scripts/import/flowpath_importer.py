@@ -58,8 +58,11 @@ PROCESSING_COUNTS = {
     "flowpaths_invalidgeom": 0,
     "flowpaths_lenzero_reset": 0,
     "flowpaths_inconsistent_gridorder": 0,
+    "flowpaths_deleted": 0,
+    "flowpath_ofes_deleted": 0,
     "fields_deleted": 0,
     "fields_inserted": 0,
+    "field_operations_deleted": 0,
 }
 TRANSFORMER = pyproj.Transformer.from_crs(
     "epsg:5070", "epsg:4326", always_xy=True
@@ -510,12 +513,11 @@ def process(cursor, scenario, huc12df, fld_df):
             break
     if huc12 is None or len(huc12) != 12:
         raise ValueError(f"Could not find huc12 from {huc12df.columns}")
-    (
-        PROCESSING_COUNTS["flowpath_ofes_deleted"],
-        PROCESSING_COUNTS["flowpaths_deleted"],
-        PROCESSING_COUNTS["field_operations_deleted"],
-        PROCESSING_COUNTS["fields_deleted"],
-    ) = clear_huc12data(cursor, huc12, scenario)
+    fod, fpd, fopd, fldd = clear_huc12data(cursor, huc12, scenario)
+    PROCESSING_COUNTS["flowpath_ofes_deleted"] += fod
+    PROCESSING_COUNTS["flowpaths_deleted"] += fpd
+    PROCESSING_COUNTS["field_operations_deleted"] += fopd
+    PROCESSING_COUNTS["fields_deleted"] += fldd
     if fld_df is not None:
         process_fields(cursor, scenario, huc12, fld_df)
     # With fields processed, we can join the field_id to the flowpath points
