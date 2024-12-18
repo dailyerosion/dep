@@ -118,7 +118,7 @@ def dump_data():
                     },
                 )
                 inserts += 1
-            if inserts > 1_000 == 0:
+            if inserts > 1_000:
                 conn.commit()
                 inserts = 0
         conn.commit()
