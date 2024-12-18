@@ -1,5 +1,7 @@
 """pydep's R-factor calculations."""
 
+from datetime import date
+
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
@@ -63,8 +65,8 @@ def _compute_accum(lines):
     )(np.arange(0.5, 24.01, 0.5))
 
 
-def _rfactor_window(accum: np.ndarray) -> list:
-    """Compute R-factors for the last day in the 10 day window."""
+def _rfactor_year(accum: np.ndarray) -> list:
+    """Compute R-factors for a year."""
     storm_start_stop = []
     storm_start = -1
     x = 12
@@ -80,9 +82,6 @@ def _rfactor_window(accum: np.ndarray) -> list:
         x += 1
     rfactors = []
     for start, stop in storm_start_stop:
-        # For a storm to be considered, it must stop within the tenth day
-        if stop < (9 * 24 * 2):
-            continue
         event = accum[start:stop] - accum[start]
         rate_mmhr = (event[1:] - event[0:-1]) * 2.0
         # sum of E x I
@@ -119,26 +118,29 @@ def compute_rfactor_from_cli(
             range(int(year1), int(year1) + int(years_simuluated)), name="year"
         ),
     )
-    # Life Choice, store 10 days of 30 minute accum
-    window_accum = np.zeros(10 * 24 * 2)
+    # We compute one year at a time.
+    year_accum = np.array([])
     while lnum < len(lines):
-        (_da, _mo, year, breakpoints, *_bah) = lines[lnum].strip().split()
+        (da, mo, year, breakpoints, *_bah) = lines[lnum].strip().split()
+        dt = date(int(year), int(mo), int(da))
+        doy = dt.timetuple().tm_yday
+        idx = (doy - 1) * 24 * 2
+        if doy == 1:
+            year_accum = np.zeros(366 * 24 * 2)
         breakpoints = int(breakpoints)
         if breakpoints == 0:
             accum = np.zeros(24 * 2)
         else:
             accum = _compute_accum(lines[lnum + 1 : lnum + 1 + breakpoints])
-        # Chop off the oldest day and add the new day
-        window_accum = np.concatenate(
-            (
-                window_accum[48:] - window_accum[48],
-                accum + window_accum[-1] - window_accum[48],
-            )
+        # Place this accum into the yearly accum and apply offset to keep mono
+        year_accum[idx : idx + 24 * 2] = accum + (
+            0 if doy == 1 else year_accum[idx - 1]
         )
-        rfactors = _rfactor_window(window_accum)
-        if rfactors:
-            resultdf.at[int(year), "rfactor"] += np.sum(rfactors)
-            resultdf.at[int(year), "storm_count"] += len(rfactors)
+        if f"{dt:%m%d}" == "1231":
+            rfactors = _rfactor_year(year_accum)
+            if rfactors:
+                resultdf.at[dt.year, "rfactor"] = np.sum(rfactors)
+                resultdf.at[dt.year, "storm_count"] = len(rfactors)
         lnum += breakpoints + 1
 
     return resultdf

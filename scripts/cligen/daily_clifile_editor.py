@@ -393,15 +393,15 @@ def load_precip(data, dt: date, tile_bounds: BOUNDS):
 
     now = midnight
     # Require at least 75% data coverage, if not, we will abort back to legacy
-    data["quorum"] = ts * 0.75
+    quorum = {"cnt": ts * 0.75}
 
     def _cb_lp(args):
         """callback"""
         tidx, grid = args
         # If tidx is outside of bounds, just make this a no-op
         if grid is not None and tidx < data["precip"].shape[2]:
-            data["quorum"] -= 1
             data["precip"][:, :, tidx] = grid
+            quorum["cnt"] -= 1
 
     tidx = 0
     shp = data["solar"].shape
@@ -424,10 +424,10 @@ def load_precip(data, dt: date, tile_bounds: BOUNDS):
             tidx += 1
         pool.close()
         pool.join()
-    if data["quorum"] > 0:
+    if quorum["cnt"] > 0:
         LOG.warning(
             "Failed 75%% quorum with MRMS a2m %.1f, loading legacy",
-            data["quorum"],
+            quorum["cnt"],
         )
         load_precip_legacy(data, dt, tile_bounds)
     LOG.info("finished precip calculation")
