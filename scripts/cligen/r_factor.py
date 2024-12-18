@@ -126,4 +126,3 @@ def dump_data():
 
 if __name__ == "__main__":
     dump_data()
-    # plot()
