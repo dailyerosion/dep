@@ -137,6 +137,9 @@ def compute_rfactor_from_cli(
             0 if doy == 1 else year_accum[idx - 1]
         )
         if f"{dt:%m%d}" == "1231":
+            # Chomp the last day that does not exist
+            if doy == 365:
+                year_accum = year_accum[: 365 * 24 * 2]
             rfactors = _rfactor_year(year_accum)
             if rfactors:
                 resultdf.at[dt.year, "rfactor"] = np.sum(rfactors)
