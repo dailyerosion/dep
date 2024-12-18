@@ -1,17 +1,21 @@
 """R factor work."""
 
+import os
+from multiprocessing import Pool
+
 import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.colors as mpcolors
 import numpy as np
 import pandas as pd
 from matplotlib.patches import Polygon
+from pyiem.database import get_sqlalchemy_conn
 from pyiem.plot import MapPlot
 from pyiem.plot.use_agg import plt
-from pyiem.util import get_sqlalchemy_conn
+from sqlalchemy import text
 from tqdm import tqdm
 
-from pydep.io.wepp import read_cli
+from pydep.rfactor import compute_rfactor_from_cli
 
 
 def plot():
@@ -66,45 +70,60 @@ def plot():
     mp.fig.savefig("test.png")
 
 
+def job(args) -> pd.DataFrame:
+    """Process."""
+    (cliid, row) = args
+    if not os.path.isfile(row["filepath"]):
+        return cliid, pd.DataFrame()
+    return cliid, compute_rfactor_from_cli(row["filepath"])
+
+
 def dump_data():
     """Go main Go."""
-    with get_sqlalchemy_conn("idep") as conn:
-        df = pd.read_sql(
+    inserts = 0
+    with get_sqlalchemy_conn("idep") as conn, Pool() as pool:
+        clidf = pd.read_sql(
             """
-            SELECT huc_12, max(climate_file) as cli from flowpaths where
-            scenario = 0 GROUP by huc_12
+            SELECT id, filepath from climate_files where
+            scenario = 0
         """,
             conn,
-            index_col="huc_12",
+            index_col="id",
         )
-    data = {
-        "huc12": [],
-        "rfactor_yr_avg": [],
-        "rfactor_yr_max": [],
-        "rfactor_yr_min": [],
-        "rfactor_min_year": [],
-        "rfactor_max_year": [],
-    }
-    for year in range(2007, 2022):
-        data[f"rfactor_{year}"] = []
-    for huc_12, row in tqdm(df.iterrows(), total=len(df.index)):
-        fn = row["cli"].replace("/i/", "/mnt/idep2/2/")
-        cdf = read_cli(fn, compute_rfactor=True)
-        data["huc12"].append(huc_12)
-        # drop 2020
-        yearly = cdf["rfactor"].groupby(cdf.index.year).sum().iloc[:-1]
-        data["rfactor_yr_avg"].append(yearly.mean())
-        data["rfactor_yr_min"].append(yearly.min())
-        data["rfactor_yr_max"].append(yearly.max())
-        data["rfactor_min_year"].append(yearly.idxmin())
-        data["rfactor_max_year"].append(yearly.idxmax())
-        for year in range(2007, 2022):
-            data[f"rfactor_{year}"].append(yearly.loc[year])
-
-    df = pd.DataFrame(data)
-    df.to_csv("/tmp/data.csv", index=False)
+        for clid, resdf in tqdm(
+            pool.imap(job, clidf.iterrows()), total=len(clidf)
+        ):
+            if resdf.empty:
+                continue
+            conn.execute(
+                text("""
+    delete from climate_file_yearly_summary where climate_file_id = :clid
+                     """),
+                {"clid": clid},
+            )
+            for year in range(2007, 2025):
+                conn.execute(
+                    text(
+                        """
+    insert into climate_file_yearly_summary
+    (climate_file_id, year, rfactor, rfactor_storms) values
+    (:clid, :year, :rfactor, :rfactor_storms)
+                        """
+                    ),
+                    {
+                        "clid": clid,
+                        "year": year,
+                        "rfactor": resdf.at[year, "rfactor"],
+                        "rfactor_storms": resdf.at[year, "storm_count"],
+                    },
+                )
+                inserts += 1
+            if inserts > 1_000 == 0:
+                conn.commit()
+                inserts = 0
+        conn.commit()
 
 
 if __name__ == "__main__":
-    # dump_data()
-    plot()
+    dump_data()
+    # plot()
