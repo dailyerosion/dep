@@ -1,49 +1,70 @@
 """Create a map of where we have climate files!"""
 
-import glob
-import os
-from typing import List, Tuple
-
-from pyiem.plot import MapPlot
+import click
+import geopandas as gpd
+import numpy as np
+from matplotlib.colors import BoundaryNorm
+from pyiem.database import get_sqlalchemy_conn
+from pyiem.plot import MapPlot, get_cmap
 from pyiem.reference import Z_OVERLAY
-from tqdm import tqdm
+from sqlalchemy import text
+
+"""
+select geom from climate_files where id in (
+        select distinct climate_file_id from climate_file_yearly_summary
+        where rfactor < 1 and year = 2024) and scenario = 0
+"""
 
 
-def get_points() -> Tuple[List[float], List[float]]:
-    """Plot vals."""
-    os.chdir("/i/0/cli")
-    lons = []
-    lats = []
-    for mydir in tqdm(glob.glob("*")):
-        os.chdir(mydir)
-        for fn in glob.glob("*.cli"):
-            tokens = fn[:-4].split("x")
-            lons.append(0 - float(tokens[0]))
-            lats.append(float(tokens[1]))
-        os.chdir("..")
-    return lons, lats
-
-
-def main():
+@click.command()
+@click.option("--year", default=2024, help="Year to plot")
+def main(year: int):
     """make maps, not war."""
-    lons, lats = get_points()
+    with get_sqlalchemy_conn("idep") as pgconn:
+        pts = gpd.read_postgis(
+            text("""
+    with climo as (
+        select climate_file_id, avg(rfactor) as rr from
+        climate_file_yearly_summary
+        GROUP by climate_file_id)
+    select geom, (rfactor - rr) / rr  * 100. as ratio from
+    climate_files f, climate_file_yearly_summary s, climo c
+    WHERE f.id = s.climate_file_id and s.year = :year
+    and f.id = c.climate_file_id and f.scenario = 0
+"""),
+            pgconn,
+            params={"year": year},
+            geom_col="geom",
+        )
+    cmap = get_cmap("RdBu")
+    # clevs = [0, 250, 500, 750, 1000, 1500, 2000, 2500, 3000, 4000, 5000]
+    clevs = np.arange(-60, 61, 20)
+    norm = BoundaryNorm(clevs, cmap.N)
     mp = MapPlot(
         logo="dep",
         sector="conus",
-        title="7 June 2024 :: DEP Daily Updated Climate File Locations",
-        subtitle=f"Total Climate Files: {len(lons)}",
+        title=f"{year} R-Factor % Difference from 2007-2024 Average",
+        subtitle=f"Total Climate Files: {len(pts)}",
         caption="Daily Erosion Project",
     )
     # All points will overwhelm matplotlib, so we need to plot them in chunks
-    for i in tqdm(range(0, len(lons), 1000)):
-        mp.panels[0].scatter(
-            lons[i : i + 1000],
-            lats[i : i + 1000],
-            c="r",
-            s=0.1,
-            zorder=Z_OVERLAY,
-        ).set_rasterized(True)
-    mp.fig.savefig("map_clipoints.png")
+    pts.to_crs(mp.panels[0].crs).plot(
+        ax=mp.panels[0].ax,
+        aspect=None,
+        marker="o",
+        markersize=3,
+        color=cmap(norm(pts["ratio"].values)),
+        zorder=Z_OVERLAY,
+    )
+    mp.draw_colorbar(
+        clevs=clevs,
+        cmap=cmap,
+        norm=norm,
+        spacing="proportional",
+        units="%",
+        extend="both",
+    )
+    mp.fig.savefig(f"{year}_departure.png")
 
 
 if __name__ == "__main__":
