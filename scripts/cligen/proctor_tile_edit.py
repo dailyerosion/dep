@@ -1,6 +1,6 @@
 """Proctor the editing of DEP CLI files."""
 
-import gzip
+import glob
 import os
 import stat
 import subprocess
@@ -8,11 +8,14 @@ import sys
 import time
 from concurrent.futures import ProcessPoolExecutor
 from datetime import date, datetime
+from math import ceil
 from multiprocessing import cpu_count
 
 import click
 import numpy as np
-from pyiem import iemre
+import rasterio
+from affine import Affine
+from pyiem.grid.nav import IEMRE
 from pyiem.util import logger
 
 LOG = logger()
@@ -21,28 +24,61 @@ DATADIR = "/mnt/idep2/data/dailyprecip"
 
 def get_fn(dt: date):
     """Return the filename for this date."""
-    return f"{DATADIR}/{dt.year}/{dt:%Y%m%d}.npy.gz"
+    return f"{DATADIR}/{dt.year}/{dt:%Y%m%d}.geotiff"
 
 
-def assemble_grids(tilesz, dt: date):
-    """Build back the grid from the tiles."""
-    dom = iemre.DOMAINS[""]
-    YS = int((dom["north"] - dom["south"]) * 100.0)
-    XS = int((dom["east"] - dom["west"]) * 100.0)
+def assemble_geotiffs(dt: date):
+    """Build back the grid from the tiles.
+
+    Important: The tiles are S-N, but we flip and store as N-S (image)
+    """
+    north = ceil(IEMRE.top_edge)
+    YS = int((north - IEMRE.bottom) * 100.0)
+    XS = int((ceil(IEMRE.right) - IEMRE.left) * 100.0)
     res = np.zeros((YS, XS))
-    basedir = f"{DATADIR}/{dt.year}"
-    for i, _lo in enumerate(np.arange(dom["west"], dom["east"], tilesz)):
-        for j, _la in enumerate(np.arange(dom["south"], dom["north"], tilesz)):
-            fn = f"{basedir}/{dt:%Y%m%d}.tile_{i}_{j}.npy"
-            if not os.path.isfile(fn):
-                continue
-            yslice = slice(j * 100 * tilesz, (j + 1) * 100 * tilesz)
-            xslice = slice(i * 100 * tilesz, (i + 1) * 100 * tilesz)
-            res[yslice, xslice] = np.load(fn)
-            os.unlink(fn)
+    for gfn in glob.glob(f"{DATADIR}/{dt:%Y}/{dt:%Y%m%d}.tile*.geotiff"):
+        with rasterio.open(gfn) as src:
+            data = src.read(1)
+            meta = src.meta
+            # The raster is stored south to north and has the small offset
+            height = meta["height"]
+            width = meta["width"]
+            xs = int((meta["transform"][2] + 0.005 - IEMRE.left) * 100.0)
+            ys = int((meta["transform"][5] + 0.005 - IEMRE.bottom) * 100.0)
+            LOG.info(
+                "%s %s %s %s %s %s %s",
+                gfn,
+                xs,
+                ys,
+                width,
+                height,
+                data.shape,
+                res.shape,
+            )
+            res[ys : ys + height, xs : xs + width] = data
+            os.unlink(gfn)
 
-    with gzip.GzipFile(get_fn(dt), "w") as fh:
-        np.save(file=fh, arr=res)
+    # Write out a GeoTIFF, we will store as a UInt16 with a scale factor
+    # of 100, so we can store 0 to 655.35 mm of precipitation
+    res = (res * 100.0).astype(np.uint16)
+    with rasterio.open(
+        get_fn(dt),
+        "w",
+        driver="GTiff",
+        compress="lzw",
+        height=res.shape[0],
+        width=res.shape[1],
+        count=1,
+        dtype=res.dtype,
+        crs="EPSG:4326",
+        # Oh boy. We never actually get to the north edge
+        transform=Affine(
+            0.01, 0.0, IEMRE.left - 0.005, 0.0, -0.01, north - 0.005
+        ),
+    ) as dst:
+        dst._set_all_scales([0.01])  # skipcq
+        dst._set_all_offsets([0.0])  # skipcq
+        dst.write(np.flipud(res), 1)
 
 
 def myjob(cmd: list):
@@ -83,16 +119,23 @@ def main(scenario, dt: datetime, domain: str):
     fn = get_fn(dt)
     if os.path.isfile(fn):
         filets = os.stat(fn)[stat.ST_MTIME]
-        LOG.warning("%s was last processed on %s", dt, time.ctime(filets))
+        LOG.warning(
+            "%s[%s] was last processed on %s", dt, domain, time.ctime(filets)
+        )
     jobs = []
-    dom = iemre.DOMAINS[domain]
-    for i, _lo in enumerate(np.arange(dom["west"], dom["east"], tilesz)):
-        for j, _la in enumerate(np.arange(dom["south"], dom["north"], tilesz)):
+    # This is more convoluted than it should be, but our IEMRE grid is not
+    # exactly even. This also needs to assume that the IEMRE corner is an int
+    east = ceil(IEMRE.right)
+    north = ceil(IEMRE.top)
+    for lon in np.arange(IEMRE.left, east, tilesz):
+        for lat in np.arange(IEMRE.bottom, north, tilesz):
             cmd = [
                 "python",
                 "daily_clifile_editor.py",
-                f"--xtile={i}",
-                f"--ytile={j}",
+                f"--west={lon:.0f}",
+                f"--east={min(east, lon + tilesz):.0f}",
+                f"--south={lat:.0f}",
+                f"--north={min(north, lat + tilesz):.0f}",
                 f"--scenario={scenario}",
                 f"--date={dt:%Y-%m-%d}",
             ]
@@ -110,7 +153,7 @@ def main(scenario, dt: datetime, domain: str):
         LOG.warning("Aborting due to job failures")
         sys.exit(3)
 
-    assemble_grids(tilesz, dt)
+    assemble_geotiffs(dt)
 
 
 if __name__ == "__main__":
