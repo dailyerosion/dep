@@ -9,7 +9,6 @@ also do any of the following:
 
 import argparse
 import datetime
-import gzip
 import os
 import re
 import sys
@@ -18,9 +17,8 @@ from multiprocessing import Pool, cpu_count
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from affine import Affine
+import rasterio
 from pyiem.grid.zs import CachingZonalStats
-from pyiem.iemre import NORTH, WEST
 from pyiem.util import get_dbconn, get_dbconnstr, logger
 from tqdm import tqdm
 
@@ -28,7 +26,6 @@ from pydep.io.dep import read_env
 from pydep.util import load_scenarios
 
 LOG = logger()
-PRECIP_AFF = Affine(0.01, 0.0, WEST, 0.0, -0.01, NORTH)
 CONFIG = {"subset": False}
 
 # Maximum precip value allowed, will alert otherwise, see dailyerosion/dep#65
@@ -147,21 +144,23 @@ def load_precip(dates, huc12s):
     if CONFIG["subset"]:
         huc12df = huc12df.loc[huc12s]
 
-    czs = CachingZonalStats(PRECIP_AFF)
+    czs = None
     # 2. Loop over dates
     res = {}
     progress = tqdm(dates, disable=(not sys.stdout.isatty()))
     for date in progress:
         progress.set_description(date.strftime("%Y-%m-%d"))
-        fn = date.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.npy.gz")
+        fn = date.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.geotiff")
         if not os.path.isfile(fn):
             LOG.info("Missing precip: %s", fn)
             for huc12 in huc12df.index.values:
                 d = res.setdefault(huc12, [])
                 d.append(0)
             continue
-        with gzip.GzipFile(fn, "r") as fh:
-            pcp = np.flipud(np.load(file=fh))
+        with rasterio.open(fn, "r") as ds:
+            if czs is None:
+                czs = CachingZonalStats(ds.transform)
+            pcp = ds.read(1) * ds.scales[0]
         # nodata here represents the value that is set to missing within the
         # source dataset!, setting to zero has strange side affects
         pcp[pcp < 0] = np.nan
