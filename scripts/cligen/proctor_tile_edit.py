@@ -76,8 +76,8 @@ def assemble_geotiffs(dt: date):
             0.01, 0.0, IEMRE.left - 0.005, 0.0, -0.01, north - 0.005
         ),
     ) as dst:
-        dst._set_all_scales([0.01])
-        dst._set_all_offsets([0.0])
+        dst._set_all_scales([0.01])  # skipcq
+        dst._set_all_offsets([0.0])  # skipcq
         dst.write(np.flipud(res), 1)
 
 
@@ -119,7 +119,9 @@ def main(scenario, dt: datetime, domain: str):
     fn = get_fn(dt)
     if os.path.isfile(fn):
         filets = os.stat(fn)[stat.ST_MTIME]
-        LOG.warning("%s was last processed on %s", dt, time.ctime(filets))
+        LOG.warning(
+            "%s[%s] was last processed on %s", dt, domain, time.ctime(filets)
+        )
     jobs = []
     # This is more convoluted than it should be, but our IEMRE grid is not
     # exactly even. This also needs to assume that the IEMRE corner is an int

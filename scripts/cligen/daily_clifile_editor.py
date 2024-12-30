@@ -515,7 +515,7 @@ def edit_clifile(
 ) -> bool:
     """Edit the climate file, run from thread."""
     # Okay we have work to do
-    with open(clirow["filepath"], "r", encoding="utf8") as fh:
+    with open(clirow["filepath"], "r", encoding="utf8") as fh:  # skipcq
         clidata = fh.read()
     pos = clidata.find(valid.strftime("%-d\t%-m\t%Y"))
     if pos == -1:
