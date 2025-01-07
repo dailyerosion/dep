@@ -97,7 +97,7 @@ def get_sts_ets_at_localhour(dt: date, local_hour):
 
 def iemre_bounds_check(clidf: pd.DataFrame, col: str, lower, upper) -> None:
     """Make sure our data is within bounds, if not, exit!"""
-    if clidf[col].min() <= lower or clidf[col].max() > upper:
+    if clidf[col].min() < lower or clidf[col].max() > upper:
         LOG.warning(
             "FATAL: iemre failure %s %.3f to %.3f [%.3f to %.3f]",
             col,
