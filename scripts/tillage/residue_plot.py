@@ -126,8 +126,7 @@ def main():
     ]
     fig, ax = figure_axes(
         title=(
-            "2017-2022 Distribution of Residue "
-            "Cover Estimate after Given Crop"
+            "2017-2022 Distribution of Residue Cover Estimate after Given Crop"
         ),
         logo="dep",
         figsize=(8, 6),

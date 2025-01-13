@@ -48,9 +48,7 @@ def main():
 
     fig.savefig("depdomain.png")
     with open("depdomain.wld", "w", encoding="utf-8") as fp:
-        fp.write(
-            "2000.\n" "0.0\n" "0.0\n" "-2000.\n" f"{ulx:.2f}\n" f"{uly:.2f}\n"
-        )
+        fp.write(f"2000.\n0.0\n0.0\n-2000.\n{ulx:.2f}\n{uly:.2f}\n")
     # Now make white color transparent
     subprocess.call(
         [
