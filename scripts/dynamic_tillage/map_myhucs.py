@@ -42,7 +42,7 @@ def main():
         logo="dep",
         title="HUC12s Selected for Erosion Sensitivity Test",
         subtitle=(
-            f"{len(hucdf.index)} HUC12s selected over " f"{len(mlras)} MLRAs"
+            f"{len(hucdf.index)} HUC12s selected over {len(mlras)} MLRAs"
         ),
         nocaption=True,
     )

@@ -119,7 +119,7 @@ def main(argv):
         f"""
     WITH data as (
       SELECT huc_12, extract(year from valid) as yr,
-      sum({v.replace('_metric', '')})  as d from results_by_huc12
+      sum({v.replace("_metric", "")})  as d from results_by_huc12
       WHERE scenario = %s and valid >= %s and valid <= %s
       GROUP by huc_12, yr),
 

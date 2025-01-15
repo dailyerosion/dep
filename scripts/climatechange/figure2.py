@@ -47,9 +47,7 @@ DATA = [
 
 def main():
     """Go Main Go."""
-    title = (
-        "Change in Hillslope Soil Loss\n" "by -/+ 14 Day Precipitation Shift"
-    )
+    title = "Change in Hillslope Soil Loss\nby -/+ 14 Day Precipitation Shift"
     (fig, ax) = figure_axes(
         logo="dep",
         title=title,

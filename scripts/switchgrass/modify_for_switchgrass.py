@@ -54,7 +54,7 @@ def main(argv):
                         and line.find('File = "IDEP2/') > 0
                     ):
                         lines[i] = (
-                            "        File = " '"IDEP2/CSCAP/SWITCHGRASS.rot"\n'
+                            '        File = "IDEP2/CSCAP/SWITCHGRASS.rot"\n'
                         )
                 fp = open(newfn, "w")
                 fp.write("".join(lines))

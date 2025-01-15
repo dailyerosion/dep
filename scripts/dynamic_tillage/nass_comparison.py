@@ -381,10 +381,7 @@ def plot_accum(
 def plot_v2(ax2, crop, year, district, state):
     """Plot v2."""
     v2df = pd.read_csv(
-        (
-            f"plotsv2/{crop}_{year}_{district if state is None else state}"
-            ".csv"
-        ),
+        (f"plotsv2/{crop}_{year}_{district if state is None else state}.csv"),
         parse_dates=["valid"],
     )
     v2df["valid"] = v2df["valid"].dt.date
@@ -474,8 +471,7 @@ def main(
     fig = figure(
         logo="dep",
         title=(
-            f"{year} DEP Dynamic Tillage {crop.capitalize()} "
-            "Planting Progress"
+            f"{year} DEP Dynamic Tillage {crop.capitalize()} Planting Progress"
         ),
         subtitle=f"Comparison with USDA NASS Weekly Progress for {title}",
         figsize=(10.24, 7.68),

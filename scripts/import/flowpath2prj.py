@@ -136,15 +136,15 @@ def do_rotation(scenario, zone, rotfn, landuse: str, management):
 # Created with scripts/import/flowpath2prj.py
 #
 Version = 98.7
-Name = {data['name']}
+Name = {data["name"]}
 Description {{
 }}
 Color = 0 255 0
 LandUse = 1
-InitialConditions = {data['initcond']}
+InitialConditions = {data["initcond"]}
 
 Operations {{
-{data['yearly']}
+{data["yearly"]}
 }}
 """
         )
