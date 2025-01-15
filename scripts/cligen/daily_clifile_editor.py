@@ -412,7 +412,7 @@ def load_precip(data, dt: date, tile_affine: Affine):
 def bpstr(ts, accum):
     """Make a string representation of this breakpoint and accumulation"""
     # Need four decimals for accurate reproduction
-    return f"{ts.hour:02.0f}.{(ts.minute / 60. * 10000.):04.0f} {accum:.2f}"
+    return f"{ts.hour:02.0f}.{(ts.minute / 60.0 * 10000.0):04.0f} {accum:.2f}"
 
 
 def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):

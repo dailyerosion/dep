@@ -23,7 +23,7 @@ m = MapPlot(
     axisbg="white",
     nologo=True,
     subtitle="1 Jan 2008 thru 31 Dec 2015",
-    title=("UCS %s Year %s Scenario Change in Soil Delivery " "from Baseline")
+    title=("UCS %s Year %s Scenario Change in Soil Delivery from Baseline")
     % (titles2[scenario], nt.get(scenario, "")),
 )
 

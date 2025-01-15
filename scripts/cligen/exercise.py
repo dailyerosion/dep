@@ -767,7 +767,7 @@ def edit(bpdata):
     pos2 = o.find("12\t6\t2015")
     out = open("/i/0/cli/095x041/094.86x040.84.cli", "w")
     newdata = (
-        "11\t6\t2015\t%(points)s\t25.0\t20.0\t269\t4.2\t0\t20.0\n" "%(bp)s\n"
+        "11\t6\t2015\t%(points)s\t25.0\t20.0\t269\t4.2\t0\t20.0\n%(bp)s\n"
     ) % dict(points=len(bpdata), bp=("\n".join(bpdata)))
     out.write(o[:pos1] + newdata + o[pos2:])
     out.close()

@@ -222,7 +222,7 @@ def do_qc(fn, df, year):
     df2 = df.loc[slice(datetime.date(year, 1, 1), datetime.date(year, 1, 31))][
         ["diff_precip", "pcpn_in", "iemre_precip", "stage4_precip"]
     ].sort_values(by="diff_precip")
-    print(" --- Daily values for month " "")
+    print(" --- Daily values for month ")
     print(df2)
 
 

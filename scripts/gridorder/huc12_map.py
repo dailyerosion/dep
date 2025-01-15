@@ -21,7 +21,7 @@ m = MapPlot(
     axisbg="white",
     nologo=True,
     subtitle="1 Jan 2007 thru 31 Dec 2016",
-    title=("Grid Order %s minus Grid Order %s " "Soil Delivery")
+    title=("Grid Order %s minus Grid Order %s Soil Delivery")
     % (titles2[scenario1], titles2[scenario2]),
 )
 

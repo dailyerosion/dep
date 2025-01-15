@@ -108,9 +108,7 @@ def edit_rotfile(year, huc12, row):
                 thisdt = dates.pop(0)
             if thisdt is None:
                 thisdt = row["plant"]
-            lines[i] = (
-                f"{thisdt:%-m %-d} {yearindex} " f"{' '.join(tokens[3:])}\n"
-            )
+            lines[i] = f"{thisdt:%-m %-d} {yearindex} {' '.join(tokens[3:])}\n"
     with open(rotfn, "w", encoding="ascii") as fh:
         fh.write("".join(lines))
 

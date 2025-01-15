@@ -24,9 +24,7 @@ def main():
         nologo=True,
         subtitle="1 Jan 2014 thru 31 Dec 2014",
         caption="Daily Erosion Project",
-        title=(
-            "Harvest Index 0.8 Change in 2014 Soil Delivery " "from Baseline"
-        ),
+        title=("Harvest Index 0.8 Change in 2014 Soil Delivery from Baseline"),
     )
 
     cursor.execute(
