@@ -265,10 +265,17 @@ def load_precip_legacy(data, valid, tile_affine: Affine):
             return
         if precip is not None:
             # sigh
-            if precip.shape[0] == 400:
-                m5[tidx, 100:, :] = precip
-            elif precip.shape[0] == 200:
-                m5[tidx, :200, :] = precip
+            if precip.shape[0] == 401:
+                m5[tidx, 99:, :] = precip
+            elif precip.shape[0] == 201:
+                m5[tidx, :201, :] = precip
+            elif m5[tidx].shape != precip.shape:
+                LOG.warning(
+                    "m5[%s].shape %s != precip.shape %s",
+                    tidx,
+                    m5[tidx].shape,
+                    precip.shape,
+                )
             else:
                 m5[tidx] = precip
 
