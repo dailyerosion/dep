@@ -21,7 +21,9 @@ def main(scenario: int):
         LOG.info("removed old dep.tar file")
         os.unlink("dep.tar")
     for huc in tqdm(myhucs):
-        cmd = f"tar -uf dep.tar {{man,slp,sol,meta}}/{huc[:8]}/{huc[8:]}"
+        cmd = (
+            f"tar -uf dep.tar {{man,prj,rot,slp,sol,meta}}/{huc[:8]}/{huc[8:]}"
+        )
         subprocess.call(cmd, shell=True)
 
 

@@ -2,7 +2,8 @@
 
 import sys
 
-from pyiem.util import get_dbconn, logger
+from pyiem.database import get_dbconn
+from pyiem.util import logger
 
 from pydep.util import get_cli_fname
 
@@ -23,24 +24,26 @@ def main(argv):
     cursor.execute(
         """
         SELECT st_x(st_pointn(st_transform(geom, 4326), 1)),
-        st_y(st_pointn(st_transform(geom, 4326), 1)), fid, climate_file
-        from flowpaths WHERE scenario = %s
+        st_y(st_pointn(st_transform(geom, 4326), 1)), fid
+        from flowpaths WHERE scenario = %s and climate_file_id is null
     """,
         (scenario,),
     )
     ok = wrong = updated = 0
     for row in cursor:
         fn = get_cli_fname(row[0], row[1], clscenario)
-        if row[3] == fn:
-            ok += 1
-            continue
-        if row[3] is not None and row[3] != fn:
-            wrong += 1
         cursor2.execute(
-            "UPDATE flowpaths SET climate_file = %s where fid = %s",
-            (fn, row[2]),
+            "update flowpaths SET "
+            "climate_file_id = (select id from climate_files "
+            "where filepath = %s and scenario = %s) WHERE fid = %s",
+            (fn, clscenario, row[2]),
         )
         updated += 1
+        if updated % 1000 == 0:
+            LOG.info("updated %s rows", updated)
+            cursor2.close()
+            pgconn.commit()
+            cursor2 = pgconn.cursor()
     LOG.info(
         "%s rows updated: %s ok: %s wrong: %s",
         cursor.rowcount,
