@@ -293,7 +293,7 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
     groupid = "_".join(
         [
             str(get_slope_class(bulk_slope * 100.0)),
-            str(get_kwfact_class(kwfact)),
+            "N" if kwfact is None else str(get_kwfact_class(kwfact)),
             firstpt["management"][0],
             firstpt["GenLU"],
         ]
@@ -321,7 +321,7 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
     )
 
 
-def get_cli_fname_and_id(cursor, lon, lat, scenario):
+def get_cli_fname_and_id(cursor, lon, lat, scenario) -> tuple[str, int]:
     """Get database entry or add one."""
     clifn = get_cli_fname(lon, lat, scenario)
     cursor.execute(
@@ -329,12 +329,19 @@ def get_cli_fname_and_id(cursor, lon, lat, scenario):
         (scenario, clifn),
     )
     if cursor.rowcount == 0:
+        # Danger, we are doing lame things from the database on my laptop to
+        # how it syncs to the server, so we need to manually track the next
+        # sequence value
+        cursor.execute("select max(id) + 1 from climate_files")
+        cli_id = cursor.fetchone()[0]
         cursor.execute(
-            "INSERT into climate_files(scenario, filepath) values (%s, %s) "
-            "RETURNING id",
-            (scenario, clifn),
+            "INSERT into climate_files(id, scenario, filepath, geom) "
+            "values (%s, %s, %s, ST_Point(%s, %s, 4326))",
+            (cli_id, scenario, clifn, lon, lat),
         )
-    return clifn, cursor.fetchone()[0]
+    else:
+        cli_id = cursor.fetchone()[0]
+    return clifn, cli_id
 
 
 def process_flowpath(
@@ -586,7 +593,12 @@ def main(scenario, datadir, mpe: int, cl: Optional[str], cm: Optional[str]):
             if i > 0 and i % 100 == 0:
                 pgconn.commit()
                 cursor = pgconn.cursor()
-            fp_df, fld_df = get_data(fn)
+            try:
+                fp_df, fld_df = get_data(fn)
+            except Exception as exp:
+                logging.error(exp, exc_info=True)
+                print(huc12)
+                return
             # Sometimes we get no flowpaths, so skip writing those
             huc12 = process(cursor, scenario, fp_df, fld_df)
             if not fp_df.empty:

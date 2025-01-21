@@ -22,6 +22,19 @@ is one file per HUC12.
 1. On IEM run `cligen/locate_clifile.py --scenario=<scenario>`
 1. On IEM run `util/make_dirs.py --scenario=<scenario>`
 
+Local laptop queries to support the above
+
+    copy (select * from fields where scenario = 0) to '/tmp/fields.db';
+    copy (select o.* from flowpath_ofes o, fields f where o.field_id = f.field_id and scenario = 0) to '/tmp/ofes.db';
+    copy (select * from flowpaths where scenario = 0) to '/tmp/flowpaths.db';
+
+and corresponding server side queries:
+
+    delete from field_operations o USING fields f WHERE o.field_id = f.field_id and f.scenario = 0;
+    delete from flowpath_ofes o USING fields f WHERE o.field_id = f.field_id and f.scenario = 0;
+    delete from fields where scenario = 0;
+    delete from flowpaths where scenario = 0;
+
 This query finds any new HUC12s and inserts the geometry into a table.
 
     insert into huc12

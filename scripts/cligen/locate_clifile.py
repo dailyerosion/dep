@@ -2,11 +2,12 @@
 
 import os
 import subprocess
-import sys
 
 import click
-from pyiem.database import get_dbconn
+import pandas as pd
+from pyiem.database import get_sqlalchemy_conn
 from pyiem.util import logger
+from sqlalchemy import text
 
 from pydep.util import get_cli_fname
 
@@ -34,46 +35,39 @@ def finder(lon, lat, clscenario):
 
 
 @click.command()
-@click.option("--scenario", type=int, required=True, help="Scenario ID")
+@click.option("--scenario", "-s", type=int, required=True, help="Scenario ID")
 def main(scenario: int):
     """Go Main Go."""
-    pgconn = get_dbconn("idep")
-    cursor = pgconn.cursor()
-    # This given scenario may use a different climate scenario's files.
-    cursor.execute(
-        "SELECT climate_scenario from scenarios where id = %s", (scenario,)
-    )
-    clscenario = cursor.fetchone()[0]
-    LOG.info("DEP scenario: %s uses clscenario: %s", scenario, clscenario)
+    # Load up the climate_files
+    with get_sqlalchemy_conn("idep") as conn:
+        clidf = pd.read_sql(
+            text("""
+    select filepath, st_x(geom) as lon, st_y(geom) as lat
+    from climate_files WHERE scenario = :scenario
+                 """),
+            conn,
+            params={"scenario": scenario},
+            index_col=None,
+        )
+    LOG.info("Found %s climate files", len(clidf.index))
 
-    cursor.execute(
-        "SELECT climate_file, fid from flowpaths where scenario = %s",
-        (scenario,),
-    )
     created = 0
-    for row in cursor:
-        fn = row[0]
-        if fn is None:
-            LOG.error("FATAL, found null climate_file, run assign first")
-            return
+    for _, row in clidf.iterrows():
+        fn = row["filepath"]
         if os.path.isfile(fn):
             continue
-        created += 1
-        # /i/0/cli/092x041/092.30x041.22.cli
-        lon, lat = fn.split("/")[-1][:-4].split("x")
-        lon = 0 - float(lon)
-        lat = float(lat)
-        copyfn, xoff, yoff = finder(lon, lat, clscenario)
+        copyfn, _, _ = finder(row["lon"], row["lat"], scenario)
         if copyfn is None:
-            LOG.info("missing %s for fid: %s ", fn, row[1])
-            sys.exit()
-        LOG.info("cp %s %s xoff: %s yoff: %s", copyfn, fn, xoff, yoff)
+            LOG.info("FATAL: Failed to find a file for %s", row["filepath"])
+            return
         mydir = os.path.dirname(fn)
         if not os.path.isdir(mydir):
             os.makedirs(mydir)
+        LOG.info("Copying %s to %s", copyfn, fn)
         subprocess.call(["cp", copyfn, fn])
         # Now fix the header to match its location
         subprocess.call(["python", "edit_cli_header.py", fn])
+        created += 1
     LOG.info("added %s files", created)
 
 
