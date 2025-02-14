@@ -10,7 +10,6 @@ import glob
 import json
 import logging
 import os
-import re
 from typing import Optional
 
 import click
@@ -43,9 +42,9 @@ KNOBS = {
 }
 
 YEARS = 2025 - 2007 + 1
-SOILFY = 2023
+SOILFY = 2024
+ROTATION_FIELD = "CropRotatn_CY_2023"  # Tied to ACPF
 SOILCOL = f"SOL_FY_{SOILFY}"
-PREFIX = "fp"
 TRUNC_GRIDORDER_AT = 4
 GENLU_CODES = {}
 PROCESSING_COUNTS = {
@@ -70,7 +69,6 @@ TRANSFORMER = pyproj.Transformer.from_crs(
 # First call returns inf for unknown reasons
 TRANSFORMER.transform(223279, 2071344)
 MAX_SLOPE_RATIO = 0.9
-HUC12RE = re.compile("^fp[0-9]{12}")
 
 
 def create_flowpath_id(cursor, scenario, huc12, fpath) -> int:
@@ -95,19 +93,59 @@ def create_flowpath_id(cursor, scenario, huc12, fpath) -> int:
 def fillout_codes(df):
     """ "Get the right full-string codes."""
     if KNOBS["CONSTANT_LANDUSE"] is None:
-        s = df["CropRotatn_CY_2022"].str
-        df["landuse"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1] + s[-2]
+        s = df[ROTATION_FIELD].str
+        df["landuse"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1]
         if df["landuse"].str.len().min() != YEARS:
             raise ValueError(f"landuse is not {YEARS} chars")
     else:
         df["landuse"] = KNOBS["CONSTANT_LANDUSE"] * YEARS
     if KNOBS["CONSTANT_MANAGEMENT"] is None:
-        s = df["Management_CY_2022"].str
-        df["management"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1] + s[-2]
+        s = df["Management_CY_2023"].str
+        df["management"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1]
         if df["management"].str.len().min() != YEARS:
             raise ValueError(f"management is not {YEARS} chars")
     else:
         df["management"] = KNOBS["CONSTANT_MANAGEMENT"] * YEARS
+
+
+def read_flowpaths(filename: str) -> pd.DataFrame:
+    """Basics of filepath reading and moidification."""
+    df = gpd.read_file(filename, engine="pyogrio")
+    # smpl3m_mean18040302011002
+    huc12 = os.path.basename(filename)[13:25]
+    df["huc12"] = huc12
+    # Rename columns to make things simplier
+    df = df.rename(
+        columns={
+            f"fpLen{huc12}": "len",
+            f"ep3m{huc12}": "elev",
+            f"gord_{huc12}": "gorder",
+            f"fp{huc12}": "fp",
+        },
+        errors="raise",
+    )
+    if "irrigated" not in df.columns:
+        LOG.info("%s had no irrigated column", filename)
+        df["irrigated"] = 0
+    if ROTATION_FIELD not in df.columns:
+        errmsg = f"{filename} missing {ROTATION_FIELD} in cols {df.columns}"
+        raise ValueError(errmsg)
+    return df
+
+
+def read_fields(filename: str) -> pd.DataFrame:
+    """Basics of field reading and moidification."""
+    df = gpd.read_file(filename, engine="pyogrio").drop(
+        columns=["OBJECTID"],
+    )
+    # Forgive the provider
+    if "CropRotatn" in df.columns and ROTATION_FIELD not in df.columns:
+        df = df.rename(columns={"CropRotatn": ROTATION_FIELD}, errors="raise")
+    if ROTATION_FIELD not in df.columns:
+        errmsg = f"{filename} missing {ROTATION_FIELD} in cols {df.columns}"
+        raise ValueError(errmsg)
+
+    return df
 
 
 def get_data(filename):
@@ -119,26 +157,10 @@ def get_data(filename):
     Returns:
       gpd.DataFrame with the geojson data included.
     """
-    df = gpd.read_file(filename, engine="pyogrio")
-    huc12 = None
-    for col in df.columns:
-        if HUC12RE.match(col):
-            huc12 = col[len(PREFIX) : (len(PREFIX) + 12)]
-            break
+    df = read_flowpaths(filename)
     # Count up unique flowpaths
-    PROCESSING_COUNTS["flowpaths_found"] += len(df[f"fp{huc12}"].unique())
+    PROCESSING_COUNTS["flowpaths_found"] += len(df["fp"].unique())
 
-    if "irrigated" not in df.columns:
-        LOG.info("%s had no irrigated column", filename)
-        df["irrigated"] = 0
-    # Rename columns to make things simplier
-    df = df.rename(
-        columns={
-            f"{PREFIX}Len{huc12}": "len",
-            f"ep3m{huc12}": "elev",
-            f"gord_{huc12}": "gorder",
-        }
-    )
     # Ensure that len is not an object
     if df["len"].dtype == object:
         df["len"] = pd.to_numeric(df["len"])
@@ -155,14 +177,7 @@ def get_data(filename):
     fldfn = filename.replace("smpl3m_mean18", "FB")
     if os.path.isfile(fldfn):
         # Get the field bounds dataframe as well
-        fld_df = gpd.read_file(fldfn, engine="pyogrio").drop(
-            columns=["OBJECTID"],
-        )
-        if "CropRotatn" in fld_df.columns:
-            LOG.info("Field_df renaming CropRotatn to CropRotatn_CY_2022")
-            fld_df = fld_df.rename(
-                columns={"CropRotatn": "CropRotatn_CY_2022"}
-            )
+        fld_df = read_fields(fldfn)
         fld_df.index = fld_df["FBndID"].str.split("_").str[1].astype(int)
         # Placeholder for capturing database insert
         fld_df["field_id"] = -1
@@ -511,15 +526,7 @@ def process(cursor, scenario, huc12df, fld_df):
       None
     """
     # Hack compute the huc12 by finding the fp field name
-    huc12 = None
-    fpcol = None
-    for col in huc12df.columns:
-        if col.startswith(PREFIX):
-            fpcol = col
-            huc12 = col[len(PREFIX) :].replace("_tif", "")
-            break
-    if huc12 is None or len(huc12) != 12:
-        raise ValueError(f"Could not find huc12 from {huc12df.columns}")
+    huc12 = huc12df.iloc[0]["huc12"]
     fod, fpd, fopd, fldd = clear_huc12data(cursor, huc12, scenario)
     PROCESSING_COUNTS["flowpath_ofes_deleted"] += fod
     PROCESSING_COUNTS["flowpaths_deleted"] += fpd
@@ -529,19 +536,11 @@ def process(cursor, scenario, huc12df, fld_df):
         process_fields(cursor, scenario, huc12, fld_df)
     # With fields processed, we can join the field_id to the flowpath points
     huc12df["field_id"] = huc12df["FBndID"].map(fld_df["field_id"])
-    newid_schema = f"fp_id_{huc12}" in huc12df.columns
-    if newid_schema:
-        fpcol = f"fp_id_{huc12}"
 
-    # the inbound dataframe has lots of data, one row per flowpath point
-    # We group the dataframe by the column which uses a PREFIX and the huc8
-    for flowpath_num, df in huc12df.groupby(fpcol):
+    for flowpath_num, df in huc12df.groupby("fp"):
         # These are upstream errors I should ignore
         if flowpath_num == 0 or len(df.index) < 3:
             continue
-        if newid_schema:
-            # Condition the flowpath_num to fit in database
-            flowpath_num = int(flowpath_num[4:])
         # Create the flowpathid in the database
         db_fid = create_flowpath_id(cursor, scenario, huc12, flowpath_num)
         try:
@@ -554,13 +553,39 @@ def process(cursor, scenario, huc12df, fld_df):
     return huc12
 
 
+def scan_file_attributes(fns: list):
+    """A first pass checking if the files have the expected attributes."""
+    LOG.info("Scanning file attributes")
+    progress = tqdm(fns)
+    errors = False
+    for fn in progress:
+        progress.set_description(os.path.basename(fn))
+        try:
+            read_flowpaths(fn)
+            read_fields(fn.replace("smpl3m_mean18", "FB"))
+        except Exception as exp:
+            logging.error(exp, exc_info=True)
+            print(fn)
+            errors = True
+    if errors:
+        raise ValueError("Found errors in file processing, aborting")
+
+
 @click.command()
 @click.option("--scenario", "-s", type=int, required=True)
 @click.option("--datadir", "-d", type=str, required=True)
 @click.option("--max-points-ofe", "mpe", type=int, default=97)
 @click.option("--constant-landuse", "cl", type=str, default=None)
 @click.option("--constant-management", "cm", type=str, default=None)
-def main(scenario, datadir, mpe: int, cl: Optional[str], cm: Optional[str]):
+@click.option("--skipscan", is_flag=True)
+def main(
+    scenario,
+    datadir,
+    mpe: int,
+    cl: Optional[str],
+    cm: Optional[str],
+    skipscan: bool,
+):
     """Our main function, the starting point for code execution"""
     KNOBS["MAX_POINTS_OFE"] = mpe
     KNOBS["CONSTANT_LANDUSE"] = cl
@@ -572,6 +597,8 @@ def main(scenario, datadir, mpe: int, cl: Optional[str], cm: Optional[str]):
     # collect up the GeoJSONs in that directory
     fns = glob.glob(f"{datadir}/smpl3m_*.json")
     fns.sort()
+    if not skipscan:
+        scan_file_attributes(fns)
     i = 0
     # Allow for processing to restart
     done = []
