@@ -2,8 +2,7 @@
 
 import click
 import pandas as pd
-from pyiem.database import get_dbconnstr
-from sqlalchemy import text
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 
 
 @click.command()
@@ -11,15 +10,17 @@ from sqlalchemy import text
 def main(scenario: int):
     """Go Main Go."""
     huc12s = [s.strip() for s in open("myhucs.txt", encoding="utf8")]
-    df = pd.read_sql(
-        text(
-            "SELECT huc_12, count(*) from flowpaths where scenario = %s "
-            "GROUP by huc_12"
-        ),
-        get_dbconnstr("idep"),
-        params=(scenario,),
-        index_col="huc_12",
-    )
+    with get_sqlalchemy_conn("idep") as conn:
+        df = pd.read_sql(
+            sql_helper(
+                """
+    SELECT huc_12, count(*) from flowpaths where scenario = :scenario
+    GROUP by huc_12"""
+            ),
+            conn,
+            params={"scenario": scenario},
+            index_col="huc_12",
+        )
     df = df.reindex(huc12s).fillna(0)
     print(df[df["count"] == 0].index.values)
 

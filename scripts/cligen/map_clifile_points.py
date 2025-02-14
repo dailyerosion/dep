@@ -5,10 +5,9 @@ import geopandas as gpd
 import numpy as np
 import rasterio as rio
 from matplotlib.colors import BoundaryNorm
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import MapPlot, get_cmap
 from pyiem.reference import Z_OVERLAY
-from sqlalchemy import text
 
 """
 select geom from climate_files where id in (
@@ -32,7 +31,7 @@ def main(year: int):
 
     with get_sqlalchemy_conn("idep") as pgconn:
         pts = gpd.read_postgis(
-            text("""
+            sql_helper("""
     with climo as (
         select climate_file_id, avg(rfactor) as rr from
         climate_file_yearly_summary

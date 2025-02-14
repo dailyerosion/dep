@@ -29,9 +29,8 @@ import click
 import numpy as np
 import pandas as pd
 import requests
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
-from sqlalchemy import text
 from tqdm import tqdm
 
 from pydep.io.man import man2df, read_man
@@ -175,7 +174,7 @@ def write_database(scenario: int, dt: date, results: pd.DataFrame):
     """Write things to the database."""
     with get_sqlalchemy_conn("idep") as conn:
         res = conn.execute(
-            text("""
+            sql_helper("""
                  delete from wind_results_by_huc12 where scenario = :scenario
                  and valid = :dt
             """),
@@ -186,7 +185,7 @@ def write_database(scenario: int, dt: date, results: pd.DataFrame):
             if row[("erosion", "mean")] == 0:
                 continue
             conn.execute(
-                text("""
+                sql_helper("""
                 insert into wind_results_by_huc12
                 (scenario, valid, huc_12, avg_loss) VALUES
                 (:scenario, :valid, :huc12, :avg_loss)
@@ -208,7 +207,7 @@ def main(scenario, dt):
     """Go Main Go."""
     with get_sqlalchemy_conn("idep") as conn:
         df = pd.read_sql(
-            text("""
+            sql_helper("""
             SELECT huc_12, fpath, scenario,
             ST_x(ST_Transform(ST_PointN(geom, 1), 4326)) as lon,
             ST_y(ST_Transform(ST_PointN(geom, 1), 4326)) as lat

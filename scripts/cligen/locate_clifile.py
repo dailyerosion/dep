@@ -5,9 +5,8 @@ import subprocess
 
 import click
 import pandas as pd
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
-from sqlalchemy import text
 
 from pydep.util import get_cli_fname
 
@@ -41,7 +40,7 @@ def main(scenario: int):
     # Load up the climate_files
     with get_sqlalchemy_conn("idep") as conn:
         clidf = pd.read_sql(
-            text("""
+            sql_helper("""
     select filepath, st_x(geom) as lon, st_y(geom) as lat
     from climate_files WHERE scenario = :scenario
                  """),
