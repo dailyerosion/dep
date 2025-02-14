@@ -9,10 +9,9 @@ import matplotlib.colors as mpcolors
 import numpy as np
 import pandas as pd
 from matplotlib.patches import Polygon
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import MapPlot
 from pyiem.plot.use_agg import plt
-from sqlalchemy import text
 from tqdm import tqdm
 
 from pydep.rfactor import compute_rfactor_from_cli
@@ -23,8 +22,10 @@ def plot():
     df2 = pd.read_csv("/tmp/data.csv", dtype={"huc12": str}).set_index("huc12")
     with get_sqlalchemy_conn("idep") as conn:
         df = gpd.read_postgis(
-            "SELECT huc_12, ST_Transform(simple_geom, 4326) as geom "
-            "from huc12 WHERE scenario = 0",
+            sql_helper(
+                "SELECT huc_12, ST_Transform(simple_geom, 4326) as geom "
+                "from huc12 WHERE scenario = 0"
+            ),
             conn,
             geom_col="geom",
             index_col="huc_12",
@@ -96,14 +97,14 @@ def dump_data():
             if resdf.empty:
                 continue
             conn.execute(
-                text("""
+                sql_helper("""
     delete from climate_file_yearly_summary where climate_file_id = :clid
                      """),
                 {"clid": clid},
             )
             for year in range(2007, 2025):
                 conn.execute(
-                    text(
+                    sql_helper(
                         """
     insert into climate_file_yearly_summary
     (climate_file_id, year, rfactor, rfactor_storms) values

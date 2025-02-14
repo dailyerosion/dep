@@ -21,13 +21,12 @@ import pandas as pd
 import rasterio
 from affine import Affine
 from osgeo import gdal
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.grid.nav import IEMRE, STAGE4
 from pyiem.iemre import get_grids, hourly_offset
 from pyiem.util import archive_fetch, convert_value, logger, ncopen
 from rasterio.errors import NotGeoreferencedWarning
 from rasterio.warp import reproject
-from sqlalchemy import text
 from tqdm import tqdm
 
 from pydep.io.cli import daily_formatter
@@ -54,7 +53,7 @@ def load_clifiles(
     """Load the climate files for the given scenario"""
     with get_sqlalchemy_conn("idep") as conn:
         clidf = pd.read_sql(
-            text("""
+            sql_helper("""
     select st_x(geom) as lon, st_y(geom) as lat, filepath from climate_files
     WHERE scenario = :scenario and ST_Contains(
         ST_MakeEnvelope(:west, :south, :east, :north, 4326), geom)

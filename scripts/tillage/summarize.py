@@ -1,8 +1,7 @@
 """Summarizing some tillage code sensitivity work."""
 
 import pandas as pd
-from pyiem.database import get_sqlalchemy_conn
-from sqlalchemy import text
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 
 SCENARIO2TILLAGE = {
     0: "Baseline",
@@ -23,32 +22,29 @@ SCENARIO2TILLAGE = {
 def iowa():
     """summarize"""
     with get_sqlalchemy_conn("idep") as conn:
-        df = pd.read_sql(
-            text(
+        annualdf = pd.read_sql(
+            sql_helper(
                 """
-        WITH iahuc12 as (
-            SELECT huc_12, mlra_id, average_slope_ratio,
+        WITH huc12meta as (
+            SELECT huc_12, mlra_id, average_slope_ratio, ugc,
             substr(states, 1, 2) as state from huc12 where scenario = 0
-        ), agg as (
-            SELECT r.huc_12, i.mlra_id, i.state, i.average_slope_ratio,
-            r.scenario, extract(year from valid)::int as yr,
+        ), annual as (
+            SELECT huc_12, scenario, extract(year from valid)::int as yr,
             sum(qc_precip) as precip, sum(avg_runoff) as runoff,
             sum(avg_delivery) as delivery,
-            sum(avg_loss) as detachment from results_by_huc12 r JOIN iahuc12 i
-            on (r.huc_12 = i.huc_12) WHERE r.scenario = ANY(:scenarios)
-            and r.valid >= '2008-01-01'
-            and r.valid <= '2024-01-01'
-            GROUP by r.huc_12, i.state, r.scenario, i.mlra_id,
-            i.average_slope_ratio, yr
+            sum(avg_loss) as detachment from results_by_huc12
+            WHERE scenario = 0
+            and valid >= '2008-01-01'
+            and valid <= '2024-12-31'
+            GROUP by huc_12, scenario, yr
         )
 
-        SELECT yr, state, huc_12, scenario, mlra_id, average_slope_ratio,
-        round((avg(precip) / 25.4)::numeric, 2) as precip_in,
-        round((avg(runoff) / 25.4)::numeric, 2) as runoff_in,
-        round((avg(delivery) * 4.463)::numeric, 2) as delivery_ta,
-        round((avg(detachment) * 4.463)::numeric, 2) as detachment_ta
-        from agg GROUP by yr, huc_12, state, scenario, mlra_id,
-        average_slope_ratio
+        SELECT h.*, a.yr, a.scenario,
+        round((precip / 25.4)::numeric, 2) as precip_in,
+        round((runoff / 25.4)::numeric, 2) as runoff_in,
+        round((delivery * 4.463)::numeric, 2) as delivery_ta,
+        round((detachment * 4.463)::numeric, 2) as detachment_ta
+        from annual a, huc12meta h WHERE a.huc_12 = h.huc_12
         ORDER by yr, scenario
 
         """
@@ -56,11 +52,11 @@ def iowa():
             conn,
             params={"scenarios": list(SCENARIO2TILLAGE.keys())},
         )
-    df = df.drop(columns=["mlra_id", "huc_12"])
-    df = df.rename(
+    annualdf.rename(
         columns={
             "mlra_id": "MLRA",
             "huc_12": "HUC12",
+            "ugc": "County",
             "average_slope_ratio": "Slope",
             "yr": "Year",
             "precip_in": "Annual_Precip_in",
@@ -68,12 +64,12 @@ def iowa():
             "delivery_ta": "Annual_Del_T/ac",
             "detachment_ta": "Annual_Det_T/ac",
         }
-    )
-    """
+    ).to_csv("HUC12_Annual.csv", index=False)
+    """ All the below needs help
     l6 = (
         df[(df["Year"] >= 2017) & (df["Year"] < 2023)]
         .drop(columns=["Year"])
-        .groupby(["scenario", "HUC12"])
+        .groupby(["scenario", "HUC12", "County"])
         .mean()
         .reset_index()
         .copy()
@@ -88,7 +84,7 @@ def iowa():
     )
     lt = (
         df.drop(columns=["Year"])
-        .groupby(["scenario", "HUC12"])
+        .groupby(["scenario", "HUC12", "County"])
         .mean()
         .reset_index()
         .copy()
@@ -110,7 +106,6 @@ def iowa():
             "Slope_y": "Slope",
         }
     ).to_csv("HUC12_LongTerm.csv", index=False)
-    """
     # reorder
     df = df.groupby(["state", "Year", "scenario"]).mean().reset_index().copy()
     df["Till_Code"] = df["scenario"].map(SCENARIO2TILLAGE)
@@ -130,6 +125,7 @@ def iowa():
             "Annual_Del_T/ac",
         ]
     ].to_csv("State_annual.csv", index=False)
+    """
 
 
 if __name__ == "__main__":

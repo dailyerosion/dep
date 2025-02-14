@@ -70,32 +70,37 @@ def main():
             outf.write(f"SSURGO MUKEY: {row[0]}\n")
             outf.write("1 1\n")
 
-            r4 = 9 if row[4] > 9 else row[4]
             compname = row[1].replace("'", " ")
-            outf.write(
-                f"'{compname}' '{row[3]}' {r4} {row[2]} 0.75 {row[5]:.2f} "
-                f"{row[6]:.4f} {row[7]:.2f} {row[8]:.2f}\n"
-            )
 
-            zCount = 0
             # GH293 limit is 1.8m for soil depth
             HrzCursor.execute(
                 """
                 SELECT DepthTo_mm, Sand, Clay, OM, CEC7, FragTot
                 FROM gssurgo24.DEP_SoilFractions
-                WHERE mukey = %s and depthto_mm <= 1800
-                ORDER by DepthTo_mm
+                WHERE mukey = %s ORDER by DepthTo_mm
                 """,
                 (row[0],),
             )
-            for row2 in HrzCursor:
-                zCount += 1
-                if zCount < 10:
-                    outf.write(
-                        f"       {row2[0]} {row2[1]} {row2[2]} {row2[3]} "
-                        f"{row2[4]} {row2[5]}\n"
-                    )
-                    lastdepth = row2[0]
+            layers = []
+            for z, row2 in enumerate(HrzCursor):
+                if z > 8:
+                    break
+                # We want to keep taking rows until we exceed 1.8m and truncate
+                # the deepest back to 1800mm
+                depth = min(row2[0], 1800)
+                layers.append(
+                    f"       {depth} {row2[1]} {row2[2]} {row2[3]} "
+                    f"{row2[4]} {row2[5]}"
+                )
+                lastdepth = depth
+                if depth == 1800:
+                    break
+            outf.write(
+                f"'{compname}' '{row[3]}' {len(layers)} "
+                f"{row[2]} 0.75 {row[5]:.2f} "
+                f"{row[6]:.4f} {row[7]:.2f} {row[8]:.2f}\n"
+            )
+            outf.write("\n".join(layers) + "\n")
 
             outf.write("0 0 0 0\n")
             outf.write("255 255 255\n")
