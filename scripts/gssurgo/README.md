@@ -18,15 +18,15 @@ discussion with DJ settled that this situation is isolated to wonky soils like
 Ran the following commands to ingest the needed layers into postgresql
 
 ```sql
-create schema gssurgo24;
-ALTER DATABASE idep SET search_path = public,gssurgo24;
+create schema gssurgo25;
+ALTER DATABASE idep SET search_path = public,gssurgo25;
 ```
 
 ```bash
-ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS.gdb -nln gssurgo24.component component -progress
-ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS.gdb -nln gssurgo24.mapunit mapunit -progress
-ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS.gdb -nln gssurgo24.chorizon chorizon -progress
-ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS.gdb -nln gssurgo24.chfrags chfrags -progress
-ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS.gdb -nln gssurgo24.chtexture  chtexture  -progress
-ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS.gdb -nln gssurgo24.chtexturegrp  chtexturegrp  -progress
+ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS.gdb -nln gssurgo25.component component -progress
+ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS.gdb -nln gssurgo25.mapunit mapunit -progress
+ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS.gdb -nln gssurgo25.chorizon chorizon -progress
+ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS.gdb -nln gssurgo25.chfrags chfrags -progress
+ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS.gdb -nln gssurgo25.chtexture  chtexture  -progress
+ogr2ogr -f "PostgreSQL" PG:"host=iemdb-idep.local dbname=idep" gSSURGO_CONUS.gdb -nln gssurgo25.chtexturegrp  chtexturegrp  -progress
 ```
