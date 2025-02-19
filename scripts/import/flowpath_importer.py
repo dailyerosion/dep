@@ -40,6 +40,7 @@ KNOBS = {
     "CONSTANT_LANDUSE": None,
     "CONSTANT_MANAGEMENT": None,
     "TRUNC_GRIDORDER_AT": 4,
+    "CLIMATE_SCENARIO": 0,
 }
 
 YEARS = 2025 - 2007 + 1
@@ -55,7 +56,7 @@ PROCESSING_COUNTS = {
     "flowpaths_toosteep": 0,
     "flowpaths_toomanydupes": 0,
     "flowpaths_invalidgeom": 0,
-    "flowpaths_lenzero_reset": 0,
+    "flowpaths_not_start_len_zero": 0,
     "flowpaths_inconsistent_gridorder": 0,
     "flowpaths_deleted": 0,
     "flowpath_ofes_deleted": 0,
@@ -336,12 +337,12 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
     )
 
 
-def get_cli_fname_and_id(cursor, lon, lat, scenario) -> tuple[str, int]:
+def get_cli_fname_and_id(cursor, lon, lat) -> tuple[str, int]:
     """Get database entry or add one."""
-    clifn = get_cli_fname(lon, lat, scenario)
+    clifn = get_cli_fname(lon, lat, KNOBS["CLIMATE_SCENARIO"])
     cursor.execute(
         "select id from climate_files where scenario = %s and filepath = %s",
-        (scenario, clifn),
+        (KNOBS["CLIMATE_SCENARIO"], clifn),
     )
     if cursor.rowcount == 0:
         # Danger, we are doing lame things from the database on my laptop to
@@ -352,7 +353,7 @@ def get_cli_fname_and_id(cursor, lon, lat, scenario) -> tuple[str, int]:
         cursor.execute(
             "INSERT into climate_files(id, scenario, filepath, geom) "
             "values (%s, %s, %s, ST_Point(%s, %s, 4326))",
-            (cli_id, scenario, clifn, lon, lat),
+            (cli_id, KNOBS["CLIMATE_SCENARIO"], clifn, lon, lat),
         )
     else:
         cli_id = cursor.fetchone()[0]
@@ -368,7 +369,7 @@ def process_flowpath(
     # to bottom, rename columns to simplify further code.
     df = df.sort_values("len", ascending=True)
     if df.iloc[0]["len"] > 0:
-        PROCESSING_COUNTS["flowpaths_lenzero_reset"] += 1
+        PROCESSING_COUNTS["flowpaths_not_start_len_zero"] += 1
         df["len"] = df["len"] - df.iloc[0]["len"]
     # remove duplicate points due to a bkgelder sampling issue whereby some
     # points exist in two fields
@@ -431,7 +432,7 @@ def process_flowpath(
         df.iloc[0].geometry.x,
         df.iloc[0].geometry.y,
     )
-    clifn, clifn_id = get_cli_fname_and_id(cursor, lon, lat, scenario)
+    clifn, clifn_id = get_cli_fname_and_id(cursor, lon, lat)
     cursor.execute(
         """
         UPDATE flowpaths SET geom = %s, irrigated = %s,
