@@ -39,13 +39,13 @@ KNOBS = {
     "MAX_POINTS_OFE": 97,
     "CONSTANT_LANDUSE": None,
     "CONSTANT_MANAGEMENT": None,
+    "TRUNC_GRIDORDER_AT": 4,
 }
 
 YEARS = 2025 - 2007 + 1
 SOILFY = 2024
 ROTATION_FIELD = "CropRotatn_CY_2023"  # Tied to ACPF
 SOILCOL = f"SOL_FY_{SOILFY}"
-TRUNC_GRIDORDER_AT = 4
 GENLU_CODES = {}
 PROCESSING_COUNTS = {
     "flowpaths_found": 0,
@@ -383,7 +383,7 @@ def process_flowpath(
         return
 
     # Truncate at grid order
-    df = df[df["gorder"] <= TRUNC_GRIDORDER_AT]
+    df = df[df["gorder"] <= KNOBS["TRUNC_GRIDORDER_AT"]]
 
     if len(df.index) < 3:
         PROCESSING_COUNTS["flowpaths_tooshort"] += 1
@@ -578,6 +578,7 @@ def scan_file_attributes(fns: list):
 @click.option("--constant-landuse", "cl", type=str, default=None)
 @click.option("--constant-management", "cm", type=str, default=None)
 @click.option("--skipscan", is_flag=True)
+@click.option("--gorder", type=int, default=4, help="Truncate at grid order")
 def main(
     scenario,
     datadir,
@@ -585,11 +586,13 @@ def main(
     cl: Optional[str],
     cm: Optional[str],
     skipscan: bool,
+    gorder: int,
 ):
     """Our main function, the starting point for code execution"""
     KNOBS["MAX_POINTS_OFE"] = mpe
     KNOBS["CONSTANT_LANDUSE"] = cl
     KNOBS["CONSTANT_MANAGEMENT"] = cm
+    KNOBS["TRUNC_GRIDORDER_AT"] = gorder
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()
     load_genlu_codes(cursor)
