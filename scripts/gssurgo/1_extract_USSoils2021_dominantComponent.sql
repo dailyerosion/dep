@@ -13,7 +13,7 @@ USE US_Soils2
 IF OBJECT_ID('dbo.US_DomComponents') IS NOT NULL 
         DROP TABLE dbo.US_DomComponents
 
-set search_path=gssurgo24;
+set search_path=gssurgo25;
 SELECT mukey
       ,cokey
       ,compname

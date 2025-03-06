@@ -21,7 +21,7 @@ USE DEPSoils2020
 IF OBJECT_ID('dbo.DEP_SoilFrags') IS NOT NULL 
         DROP TABLE dbo.DEP_SoilFrags
 
-set search_path=gssurgo24;
+set search_path=gssurgo25;
 SELECT hrz.chkey
       ,SUM(frg.fragvol_r) as FragTot
   INTO DEP_SoilFrags

@@ -2,58 +2,48 @@
 
 import glob
 import os
-import sys
 
-from pyiem.util import get_dbconn
+import click
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 
 
-def do_delete(huc12, scenario):
+def do_delete(conn, huc12, scenario):
     """Delete all things."""
-    pgconn = get_dbconn("idep")
-    cursor = pgconn.cursor()
+    params = {"huc12": huc12, "scenario": scenario}
+    res = conn.execute(
+        sql_helper("""
+    delete from flowpath_ofes pts using flowpaths f where
+    pts.flowpath = f.fid and f.huc_12 = :huc12 and f.scenario = :scenario
+    """),
+        params,
+    )
+    print(f"removed {res.rowcount} flowpath_ofes")
 
-    # Remove any flowpath points, ofes
-    for table in [
-        "ofes",
-    ]:
-        cursor.execute(
-            f"""
-        delete from flowpath_{table} pts using flowpaths f where
-        pts.flowpath = f.fid and f.huc_12 = %s and f.scenario = %s
+    res = conn.execute(
+        sql_helper("""
+    delete from field_operations o using fields f where
+    o.field_id = f.field_id and f.huc12 = :huc12 and f.scenario = :scenario
+    """),
+        params,
+    )
+    print(f"removed {res.rowcount} field_operations")
+
+    for table in ["flowpaths", "results_by_huc12", "huc12", "fields"]:
+        hcol = "huc_12" if table != "fields" else "huc12"
+        res = conn.execute(
+            sql_helper(
+                """
+        DELETE from {table} where {hcol} = :huc12 and scenario = :scenario
         """,
-            (huc12, scenario),
+                table=table,
+                hcol=hcol,
+            ),
+            params,
         )
-        print(f"removed {cursor.rowcount} flowpath_{table}")
-
-    # Remove any flowpaths
-    cursor.execute(
-        """
-    DELETE from flowpaths where huc_12 = %s and scenario = %s
-    """,
-        (huc12, scenario),
-    )
-    print(f"removed {cursor.rowcount} flowpaths")
-
-    # remove any results
-    cursor.execute(
-        """
-    DELETE from results_by_huc12 where huc_12 = %s and scenario = %s
-    """,
-        (huc12, scenario),
-    )
-    print(f"removed {cursor.rowcount} results_by_huc12")
-
-    # remove the huc12 from the baseline table
-    cursor.execute(
-        """
-        DELETE from huc12 where huc_12 = %s and scenario = %s
-    """,
-        (huc12, scenario),
-    )
-    print(f"removed {cursor.rowcount} rows from huc12")
+        print(f"removed {res.rowcount} from {table}")
 
     # Remove some files
-    for prefix in ["env", "error", "man", "prj", "run", "slp", "sol", "wb"]:
+    for prefix in "env error man prj run slp sol wb".split():
         dirname = f"/i/{scenario}/{prefix}/{huc12[:8]}/{huc12[8:]}"
         if not os.path.isdir(dirname):
             continue
@@ -67,16 +57,16 @@ def do_delete(huc12, scenario):
         # Try to remove the huc8 folder
         os.rmdir(f"/i/{scenario}/{prefix}/{huc12[:8]}")
 
-    cursor.close()
-    pgconn.commit()
 
-
-def main(argv):
+@click.command()
+@click.option("--huc12", required=True, help="HUC12 to delete")
+@click.option("--scenario", required=True, help="Scenario", type=int)
+def main(huc12: str, scenario: int):
     """Go Main Go"""
-    huc12 = argv[1]
-    scenario = int(argv[2])
-    do_delete(huc12, scenario)
+    with get_sqlalchemy_conn("idep") as conn:
+        do_delete(conn, huc12, scenario)
+        conn.commit()
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
