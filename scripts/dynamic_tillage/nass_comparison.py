@@ -11,11 +11,12 @@ import numpy as np
 import pandas as pd
 from matplotlib.dates import date2num
 from matplotlib.patches import Rectangle
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import figure, get_cmap
 from pyiem.reference import state_names
-from sqlalchemy import text
+from pyiem.util import logger
 
+LOG = logger()
 XREF = {
     "nw": "IAC001",
     "nc": "IAC002",
@@ -65,28 +66,31 @@ def get_geo_bounds(district, state):
     if state is not None:
         with get_sqlalchemy_conn("postgis") as conn:
             return gpd.read_postgis(
-                text(
+                sql_helper(
                     """
-                    select state_abbr, the_geom from states
-                    where state_abbr = :state
+                    select state_abbr, ST_Transform(the_geom, 5070) as geo
+                    from states where state_abbr = :state
                     """
                 ),
                 conn,
+                crs=5070,
                 params={"state": state},
-                geom_col="the_geom",
+                geom_col="geo",
                 index_col="state_abbr",
             )
     with get_sqlalchemy_conn("coop") as conn:
         return gpd.read_postgis(
-            text(
+            sql_helper(
                 """
-                select t.iemid, r.geom from climodat_regions r JOIN stations t
+                select t.iemid, ST_Transform(r.geom, 5070) as geo
+                from climodat_regions r JOIN stations t
                 on (r.iemid = t.iemid) where t.id = :sid
                 """
             ),
             conn,
+            crs=5070,
             params={"sid": XREF[district]},
-            geom_col="geom",
+            geom_col="geo",
             index_col="iemid",
         )
 
@@ -95,7 +99,7 @@ def get_nass(year, state, district, crop) -> pd.DataFrame:
     """Get the NASS data."""
     with get_sqlalchemy_conn("coop") as conn:
         nass = pd.read_sql(
-            text(
+            sql_helper(
                 f"""
             select num_value,
             case when statisticcat_desc = 'DAYS SUITABLE'
@@ -114,9 +118,9 @@ def get_nass(year, state, district, crop) -> pd.DataFrame:
             conn,
             params={"year": year},
         )
-        if state == "IA":  # We have extra data for Iowa
+        if state == "IA" or district is not None:  # Iowa has district
             district = pd.read_sql(
-                text(
+                sql_helper(
                     f"""
                 select valid, metric, nw, nc, ne, wc, c, ec, sw, sc, se
                 from nass_iowa
@@ -176,29 +180,29 @@ def get_nass(year, state, district, crop) -> pd.DataFrame:
     return nass
 
 
-def get_fields(year, district, state, crop) -> gpd.GeoDataFrame:
+def get_fields(year, district, state, crop) -> pd.DataFrame:
     """Compute the fields."""
     charidx = year - 2007 + 1
     boundsdf = get_geo_bounds(district, state)
     # Figure out the planting dates
     with get_sqlalchemy_conn("idep") as conn:
-        fields = gpd.read_postgis(
-            text("""
-            select st_transform(geom, 4326) as geom, plant, huc12, fbndid,
-            acres from fields f JOIN field_operations o
+        fields = pd.read_sql(
+            sql_helper("""
+            select plant, huc12, fbndid, acres
+            from fields f JOIN field_operations o
             on (f.field_id = o.field_id and o.year = :year)
-            where scenario = 0 and substr(landuse, :charidx, 1) = :ccode
+            where scenario = 0 and substr(landuse, :charidx, 1) = :ccode and
+            ST_Intersects(geom, ST_SetSRID(ST_GeomFromEWKT(:geom), 5070))
             """),
             conn,
             params={
                 "year": year,
                 "ccode": "C" if crop == "corn" else "B",
                 "charidx": charidx,
+                "geom": boundsdf["geo"].iloc[0].wkt,
             },
-            geom_col="geom",
             parse_dates="plant",
         )
-    fields = gpd.sjoin(fields, boundsdf, predicate="intersects")
     return fields
 
 
@@ -316,7 +320,7 @@ def plot_accum(
     ax2.plot(
         date2num(accum.index.date),
         accum["percent"].values,
-        label="DEP DynTillv3",
+        label="DEP DynTillv4",
     )
     if datum == "IA":
         # Plot the daily district data as a filled bar
@@ -378,17 +382,17 @@ def plot_accum(
     return ax2
 
 
-def plot_v2(ax2, crop, year, district, state):
+def plot_v(ax2, v: int, crop, year, district, state):
     """Plot v2."""
     v2df = pd.read_csv(
-        (f"plotsv2/{crop}_{year}_{district if state is None else state}.csv"),
+        f"plotsv{v}/{crop}_{year}_{district if state is None else state}.csv",
         parse_dates=["valid"],
     )
     v2df["valid"] = v2df["valid"].dt.date
     ax2.plot(
         v2df["valid"].values,
         v2df[f"dep_{crop}_planted"],
-        label="DEP DynTillv2",
+        label=f"DEP DynTillv{v}",
     )
 
 
@@ -422,7 +426,7 @@ def plot_dep(ax, year: int, state: Optional[str], district: Optional[str]):
 
 
 @click.command()
-@click.option("--year", type=int, help="Year to plot")
+@click.option("--year", required=True, type=int, help="Year to plot")
 @click.option("--district", type=str, help="NASS District (lowercase)")
 @click.option("--state", type=str, help="State to Process.")
 @click.option(
@@ -432,13 +436,15 @@ def plot_dep(ax, year: int, state: Optional[str], district: Optional[str]):
     help="Crop to Process",
 )
 @click.option("--plotv2", is_flag=True, help="Plot v2")
+@click.option("--plotv3", is_flag=True, help="Plot v3")
 @click.option("--plotdep", is_flag=True, help="Plot DEP")
 def main(
-    year,
+    year: int,
     district: Optional[str],
     state: Optional[str],
-    crop,
+    crop: str,
     plotv2: bool,
+    plotv3: bool,
     plotdep: bool,
 ):
     """Go Main Go."""
@@ -491,7 +497,9 @@ def main(
     ax2.set_xticks(xticks)
     ax2.set_xticklabels(xticklabels)
     if plotv2:
-        plot_v2(ax2, crop, year, district, state)
+        plot_v(ax2, 2, crop, year, district, state)
+    if plotv3:
+        plot_v(ax2, 3, crop, year, district, state)
     if plotdep:
         plot_dep(ax2, year, state, district)
     ax2.legend(loc=2)
@@ -501,17 +509,20 @@ def main(
     ax.set_xlim(*ax2.get_xlim())
     ax3.set_xlim(*ax2.get_xlim())
 
+    # plots is symlinked
     nass.to_csv(
-        f"plotsv3/{crop}_{year}_"
+        f"plots/{crop}_{year}_"
         f"{district if district is not None else state}.csv",
         float_format="%.2f",
     )
 
     ss = f"state_{state}"
+    # plots is symlinked
     fig.savefig(
-        f"plotsv3/{crop}_progress_{year}_"
+        f"plots/{crop}_progress_{year}_"
         f"{district if district is not None else ss}.png"
     )
+    LOG.info("%s done", year)
 
 
 if __name__ == "__main__":
