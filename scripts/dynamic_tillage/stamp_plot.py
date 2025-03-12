@@ -17,7 +17,8 @@ from pyiem.plot.use_agg import plt
 def main(crop: str):
     """Go main Go."""
     dfs = []
-    for csvfn in glob.glob(f"plotsv3/{crop}_*.csv"):
+    # plots is symlinked
+    for csvfn in glob.glob(f"plots/{crop}_*.csv"):
         _, _, datum = csvfn[:-4].split("_")
         progress = pd.read_csv(csvfn, parse_dates=["valid"])
         progress["datum"] = datum
@@ -45,7 +46,7 @@ def main(crop: str):
         xmax = pd.Timestamp(f"{year}-06-15").dayofyear
         for y, (district, _color) in enumerate(
             zip(
-                "sw sc se wc c ec nw nc ne IA MN".split(),
+                "sw sc se wc c ec nw nc ne IA KS".split(),
                 (
                     "red blue green orange tan purple "
                     "brown pink skyblue black gray"
@@ -106,7 +107,7 @@ def main(crop: str):
     ax.set_yticklabels(
         (
             "IA\nSW IA\nSC IA\nSE IA\nWC IA\nC IA\nEC "
-            "IA\nNW IA\nNC IA\nNE IA MN"
+            "IA\nNW IA\nNC IA\nNE IA KS"
         ).split(" "),
         rotation=45,
         ha="right",
@@ -129,7 +130,8 @@ def main(crop: str):
     )
     cb.set_label("MAE of NASS vs DEP Planting Progress [%]")
 
-    fig.savefig("plotsv3/stamp_plot.png")
+    # plots is symlinked
+    fig.savefig("plots/stamp_plot.png")
 
 
 if __name__ == "__main__":

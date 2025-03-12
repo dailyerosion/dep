@@ -16,9 +16,8 @@ from multiprocessing.pool import Pool
 import click
 import geopandas as gpd
 import pandas as pd
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
-from sqlalchemy import text
 from tqdm import tqdm
 
 from pydep.io.dep import read_wb
@@ -32,7 +31,7 @@ def job(dates, tmpdir, huc12) -> int:
         # Build up cross reference of fields and flowpath/OFEs
         # Dates are currently always for the same year
         huc12df = pd.read_sql(
-            text(
+            sql_helper(
                 """
     select o.ofe, p.fpath, o.fbndid,
     case when g.plastic_limit < 40 then
@@ -95,12 +94,15 @@ def main(dt, huc12, year):
     huc12limiter = "" if huc12 is None else " and huc_12 = :huc12"
     with get_sqlalchemy_conn("idep") as conn:
         huc12df = gpd.read_postgis(
-            text(f"""
+            sql_helper(
+                """
             SELECT geom, huc_12,
             ST_x(st_transform(st_centroid(geom), 4326)) as lon,
             ST_y(st_transform(st_centroid(geom), 4326)) as lat
             from huc12 where scenario = 0 {huc12limiter}
-            """),
+            """,
+                huc12limiter=huc12limiter,
+            ),
             conn,
             params={"huc12": huc12},
             geom_col="geom",

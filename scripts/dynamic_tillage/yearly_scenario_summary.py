@@ -1,8 +1,7 @@
 """Summarize the data."""
 
 import pandas as pd
-from pyiem.database import get_sqlalchemy_conn
-from sqlalchemy import text
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 
 
 def main():
@@ -11,7 +10,7 @@ def main():
         huc12s = [line.strip() for line in fh]
     with get_sqlalchemy_conn("idep") as conn:
         yearlydf = pd.read_sql(
-            text("""
+            sql_helper("""
                 select huc_12, scenario, extract(year from valid) as year,
                 sum(avg_loss) as loss_static,
                 sum(avg_delivery) as delivery_static,

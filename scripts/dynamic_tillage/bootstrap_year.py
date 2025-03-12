@@ -4,9 +4,8 @@ from datetime import date
 
 import click
 import pandas as pd
-from pyiem.database import get_dbconnc, get_sqlalchemy_conn
+from pyiem.database import get_dbconnc, get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
-from sqlalchemy import text
 from tqdm import tqdm
 
 from pydep.tillage import make_tillage
@@ -23,7 +22,7 @@ def main(year, scenario):
     with get_sqlalchemy_conn("idep") as conn:
         # Delete current year's data
         res = conn.execute(
-            text("""
+            sql_helper("""
                  delete from field_operations o USING fields f
                  WHERE o.field_id = f.field_id and o.year = :year
                  and f.scenario = :scenario
@@ -35,7 +34,7 @@ def main(year, scenario):
         # The isAg field is not reliable, we need to look at the landuse
         # column which we control planting dates for.
         fields = pd.read_sql(
-            text("""
+            sql_helper("""
                 select field_id, landuse, management,
                 st_y(st_centroid(st_transform(geom, 4326))) as lat
                 from fields where scenario = :scenario
