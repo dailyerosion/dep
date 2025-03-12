@@ -5,9 +5,8 @@ import os
 import click
 import pandas as pd
 from matplotlib.dates import DateFormatter
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import figure
-from sqlalchemy import text
 
 
 def get_plastic_limit(huc12: str, year: int) -> pd.DataFrame:
@@ -16,7 +15,7 @@ def get_plastic_limit(huc12: str, year: int) -> pd.DataFrame:
     with get_sqlalchemy_conn("idep") as conn:
         # build up the cross reference of everyhing we need to know
         return pd.read_sql(
-            text(
+            sql_helper(
                 """
                 select o.ofe, p.fpath, o.fbndid,
                 g.wepp_min_sw + (g.wepp_max_sw - g.wepp_min_sw) * 0.58
@@ -61,6 +60,7 @@ def main(huc12: str, year: int):
         hucstatusdfs.append(statusdf.loc[[huc12]])
     hucstatusdf = pd.concat(hucstatusdfs)
     huc12sm = pd.concat(smdfs)
+    huc12sm = huc12sm[huc12sm["crop"] != "P"]
     huc12sm["combo"] = (
         huc12sm["fpath"].astype(str) + "_" + huc12sm["ofe"].astype(str)
     )
@@ -79,13 +79,11 @@ def main(huc12: str, year: int):
     yaxsize = 0.15
     # Scatter plot of Soil Moisture
     ax0 = fig.add_axes([0.1, 0.75, 0.8, yaxsize])
-    past = huc12sm[huc12sm["crop"] == "P"]
-    ax0.scatter(past["date"], past["sw1"] - past["pl0.8"], c="r", s=2)
-    nonp = huc12sm[huc12sm["crop"] != "P"]
-    ax0.scatter(nonp["date"], nonp["sw1"] - nonp["pl0.8"], c="b", s=2)
+    ax0.scatter(huc12sm["date"], huc12sm["sw1"] - huc12sm["pl0.8"], c="r", s=2)
     ax0.xaxis.set_major_formatter(DateFormatter("%-d %b"))
     ax0.xaxis.set_major_formatter(DateFormatter("%-d %b"))
     ax0.grid(True)
+    ax0.set_ylabel("0-10cm SM - 0.8*PL")
 
     # Percent of OFEs below 0.8*PL
     ax = fig.add_axes([0.1, 0.51, 0.8, yaxsize], sharex=ax0)
@@ -101,7 +99,7 @@ def main(huc12: str, year: int):
             align="center",
             edgecolor="black",
         )
-    ax.axhline(50, lw=2, color="k")
+    ax.axhline(25, lw=2, color="k")
     ax.set_ylim(0, 100)
     ax.set_yticks([0, 10, 25, 50, 75, 90, 100])
     ax.grid(True)
@@ -120,9 +118,10 @@ def main(huc12: str, year: int):
     ax2.grid(True)
 
     ax3 = fig.add_axes([0.1, 0.05, 0.8, yaxsize], sharex=ax0)
+    dfgood = hucstatusdf[hucstatusdf["tsoil_avg"] < 80]
     ax3.bar(
-        hucstatusdf["date"],
-        hucstatusdf["tsoil_avg"],
+        dfgood["date"],
+        dfgood["tsoil_avg"],
         width=0.4,
         color="b",
         lw=2,
@@ -146,7 +145,8 @@ def main(huc12: str, year: int):
                 color="red" if row[f"limited_by_{label}"] else "green",
             )
 
-    fig.savefig(f"plotsv3/sm_{huc12}_{year}.png")
+    # plots directory is symlinked
+    fig.savefig(f"plots/sm_{huc12}_{year}.png")
 
 
 if __name__ == "__main__":

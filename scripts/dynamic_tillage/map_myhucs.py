@@ -1,10 +1,9 @@
 """Plot myhucs.txt on a map."""
 
 import geopandas as gpd
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import MapPlot
 from pyiem.reference import Z_OVERLAY
-from sqlalchemy import text
 
 
 def main():
@@ -13,7 +12,7 @@ def main():
         huc12s = [line.strip() for line in fh]
     with get_sqlalchemy_conn("idep") as conn:
         hucdf = gpd.read_postgis(
-            text("""
+            sql_helper("""
                 select huc_12, geom, mlra_id, dominant_tillage,
                 average_slope_ratio, name from huc12
                 where huc_12 = ANY(:hucs) and scenario = 0
@@ -26,7 +25,9 @@ def main():
         hucdf.to_csv("myhucs.csv")
         mlras = hucdf["mlra_id"].unique().tolist()
         mlradf = gpd.read_postgis(
-            text("select mlra_id, geom from mlra where mlra_id = ANY(:mlras)"),
+            sql_helper(
+                "select mlra_id, geom from mlra where mlra_id = ANY(:mlras)"
+            ),
             conn,
             params={"mlras": mlras},
             geom_col="geom",

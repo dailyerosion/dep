@@ -6,10 +6,9 @@ import click
 import geopandas as gpd
 import pandas as pd
 from matplotlib.patches import Rectangle
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import MapPlot
 from pyiem.util import logger
-from sqlalchemy import text
 from tqdm import tqdm
 
 LOG = logger()
@@ -95,7 +94,7 @@ def main(huc12: str, year: int):
     """Go Main Go."""
     with get_sqlalchemy_conn("idep") as conn:
         huc12df = gpd.read_postgis(
-            text("""
+            sql_helper("""
     select huc_12, name, ST_Transform(geom, 4326) as geom
     from huc12 where huc_12 = :huc12 and scenario = 0
         """),
@@ -106,7 +105,7 @@ def main(huc12: str, year: int):
             crs="EPSG:4326",
         )
         fieldsdf = gpd.read_postgis(
-            text("""
+            sql_helper("""
     select o.*, ST_Transform(f.geom, 4326) as geom, 0 as tillage_events
     from fields f LEFT JOIN field_operations o
     on (f.field_id = o.field_id and o.year = :year)

@@ -23,10 +23,9 @@ import click
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from pyiem.database import get_dbconnc, get_sqlalchemy_conn
+from pyiem.database import get_dbconnc, get_sqlalchemy_conn, sql_helper
 from pyiem.iemre import daily_offset, get_daily_mrms_ncname
 from pyiem.util import archive_fetch, logger, ncopen
-from sqlalchemy import text
 from tqdm import tqdm
 
 pd.set_option("future.no_silent_downcasting", True)
@@ -132,7 +131,7 @@ def do_huc12(dt, huc12) -> Tuple[int, int]:
     with get_sqlalchemy_conn("idep") as conn:
         # build up the cross reference of everyhing we need to know
         df = pd.read_sql(
-            text(
+            sql_helper(
                 """
             with myofes as (
                 select o.ofe, p.fpath, o.fbndid
@@ -340,7 +339,8 @@ def main(scenario, dt, huc12, edr, run_prj2wepp):
     huc12_filter = "" if huc12 is None else " and huc_12 = :huc12"
     with get_sqlalchemy_conn("idep") as conn:
         huc12df = gpd.read_postgis(
-            text(f"""
+            sql_helper(
+                """
             SELECT geom, huc_12,
             false as limited_by_precip,
             false as limited_by_soiltemp,
@@ -352,7 +352,9 @@ def main(scenario, dt, huc12, edr, run_prj2wepp):
             ST_x(st_transform(st_centroid(geom), 4326)) as lon,
             ST_y(st_transform(st_centroid(geom), 4326)) as lat
             from huc12 where scenario = :scenario {huc12_filter}
-            """),
+            """,
+                huc12_filter=huc12_filter,
+            ),
             conn,
             params={"scenario": scenario, "huc12": huc12},
             geom_col="geom",

@@ -5,9 +5,8 @@ import numpy as np
 import pandas as pd
 from matplotlib.colors import BoundaryNorm
 from matplotlib.patches import Rectangle
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import MapPlot, figure_axes, get_cmap
-from sqlalchemy import text
 
 
 def plot_map_progress(i, dt):
@@ -15,7 +14,7 @@ def plot_map_progress(i, dt):
     charidx = dt.year - 2007 + 1
     with get_sqlalchemy_conn("idep") as conn:
         huc12df = gpd.read_postgis(
-            text("""
+            sql_helper("""
             with data as (
                 select huc12, sum(acres) as total,
                 sum(case when o.plant is not null then acres else 0 end)
