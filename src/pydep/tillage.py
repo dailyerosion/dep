@@ -75,6 +75,9 @@ def make_tillage(scenario, zone, prevcode, code, nextcode, cfactor, year: int):
         return ""
     with open(blockfn, "r", encoding="utf8") as fh:
         data = fh.read()
+    # Ensure that the data ends with a line feed
+    if not data.endswith("\n"):
+        data = f"{data}\n"
     # Special consideration for planting alfalfa
     if code == "P" and (prevcode != "P" or year == 1):
         # Best we can do now is plant it on Apr 15 with a simple disk the
