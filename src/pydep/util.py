@@ -5,9 +5,8 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.iemre import EAST, NORTH, SOUTH, WEST
-from sqlalchemy import text
 
 from pydep.reference import KWFACT_CLASSES, SLOPE_CLASSES
 
@@ -65,7 +64,7 @@ def load_scenarios():
     """Build a dataframe of DEP scenarios."""
     with get_sqlalchemy_conn("idep") as conn:
         df = pd.read_sql(
-            text("SELECT * from scenarios ORDER by id ASC"),
+            sql_helper("SELECT * from scenarios ORDER by id ASC"),
             conn,
             index_col="id",
         )

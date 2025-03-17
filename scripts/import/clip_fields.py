@@ -4,8 +4,7 @@ is impossibly small.
 """
 
 import pandas as pd
-from pyiem.database import get_sqlalchemy_conn
-from sqlalchemy import text
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 
 
 def main():
@@ -18,7 +17,7 @@ def main():
         minval = 1000.0
         for huc12 in hucs:
             df = pd.read_sql(
-                text(
+                sql_helper(
                     """
                 with data as (
                     select fbndid, f.huc12, st_area(st_intersection(f.geom,

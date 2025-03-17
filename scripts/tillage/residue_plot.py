@@ -4,9 +4,8 @@ import os
 
 import pandas as pd
 import seaborn as sns
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import figure_axes
-from sqlalchemy import text
 
 
 def magic(df, prefix):
@@ -45,7 +44,7 @@ def curate():
     """Make feather file."""
     with get_sqlalchemy_conn("idep") as conn:
         residues = pd.read_sql(
-            text("""
+            sql_helper("""
                 select field_id, residue2017, residue2018, residue2019,
                 residue2020, residue2021, residue2022,
                 substr(man_2017_2022, 1, 1) as man2017,

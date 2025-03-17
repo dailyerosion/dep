@@ -15,9 +15,8 @@ from typing import Optional
 
 import click
 import pandas as pd
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
-from sqlalchemy import text
 from tqdm import tqdm
 
 LOG = logger()
@@ -82,7 +81,7 @@ def process_huc12_results(huc12, oferesults, scenario: int):
 def do_huc12(pgconn, huc12, scenario: int):
     """Process a single HUC12."""
     domaindf = pd.read_sql(
-        text("""
+        sql_helper("""
     select huc_12 from huc12 where scenario = :scenario and st_distance(geom,
         (select st_centroid(geom) from huc12 where huc_12 = :huc12 and
          scenario = :scenario)) < 100_000
@@ -116,7 +115,7 @@ def main(scenario: int, huc12: Optional[str]):
     """Go Main Go."""
     with get_sqlalchemy_conn("idep") as pgconn:
         huc12df = pd.read_sql(
-            text("select huc_12 from huc12 where scenario = :scenario"),
+            sql_helper("select huc_12 from huc12 where scenario = :scenario"),
             pgconn,
             params={"scenario": scenario},
         )

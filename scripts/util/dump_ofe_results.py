@@ -7,8 +7,7 @@ from datetime import datetime
 
 import click
 import pandas as pd
-from pyiem.database import get_dbconn, get_sqlalchemy_conn
-from sqlalchemy import text
+from pyiem.database import get_dbconn, get_sqlalchemy_conn, sql_helper
 from tqdm import tqdm
 
 from pydep.io.wepp import read_env, read_ofe
@@ -57,7 +56,7 @@ def do_huc12(cursor, scenario, huc12):
     oferows = []
     with get_sqlalchemy_conn("idep") as conn:
         huc12df = pd.read_sql(
-            text(
+            sql_helper(
                 """
             SELECT huc_12, max(mlrarsym) as mlrarsym
                 from huc12 h JOIN mlra m on
@@ -71,7 +70,7 @@ def do_huc12(cursor, scenario, huc12):
             index_col="huc_12",
         )
         fieldsdf = pd.read_sql(
-            text(
+            sql_helper(
                 """
             select huc12, fbndid, isag, g.label as genlanduse from
             fields f, general_landuse g WHERE f.genlu = g.id and
