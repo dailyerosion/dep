@@ -24,6 +24,7 @@ from tqdm import tqdm
 
 from pydep.util import (
     clear_huc12data,
+    compute_management_for_groupid,
     get_cli_fname,
     get_kwfact_class,
     get_slope_class,
@@ -310,7 +311,8 @@ def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
         [
             str(get_slope_class(bulk_slope * 100.0)),
             "N" if kwfact is None else str(get_kwfact_class(kwfact)),
-            firstpt["management"][0],
+            # Need to apply some logic to deal with mixed mans with 0s
+            compute_management_for_groupid(firstpt["management"][0]),
             firstpt["GenLU"],
         ]
     )

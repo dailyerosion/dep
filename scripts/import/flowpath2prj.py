@@ -39,9 +39,8 @@ from math import atan2, degrees, pi
 
 import click
 import pandas as pd
-from pyiem.database import get_dbconn, get_sqlalchemy_conn
+from pyiem.database import get_dbconn, get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
-from sqlalchemy import text
 from tqdm import tqdm
 
 from pydep.tillage import make_tillage
@@ -184,7 +183,7 @@ def compute_aspect(x0, y0, x1, y1):
 def load_flowpath_from_db(pgconn, fid):
     """Fetch me the flowpath."""
     return pd.read_sql(
-        text(
+        sql_helper(
             """
         with data as (
             select ofe, (st_dumppoints(geom)).* as g,

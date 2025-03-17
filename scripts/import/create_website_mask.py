@@ -6,17 +6,16 @@ import subprocess
 # Third Party
 import geopandas as gpd
 import pyproj
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.iemre import EAST, NORTH, SOUTH, WEST
 from pyiem.plot.use_agg import plt
-from sqlalchemy import text
 
 
 def main():
     """Go Main Go."""
     with get_sqlalchemy_conn("idep") as conn:
         gdf = gpd.read_postgis(
-            text(
+            sql_helper(
                 "SELECT st_transform(simple_geom, 3857) as geo from huc12 "
                 "where scenario = 0"
             ),
