@@ -11,6 +11,17 @@ from pyiem.iemre import EAST, NORTH, SOUTH, WEST
 from pydep.reference import KWFACT_CLASSES, SLOPE_CLASSES
 
 
+def compute_management_for_groupid(text: str) -> str:
+    """Compute the management portion of the groupid."""
+    if text[0] != "0":
+        return text[0]
+    # Find the first non-0 character in the text string
+    for char in text:
+        if char != "0":
+            return char
+    return "0"
+
+
 def get_kwfact_class(kwfact: float) -> int:
     """Get kwfact class for the given kwfact."""
     return np.digitize(kwfact, KWFACT_CLASSES, right=True)

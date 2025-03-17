@@ -6,6 +6,13 @@ from pyiem.database import get_dbconnc
 from pydep import util
 
 
+def test_compute_management_for_groupid():
+    """Test scenarios."""
+    assert util.compute_management_for_groupid("0000") == "0"
+    assert util.compute_management_for_groupid("1000") == "1"
+    assert util.compute_management_for_groupid("0001") == "1"
+
+
 def test_kwfact_class():
     """Test kwfact classification."""
     assert util.get_kwfact_class(0) == 1
