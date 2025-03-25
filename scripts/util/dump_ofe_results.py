@@ -130,6 +130,8 @@ def do_huc12(cursor, scenario, huc12):
             if meta_ofe.empty:
                 print(ofe, huc12, fpath)
                 sys.exit()
+            if meta_ofe["groupid"].values[0] is None:
+                continue
             field_meta = fieldsdf[
                 (fieldsdf["fbndid"] == meta_ofe["fbndid"].values[0])
                 & (fieldsdf["huc12"] == huc12)
@@ -181,19 +183,22 @@ def do_huc12(cursor, scenario, huc12):
 
             oferows.append(res)
 
-    df = pd.DataFrame(oferows)
-    df.to_csv(
-        f"/i/{scenario}/ofe/{huc12[:8]}/{huc12[8:]}/oferesults_{huc12}.csv",
-        index=False,
-        float_format="%.4f",
-    )
+    if oferows:
+        df = pd.DataFrame(oferows)
+        df.to_csv(
+            f"/i/{scenario}/ofe/{huc12[:8]}/{huc12[8:]}/"
+            f"oferesults_{huc12}.csv",
+            index=False,
+            float_format="%.4f",
+        )
 
-    df = pd.DataFrame(fprows)
-    df.to_csv(
-        f"/i/{scenario}/ofe/{huc12[:8]}/{huc12[8:]}/fpresults_{huc12}.csv",
-        index=False,
-        float_format="%.4f",
-    )
+    if fprows:
+        df = pd.DataFrame(fprows)
+        df.to_csv(
+            f"/i/{scenario}/ofe/{huc12[:8]}/{huc12[8:]}/fpresults_{huc12}.csv",
+            index=False,
+            float_format="%.4f",
+        )
 
 
 @click.command()
