@@ -642,7 +642,9 @@ def main(
                 return False
             clifn = clirow["filepath"]
             xidx = int((clirow["lon"] - west) * 100)
-            yidx = int((clirow["lat"] - north) * 100)
+            # Since yidx is negative here, we need to round and cast
+            # see pain found with dailyerosion/dep#329
+            yidx = int(round((clirow["lat"] - north) * 100, 0))
             try:
                 return edit_clifile(clirow, xidx, yidx, data, valid)
             except Exception as _exp:
