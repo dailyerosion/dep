@@ -63,6 +63,8 @@ INITIAL_COND = {
     "F": "IniCropDef.Tre_2239",  # TODO for new forest stuff
     "P": "IniCropDef.gra_3425",
     "R": "IniCropDef.Aft_12889",
+    "4": "IniCropDef.Blu_20876",
+    "8": "IniCropDef.gra_3425",
 }
 # Management code maps back to a forest crop
 FOREST = {

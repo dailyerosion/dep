@@ -26,7 +26,7 @@ def main(crop: str):
     jumbo = pd.concat(dfs)
     jumbo["dayofyear"] = jumbo["valid"].dt.dayofyear
     fig, ax = figure_axes(
-        title="Corn Planting Progress (DEP Lines, NASS Dots)",
+        title=f"{crop.capitalize()} Planting Progress (DEP Lines, NASS Dots)",
         logo="dep",
         figsize=(10, 8),
     )
@@ -46,7 +46,7 @@ def main(crop: str):
         xmax = pd.Timestamp(f"{year}-06-15").dayofyear
         for y, (district, _color) in enumerate(
             zip(
-                "sw sc se wc c ec nw nc ne IA KS".split(),
+                "sw sc se wc c ec nw nc ne IA MN".split(),
                 (
                     "red blue green orange tan purple "
                     "brown pink skyblue black gray"
@@ -61,13 +61,17 @@ def main(crop: str):
                 & (jumbo["dayofyear"] >= xmin)
                 & (jumbo["dayofyear"] <= xmax)
             ]
-            nass = df[df["corn planted"].notna()]
+            nass = df[df[f"{crop} planted"].notna()]
             # Calculate RMSE
             rmse = (
-                (nass["corn planted"] - nass["dep_corn_planted"]).pow(2).mean()
+                (nass[f"{crop} planted"] - nass[f"dep_{crop}_planted"])
+                .pow(2)
+                .mean()
             ) ** 0.5
             mae = (
-                (nass["corn planted"] - nass["dep_corn_planted"]).abs().mean()
+                (nass[f"{crop} planted"] - nass[f"dep_{crop}_planted"])
+                .abs()
+                .mean()
             )
             print(f"{year} {district} RMSE: {rmse:.2f} MAE: {mae:.2f}")
             background_color = cmap(norm(mae))
@@ -82,23 +86,26 @@ def main(crop: str):
             )
             ax.plot(
                 x0 + (df["dayofyear"] - xmin) / (xmax - xmin) * xtilesize,
-                y0 + df["dep_corn_planted"] / 100.0 * ytilesize,
+                y0 + df[f"dep_{crop}_planted"] / 100.0 * ytilesize,
                 color="k",
+                zorder=3,
             )
             ax.scatter(
                 x0 + (nass["dayofyear"] - xmin) / (xmax - xmin) * xtilesize,
-                y0 + nass["corn planted"] / 100.0 * ytilesize,
+                y0 + nass[f"{crop} planted"] / 100.0 * ytilesize,
                 color="k",
                 s=5,
+                zorder=4,
             )
             ax.text(
-                x0 + 0.5 * xtilesize,
-                y0 + 0.5 * ytilesize,
+                x0 + 0.75 * xtilesize,
+                y0 + 0.15 * ytilesize,
                 f"{mae:.0f}",
                 ha="center",
                 va="center",
                 color="b",
                 fontsize=14,
+                zorder=5,
             )
 
     ax.set_xticks(numpy.arange(0, 0.99, 1.0 / 18.0) + xtilesize / 2.0)
@@ -107,7 +114,7 @@ def main(crop: str):
     ax.set_yticklabels(
         (
             "IA\nSW IA\nSC IA\nSE IA\nWC IA\nC IA\nEC "
-            "IA\nNW IA\nNC IA\nNE IA KS"
+            "IA\nNW IA\nNC IA\nNE IA MN"
         ).split(" "),
         rotation=45,
         ha="right",
@@ -131,7 +138,7 @@ def main(crop: str):
     cb.set_label("MAE of NASS vs DEP Planting Progress [%]")
 
     # plots is symlinked
-    fig.savefig("plots/stamp_plot.png")
+    fig.savefig(f"plots/{crop}_stamp_plot.png")
 
 
 if __name__ == "__main__":

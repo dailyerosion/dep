@@ -109,6 +109,10 @@ def fillout_codes(df):
     else:
         df["management"] = KNOBS["CONSTANT_MANAGEMENT"] * YEARS
 
+    if "CP_2018" in df.columns:
+        df.loc[df["CP_2018"] == "CP-8A", "landuse"] = "8" * YEARS
+        df.loc[df["CP_2018"] == "CP-43", "landuse"] = "4" * YEARS
+
 
 def read_flowpaths(filename: str) -> pd.DataFrame:
     """Basics of filepath reading and moidification."""
