@@ -94,7 +94,6 @@ def create_flowpath_id(cursor, scenario, huc12, fpath) -> int:
 
 def fillout_codes(df):
     """ "Get the right full-string codes."""
-
     if KNOBS["CONSTANT_LANDUSE"] is None:
         s = df[ROTATION_FIELD].str
         df["landuse"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1]
