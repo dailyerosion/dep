@@ -3,10 +3,10 @@
 import datetime
 import json
 import os
-import sys
 import time
 from io import StringIO
 
+import click
 import pika
 import requests
 from pyiem.database import get_dbconn
@@ -14,6 +14,12 @@ from pyiem.util import logger
 
 YEARS = datetime.date.today().year - 2006
 WEPPEXE = "wepp20240930"
+
+# These are HUC12s that we currently need graph output for SWEEP
+GRAPH_HUC12 = (
+    "090201081101 090201081102 090201060605 102702040203 101500041202 "
+    "090203010403 070200070501 070102050503 090203030703 090203030702"
+).split()
 
 
 def get_rabbitmqconn():
@@ -134,7 +140,7 @@ class WeppRun:
         # out.write("%s\n" % (self.get_crop_fn(),))  # crop output file
         out.write("No\n")  # soil output
         out.write("No\n")  # distance and sed output
-        if self.huc12 in ["090201081101", "090201081102", "090201060605"]:
+        if self.huc12 in GRAPH_HUC12:
             out.write("Yes\n")  # large graphics output
             out.write(f"{self.get_graphics_fn()}\n")
         else:
@@ -162,9 +168,15 @@ class WeppRun:
         return out.read()
 
 
-def main(argv):
+@click.command()
+@click.option(
+    "--scenario", "s", type=int, help="Scenario ID to run", default=0
+)
+@click.option(
+    "--runerrors", is_flag=True, help="Run previous runs that errored."
+)
+def main(scenario: int, runerrors: bool):
     """Go main Go."""
-    scenario = int(argv[1])
     log = logger()
     myhucs = []
     if os.path.isfile("myhucs.txt"):
@@ -200,6 +212,14 @@ def main(argv):
         if scenario >= 142:
             # le sigh
             clfile = clfile.replace("/0/", f"/{scenario}/")
+        if runerrors:
+            errfn = (
+                f"/i/0/error/{row[0][:8]}/{row[0][8:]}/{row[0]}_{row[1]}.error"
+            )
+            if not os.path.isfile(errfn):
+                continue
+            os.unlink(errfn)
+
         wr = WeppRun(row[0], row[1], clfile, scenario, row[3], row[4])
         payload = {
             "wepprun": wr.make_runfile(),
@@ -249,4 +269,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
