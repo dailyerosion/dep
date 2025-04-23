@@ -22,3 +22,4 @@ prj2wepp/tmp**
 .coverage
 /build
 **/pydep.egg-info/
+scripts/RT/rabbitmq.json
