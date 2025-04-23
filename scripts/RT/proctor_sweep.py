@@ -29,13 +29,13 @@ import click
 import numpy as np
 import pandas as pd
 import requests
+from enqueue_jobs import GRAPH_HUC12
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
 from tqdm import tqdm
 
 from pydep.io.man import man2df, read_man
 
-HUC12S = ["090201081101", "090201081102", "090201060605"]
 LOG = logger()
 IEMRE = "http://mesonet.agron.iastate.edu/iemre/hourly"
 
@@ -215,14 +215,15 @@ def main(scenario, dt):
             and huc_12 = ANY(:huc12s)
         """),
             conn,
-            params={"scenario": scenario, "huc12s": HUC12S},
+            params={"scenario": scenario, "huc12s": GRAPH_HUC12},
             index_col=None,
         )
     df["date"] = pd.Timestamp(dt)
     df["erosion"] = np.nan
     LOG.info("found %s flowpaths to run for %s", len(df.index), dt)
     jobs = list(df.iterrows())
-    with Pool() as pool:
+    # hard coded CPU count for now as using them all is too much
+    with Pool(4) as pool:
         progress = tqdm(
             pool.imap_unordered(workflow, jobs),
             total=len(df.index),
