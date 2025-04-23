@@ -36,14 +36,16 @@ def get_threshold_bypl(scenario, row):
         row["fpath"],
     )
     # Take the top layer of the first soil, good enough for now.
-    line = open(fn).readlines()[4]
+    with open(fn) as fp:
+        line = fp.readlines()[4]
     tokens = line.strip().split()
     # depth, sand, clay, OM, CEC, Rock
     clay = float(tokens[2])
     om = float(tokens[3])
     pl = 14.22 + 0.005 * clay**2 + 3.63 * om - 0.048 * clay * om
     if PL_THRESHOLDS[scenario] is None:
-        line = open(fn).readlines()[3]
+        with open(fn) as fp:
+            line = fp.readlines()[3]
         tokens = line.strip().split()
         satv = float(tokens[4])
         satm = satv / 2.65 * (1 - satv)

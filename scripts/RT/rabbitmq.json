@@ -1,7 +1,0 @@
-{
-    "host": "iem-rabbitmq.local",
-    "port": 5672,
-    "vhost": "/",
-    "user": "iem",
-    "password": "iem"
-}

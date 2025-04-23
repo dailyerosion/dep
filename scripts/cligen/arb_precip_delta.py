@@ -13,7 +13,8 @@ from tqdm import tqdm
 def conservative_adjust(times, accum, multipler):
     """Adjust times to conserve precip, but change intensity, tricky."""
     # We can't adjust by more than 50%
-    assert 0.5 < multipler < 1.5
+    if 0.5 < multipler < 1.5:
+        raise ValueError("Multiplier must be between 0.5 and 1.5")
     # If this was a drizzle event, do nothing.
     if accum[-1] < 5:
         return times
