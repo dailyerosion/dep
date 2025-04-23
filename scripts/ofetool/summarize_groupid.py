@@ -34,7 +34,7 @@ def summarize(ofedf: pd.DataFrame, groupid, is_local: bool) -> dict:
         "n": len(popdf),
         "slope_reclass": row0["slope_reclass"],
         "kw_reclass": row0["kw_reclass"],
-        "tillage_code_2022": row0["tillage_code_2022"],
+        "tillage_code_2023": row0["tillage_code_2023"],
         "genlanduse": row0["genlanduse"],
         "isag": row0["isag"],
         "runoff[mm/yr]": rstats["mean"],

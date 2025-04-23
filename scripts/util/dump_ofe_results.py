@@ -7,24 +7,25 @@ from datetime import datetime
 
 import click
 import pandas as pd
-from pyiem.database import get_dbconn, get_sqlalchemy_conn, sql_helper
+from pyiem.database import get_dbconn, get_sqlalchemy_conn
+from pyiem.util import logger
+from sqlalchemy import text
 from tqdm import tqdm
 
 from pydep.io.wepp import read_env, read_ofe
 
+LOG = logger()
 # 2007 is skipped
 YEARS = 6.0
-# We have a 'final year', which represents the last year of a six year
-# period that we have "real" data for.
-FINAL_YEAR = 2023
 
 
 def fpmagic(cursor, scenario, envfn, rows, huc12, fpath, mlrarsym):
     """Do the computations for the flowpath."""
     df = read_env(envfn)
+    # Only want 2017 through 2022
     df = df[
-        (df["date"] <= datetime(FINAL_YEAR, 12, 31))
-        & (df["date"] >= datetime(FINAL_YEAR - 5, 1, 1))
+        (df["date"] < datetime(2024, 1, 1))
+        & (df["date"] >= datetime(2018, 1, 1))
     ]
     cursor.execute(
         "SELECT real_length, bulk_slope, max_slope from flowpaths "
@@ -46,7 +47,7 @@ def fpmagic(cursor, scenario, envfn, rows, huc12, fpath, mlrarsym):
         "length[m]": fplen,
         "delivery[t/a/yr]": df["delivery"].sum() / YEARS * 4.463,
     }
-    for year in range(FINAL_YEAR - 5, FINAL_YEAR + 1):
+    for year in range(2018, 2024):
         df2 = df[df["year"] == year]
         res[f"delivery_{year}_t/a"] = df2["delivery"].sum() * 4.463
     rows.append(res)
@@ -56,9 +57,13 @@ def do_huc12(cursor, scenario, huc12):
     """Workflow."""
     fprows = []
     oferows = []
+    if os.path.isfile(
+        f"/i/{scenario}/ofe/{huc12[:8]}/{huc12[8:]}/oferesults_{huc12}.csv"
+    ):
+        return
     with get_sqlalchemy_conn("idep") as conn:
         huc12df = pd.read_sql(
-            sql_helper(
+            text(
                 """
             SELECT huc_12, max(mlrarsym) as mlrarsym
                 from huc12 h JOIN mlra m on
@@ -72,7 +77,7 @@ def do_huc12(cursor, scenario, huc12):
             index_col="huc_12",
         )
         fieldsdf = pd.read_sql(
-            sql_helper(
+            text(
                 """
             select huc12, fbndid, isag, g.label as genlanduse from
             fields f, general_landuse g WHERE f.genlu = g.id and
@@ -95,9 +100,10 @@ def do_huc12(cursor, scenario, huc12):
             fpath,
             huc12df.at[huc12, "mlrarsym"],
         )
+        # Just 2017-2022
         ofedf = ofedf[
-            (ofedf["date"] <= datetime(FINAL_YEAR, 12, 31))
-            & (ofedf["date"] >= datetime(FINAL_YEAR - 5, 1, 1))
+            (ofedf["date"] < datetime(2024, 1, 1))
+            & (ofedf["date"] >= datetime(2018, 1, 1))
         ]
         # Figure out the crop string
         with get_sqlalchemy_conn("idep") as conn:
@@ -121,17 +127,20 @@ def do_huc12(cursor, scenario, huc12):
             )
         accum_length = 0
         lastdelivery = 0
-        lastdelivery_byyear = dict.fromkeys(
-            range(FINAL_YEAR - 5, FINAL_YEAR + 1), 0
-        )
+        lastdelivery_byyear = {
+            2018: 0,
+            2019: 0,
+            2020: 0,
+            2021: 0,
+            2022: 0,
+            2023: 0,
+        }
         for ofe in ofedf["ofe"].unique():  # Assuming this is sorted(?)
             myofe = ofedf[ofedf["ofe"] == ofe]
             meta_ofe = meta[meta["ofe"] == ofe]
             if meta_ofe.empty:
                 print(ofe, huc12, fpath)
                 sys.exit()
-            if meta_ofe["groupid"].values[0] is None:
-                continue
             field_meta = fieldsdf[
                 (fieldsdf["fbndid"] == meta_ofe["fbndid"].values[0])
                 & (fieldsdf["huc12"] == huc12)
@@ -167,12 +176,12 @@ def do_huc12(cursor, scenario, huc12):
                 "delivery[t/a/yr]": thisdelivery,
                 "ofe_loss[t/a/yr]": thisdelivery - lastdelivery,
                 "management": meta_ofe["management"].values[0],
-                f"tillage_code_{FINAL_YEAR}": (
-                    meta_ofe["management"].values[0][FINAL_YEAR - 2007]
+                "tillage_code_2022": (
+                    meta_ofe["management"].values[0][2022 - 2007]
                 ),
             }
             lastdelivery = thisdelivery
-            for year in range(FINAL_YEAR - 5, FINAL_YEAR + 1):
+            for year in range(2018, 2024):
                 df2 = myofe[myofe["year"] == year]
                 thisdelivery = df2["sedleave"].sum() / accum_length * 4.463
                 res[f"delivery_{year}[t/a]"] = thisdelivery
@@ -183,22 +192,19 @@ def do_huc12(cursor, scenario, huc12):
 
             oferows.append(res)
 
-    if oferows:
-        df = pd.DataFrame(oferows)
-        df.to_csv(
-            f"/i/{scenario}/ofe/{huc12[:8]}/{huc12[8:]}/"
-            f"oferesults_{huc12}.csv",
-            index=False,
-            float_format="%.4f",
-        )
+    df = pd.DataFrame(oferows)
+    df.to_csv(
+        f"/i/{scenario}/ofe/{huc12[:8]}/{huc12[8:]}/oferesults_{huc12}.csv",
+        index=False,
+        float_format="%.4f",
+    )
 
-    if fprows:
-        df = pd.DataFrame(fprows)
-        df.to_csv(
-            f"/i/{scenario}/ofe/{huc12[:8]}/{huc12[8:]}/fpresults_{huc12}.csv",
-            index=False,
-            float_format="%.4f",
-        )
+    df = pd.DataFrame(fprows)
+    df.to_csv(
+        f"/i/{scenario}/ofe/{huc12[:8]}/{huc12[8:]}/fpresults_{huc12}.csv",
+        index=False,
+        float_format="%.4f",
+    )
 
 
 @click.command()
@@ -217,14 +223,21 @@ def main(scenario, huc12):
         myhucs.append(huc12)
     else:
         cursor.execute(
-            "SELECT huc_12 from huc12 where scenario = %s", (scenario,)
+            """
+    SELECT huc_12 from huc12 where scenario = %s
+    ORDER by huc_12 desc OFFSET 2200""",
+            (scenario,),
         )
         for row in cursor:
             myhucs.append(row[0])
     progress = tqdm(myhucs)
     for huc12 in progress:
         progress.set_description(huc12)
-        do_huc12(cursor, scenario, huc12)
+        try:
+            do_huc12(cursor, scenario, huc12)
+        except Exception as exp:
+            LOG.exception(exp, exc_info=True)
+            print(huc12)
 
 
 if __name__ == "__main__":

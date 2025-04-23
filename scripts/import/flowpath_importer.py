@@ -94,6 +94,7 @@ def create_flowpath_id(cursor, scenario, huc12, fpath) -> int:
 
 def fillout_codes(df):
     """ "Get the right full-string codes."""
+
     if KNOBS["CONSTANT_LANDUSE"] is None:
         s = df[ROTATION_FIELD].str
         df["landuse"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1]
@@ -108,6 +109,10 @@ def fillout_codes(df):
             raise ValueError(f"management is not {YEARS} chars")
     else:
         df["management"] = KNOBS["CONSTANT_MANAGEMENT"] * YEARS
+
+    if "CP_2018" in df.columns:
+        df.loc[df["CP_2018"] == "CP-8A", "landuse"] = "8" * YEARS
+        df.loc[df["CP_2018"] == "CP-43", "landuse"] = "4" * YEARS
 
 
 def read_flowpaths(filename: str) -> pd.DataFrame:

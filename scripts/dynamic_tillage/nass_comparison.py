@@ -468,7 +468,7 @@ def main(
     accum = accum.reindex(pd.date_range(f"{year}-04-11", ldate)).ffill()
     nass = nass.reindex(accum.index)
     nass.index.name = "valid"
-    nass["dep_corn_planted"] = accum["percent"]
+    nass[f"dep_{crop}_planted"] = accum["percent"]
 
     if state is not None:
         title = f"state of {state_names[state]}"
