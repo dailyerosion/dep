@@ -169,9 +169,7 @@ class WeppRun:
 
 
 @click.command()
-@click.option(
-    "--scenario", "s", type=int, help="Scenario ID to run", default=0
-)
+@click.option("-s", "--scenario", type=int, help="Scenario ID", default=0)
 @click.option(
     "--runerrors", is_flag=True, help="Run previous runs that errored."
 )
