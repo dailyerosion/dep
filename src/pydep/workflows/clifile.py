@@ -574,6 +574,7 @@ def edit_clifile(
         for v, n in zip(
             [high, low, solar, wind, dwpt],
             "hi lo sol wnd dpt".split(),
+            strict=False,
         ):
             if np.isnan(v):
                 msg.append(f"{n}={v}")

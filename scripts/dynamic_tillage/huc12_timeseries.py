@@ -131,7 +131,7 @@ def main(huc12: str, year: int):
     ax3.grid(True)
 
     for _ax, label in zip(
-        [ax, ax2, ax3], ["soilmoisture", "precip", "soiltemp"]
+        [ax, ax2, ax3], ["soilmoisture", "precip", "soiltemp"], strict=False
     ):
         for _idx, row in hucstatusdf.iterrows():
             _ax.annotate(

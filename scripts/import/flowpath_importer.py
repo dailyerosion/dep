@@ -290,7 +290,14 @@ def compute_slope(df):
 
 def insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts):
     """Add database entry."""
-    pts = list(zip(gdf.geometry.x, gdf.geometry.y, gdf.elev.values / 100.0))
+    pts = list(
+        zip(
+            gdf.geometry.x,
+            gdf.geometry.y,
+            gdf.elev.values / 100.0,
+            strict=False,
+        )
+    )
     next_ofe = ofe + 1
     firstpt = gdf.iloc[0]
     lastpt = gdf.iloc[-1]
@@ -429,7 +436,7 @@ def process_flowpath(
         insert_ofe(cursor, gdf, db_fid, ofe, ofe_starts)
 
     # Update flowpath info
-    ls = LineString(zip(df.geometry.x, df.geometry.y))
+    ls = LineString(zip(df.geometry.x, df.geometry.y, strict=False))
     if not ls.is_valid:
         PROCESSING_COUNTS["flowpaths_invalidgeom"] += 1
         return

@@ -145,7 +145,7 @@ def main(scenario, dt: datetime, domain: str):
     workers = int(min([4, cpu_count() / 4]))
     LOG.debug("starting %s workers", workers)
     with ProcessPoolExecutor(max_workers=workers) as executor:
-        for job, res in zip(jobs, executor.map(myjob, jobs)):
+        for job, res in zip(jobs, executor.map(myjob, jobs), strict=False):
             if res != 0:
                 failed = True
                 LOG.warning("job: %s exited with status code %s", job, res)

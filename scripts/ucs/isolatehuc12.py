@@ -15,7 +15,7 @@ df = read_sql(
 
 (fig, ax) = plt.subplots(1, 1)
 for scenario, label in zip(
-    [0, 7, 9], ["Baseline", "UCS 4 Year", "UCS 3 Year"]
+    [0, 7, 9], ["Baseline", "UCS 4 Year", "UCS 3 Year"], strict=False
 ):
     df2 = df[df["scenario"] == scenario]
     x = []
