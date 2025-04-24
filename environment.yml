@@ -2,6 +2,8 @@ dependencies:
   # command line stuff
   - click
   - coverage
+  # reading rasters
+  - gdal
   - pyshp
   - tqdm
   - pandas
