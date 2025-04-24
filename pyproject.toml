@@ -1,25 +1,53 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+
+requires = [ "setuptools>=64", "setuptools-scm>=8" ]
+
+[project]
+name = "pydep"
+description = "Daily Erosion Project Python package"
+readme = "README.md"
+keywords = [ "agriculture", "climate", "erosion", "meteorology" ]
+license = { text = "Apache" }
+
+requires-python = ">=3.10"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dynamic = [ "version" ]
+dependencies = [
+  "pyiem",
+]
+urls."homepage" = "https://github.com/dailyerosion/dep"
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+
 [tool.ruff]
+target-version = "py310"
+
 line-length = 79
 lint.select = [
-    "B",  # bugbear
-    "E",
-    "F",
-    "I",
-    # "PD",  # pandas
-    "PIE",  # perf
-    "T20",  # print
+  "B", # bugbear
+  "E",
+  "F",
+  "I",
+  # "PD",  # pandas
+  "PIE", # perf
+  "T20", # print
 ]
-target-version = "py39"
-
-[tool.ruff.lint.per-file-ignores]
-"scripts/**/*.py" = [
-    "T20",  # print
-]
-
 # per memory issues microsoft/pylance-release/issues/5739
 # per type checking pain microsoft/pylance-release/issues/6373
+lint.per-file-ignores."scripts/**/*.py" = [
+  "T20", # print
+]
+
 [tool.pyright]
 autoSearchPaths = false
-exclude = ["data/", "prj2wepp/"]
-ignore = ["data/", "prj2wepp/"]
+exclude = [ "data/", "prj2wepp/" ]
+ignore = [ "data/", "prj2wepp/" ]
 typeCheckingMode = "off"

@@ -16,7 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        PYTHON_VERSION: ["3.9", "3.11", "3.12"]
+        # Min supported is 3.10
+        # IEM runs 3.11
+        # 3.13 is the latest release
+        PYTHON_VERSION: ["3.10", "3.11", "3.13"]
     env:
       PYTHON_VERSION: ${{ matrix.PYTHON_VERSION }}
     steps:
