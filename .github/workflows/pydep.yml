@@ -71,7 +71,7 @@ jobs:
         python -m coverage xml
 
     - name: Upload codecov
-      if: ${{ env.PYTHON_VERSION == '3.12' }}
+      if: ${{ env.PYTHON_VERSION == '3.13' }}
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
