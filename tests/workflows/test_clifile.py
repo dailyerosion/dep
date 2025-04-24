@@ -39,16 +39,13 @@ def test_faked_stage4(httpx_mock: HTTPXMock):
     """CI provides some faked data for 2 Jan 2017."""
     with open("tests/data/a2m_201701020000.png", "rb") as fh:
         content = fh.read()
-    with open("tests/data/n0q_201701010000.png", "rb") as fh:
-        n0q_content = fh.read()
     with open("tests/data/n0r_201701010025.png", "rb") as fh:
         n0r_content = fh.read()
     httpx_mock.add_response(
         content=content, url=re.compile(".*mrms.*"), is_reusable=True
     )
-    httpx_mock.add_response(
-        content=n0q_content, url=re.compile(".*n0q.*"), is_reusable=True
-    )
+    # Presently, MRMS will fail as there are too many zeros where there is
+    # lots of faked data within stage IV, so n0r requests get generated.
     httpx_mock.add_response(
         content=n0r_content, url=re.compile(".*n0r.*"), is_reusable=True
     )
