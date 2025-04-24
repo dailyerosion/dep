@@ -124,7 +124,7 @@ def read_flowpaths(filename: str) -> pd.DataFrame:
     df = df.rename(
         columns={
             f"fpLen{huc12}": "len",
-            f"ep3m{huc12}": "elev",
+            f"ep2m{huc12}": "elev",
             f"gord_{huc12}": "gorder",
             f"fp{huc12}": "fp",
         },

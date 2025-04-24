@@ -13,6 +13,8 @@ dependencies:
   # For testing
   - pytest
   - pytest-cov
+  # For testing
+  - pytest-httpx>=0.35.0
   - pytest-runner
   # interpolation
   - scipy
