@@ -51,8 +51,9 @@ jobs:
         environment-name: prod
         cache-environment: true
 
-    - name: Install Python Dependencies via pip
-      run: python -m pip install -r pip_requirements.txt
+    # None at this time
+    #- name: Install Python Dependencies via pip
+    #  run: python -m pip install -r pip_requirements.txt
 
     - name: Setup paths
       run: sh .github/setuppaths.sh

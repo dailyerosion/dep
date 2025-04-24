@@ -8,6 +8,8 @@ dependencies:
   # image work
   - pillow
   - psycopg
+  # daryl's helper library, there are downstream users, so discipline please!
+  - pyiem
   # Fast geojson reading
   - pyogrio
   # For testing
