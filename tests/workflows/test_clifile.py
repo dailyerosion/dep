@@ -10,10 +10,12 @@ ready to go in order to process 2vi  Jan 2017.
 import re
 from datetime import date
 
+import pytest
 from pytest_httpx import HTTPXMock
 
 from pydep.io.wepp import read_cli
 from pydep.workflows.clifile import (
+    CLIFileWorkflowFailure,
     daily_editor_workflow,
 )
 
@@ -33,6 +35,36 @@ def test_noclifiles():
         )
         == 0
     )
+
+
+def test_no_stage4():
+    """Test that no stage IV netcdf file is fatal."""
+    with pytest.raises(CLIFileWorkflowFailure) as excinfo:
+        daily_editor_workflow(
+            DUMMY_SCENARIO,
+            date(1990, 1, 2),
+            -96,
+            -95,
+            43,
+            44,
+        )
+    assert "1990_stage4_hourly.nc" in str(excinfo.value)
+
+
+def test_bad_iemre():
+    """Test that no climate files are found for this tile."""
+    # We should not need to mock any web requests as the failure should
+    # happen immediately
+    with pytest.raises(CLIFileWorkflowFailure) as excinfo:
+        daily_editor_workflow(
+            DUMMY_SCENARIO,
+            date(2017, 1, 2),
+            -96,
+            -95,
+            43,
+            44,
+        )
+    assert "IEMRE data out of bounds!" in str(excinfo.value)
 
 
 def test_faked_stage4(httpx_mock: HTTPXMock):
