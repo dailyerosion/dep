@@ -20,12 +20,7 @@ YEARS = 6.0
 
 def fpmagic(cursor, scenario, envfn, rows, huc12, fpath, mlrarsym):
     """Do the computations for the flowpath."""
-    df = read_env(envfn)
-    # Only want 2017 through 2022
-    df = df[
-        (df["date"] < datetime(2024, 1, 1))
-        & (df["date"] >= datetime(2018, 1, 1))
-    ]
+    eventdf = read_env(envfn)
     cursor.execute(
         "SELECT real_length, bulk_slope, max_slope from flowpaths "
         "where scenario = %s and huc_12 = %s and fpath = %s",
@@ -33,7 +28,12 @@ def fpmagic(cursor, scenario, envfn, rows, huc12, fpath, mlrarsym):
     )
     meta = cursor.fetchone()
     fplen = meta[0]
-    df["delivery"] = df["sed_del"] / fplen
+    eventdf["delivery"] = eventdf["sed_del"] / fplen
+    # Only want 2017 through 2022
+    filtered = eventdf[
+        (eventdf["date"] < datetime(2024, 1, 1))
+        & (eventdf["date"] >= datetime(2018, 1, 1))
+    ]
     res = {
         "id": f"{huc12}_{fpath}",
         "huc12": huc12,
@@ -41,14 +41,15 @@ def fpmagic(cursor, scenario, envfn, rows, huc12, fpath, mlrarsym):
         "fpath": fpath,
         "bulk_slope[1]": meta[1],
         "max_slope[1]": meta[2],
-        "runoff[mm/yr]": df["runoff"].sum() / YEARS,
-        "detach[t/a/yr]": df["av_det"].sum() / YEARS * 4.463,
+        "runoff[mm/yr]": filtered["runoff"].sum() / YEARS,
+        "detach[t/a/yr]": filtered["av_det"].sum() / YEARS * 4.463,
         "length[m]": fplen,
-        "delivery[t/a/yr]": df["delivery"].sum() / YEARS * 4.463,
+        "delivery[t/a/yr]": filtered["delivery"].sum() / YEARS * 4.463,
     }
-    for year in range(2018, 2024):
-        df2 = df[df["year"] == year]
+    for year in range(2007, 2025):
+        df2 = eventdf[eventdf["year"] == year]
         res[f"delivery_{year}_t/a"] = df2["delivery"].sum() * 4.463
+        res[f"runoff_{year}_mm"] = df2["runoff"].sum()
     rows.append(res)
 
 
@@ -224,7 +225,7 @@ def main(scenario, huc12):
         cursor.execute(
             """
     SELECT huc_12 from huc12 where scenario = %s
-    ORDER by huc_12 desc OFFSET 2200""",
+    ORDER by huc_12 desc""",
             (scenario,),
         )
         for row in cursor:
