@@ -96,7 +96,7 @@ def main():
     ax4.grid(True, zorder=1)
     ax4.axvline(AVGS[3], color="r", lw=2, zorder=3)
 
-    for mo, ax in zip([1, 4, 7, 10], [ax1, ax2, ax3, ax4]):
+    for mo, ax in zip([1, 4, 7, 10], [ax1, ax2, ax3, ax4], strict=False):
         vals = []
         for huc in hucs:
             vals.append(

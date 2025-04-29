@@ -51,6 +51,7 @@ def main(crop: str):
                     "red blue green orange tan purple "
                     "brown pink skyblue black gray"
                 ).split(),
+                strict=False,
             )
         ):
             # Psuedo axis definition

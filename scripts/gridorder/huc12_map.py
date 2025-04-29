@@ -61,7 +61,7 @@ for row in cursor:
     polygon = loads(row[0].decode("hex"))
     a = np.asarray(polygon.exterior)
     x, y = m.map(a[:, 0], a[:, 1])
-    a = zip(x, y)
+    a = zip(x, y, strict=False)
     c = cmap(norm([float(row[1])]))[0]
     p = Polygon(a, fc=c, ec="None", zorder=2, lw=0.1)
     patches.append(p)

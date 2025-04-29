@@ -28,7 +28,7 @@ def read_slope(fn):
         travel += slen
     h2 = [0]
     x2 = [0]
-    for x, s in zip(xs, slp):
+    for x, s in zip(xs, slp, strict=False):
         h2.append(h2[-1] + (x - x2[-1]) * (0 - s))
         x2.append(x)
 

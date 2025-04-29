@@ -266,7 +266,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
     res["soils"] = ""
     res["slpdata"] = slpdata
 
-    for d, s in zip(soillengths, soils):
+    for d, s in zip(soillengths, soils, strict=False):
         res["soils"] += """    %s {
         Distance = %.3f
         File = "/i/0/sol_input/MWDEP_%s.SOL"
@@ -299,7 +299,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
     res["manbreaks"] = len(manlengths) - 1
     res["managements"] = ""
 
-    for d, s in zip(manlengths, mans):
+    for d, s in zip(manlengths, mans, strict=False):
         res["managements"] += """    %s {
         Distance = %.3f
         File = "%s"

@@ -251,7 +251,9 @@ def do_flowpath(pgconn, scenario, zone, metadata):
         slopes = gdf["slope"].values
         # First value is null, so we just repeat it
         slopes[0] = slopes[1]
-        tokens = [f"{r:.6f},{s:.6f}" for r, s in zip(lens, slopes)]
+        tokens = [
+            f"{r:.6f},{s:.6f}" for r, s in zip(lens, slopes, strict=False)
+        ]
         slpdata += (
             f"{len(lens)} {gdf.iloc[0]['real_length']:.4f}\n"
             f"{' '.join(tokens)}\n"
