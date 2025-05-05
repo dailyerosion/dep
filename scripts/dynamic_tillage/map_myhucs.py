@@ -62,7 +62,7 @@ def main():
         lw=2,
         zorder=Z_OVERLAY,
     )
-    mp.fig.savefig("test.png")
+    mp.fig.savefig("plots/myhucs.png")
 
 
 if __name__ == "__main__":
