@@ -16,7 +16,8 @@ def main():
                 sum(avg_delivery) as delivery_static,
                 sum(avg_runoff) as runoff_static,
                 sum(qc_precip) as precip_static from results_by_huc12
-                where huc_12 = Any(:hucs) and scenario in (0, 169)
+                where huc_12 = Any(:hucs) and scenario in (0, 171)
+                and valid < '2025-01-01'
                 GROUP by huc_12, scenario, year
             """),
             conn,
@@ -29,14 +30,14 @@ def main():
         .set_index(["huc_12", "year"])
     )
     staticdf = (
-        yearlydf[yearlydf["scenario"] == 169]
+        yearlydf[yearlydf["scenario"] == 171]
         .copy()
         .set_index(["huc_12", "year"])
     )
     for col in ["loss", "delivery", "runoff", "precip"]:
         finaldf[f"{col}_dynamic"] = staticdf[f"{col}_static"]
 
-    finaldf.reset_index().to_csv("results_240717.csv", index=False)
+    finaldf.reset_index().to_csv("plots/results_250430.csv", index=False)
 
 
 if __name__ == "__main__":
