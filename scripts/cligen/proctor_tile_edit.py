@@ -3,10 +3,10 @@
 import glob
 import os
 import stat
-import subprocess
 import sys
 import time
 from concurrent.futures import ProcessPoolExecutor
+from dataclasses import dataclass
 from datetime import date, datetime
 from math import ceil
 from multiprocessing import cpu_count
@@ -18,8 +18,22 @@ from affine import Affine
 from pyiem.grid.nav import IEMRE
 from pyiem.util import logger
 
+from pydep.workflows.clifile import daily_editor_workflow
+
 LOG = logger()
 DATADIR = "/mnt/idep2/data/dailyprecip"
+
+
+@dataclass
+class Tile:
+    """Tile information."""
+
+    west: float
+    east: float
+    south: float
+    north: float
+    scenario: int
+    dt: date
 
 
 def get_fn(dt: date):
@@ -81,20 +95,29 @@ def assemble_geotiffs(dt: date):
         dst.write(np.flipud(res), 1)
 
 
-def myjob(cmd: list):
+def myjob(tile: Tile) -> int | None:
     """Run this command and return any result."""
-    proc = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    stdout, stderr = proc.communicate()
-    if stdout != b"" or stderr != b"":
-        LOG.warning(
-            "CMD: %s\nSTDOUT: %s\nSTDERR: %s",
-            " ".join(cmd),
-            stdout.decode("ascii", "ignore").strip(),
-            stderr.decode("ascii", "ignore").strip(),
+    try:
+        return daily_editor_workflow(
+            tile.scenario,
+            tile.dt,
+            tile.west,
+            tile.east,
+            tile.south,
+            tile.north,
         )
-    return proc.returncode
+    except Exception as exp:
+        LOG.warning(
+            "Failed to process %s %s %s %s %s %s: %s",
+            tile.scenario,
+            tile.dt,
+            tile.west,
+            tile.east,
+            tile.south,
+            tile.north,
+            exp,
+        )
+    return None
 
 
 @click.command()
@@ -122,35 +145,33 @@ def main(scenario, dt: datetime, domain: str):
         LOG.warning(
             "%s[%s] was last processed on %s", dt, domain, time.ctime(filets)
         )
-    jobs = []
+    jobs: list[Tile] = []
     # This is more convoluted than it should be, but our IEMRE grid is not
     # exactly even. This also needs to assume that the IEMRE corner is an int
     east = ceil(IEMRE.right)
     north = ceil(IEMRE.top)
     for lon in np.arange(IEMRE.left, east, tilesz):
         for lat in np.arange(IEMRE.bottom, north, tilesz):
-            cmd = [
-                "python",
-                "daily_clifile_editor.py",
-                f"--west={lon:.0f}",
-                f"--east={min(east, lon + tilesz):.0f}",
-                f"--south={lat:.0f}",
-                f"--north={min(north, lat + tilesz):.0f}",
-                f"--scenario={scenario}",
-                f"--date={dt:%Y-%m-%d}",
-            ]
-            jobs.append(cmd)
-    failed = False
+            jobs.append(
+                Tile(
+                    west=round(lon, 0),
+                    east=round(min(east, lon + tilesz), 0),
+                    south=round(lat, 0),
+                    north=round(min(north, lat + tilesz), 0),
+                    scenario=scenario,
+                    dt=dt,
+                )
+            )
+    failed = 0
     # 12 Nov 2021 audit shows per process usage in the 2-3 GB range
     workers = int(min([4, cpu_count() / 4]))
     LOG.debug("starting %s workers", workers)
     with ProcessPoolExecutor(max_workers=workers) as executor:
-        for job, res in zip(jobs, executor.map(myjob, jobs), strict=False):
-            if res != 0:
-                failed = True
-                LOG.warning("job: %s exited with status code %s", job, res)
-    if failed:
-        LOG.warning("Aborting due to job failures")
+        for res in executor.map(myjob, jobs):
+            if res is None:
+                failed += 1
+    if failed > 0:
+        LOG.warning("Exiting with status 3 due to %s failure(s)", failed)
         sys.exit(3)
 
     assemble_geotiffs(dt)
