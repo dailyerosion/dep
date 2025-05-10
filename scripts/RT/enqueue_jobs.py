@@ -5,10 +5,11 @@ import json
 import os
 import time
 from io import StringIO
+from typing import Any
 
 import click
+import httpx
 import pika
-import requests
 from pyiem.database import get_dbconn
 from pyiem.util import logger
 
@@ -22,20 +23,23 @@ GRAPH_HUC12 = (
 ).split()
 
 
-def get_rabbitmqconn():
+def get_rabbitmqconn() -> tuple[Any, dict[str, str]]:
     """Load the configuration."""
     # load rabbitmq.json in the directory local to this script
     with open("rabbitmq.json", "r", encoding="utf-8") as fh:
         config = json.load(fh)
-    return pika.BlockingConnection(
-        pika.ConnectionParameters(
-            host=config["host"],
-            port=config["port"],
-            virtual_host=config["vhost"],
-            credentials=pika.credentials.PlainCredentials(
-                config["user"], config["password"]
-            ),
-        )
+    return (
+        pika.BlockingConnection(
+            pika.ConnectionParameters(
+                host=config["host"],
+                port=config["port"],
+                virtual_host=config["vhost"],
+                credentials=pika.credentials.PlainCredentials(
+                    config["user"], config["password"]
+                ),
+            )
+        ),
+        config,
     )
 
 
@@ -199,7 +203,7 @@ def main(scenario: int, runerrors: bool):
         (flscenario,),
     )
     totaljobs = icursor.rowcount
-    connection = get_rabbitmqconn()
+    connection, rabbit_config = get_rabbitmqconn()
     channel = connection.channel()
     channel.queue_declare(queue="dep", durable=True)
     sts = datetime.datetime.now()
@@ -237,12 +241,9 @@ def main(scenario: int, runerrors: bool):
     percentile = 1.0001
     while True:
         now = datetime.datetime.now()
-        # Good grief, we have to manually query the queue via the API to
-        # get actual unack'd messages.
-        # pylint: disable=protected-access
-        req = requests.get(
-            f"http://{connection._impl.params.host}:15672/api/queues/%2F/dep",
-            auth=("guest", "guest"),
+        req = httpx.get(
+            f"http://{rabbit_config['host']}:15672/api/queues/%2F/dep",
+            auth=(rabbit_config["user"], rabbit_config["password"]),
             timeout=60,
         )
         queueinfo = req.json()
