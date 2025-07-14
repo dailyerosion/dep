@@ -35,13 +35,13 @@ def main(crop: str):
     for side in ["top", "right", "left", "bottom"]:
         ax.spines[side].set_visible(False)
 
-    xtilesize = 1.0 / 18.0
+    xtilesize = 1.0 / 19.0
     ytilesize = 1.0 / 11.0
     cmap = get_cmap("RdYlGn_r")
     norm = mpcolors.BoundaryNorm([0, 10, 40, 70, 100], cmap.N)
-    for x, year in enumerate(range(2007, 2025)):
+    for x, year in enumerate(range(2007, 2026)):
         # Psuedo axis definition
-        x0 = x / 18.0
+        x0 = x / 19.0
         xmin = pd.Timestamp(f"{year}-04-11").dayofyear
         xmax = pd.Timestamp(f"{year}-06-15").dayofyear
         for y, (district, _color) in enumerate(
@@ -109,8 +109,8 @@ def main(crop: str):
                 zorder=5,
             )
 
-    ax.set_xticks(numpy.arange(0, 0.99, 1.0 / 18.0) + xtilesize / 2.0)
-    ax.set_xticklabels(range(2007, 2025), rotation=45)
+    ax.set_xticks(numpy.arange(0, 0.99, 1.0 / 19.0) + xtilesize / 2.0)
+    ax.set_xticklabels(range(2007, 2026), rotation=45)
     ax.set_yticks(numpy.arange(0, 0.99, 1.0 / 11.0) + ytilesize / 2.0)
     ax.set_yticklabels(
         (
@@ -121,7 +121,7 @@ def main(crop: str):
         ha="right",
     )
     # Add gridlines
-    for x in numpy.arange(0, 1.1, 1.0 / 18.0):
+    for x in numpy.arange(0, 1.1, 1.0 / 19.0):
         ax.axvline(x, color="k", lw=0.5)
     for y in numpy.arange(0, 1.01, 1.0 / 11.0):
         ax.axhline(y, color="k", lw=0.5)
