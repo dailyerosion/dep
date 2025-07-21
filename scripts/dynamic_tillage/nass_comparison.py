@@ -28,6 +28,11 @@ XREF = {
     "sc": "IAC008",
     "se": "IAC009",
 }
+UGCHACK = {
+    "MNC005": "Becker",
+    "MNC027": "Clay",
+    "MNC127": "Redwood",
+}
 
 
 def compute_limits(huc12s, year):
@@ -61,8 +66,23 @@ def compute_limits(huc12s, year):
     return pd.DataFrame(rows).set_index("date")
 
 
-def get_geo_bounds(district, state):
+def get_geo_bounds(district, state, ugc: str | None):
     """Figure out what the bounds are."""
+    if ugc is not None:
+        with get_sqlalchemy_conn("postgis") as conn:
+            return gpd.read_postgis(
+                sql_helper(
+                    """
+                    select ugc, ST_Transform(geom, 5070) as geo
+                    from ugcs where ugc = :ugc and end_ts is null
+                    """
+                ),
+                conn,
+                crs=5070,
+                params={"ugc": ugc},
+                geom_col="geo",
+                index_col="ugc",
+            )
     if state is not None:
         with get_sqlalchemy_conn("postgis") as conn:
             return gpd.read_postgis(
@@ -180,10 +200,10 @@ def get_nass(year, state, district, crop) -> pd.DataFrame:
     return nass
 
 
-def get_fields(year, district, state, crop) -> pd.DataFrame:
+def get_fields(year, district, state, ugc: str | None, crop) -> pd.DataFrame:
     """Compute the fields."""
     charidx = year - 2007 + 1
-    boundsdf = get_geo_bounds(district, state)
+    boundsdf = get_geo_bounds(district, state, ugc)
     # Figure out the planting dates
     with get_sqlalchemy_conn("idep") as conn:
         fields = pd.read_sql(
@@ -259,6 +279,8 @@ def plot_limiters(fig, daily_limits):
 
 def plot_suitable(fig, nass, daily_limits):
     """Plot days suitable."""
+    if nass is None:
+        return None
     ax3 = fig.add_axes([0.1, 0.25, 0.8, 0.07])
     for valid, row in nass[nass["days suitable"].notna()].iterrows():
         ax3.add_patch(
@@ -350,35 +372,36 @@ def plot_accum(
             manage_ticks=False,
             label="District Range",
         )
-    nass = nass_all[nass_all["datum"] == datum].copy().set_index("valid")
-    ax2.scatter(
-        nass.index.values,
-        nass[f"{crop} planted"],
-        marker="s",
-        s=30,
-        color="r",
-        label="NASS",
-    )
+    if nass_all is not None:
+        nass = nass_all[nass_all["datum"] == datum].copy().set_index("valid")
+        ax2.scatter(
+            nass.index.values,
+            nass[f"{crop} planted"],
+            marker="s",
+            s=30,
+            color="r",
+            label="NASS",
+        )
 
-    # create a table in the lower right corner with the values from
-    txt = ["Weekly Progress", "Date   NASS DEP"]
-    for valid, row in nass[nass["days suitable"].notna()].iterrows():
-        if valid not in accum.index:
-            continue
-        dep = accum.at[valid, "percent"]
-        val = row[f"{crop} planted"]
-        txt.append(f"{valid:%b %-2d}:  {val:3.0f} {dep:3.0f}")
-    ax2.text(
-        1.05,
-        0.05,
-        "\n".join(txt),
-        transform=ax2.transAxes,
-        fontsize=10,
-        fontfamily="monospace",
-        va="bottom",
-        ha="right",
-        bbox=dict(facecolor="white", edgecolor="black", pad=5),
-    )
+        # create a table in the lower right corner with the values from
+        txt = ["Weekly Progress", "Date   NASS DEP"]
+        for valid, row in nass[nass["days suitable"].notna()].iterrows():
+            if valid not in accum.index:
+                continue
+            dep = accum.at[valid, "percent"]
+            val = row[f"{crop} planted"]
+            txt.append(f"{valid:%b %-2d}:  {val:3.0f} {dep:3.0f}")
+        ax2.text(
+            1.05,
+            0.05,
+            "\n".join(txt),
+            transform=ax2.transAxes,
+            fontsize=10,
+            fontfamily="monospace",
+            va="bottom",
+            ha="right",
+            bbox=dict(facecolor="white", edgecolor="black", pad=5),
+        )
     return ax2
 
 
@@ -429,6 +452,7 @@ def plot_dep(ax, year: int, state: Optional[str], district: Optional[str]):
 @click.option("--year", required=True, type=int, help="Year to plot")
 @click.option("--district", type=str, help="NASS District (lowercase)")
 @click.option("--state", type=str, help="State to Process.")
+@click.option("--ugc", type=str, help="UGC to Process, no NASS.")
 @click.option(
     "--crop",
     type=click.Choice(["corn", "soybeans"]),
@@ -442,6 +466,7 @@ def main(
     year: int,
     district: Optional[str],
     state: Optional[str],
+    ugc: Optional[str],
     crop: str,
     plotv2: bool,
     plotv3: bool,
@@ -449,9 +474,20 @@ def main(
 ):
     """Go Main Go."""
     datum: str = state if state is not None else district
-    nass_all = get_nass(year, state, district, crop)
-    nass = nass_all[nass_all["datum"] == datum].copy().set_index("valid")
-    fields = get_fields(year, district, state, crop)
+    ss = f"state_{state}"
+    pngname = (
+        f"plots/{crop}_progress_{year}_"
+        f"{district if district is not None else ss}.png"
+    )
+    if ugc is not None:
+        datum = ugc
+        nass_all = None
+        nass = None
+        pngname = f"plots/{crop}_progress_{year}_{ugc}.png"
+    else:
+        nass_all = get_nass(year, state, district, crop)
+        nass = nass_all[nass_all["datum"] == datum].copy().set_index("valid")
+    fields = get_fields(year, district, state, ugc, crop)
 
     xticks, xticklabels = get_labels(year)
 
@@ -466,20 +502,26 @@ def main(
     if ldate >= f"{date.today():%Y-%m-%d}":
         ldate = f"{(date.today() - timedelta(days=1)):%Y-%m-%d}"
     accum = accum.reindex(pd.date_range(f"{year}-04-11", ldate)).ffill()
-    nass = nass.reindex(accum.index)
-    nass.index.name = "valid"
-    nass[f"dep_{crop}_planted"] = accum["percent"]
+    if nass is not None:
+        nass = nass.reindex(accum.index)
+        nass.index.name = "valid"
+        nass[f"dep_{crop}_planted"] = accum["percent"]
 
     if state is not None:
         title = f"state of {state_names[state]}"
+    elif ugc is not None:
+        title = f"UGC {ugc.upper()}"
     else:
         title = f"Iowa District {district.upper()}"
+    subtitle = f"Comparison with USDA NASS Weekly Progress for {title}"
+    if ugc:
+        subtitle = f"Progress for [{ugc}] {UGCHACK.get(ugc, ugc)}"
     fig = figure(
         logo="dep",
         title=(
             f"{year} DEP Dynamic Tillage {crop.capitalize()} Planting Progress"
         ),
-        subtitle=f"Comparison with USDA NASS Weekly Progress for {title}",
+        subtitle=subtitle,
         figsize=(10.24, 7.68),
     )
 
@@ -507,21 +549,19 @@ def main(
     # Sync up the two xaxes
 
     ax.set_xlim(*ax2.get_xlim())
-    ax3.set_xlim(*ax2.get_xlim())
+    if ax3:
+        ax3.set_xlim(*ax2.get_xlim())
+
+    if nass is not None:
+        # plots is symlinked
+        nass.to_csv(
+            f"plots/{crop}_{year}_"
+            f"{district if district is not None else state}.csv",
+            float_format="%.2f",
+        )
 
     # plots is symlinked
-    nass.to_csv(
-        f"plots/{crop}_{year}_"
-        f"{district if district is not None else state}.csv",
-        float_format="%.2f",
-    )
-
-    ss = f"state_{state}"
-    # plots is symlinked
-    fig.savefig(
-        f"plots/{crop}_progress_{year}_"
-        f"{district if district is not None else ss}.png"
-    )
+    fig.savefig(pngname)
     LOG.info("%s done", year)
 
 
