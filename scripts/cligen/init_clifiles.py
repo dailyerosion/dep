@@ -6,11 +6,13 @@ these to fast-start newly expanded areas...
 
 import os
 import shutil
-import subprocess
 
+import click
 import numpy as np
-from pyiem.iemre import EAST, NORTH, SOUTH, WEST
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconnc
+from pyiem.grid.nav import get_nav
+from pyiem.util import ncopen
+from tqdm import tqdm
 
 from pydep.util import get_cli_fname
 
@@ -35,44 +37,59 @@ def finder(lon, lat, clscenario):
     return None, None, None
 
 
-def main():
+@click.command()
+@click.option("--domain", required=True, help="The domain to init.")
+def main(domain: str):
     """Go Main Go."""
     # We shall use this file, no mater what
     SCENARIO = 0
-    pgconn = get_dbconn("postgis")
-    cursor = pgconn.cursor()
-
     created = 0
-    removed = 0
-    for lon in np.arange(WEST, EAST + 0.1, 0.1):
-        for lat in np.arange(SOUTH, NORTH + 0.1, 0.1):
-            fn = get_cli_fname(lon, lat, SCENARIO)
-            # Ensure this point is on land, in CONUS
+    nav = get_nav("IEMRE", domain)
+    # round to nearest 0.1 degree
+    left = round(nav.left_edge, 1)
+    bottom = round(nav.bottom_edge, 1)
+    # https://gpm.nasa.gov/data/directory/imerg-land-sea-mask-netcdf
+    nc = ncopen("/tmp/IMERG_land_sea_mask.nc")
+    mask = nc.variables["landseamask"][:]
+    nc.close()
+    conn, cursor = get_dbconnc("idep" if domain == "" else f"dep_{domain}")
+    progress = tqdm(np.arange(left, nav.right_edge + 0.1, 0.1))
+    for lon in progress:
+        for lat in np.arange(bottom, nav.top_edge + 0.1, 0.1):
+            progress.set_description(f"Created {created}")
+            # crude for non-conus
+            j = int((lat + 90) * 10.0)
+            i = int((lon + 180) * 10.0)
+            if mask[j, i] > 50:  # arb
+                continue
+            try:
+                fn = get_cli_fname(lon, lat, SCENARIO)
+            except ValueError:  # Potentially out of bounds
+                continue
+            # Check if we have this file
+            if os.path.isfile(fn):
+                continue
+            created += 1
+            # Ensure the directory exists
+            os.makedirs(os.path.dirname(fn), exist_ok=True)
+            # Copy random file
+            shutil.copyfile("/i/0/cli/092x042/092.56x042.98.cli", fn)
+            # create database entry
             cursor.execute(
                 """
-                SELECT ugc from ugcs where
-                ST_Contains(geom, ST_GeomFromText('Point(%s %s)',4326))
-                and substr(ugc, 3, 1) = 'C' and end_ts is null
+                INSERT into climate_files (scenario, filepath, geom)
+                VALUES (%s, %s, ST_Point(%s, %s, 4326))
             """,
-                (lon, lat),
+                (SCENARIO, fn, lon, lat),
             )
-            if cursor.rowcount == 0:
-                if os.path.isfile(fn):
-                    print(f"Hmmm {fn} is not onland, but has file?")
-                    removed += 1
-                continue
-            mydir = fn.rsplit("/", 1)[0]
-            if not os.path.isdir(mydir):
-                os.makedirs(mydir)
-            if not os.path.isfile(fn):
-                created += 1
-                src, _, _ = finder(lon, lat, 0)
-                if src is not None:
-                    print(f"{src} -> {fn}")
-                    shutil.copyfile(src, fn)
-                    subprocess.call(["python", "edit_cli_header.py", fn])
+            if created % 100 == 0:
+                cursor.close()
+                conn.commit()
+                cursor = conn.cursor()
+    cursor.close()
+    conn.commit()
 
-    print(f"We just created {created} new files, removed {removed} files!")
+    print(f"We just created {created} new files")
 
 
 if __name__ == "__main__":
