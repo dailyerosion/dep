@@ -2,6 +2,7 @@
 
 import pytest
 from pyiem.database import get_dbconnc
+from pyiem.iemre import SOUTH, WEST
 
 from pydep import util
 
@@ -35,6 +36,16 @@ def test_clear_huc12data():
     dbconn.close()
 
 
+def test_cli_fname_non_us():
+    """Test non-US climate file names."""
+    res = util.get_cli_fname(100.01, 42.5, 0)
+    assert res == "/mnt/dep/china/2/0/cli/E100xN42/E100.01xN42.50.cli"
+    res = util.get_cli_fname(19.99, 42.49, 0)
+    assert res == "/mnt/dep/europe/2/0/cli/E019xN42/E019.99xN42.49.cli"
+    res = util.get_cli_fname(-60.55, -42.5, 0)
+    assert res == "/mnt/dep/sa/2/0/cli/W060xS42/W060.55xS42.50.cli"
+
+
 def test_cli_fname():
     """Do we get the right climate file names?"""
     res = util.get_cli_fname(-95.5, 42.5, 0)
@@ -46,9 +57,9 @@ def test_cli_fname():
 def test_cli_fname_raises():
     """Test out of bounds requests."""
     with pytest.raises(ValueError):
-        util.get_cli_fname(util.WEST - 1, util.SOUTH + 1)
+        util.get_cli_fname(WEST - 1, SOUTH + 1)
     with pytest.raises(ValueError):
-        util.get_cli_fname(util.WEST + 1, util.SOUTH - 1)
+        util.get_cli_fname(WEST + 1, SOUTH - 1)
 
 
 def test_scenarios():

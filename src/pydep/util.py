@@ -6,7 +6,7 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 from pyiem.database import get_sqlalchemy_conn, sql_helper
-from pyiem.iemre import EAST, NORTH, SOUTH, WEST
+from pyiem.iemre import get_domain
 
 from pydep.reference import KWFACT_CLASSES, SLOPE_CLASSES
 
@@ -82,17 +82,26 @@ def load_scenarios():
     return df
 
 
-def get_cli_fname(lon, lat, scenario=0):
+def get_cli_fname(lon: float, lat: float, scenario: int = 0):
     """Get the climate file name for the given lon, lat, and scenario"""
     # The trouble here is relying on rounding is problematic, so we just
     # truncate
     lat = round(lat, 2)
     lon = round(lon, 2)
-    if lat < SOUTH or lat > NORTH:
-        raise ValueError(f"lat: {lat} outside of bounds: {SOUTH} {NORTH}")
-    if lon < WEST or lon > EAST:
-        raise ValueError(f"lon: {lon} outside of bounds: {WEST} {EAST}")
+    domain = get_domain(lon, lat)
+    if domain is None:
+        raise ValueError(f"lon: {lon} lat: {lat} outside any IEMRE domain")
+    if domain == "":
+        # Legacy nomenclature
+        return (
+            f"/i/{scenario}/cli/{math.floor(abs(lon)):03.0f}x"
+            f"{math.floor(lat):03.0f}/{(0 - lon):06.2f}x{lat:06.2f}.cli"
+        )
+    # Lots of pain to keep dashes out of the path
     return (
-        f"/i/{scenario}/cli/{math.floor(0 - lon):03.0f}x"
-        f"{math.floor(lat):03.0f}/{(0 - lon):06.2f}x{lat:06.2f}.cli"
+        f"/mnt/dep/{domain}/2/0/cli/"
+        f"{'W' if lon < 0 else 'E'}{math.floor(abs(lon)):03.0f}x"
+        f"{'S' if lat < 0 else 'N'}{math.floor(abs(lat)):02.0f}/"
+        f"{'W' if lon < 0 else 'E'}{abs(lon):06.2f}x"
+        f"{'S' if lat < 0 else 'N'}{abs(lat):05.2f}.cli"
     )
