@@ -39,9 +39,8 @@ def do_huc12(basedir):
     huc12 = "".join(basedir.split("/")[-2:])
     frames = [readfile(huc12, basedir + "/" + f) for f in os.listdir(basedir)]
     if not frames or all([f is None for f in frames]):
-        return
-    df = pd.concat(frames)
-    return df
+        return None
+    return pd.concat(frames)
 
 
 def main(argv):

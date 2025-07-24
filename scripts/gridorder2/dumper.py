@@ -43,8 +43,7 @@ def get_flowpath_lengths(pgconn):
     good = gdf[gdf["bulk_slope"] == 11].index.values.tolist()
     for idx, row in df.iterrows():
         df.at[idx, "useme"] = (row["huc_12"], row["fpath"]) in good
-    df = df[df["useme"]]
-    return df
+    return df[df["useme"]]
 
 
 def compute_yearly(df, bymax=False, individual=False):

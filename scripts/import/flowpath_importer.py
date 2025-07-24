@@ -272,9 +272,7 @@ def simplify(df):
             "useme",
         ] = True
 
-    df = df[df["useme"]].copy()
-
-    return df
+    return df[df["useme"]].copy()
 
 
 def compute_slope(df):
@@ -389,19 +387,19 @@ def process_flowpath(
     if df["len"].duplicated().any():
         df = dedupe(df)
         if df is None:
-            return
+            return None
 
     # Ensure that the gorder field is monotonic
     if not df["gorder"].is_monotonic_increasing:
         PROCESSING_COUNTS["flowpaths_inconsistent_gridorder"] += 1
-        return
+        return None
 
     # Truncate at grid order
     df = df[df["gorder"] <= KNOBS["TRUNC_GRIDORDER_AT"]]
 
     if len(df.index) < 3:
         PROCESSING_COUNTS["flowpaths_tooshort"] += 1
-        return
+        return None
 
     compute_slope(df)
 
@@ -420,11 +418,11 @@ def process_flowpath(
 
     if df["slope"].max() > MAX_SLOPE_RATIO:
         PROCESSING_COUNTS["flowpaths_toosteep"] += 1
-        return
+        return None
 
     if len(df.index) < 3:
         PROCESSING_COUNTS["flowpaths_tooshort"] += 1
-        return
+        return None
 
     # Need OFE start points in order to create the end point for the previous
     # OFE
@@ -439,7 +437,7 @@ def process_flowpath(
     ls = LineString(zip(df.geometry.x, df.geometry.y, strict=False))
     if not ls.is_valid:
         PROCESSING_COUNTS["flowpaths_invalidgeom"] += 1
-        return
+        return None
     # pylint: disable=not-an-iterable
     lon, lat = TRANSFORMER.transform(
         df.iloc[0].geometry.x,

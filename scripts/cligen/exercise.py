@@ -739,6 +739,7 @@ def get_results():
                 loss=float(tokens[5]),
                 delivery=float(tokens[12]),
             )
+    return None
 
 
 def get_maxrate(bpdata):

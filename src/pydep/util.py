@@ -74,12 +74,11 @@ def clear_huc12data(cursor, huc12, scenario) -> Tuple[int, int, int, int]:
 def load_scenarios():
     """Build a dataframe of DEP scenarios."""
     with get_sqlalchemy_conn("idep") as conn:
-        df = pd.read_sql(
+        return pd.read_sql(
             sql_helper("SELECT * from scenarios ORDER by id ASC"),
             conn,
             index_col="id",
         )
-    return df
 
 
 def get_cli_fname(lon: float, lat: float, scenario: int = 0):

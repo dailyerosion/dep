@@ -13,11 +13,10 @@ class ShadedReliefESRI(GoogleTiles):
     # shaded relief
     def _image_url(self, tile):
         x, y, z = tile
-        url = (
+        return (
             "https://server.arcgisonline.com/ArcGIS/rest/services/"
             "ESRI_Imagery_World_2D/MapServer/tile/{z}/{y}/{x}.jpg"
         ).format(z=z, y=y, x=x)
-        return url
 
 
 def main(argv):

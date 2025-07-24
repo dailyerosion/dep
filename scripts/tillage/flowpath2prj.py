@@ -23,13 +23,12 @@ cursor3 = PGCONN.cursor(row_factory=dict_row)
 
 def get_rotation(code):
     """Convert complex things into a simple WEPP management for now"""
-    rotfn = "tillage_issue63/IA_CENTRAL/%s/%s/%s-%s.rot" % (
+    return "tillage_issue63/IA_CENTRAL/%s/%s/%s-%s.rot" % (
         code[:2],
         code[2:4],
         code,
         TILLAGE_CLASS,
     )
-    return rotfn
 
 
 def compute_aspect(x0, y0, x1, y1):
@@ -293,7 +292,7 @@ def do_flowpath(zone, huc_12, fid, fpath):
 
     if prevman is None:
         print("%s,%s has no managements, skipping" % (huc_12, fpath))
-        return
+        return None
     mans.append(get_rotation(prevman))
     manlengths.append(res["length"] - lmanstart)
     res["manbreaks"] = len(manlengths) - 1

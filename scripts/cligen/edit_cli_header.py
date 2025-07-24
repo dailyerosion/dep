@@ -54,8 +54,7 @@ def get_elevation(lon, lat):
             lon += 360
         i = np.digitize(lon, lons)
         j = np.digitize(lat, lats)
-        elev = nc.variables["data"][0, j, i]
-    return elev
+        return nc.variables["data"][0, j, i]
 
 
 def process(lon: float, lat: float, clifn: str, domain: str):
