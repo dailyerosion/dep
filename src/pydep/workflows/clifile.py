@@ -57,7 +57,7 @@ def load_clifiles(
     """
     dbname = "idep" if domain == "" else f"dep_{domain}"
     with get_sqlalchemy_conn(dbname) as conn:
-        clidf = pd.read_sql(
+        return pd.read_sql(
             sql_helper("""
     select st_x(geom) as lon, st_y(geom) as lat, filepath from climate_files
     WHERE scenario = :scenario and ST_Contains(
@@ -72,7 +72,6 @@ def load_clifiles(
                 "south": tilenav.bottom_edge,
             },
         )
-    return clidf
 
 
 def get_sts_ets_at_localhour(domain: str, dt: date, local_hour: int):

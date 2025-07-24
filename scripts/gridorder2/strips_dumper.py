@@ -43,8 +43,7 @@ def compute_daily(df):
         envdf["delivery"] = envdf["sed_del"] / row["len"]
         envs.append(envdf)
     # We now have dataframe with yearly flowpath totals
-    envdf = pd.concat(envs)
-    return envdf
+    return pd.concat(envs)
 
 
 def main():

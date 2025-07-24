@@ -33,7 +33,7 @@ def load_precip(date, extra=""):
     )
     if not os.path.isfile(fn):
         print("load_precip(%s) failed, no such file %s" % (date, fn))
-        return
+        return None
     return np.load(fn)
 
 

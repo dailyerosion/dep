@@ -38,6 +38,7 @@ lint.select = [
   "I",
   # "PD",  # pandas
   "PIE", # perf
+  "RET", # return
   "T20", # print
 ]
 # per memory issues microsoft/pylance-release/issues/5739

@@ -2,14 +2,14 @@
 
 import matplotlib.pyplot as plt
 from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 
 PGCONN = get_dbconn("idep")
 
 
 def get_scenario(scenario):
     """get a scenario."""
-    df = read_sql(
+    return read_sql(
         """
         WITH yearly as (
             SELECT huc_12, generate_series(2008, 2016) as yr
@@ -38,7 +38,6 @@ def get_scenario(scenario):
         params=(scenario,),
         index_col="yr",
     )
-    return df
 
 
 def main():
