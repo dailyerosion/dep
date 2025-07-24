@@ -11,15 +11,33 @@ import re
 from datetime import date
 
 import pytest
+from pyiem.util import utc
 from pytest_httpx import HTTPXMock
 
 from pydep.io.wepp import read_cli
 from pydep.workflows.clifile import (
     CLIFileWorkflowFailure,
     daily_editor_workflow,
+    get_sts_ets_at_localhour,
 )
 
 DUMMY_SCENARIO = -1
+
+
+def test_get_sts_ets_at_localhour():
+    """Test that we can compute the start and end times for a domain date."""
+    sts, ets = get_sts_ets_at_localhour("", date(2017, 1, 2), 0)
+    assert sts == utc(2017, 1, 2, 6)
+    assert ets == utc(2017, 1, 3, 6)
+    sts, ets = get_sts_ets_at_localhour("china", date(2017, 1, 2), 0)
+    assert sts == utc(2017, 1, 1, 16)
+    assert ets == utc(2017, 1, 2, 16)
+    sts, ets = get_sts_ets_at_localhour("europe", date(2017, 1, 2), 0)
+    assert sts == utc(2017, 1, 1, 23)
+    assert ets == utc(2017, 1, 2, 23)
+    sts, ets = get_sts_ets_at_localhour("sa", date(2017, 1, 2), 0)
+    assert sts == utc(2017, 1, 2, 2)
+    assert ets == utc(2017, 1, 3, 2)
 
 
 def test_noclifiles():
@@ -27,6 +45,7 @@ def test_noclifiles():
     assert (
         daily_editor_workflow(
             DUMMY_SCENARIO,
+            "",
             date(2017, 1, 1),
             -101,
             -100,
@@ -42,6 +61,7 @@ def test_no_stage4():
     with pytest.raises(CLIFileWorkflowFailure) as excinfo:
         daily_editor_workflow(
             DUMMY_SCENARIO,
+            "",
             date(1990, 1, 2),
             -96,
             -95,
@@ -58,6 +78,7 @@ def test_bad_iemre():
     with pytest.raises(CLIFileWorkflowFailure) as excinfo:
         daily_editor_workflow(
             DUMMY_SCENARIO,
+            "",
             date(2017, 1, 2),
             -96,
             -95,
@@ -83,6 +104,7 @@ def test_faked_stage4(httpx_mock: HTTPXMock):
     )
     daily_editor_workflow(
         DUMMY_SCENARIO,
+        "",
         date(2017, 1, 2),
         -101,
         -96,

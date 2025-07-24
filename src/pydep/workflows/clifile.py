@@ -17,8 +17,8 @@ import rasterio
 from affine import Affine
 from osgeo import gdal
 from pyiem.database import get_sqlalchemy_conn, sql_helper
-from pyiem.grid.nav import IEMRE, STAGE4
-from pyiem.iemre import get_grids, hourly_offset
+from pyiem.grid.nav import STAGE4, get_nav
+from pyiem.iemre import DOMAINS, get_grids, hourly_offset
 from pyiem.models.gridnav import CartesianGridNavigation
 from pyiem.util import LOG, archive_fetch, convert_value, ncopen
 from rasterio.errors import NotGeoreferencedWarning
@@ -48,14 +48,15 @@ class CLIFileWorkflowFailure(Exception):
 
 
 def load_clifiles(
-    scenario: int, tilenav: CartesianGridNavigation
+    scenario: int, domain: str, tilenav: CartesianGridNavigation
 ) -> pd.DataFrame:
     """Return metadata for climate files within this tile.
 
     Important: The west and south values are inclusive, while the east and
     north values are exclusive.
     """
-    with get_sqlalchemy_conn("idep") as conn:
+    dbname = "idep" if domain == "" else f"dep_{domain}"
+    with get_sqlalchemy_conn(dbname) as conn:
         clidf = pd.read_sql(
             sql_helper("""
     select st_x(geom) as lon, st_y(geom) as lat, filepath from climate_files
@@ -74,15 +75,16 @@ def load_clifiles(
     return clidf
 
 
-def get_sts_ets_at_localhour(dt: date, local_hour):
-    """Return a Day Interval in UTC for the given date at CST/CDT hour."""
+def get_sts_ets_at_localhour(domain: str, dt: date, local_hour: int):
+    """Compute the start and end times for a local domain date."""
+    tzinfo = DOMAINS[domain]["tzinfo"]
     # ZoneInfo is supposed to get this right at instanciation
     sts = datetime(
         dt.year,
         dt.month,
         dt.day,
         local_hour,
-        tzinfo=CENTRAL,
+        tzinfo=tzinfo,
     )
     date2 = date(dt.year, dt.month, dt.day) + timedelta(days=1)
     ets = datetime(
@@ -90,12 +92,9 @@ def get_sts_ets_at_localhour(dt: date, local_hour):
         date2.month,
         date2.day,
         local_hour,
-        tzinfo=CENTRAL,
+        tzinfo=tzinfo,
     )
-    return (
-        sts.replace(hour=local_hour).astimezone(UTC),
-        ets.replace(hour=local_hour).astimezone(UTC),
-    )
+    return (sts.astimezone(UTC), ets.astimezone(UTC))
 
 
 def iemre_bounds_check(clidf: pd.DataFrame, col: str, lower, upper) -> None:
@@ -112,7 +111,7 @@ def iemre_bounds_check(clidf: pd.DataFrame, col: str, lower, upper) -> None:
         raise CLIFileWorkflowFailure("IEMRE data out of bounds!")
 
 
-def load_iemre(clidf: pd.DataFrame, valid: date) -> None:
+def load_iemre(clidf: pd.DataFrame, domain: str, valid: date) -> None:
     """Use IEM Reanalysis for non-precip data
 
     1/8 degree product is nearest neighbor resampled to the 0.01 degree grid
@@ -120,12 +119,14 @@ def load_iemre(clidf: pd.DataFrame, valid: date) -> None:
     ds = get_grids(
         valid,
         varnames=["high_tmpk", "low_tmpk", "avg_dwpk", "wind_speed", "rsds"],
+        domain=domain,
     )
     highc = convert_value(ds["high_tmpk"], "degK", "degC")
     lowc = convert_value(ds["low_tmpk"], "degK", "degC")
     dwpc = convert_value(ds["avg_dwpk"], "degK", "degC")
+    nav = get_nav("IEMRE", domain)
     for idx, row in clidf.iterrows():
-        i, j = IEMRE.find_ij(row["lon"], row["lat"])
+        i, j = nav.find_ij(row["lon"], row["lat"])
         # Convert W m-2 to langleys per day
         clidf.at[idx, "solar"] = ds["rsds"][j, i] * 86400 / 1_000_000.0 * 23.9
         clidf.at[idx, "high"] = highc[j, i]
@@ -149,7 +150,7 @@ def load_stage4(data, dt: date, tile_affine: Affine):
     """
     LOG.debug("called")
     # The stage4 files store precip in the rears, so compute 1 AM
-    one_am, tomorrow = get_sts_ets_at_localhour(dt, 1)
+    one_am, tomorrow = get_sts_ets_at_localhour("", dt, 1)
 
     sts_tidx = hourly_offset(one_am)
     ets_tidx = hourly_offset(tomorrow)
@@ -260,7 +261,7 @@ def load_precip_legacy(data, valid, tile_affine: Affine):
     LOG.info("called")
     ts = 12 * 24  # 5 minute
 
-    midnight, tomorrow = get_sts_ets_at_localhour(valid, 0)
+    midnight, tomorrow = get_sts_ets_at_localhour("", valid, 0)
 
     now = midnight
     # To avoid division by zero below when we have the strip of no-data 23-24N
@@ -373,12 +374,58 @@ def _mrms_reader(
     return tidx, np.flipud(imgdata)
 
 
+def load_imerg(data, domain: str, dt: date, tile_affine: Affine):
+    """Load the 30 minute IMERG data."""
+    LOG.info("called")
+    # IMERG is stored in the rears, so start at 12:30 AM
+    midnight, tomorrow = get_sts_ets_at_localhour(domain, dt, 0)
+    now = midnight + timedelta(minutes=30)
+    # IMERG is stored -180,90 to 180,-90 at 0.1x0.1
+    x0 = int((tile_affine.c + 180.0) * 10)
+    # DEP storage is 0.01x0.01
+    ny, nx, _ = data["precip"].shape
+    y0 = int((90.0 - tile_affine.f) * 10)
+
+    tidx = 0
+    while now <= tomorrow:
+        ppath = now.strftime("%Y/%m/%d/GIS/imerg/p30m_%Y%m%d%H%M.png")
+        with archive_fetch(ppath) as fn:
+            if fn is not None:
+                # idx: 0-200 0.25mm  -> 50 mm
+                # idx: 201-253 1mm -> 50-102 mm
+                with gdal.Open(fn, 0) as ds:
+                    imgdata = np.repeat(
+                        np.repeat(
+                            ds.ReadAsArray(
+                                xoff=x0,
+                                yoff=y0,
+                                xsize=nx // 10,
+                                ysize=ny // 10,
+                            ).astype(np.float32),
+                            10,
+                            axis=0,
+                        ),
+                        10,
+                        axis=1,
+                    )
+                data["precip"][:, :, tidx] = np.flipud(
+                    np.where(imgdata < 201, imgdata * 0.25, imgdata - 150)
+                )
+            else:
+                LOG.warning(
+                    "IMERG file %s does not exist, using zeros",
+                    ppath,
+                )
+        tidx += 1
+        now += timedelta(minutes=30)
+
+
 def load_precip(data, dt: date, tile_affine: Affine):
     """Load the 2 minute precipitation data into our ginormus grid"""
     LOG.info("called")
     ts = 30 * 24  # 2 minute
 
-    midnight, tomorrow = get_sts_ets_at_localhour(dt, 0)
+    midnight, tomorrow = get_sts_ets_at_localhour("", dt, 0)
 
     # Oopsy we discovered a problem
     a2m_divisor = 10.0 if (dt < date(2015, 1, 1)) else 50.0
@@ -454,12 +501,13 @@ def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
     accum = 0
     lastaccum = 0
     lasti = 0
+    dt = 2 if len(ar) > 100 else 30
     for i, intensity in enumerate(ar):
         if intensity < 0.001:
             continue
         # Need to initialize the breakpoint data
         if bp is None:
-            ts = ZEROHOUR + timedelta(minutes=i * 2)
+            ts = ZEROHOUR + timedelta(minutes=i * dt)
             bp = [bpstr(ts, 0)]
         accum += intensity
         lasti = i
@@ -470,7 +518,7 @@ def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
             if (i + 1) == len(ar):
                 ts = ZEROHOUR.replace(hour=23, minute=59)
             else:
-                ts = ZEROHOUR + timedelta(minutes=(i + 1) * 2)
+                ts = ZEROHOUR + timedelta(minutes=(i + 1) * dt)
             bp.append(bpstr(ts, accum))
     # To append a last accumulation, we need to have something meaningful
     # so to not have redundant values, which bombs WEPP
@@ -478,17 +526,21 @@ def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
         if (lasti + 1) == len(ar):
             ts = ZEROHOUR.replace(hour=23, minute=59)
         else:
-            ts = ZEROHOUR + timedelta(minutes=(lasti + 1) * 2)
+            ts = ZEROHOUR + timedelta(minutes=(lasti + 1) * dt)
         bp.append(bpstr(ts, accum))
     return bp
 
 
-def write_grid(grid: np.ndarray, valid, tile_affine: Affine, fnadd=""):
+def write_grid(
+    domain: str, grid: np.ndarray, valid, tile_affine: Affine, fnadd=""
+):
     """Save off the daily precip totals for usage later in computing huc_12"""
     if fnadd != "" and not sys.stdout.isatty():
         LOG.debug("not writting extra grid to disk")
         return
     basedir = f"/mnt/idep2/data/dailyprecip/{valid.year}"
+    if domain != "":
+        basedir = f"/mnt/dep/{domain}/data/dailyprecip/{valid.year}"
     if not os.path.isdir(basedir):
         os.makedirs(basedir)
     lat_prefix = "N" if tile_affine.f > 0 else "S"
@@ -512,18 +564,21 @@ def write_grid(grid: np.ndarray, valid, tile_affine: Affine, fnadd=""):
         dst.write(grid, 1)
 
 
-def precip_workflow(data, valid, tile_affine: Affine):
+def precip_workflow(domain: str, data, valid, tile_affine: Affine):
     """Drive the precipitation workflow"""
-    load_stage4(data, valid, tile_affine)
-    # We have MRMS a2m RASTER files prior to 1 Jan 2015, but these files used
-    # a very poor choice of data interval of 0.1mm, which is not large enough
-    # to capture low intensity events.  Files after 1 Jan 2015 used a better
-    # 0.02mm resolution
-    if valid.year < 2015:
-        load_precip_legacy(data, valid, tile_affine)
+    if domain == "":
+        load_stage4(data, valid, tile_affine)
+        # We have MRMS a2m RASTER files prior to 1 Jan 2015, but these files
+        # used a very poor choice of data interval of 0.1mm, which is not
+        # large enough to capture low intensity events.  Files after 1 Jan 2015
+        # used a better 0.02mm resolution
+        if valid.year < 2015:
+            load_precip_legacy(data, valid, tile_affine)
+        else:
+            load_precip(data, valid, tile_affine)
+        qc_precip(data, valid, tile_affine)
     else:
-        load_precip(data, valid, tile_affine)
-    qc_precip(data, valid, tile_affine)
+        load_imerg(data, domain, valid, tile_affine)
 
 
 def edit_clifile(
@@ -598,12 +653,19 @@ def edit_clifile(
 
 
 def daily_editor_workflow(
-    scenario: int, dt: date, west: int, east: int, south: int, north: int
+    scenario: int,
+    domain: str,
+    dt: date,
+    west: int,
+    east: int,
+    south: int,
+    north: int,
 ) -> Optional[int]:
     """Do daily processing work.
 
     Args:
         scenario (int): DEP Scenario ID
+        domain (str): Domain name
         dt (date): Date to edit
         west (int): West grid point (inclusive center point)
         east (int): East grid point (exclusive center point)
@@ -619,7 +681,7 @@ def daily_editor_workflow(
         dx=GRID_SPACING,
         dy=GRID_SPACING,
     )
-    clidf = load_clifiles(scenario, tilenav)
+    clidf = load_clifiles(scenario, domain, tilenav)
     if clidf.empty:
         LOG.info("No climate files found for scenario %s", scenario)
         return 0
@@ -634,19 +696,23 @@ def daily_editor_workflow(
     # 3. Radiation l/d
     # 4. wind mps
     # 6. Mean dewpoint C
-    load_iemre(clidf, dt)
+    load_iemre(clidf, domain, dt)
 
     shp = (int((north - south) * 100), int((east - west) * 100))
     data = {
         "stage4": np.zeros(shp, np.float32),
-        "precip": np.zeros((*shp, 30 * 24), np.float32),
+        # CONUS is 2 minute, everybody else is 30 minute, for now
+        "precip": np.zeros(
+            (*shp, (30 if domain == "" else 2) * 24), np.float32
+        ),
     }
 
     # 5. wind direction (always zero)
     # 7. breakpoint precip mm
-    precip_workflow(data, dt, tile_affine)
-    write_grid(data["stage4"], dt, tile_affine, fnadd="stage4")
-    write_grid(np.sum(data["precip"], 2), dt, tile_affine)
+    precip_workflow(domain, data, dt, tile_affine)
+    if domain == "":
+        write_grid(domain, data["stage4"], dt, tile_affine, fnadd="stage4")
+    write_grid(domain, np.sum(data["precip"], 2), dt, tile_affine)
 
     progress = tqdm(total=len(clidf), disable=not sys.stdout.isatty())
     errors = {"cnt": 0}
