@@ -5,6 +5,7 @@ import os
 import stat
 import sys
 import time
+import traceback
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -18,7 +19,10 @@ from affine import Affine
 from pyiem.grid.nav import get_nav
 from pyiem.util import logger
 
-from pydep.workflows.clifile import daily_editor_workflow
+from pydep.workflows.clifile import (
+    CLIFileWorkflowFailure,
+    daily_editor_workflow,
+)
 
 LOG = logger()
 
@@ -112,18 +116,20 @@ def myjob(tile: Tile) -> int | None:
             tile.south,
             tile.north,
         )
-    except Exception as exp:
-        LOG.warning(
-            "Failed to process %s %s %s %s %s %s %s: %s",
-            tile.scenario,
-            tile.domain,
-            tile.dt,
-            tile.west,
-            tile.east,
-            tile.south,
-            tile.north,
+    except CLIFileWorkflowFailure as exp:
+        LOG.error(
+            "CLIFileWorkflowFailure %s: %s",
+            tile,
             exp,
         )
+    except Exception as exp:
+        LOG.error(
+            "Tile %s generated unexpected exception: %s",
+            tile,
+            exp,
+        )
+        # Log the exception and full stack trace
+        traceback.print_exc()
     return None
 
 

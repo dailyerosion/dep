@@ -120,18 +120,23 @@ def load_iemre(clidf: pd.DataFrame, domain: str, valid: date) -> None:
         varnames=["high_tmpk", "low_tmpk", "avg_dwpk", "wind_speed", "rsds"],
         domain=domain,
     )
+    # Ensure that we don't have all missing data
+    if ds["high_tmpk"].isnull().all():
+        raise CLIFileWorkflowFailure("All high_tmpk values are missing")
     highc = convert_value(ds["high_tmpk"], "degK", "degC")
     lowc = convert_value(ds["low_tmpk"], "degK", "degC")
     dwpc = convert_value(ds["avg_dwpk"], "degK", "degC")
+    # Convert W m-2 to langleys per day
+    slngly = ds["rsds"] * 86400 / 1_000_000.0 * 23.9
+    wspd = ds["wind_speed"]
     nav = get_nav("IEMRE", domain)
     for idx, row in clidf.iterrows():
         i, j = nav.find_ij(row["lon"], row["lat"])
-        # Convert W m-2 to langleys per day
-        clidf.at[idx, "solar"] = ds["rsds"][j, i] * 86400 / 1_000_000.0 * 23.9
+        clidf.at[idx, "solar"] = slngly[j, i]
         clidf.at[idx, "high"] = highc[j, i]
         clidf.at[idx, "low"] = lowc[j, i]
         clidf.at[idx, "dwpt"] = dwpc[j, i]
-        clidf.at[idx, "wind"] = ds["wind_speed"][j, i]
+        clidf.at[idx, "wind"] = wspd[j, i]
 
     # What's a reasonable max bounts?  Well, 50 MJ/d should be an extreme high
     iemre_bounds_check(clidf, "solar", 0, 50.0 * 23.9)
@@ -769,5 +774,6 @@ def daily_editor_workflow(
         pool.close()
         pool.join()
 
-    LOG.info("Finished with %s errors", errors["cnt"])
+    if errors["cnt"] > 0:
+        LOG.info("Finished with %s errors", errors["cnt"])
     return 0
