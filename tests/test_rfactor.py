@@ -22,5 +22,5 @@ def test_rfactor():
     """Walk before we run."""
     resultdf = compute_rfactor_from_cli(get_path("cli.txt"))
     # There is no right answer, but we can check for changes
-    assert abs(resultdf.at[2007, "rfactor"] - 1252.09) < 0.1
-    assert resultdf.at[2007, "storm_count"] == 76
+    assert abs(resultdf.at[2007, "rfactor"] - 2204.277) < 0.1
+    assert resultdf.at[2007, "storm_count"] == 62

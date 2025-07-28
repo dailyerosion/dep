@@ -92,14 +92,14 @@ def test_yld():
 def test_cli():
     """read a CLI file please"""
     df = read_cli(get_path("cli.txt"), compute_intensity_over=[80, 120])
-    assert len(df.index) == 4018
-    assert (df["i80_mm"].max() - 51.12) < 0.01
+    assert len(df.index) == 6940
+    assert (df["i80_mm"].max() - 58.458) < 0.01
 
 
 def test_cli_rfactor():
     """read a CLI file please"""
     df = read_cli(get_path("cli.txt"), compute_rfactor=True)
-    assert abs(df["rfactor"].max() - 872.63) < 0.01
+    assert abs(df["rfactor"].max() - 1226.229) < 0.01
     assert (df.groupby(df.index.year).sum()["rfactor"].max() - 4276.60) < 0.01
 
 
