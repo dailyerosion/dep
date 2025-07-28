@@ -206,7 +206,7 @@ def get_fields(year, district, state, ugc: str | None, crop) -> pd.DataFrame:
     boundsdf = get_geo_bounds(district, state, ugc)
     # Figure out the planting dates
     with get_sqlalchemy_conn("idep") as conn:
-        fields = pd.read_sql(
+        return pd.read_sql(
             sql_helper("""
             select plant, huc12, fbndid, acres
             from fields f JOIN field_operations o
@@ -223,7 +223,6 @@ def get_fields(year, district, state, ugc: str | None, crop) -> pd.DataFrame:
             },
             parse_dates="plant",
         )
-    return fields
 
 
 def get_labels(year):

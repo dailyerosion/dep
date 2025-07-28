@@ -11,15 +11,33 @@ import re
 from datetime import date
 
 import pytest
+from pyiem.util import utc
 from pytest_httpx import HTTPXMock
 
 from pydep.io.wepp import read_cli
 from pydep.workflows.clifile import (
     CLIFileWorkflowFailure,
     daily_editor_workflow,
+    get_sts_ets_at_localhour,
 )
 
 DUMMY_SCENARIO = -1
+
+
+def test_get_sts_ets_at_localhour():
+    """Test that we can compute the start and end times for a domain date."""
+    sts, ets = get_sts_ets_at_localhour("", date(2017, 1, 2), 0)
+    assert sts == utc(2017, 1, 2, 6)
+    assert ets == utc(2017, 1, 3, 6)
+    sts, ets = get_sts_ets_at_localhour("china", date(2017, 1, 2), 0)
+    assert sts == utc(2017, 1, 1, 16)
+    assert ets == utc(2017, 1, 2, 16)
+    sts, ets = get_sts_ets_at_localhour("europe", date(2017, 1, 2), 0)
+    assert sts == utc(2017, 1, 1, 23)
+    assert ets == utc(2017, 1, 2, 23)
+    sts, ets = get_sts_ets_at_localhour("sa", date(2017, 1, 2), 0)
+    assert sts == utc(2017, 1, 2, 2)
+    assert ets == utc(2017, 1, 3, 2)
 
 
 def test_noclifiles():
@@ -27,6 +45,7 @@ def test_noclifiles():
     assert (
         daily_editor_workflow(
             DUMMY_SCENARIO,
+            "",
             date(2017, 1, 1),
             -101,
             -100,
@@ -37,20 +56,6 @@ def test_noclifiles():
     )
 
 
-def test_no_stage4():
-    """Test that no stage IV netcdf file is fatal."""
-    with pytest.raises(CLIFileWorkflowFailure) as excinfo:
-        daily_editor_workflow(
-            DUMMY_SCENARIO,
-            date(1990, 1, 2),
-            -96,
-            -95,
-            43,
-            44,
-        )
-    assert "1990_stage4_hourly.nc" in str(excinfo.value)
-
-
 def test_bad_iemre():
     """Test that no climate files are found for this tile."""
     # We should not need to mock any web requests as the failure should
@@ -58,6 +63,7 @@ def test_bad_iemre():
     with pytest.raises(CLIFileWorkflowFailure) as excinfo:
         daily_editor_workflow(
             DUMMY_SCENARIO,
+            "",
             date(2017, 1, 2),
             -96,
             -95,
@@ -65,6 +71,36 @@ def test_bad_iemre():
             44,
         )
     assert "IEMRE data out of bounds!" in str(excinfo.value)
+
+
+def test_china_no_iemre_data():
+    """Test IEMRE failure with no data."""
+    with pytest.raises(CLIFileWorkflowFailure) as excinfo:
+        daily_editor_workflow(
+            DUMMY_SCENARIO,
+            "china",
+            date(2025, 7, 22),
+            89,
+            94,
+            38,
+            43,
+        )
+    assert "high_tmpk" in str(excinfo.value)
+
+
+def test_china():
+    """Test the non-US domain code."""
+    daily_editor_workflow(
+        DUMMY_SCENARIO,
+        "china",
+        date(2025, 7, 21),
+        89,
+        94,
+        38,
+        43,
+    )
+    clidf = read_cli("/tmp/E092.80xN39.30.cli")
+    assert abs(clidf.at["2025-07-21", "pcpn"] - 0.0) < 0.01
 
 
 def test_faked_stage4(httpx_mock: HTTPXMock):
@@ -83,6 +119,7 @@ def test_faked_stage4(httpx_mock: HTTPXMock):
     )
     daily_editor_workflow(
         DUMMY_SCENARIO,
+        "",
         date(2017, 1, 2),
         -101,
         -96,
