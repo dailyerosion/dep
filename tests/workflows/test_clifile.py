@@ -73,6 +73,21 @@ def test_bad_iemre():
     assert "IEMRE data out of bounds!" in str(excinfo.value)
 
 
+def test_china_no_iemre_data():
+    """Test IEMRE failure with no data."""
+    with pytest.raises(CLIFileWorkflowFailure) as excinfo:
+        daily_editor_workflow(
+            DUMMY_SCENARIO,
+            "china",
+            date(2025, 7, 22),
+            89,
+            94,
+            38,
+            43,
+        )
+    assert "high_tmpk" in str(excinfo.value)
+
+
 def test_china():
     """Test the non-US domain code."""
     daily_editor_workflow(
