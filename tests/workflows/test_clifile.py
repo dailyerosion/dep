@@ -88,6 +88,20 @@ def test_bad_iemre():
     assert "IEMRE data out of bounds!" in str(excinfo.value)
 
 
+def test_china():
+    """Test the non-US domain code."""
+    with pytest.raises(CLIFileWorkflowFailure):
+        daily_editor_workflow(
+            DUMMY_SCENARIO,
+            "china",
+            date(2025, 7, 21),
+            89,
+            94,
+            38,
+            43,
+        )
+
+
 def test_faked_stage4(httpx_mock: HTTPXMock):
     """CI provides some faked data for 2 Jan 2017."""
     with open("tests/data/a2m_201701020000.png", "rb") as fh:
