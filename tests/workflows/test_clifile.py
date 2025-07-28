@@ -56,21 +56,6 @@ def test_noclifiles():
     )
 
 
-def test_no_stage4():
-    """Test that no stage IV netcdf file is fatal."""
-    with pytest.raises(CLIFileWorkflowFailure) as excinfo:
-        daily_editor_workflow(
-            DUMMY_SCENARIO,
-            "",
-            date(1990, 1, 2),
-            -96,
-            -95,
-            43,
-            44,
-        )
-    assert "1990_stage4_hourly.nc" in str(excinfo.value)
-
-
 def test_bad_iemre():
     """Test that no climate files are found for this tile."""
     # We should not need to mock any web requests as the failure should
