@@ -10,5 +10,5 @@ sudo ln -s `pwd`/_data/mesonet /mesonet
 sudo ln -s `pwd` /opt/dep
 
 mkdir -p /i/0/cli/100x042
-
+mkdir -p /mnt/dep/china/data/dailyprecip
 mkdir -p /mesonet/data/stage4
