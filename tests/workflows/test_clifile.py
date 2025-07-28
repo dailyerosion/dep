@@ -75,16 +75,17 @@ def test_bad_iemre():
 
 def test_china():
     """Test the non-US domain code."""
-    with pytest.raises(CLIFileWorkflowFailure):
-        daily_editor_workflow(
-            DUMMY_SCENARIO,
-            "china",
-            date(2025, 7, 21),
-            89,
-            94,
-            38,
-            43,
-        )
+    daily_editor_workflow(
+        DUMMY_SCENARIO,
+        "china",
+        date(2025, 7, 21),
+        89,
+        94,
+        38,
+        43,
+    )
+    clidf = read_cli("/tmp/E092.80xN39.30.cli")
+    assert abs(clidf.at["2025-07-21", "pcpn"] - 0.0) < 0.01
 
 
 def test_faked_stage4(httpx_mock: HTTPXMock):
