@@ -39,6 +39,7 @@ def main(
     try:
         daily_editor_workflow(
             scenario,
+            "",
             dt.date(),
             west,
             east,
