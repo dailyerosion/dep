@@ -381,9 +381,10 @@ def _mrms_reader(
 def load_imerg(data, domain: str, dt: date, tile_affine: Affine):
     """Load the 30 minute IMERG data."""
     LOG.info("called")
-    # IMERG is stored in the rears, so start at 12:30 AM
+    # IMERG is stored in the **future**
     midnight, tomorrow = get_sts_ets_at_localhour(domain, dt, 0)
-    now = midnight + timedelta(minutes=30)
+    toff = timedelta(minutes=30)
+    now = midnight + toff
     # IMERG is stored -180,90 to 180,-90 at 0.1x0.1
     x0 = int((tile_affine.c + 180.0) * 10)
     # DEP storage is 0.01x0.01
@@ -392,7 +393,9 @@ def load_imerg(data, domain: str, dt: date, tile_affine: Affine):
 
     tidx = 0
     while now <= tomorrow:
-        ppath = now.strftime("%Y/%m/%d/GIS/imerg/p30m_%Y%m%d%H%M.png")
+        # The precipitation total valid at this timestamp is found in the
+        # previous 30 minute period file :/
+        ppath = (now - toff).strftime("%Y/%m/%d/GIS/imerg/p30m_%Y%m%d%H%M.png")
         with archive_fetch(ppath) as fn:
             if fn is not None:
                 # idx: 0-200 0.25mm  -> 50 mm
