@@ -59,7 +59,10 @@ def main(domain: str):
             progress.set_description(f"Created {created}")
             # crude for non-conus
             j = int((lat + 90) * 10.0)
-            i = int((lon + 180) * 10.0)
+            if lon < 0:
+                i = int((lon + 360) * 10.0)
+            else:
+                i = int(lon * 10.0)
             if mask[j, i] > 50:  # arb
                 continue
             try:
