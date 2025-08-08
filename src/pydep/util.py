@@ -1,14 +1,51 @@
 """pydep helper util methods."""
 
+import logging
 import math
+import sys
 from typing import Tuple
 
 import numpy as np
 import pandas as pd
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.iemre import get_domain
+from pyiem.util import CustomFormatter
+from tqdm import tqdm
 
 from pydep.reference import KWFACT_CLASSES, SLOPE_CLASSES
+
+
+class TqdmLoggingHandler(logging.Handler):  # skipcq
+    """Custom logging handler that uses tqdm.write() for output."""
+
+    def emit(self, record):
+        """Emit a log record."""
+        tqdm.write(self.format(record))
+
+
+def _logger(ch: logging.Handler) -> logging.Logger:
+    """Helper to get the logger."""
+    ch.setFormatter(CustomFormatter())
+    # We lamely get both pydep and pyiem loggers here
+    log = logging.getLogger("pyiem")
+    log.setLevel(logging.INFO if sys.stdout.isatty() else logging.WARNING)
+    log.addHandler(ch)
+    log = logging.getLogger("pydep")
+    log.setLevel(logging.INFO if sys.stdout.isatty() else logging.WARNING)
+    log.addHandler(ch)
+    return log
+
+
+def tqdm_logger() -> logging.Logger:
+    """Return a logger that writes to tqdm."""
+    ch = TqdmLoggingHandler()
+    return _logger(ch)
+
+
+def logger() -> logging.Logger:
+    """Return the root logger."""
+    ch = logging.StreamHandler()
+    return _logger(ch)
 
 
 def compute_management_for_groupid(text: str) -> str:

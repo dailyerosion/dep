@@ -7,7 +7,6 @@ import sys
 import time
 import traceback
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass
 from datetime import date, datetime
 from math import ceil, floor
 from multiprocessing import cpu_count
@@ -17,28 +16,17 @@ import numpy as np
 import rasterio
 from affine import Affine
 from pyiem.grid.nav import get_nav
-from pyiem.util import logger
+from tqdm import tqdm
 
+from pydep.util import tqdm_logger
 from pydep.workflows.clifile import (
     CLIFileWorkflowFailure,
+    Tile,
     daily_editor_workflow,
     preflight_check,
 )
 
-LOG = logger()
-
-
-@dataclass
-class Tile:
-    """Tile information."""
-
-    west: float
-    east: float
-    south: float
-    north: float
-    scenario: int
-    dt: date
-    domain: str
+LOG = tqdm_logger()
 
 
 def get_fn(dt: date, domain: str) -> str:
@@ -87,8 +75,10 @@ def assemble_geotiffs(dt: date, domain: str):
     # Write out a GeoTIFF, we will store as a UInt16 with a scale factor
     # of 100, so we can store 0 to 655.35 mm of precipitation
     res = (res * 100.0).astype(np.uint16)
+    outfn = get_fn(dt, domain)
+    os.makedirs(os.path.dirname(outfn), exist_ok=True)
     with rasterio.open(
-        get_fn(dt, domain),
+        outfn,
         "w",
         driver="GTiff",
         compress="lzw",
@@ -108,15 +98,7 @@ def assemble_geotiffs(dt: date, domain: str):
 def myjob(tile: Tile) -> list[bool, int, int]:
     """Run this command and return any result."""
     try:
-        return daily_editor_workflow(
-            tile.scenario,
-            tile.domain,
-            tile.dt,
-            tile.west,
-            tile.east,
-            tile.south,
-            tile.north,
-        )
+        return daily_editor_workflow(tile)
     except CLIFileWorkflowFailure as exp:
         LOG.error(
             "CLIFileWorkflowFailure %s: %s",
@@ -184,6 +166,7 @@ def main(scenario, dt: datetime, domain: str):
                 )
             )
     failed = 0
+    progress = tqdm(total=len(jobs), disable=not sys.stdout.isatty())
     # 12 Nov 2021 audit shows per process usage in the 2-3 GB range
     workers = int(min([4, cpu_count() / 4]))
     LOG.info("starting %s workers", workers)
@@ -191,6 +174,7 @@ def main(scenario, dt: datetime, domain: str):
         for res in executor.map(myjob, jobs):
             if not res[0]:
                 failed += 1
+            progress.update(1)
     if failed > 0:
         LOG.warning("Exiting with status 3 due to %s failure(s)", failed)
         sys.exit(3)

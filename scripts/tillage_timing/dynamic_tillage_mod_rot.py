@@ -95,7 +95,7 @@ def main(argv):
     )
     print("Found %s flowpaths" % (len(df.index),))
     dates = []
-    for i, row in tqdm(df.iterrows(), total=len(df.index)):
+    for _, row in tqdm(df.iterrows(), total=len(df.index)):
         # 1. Load up scenario 0 WB file
         tillage_date = compute_tillage_date(scenario, row)
         dates.append(tillage_date)
