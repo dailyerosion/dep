@@ -13,8 +13,8 @@ import sys
 from datetime import datetime
 
 import click
-from pyiem.util import logger
 
+from pydep.util import logger
 from pydep.workflows.clifile import (
     CLIFileWorkflowFailure,
     Tile,

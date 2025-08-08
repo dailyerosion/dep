@@ -16,9 +16,9 @@ import numpy as np
 import rasterio
 from affine import Affine
 from pyiem.grid.nav import get_nav
-from pyiem.util import logger
 from tqdm import tqdm
 
+from pydep.util import tqdm_logger
 from pydep.workflows.clifile import (
     CLIFileWorkflowFailure,
     Tile,
@@ -26,7 +26,7 @@ from pydep.workflows.clifile import (
     preflight_check,
 )
 
-LOG = logger()
+LOG = tqdm_logger()
 
 
 def get_fn(dt: date, domain: str) -> str:

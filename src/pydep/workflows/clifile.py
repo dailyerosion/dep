@@ -21,10 +21,11 @@ from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.grid.nav import STAGE4, get_nav
 from pyiem.iemre import DOMAINS, get_grids, hourly_offset
 from pyiem.models.gridnav import CartesianGridNavigation
-from pyiem.util import LOG, archive_fetch, convert_value, ncopen
+from pyiem.util import archive_fetch, convert_value, ncopen
 from rasterio.errors import NotGeoreferencedWarning
 from rasterio.warp import reproject
 
+from pydep import LOG
 from pydep.io.cli import daily_formatter
 from pydep.reference import GRID_SPACING
 
@@ -38,7 +39,7 @@ ST4PATH = "/mesonet/data/stage4"
 ZEROHOUR = datetime(2000, 1, 1, 0, 0)
 # How many CPUs are we going to burn
 CPUCOUNT = min([4, int(cpu_count() / 4)])
-MEMORY = {"stamp": datetime.now()}
+RUNTIME = {"log_prefix": ""}
 # An estimate of the number of years of data we have in our climate files
 ESTIMATED_YEARS = date.today().year - 2007 + 1
 
@@ -93,6 +94,18 @@ class CLIFileWorkflowFailure(Exception):
     """Exception for CLIFileWorkflow failures."""
 
 
+def _warnlog(msg: str, *args):
+    """Log Proxy."""
+    msg = f"{RUNTIME['log_prefix']}{msg}"
+    LOG.warning(msg, *args, stacklevel=2)
+
+
+def _infolog(msg: str, *args):
+    """Log Proxy."""
+    msg = f"{RUNTIME['log_prefix']}{msg}"
+    LOG.info(msg, *args, stacklevel=2)
+
+
 def preflight_check(dt: date, domain: str) -> bool:
     """Perform preflight checks before processing."""
     nav = get_nav("IEMRE", domain)
@@ -110,7 +123,7 @@ def preflight_check(dt: date, domain: str) -> bool:
     data = resp.json()["data"]
     for col in "daily_high_f daily_low_f avg_windspeed_mps srad_mj".split():
         if data[0].get(col) is None:
-            LOG.warning("Preflight check failed: %s is None", col)
+            _warnlog("Preflight check failed: %s is None", col)
             return False
     return True
 
@@ -165,7 +178,7 @@ def get_sts_ets_at_localhour(domain: str, dt: date, local_hour: int):
 def iemre_bounds_check(clidf: pd.DataFrame, col: str, lower, upper) -> None:
     """Make sure our data is within bounds, if not, exit!"""
     if clidf[col].min() < lower or clidf[col].max() > upper:
-        LOG.warning(
+        _warnlog(
             "FATAL: iemre failure %s %.3f to %.3f [%.3f to %.3f]",
             col,
             clidf[col].min(),
@@ -218,23 +231,15 @@ def load_stage4(data, dt: date, tile_affine: Affine):
     1) Wind Farms
     2) Over-estimates
     """
-    LOG.debug("called")
     # The stage4 files store precip in the rears, so compute 1 AM
     one_am, tomorrow = get_sts_ets_at_localhour("", dt, 1)
 
     sts_tidx = hourly_offset(one_am)
     ets_tidx = hourly_offset(tomorrow)
-    LOG.debug(
-        "stage4 sts_tidx:%s[%s] ets_tidx:%s[%s]",
-        sts_tidx,
-        one_am,
-        ets_tidx,
-        tomorrow,
-    )
     ncfn = f"{ST4PATH}/{dt:%Y}_stage4_hourly.nc"
     if not os.path.isfile(ncfn):
         msg = f"Stage IV file {ncfn} does not exist, aborting workflow..."
-        LOG.warning(msg)
+        _warnlog(msg)
         raise CLIFileWorkflowFailure(msg)
 
     with ncopen(ncfn, "r") as nc:
@@ -242,7 +247,6 @@ def load_stage4(data, dt: date, tile_affine: Affine):
 
         # crossing jan 1
         if ets_tidx < sts_tidx:
-            LOG.debug("Exercise special stageIV logic for jan1!")
             totals = np.sum(p01m[sts_tidx:], axis=0)
             with ncopen(f"{ST4PATH}/{tomorrow.year}_stage4_hourly.nc") as nc2:
                 p01m = nc2.variables["p01m"]
@@ -253,7 +257,7 @@ def load_stage4(data, dt: date, tile_affine: Affine):
     if np.ma.max(totals) > 0:
         pass
     else:
-        LOG.warning("No StageIV data found, aborting...")
+        _warnlog("No StageIV data found, aborting...")
         raise CLIFileWorkflowFailure("No Stage IV data found, aborting...")
     # set a small non-zero number to keep things non-zero
     totals[totals < 0.001] = 0.001
@@ -266,7 +270,6 @@ def load_stage4(data, dt: date, tile_affine: Affine):
         dst_transform=tile_affine,
         dst_crs="EPSG:4326",
     )
-    LOG.debug("finished")
 
 
 def qc_precip(data, dt: date, tile_affine: Affine):
@@ -285,7 +288,7 @@ def qc_precip(data, dt: date, tile_affine: Affine):
         s4 = data["stage4"] > 5  # arb
         score = np.sum(np.logical_and(a2m_zeros, s4)) / np.multiply(*s4.shape)
         if score > 0.005:  # 0.5% is arb, but good enough?
-            LOG.warning("MRMS had %.2f%% bad zeros, using legacy", score * 100)
+            _warnlog("MRMS had %.2f%% bad zeros, using legacy", score * 100)
             load_precip_legacy(data, dt, tile_affine)
             hires_total = np.sum(data["precip"], 2)
 
@@ -328,7 +331,6 @@ def _reader(utcnow: datetime, tidx, shp, west: float, south: float):
 
 def load_precip_legacy(data, valid, tile_affine: Affine):
     """Compute a Legacy Precip product for dates prior to 1 Jan 2014"""
-    LOG.info("called")
     ts = 12 * 24  # 5 minute
 
     midnight, tomorrow = get_sts_ets_at_localhour("", valid, 0)
@@ -384,14 +386,10 @@ def load_precip_legacy(data, valid, tile_affine: Affine):
         pool.close()
         pool.join()
 
-    LOG.debug("finished loading N0R Composites")
     m5 = np.transpose(m5, (1, 2, 0)).copy()
-    LOG.debug("transposed the data!")
     # Prevent overflow with likely bad data leading to value > np.float32
     m5total = np.sum(m5, 2, dtype=np.float32)
-    LOG.debug("computed sum(m5)")
     wm5 = m5 / m5total[:, :, None]
-    LOG.debug("computed weights of m5")
 
     minute2 = np.arange(0, 60 * 24, 2)
     minute5 = np.arange(0, 60 * 24, 5)
@@ -411,8 +409,6 @@ def load_precip_legacy(data, valid, tile_affine: Affine):
     for x in range(data["stage4"].shape[1]):
         for y in range(data["stage4"].shape[0]):
             _compute(y, x)
-
-    LOG.info("finished precip calculation")
 
 
 def _mrms_reader(
@@ -484,7 +480,7 @@ def load_imerg(data, domain: str, dt: date, tile_affine: Affine):
                     np.where(imgdata < 201, imgdata * 0.25, imgdata - 150)
                 )
             else:
-                LOG.warning(
+                _warnlog(
                     "IMERG file %s does not exist, using zeros",
                     ppath,
                 )
@@ -494,7 +490,6 @@ def load_imerg(data, domain: str, dt: date, tile_affine: Affine):
 
 def load_precip(data, dt: date, tile_affine: Affine):
     """Load the 2 minute precipitation data into our ginormus grid"""
-    LOG.info("called")
     ts = 30 * 24  # 2 minute
 
     midnight, tomorrow = get_sts_ets_at_localhour("", dt, 0)
@@ -536,12 +531,11 @@ def load_precip(data, dt: date, tile_affine: Affine):
         pool.close()
         pool.join()
     if quorum["cnt"] > 0:
-        LOG.warning(
+        _warnlog(
             "Failed 75%% quorum with MRMS a2m %.1f, loading legacy",
             quorum["cnt"],
         )
         load_precip_legacy(data, dt, tile_affine)
-    LOG.info("finished precip calculation")
 
 
 def bpstr(ts, accum):
@@ -666,14 +660,14 @@ def edit_clifile(
         clidata = fh.read()
     pos = clidata.find(valid.strftime("%-d\t%-m\t%Y"))
     if pos == -1:
-        LOG.warning("Date find failure for %s", clirow["filepath"])
+        _warnlog("Date find failure for %s", clirow["filepath"])
         return False
 
     pos2 = clidata[pos:].find(
         (valid + timedelta(days=1)).strftime("%-d\t%-m\t%Y")
     )
     if pos2 == -1:
-        LOG.warning("Date2 find failure for %s", clirow["filepath"])
+        _warnlog("Date2 find failure for %s", clirow["filepath"])
         return False
 
     intensity_threshold = 1.0
@@ -684,7 +678,6 @@ def edit_clifile(
         bpdata = []
     while len(bpdata) >= 100:
         intensity_threshold += 2
-        LOG.debug("len(bpdata) %s>100 t:%s", len(bpdata), intensity_threshold)
         bpdata = compute_breakpoint(
             data["precip"][yidx, xidx, :],
             accumThreshold=intensity_threshold,
@@ -705,9 +698,7 @@ def edit_clifile(
         ):
             if np.isnan(v):
                 msg.append(f"{n}={v}")
-        LOG.warning(
-            "Missing data[%s] for %s", ",".join(msg), clirow["filepath"]
-        )
+        _warnlog("Missing data[%s] for %s", ",".join(msg), clirow["filepath"])
         return False
     thisday = daily_formatter(
         valid,
@@ -738,7 +729,7 @@ def daily_editor_workflow(tile: Tile) -> list[bool, int, int]:
 
     clidf = load_clifiles(tile)
     if clidf.empty:
-        LOG.info("No climate files found for scenario %s", tile.scenario)
+        _infolog("No climate files found for scenario %s", tile.scenario)
         return [True, 0, 0]
 
     # This is the outer edge of the grid and our west/south pts are inclusive
@@ -787,7 +778,7 @@ def daily_editor_workflow(tile: Tile) -> list[bool, int, int]:
         yidx = int((clirow["lat"] - tile.south) * 100)
         # Ensure that our indices are within bnds, this should not be possible
         if xidx < 0 or xidx >= shp[1] or yidx < 0 or yidx >= shp[0]:
-            LOG.warning(
+            _warnlog(
                 "clifile %s out of bounds x:%s[0-%s] y:%s[0-%s]",
                 clifn,
                 xidx,
@@ -801,7 +792,7 @@ def daily_editor_workflow(tile: Tile) -> list[bool, int, int]:
         except Exception as _exp:
             with StringIO() as sio:
                 traceback.print_exc(file=sio)
-                LOG.error(
+                _warnlog(
                     "edit_clifile(%s, %s, %s) failed: %s",
                     xidx,
                     yidx,
