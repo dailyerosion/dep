@@ -20,6 +20,7 @@ from pydep.workflows.clifile import (
     Tile,
     daily_editor_workflow,
     get_sts_ets_at_localhour,
+    precip_workflow,
     preflight_check,
 )
 
@@ -74,6 +75,22 @@ def test_noclifiles():
         domain="",
     )
     assert daily_editor_workflow(tile)[1] == 0
+
+
+def test_no_stage4():
+    """Test exception when no stageIV netcdf exists."""
+    tile = Tile(
+        west=-96,
+        east=-95,
+        south=43,
+        north=44,
+        scenario=DUMMY_SCENARIO,
+        dt=date(1980, 1, 2),
+        domain="",
+    )
+    with pytest.raises(CLIFileWorkflowFailure) as excinfo:
+        precip_workflow(tile, {})
+    assert "Stage IV file" in str(excinfo.value)
 
 
 def test_bad_iemre():

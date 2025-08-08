@@ -20,33 +20,32 @@ class TqdmLoggingHandler(logging.Handler):  # skipcq
 
     def emit(self, record):
         """Emit a log record."""
-        try:
-            msg = self.format(record)
-            tqdm.write(msg)
-        except Exception:
-            self.handleError(record)
+        tqdm.write(self.format(record))
+
+
+def _logger(ch: logging.Handler) -> logging.Logger:
+    """Helper to get the logger."""
+    ch.setFormatter(CustomFormatter())
+    # We lamely get both pydep and pyiem loggers here
+    log = logging.getLogger("pyiem")
+    log.setLevel(logging.INFO if sys.stdout.isatty() else logging.WARNING)
+    log.addHandler(ch)
+    log = logging.getLogger("pydep")
+    log.setLevel(logging.INFO if sys.stdout.isatty() else logging.WARNING)
+    log.addHandler(ch)
+    return log
 
 
 def tqdm_logger() -> logging.Logger:
     """Return a logger that writes to tqdm."""
     ch = TqdmLoggingHandler()
-    ch.setFormatter(CustomFormatter())
-    # We want the root logger to control everything
-    log = logging.getLogger()
-    log.setLevel(logging.INFO if sys.stdout.isatty() else logging.WARNING)
-    log.addHandler(ch)
-    return log
+    return _logger(ch)
 
 
 def logger() -> logging.Logger:
     """Return the root logger."""
     ch = logging.StreamHandler()
-    ch.setFormatter(CustomFormatter())
-    # We want the root logger to control everything
-    log = logging.getLogger()
-    log.setLevel(logging.INFO if sys.stdout.isatty() else logging.WARNING)
-    log.addHandler(ch)
-    return log
+    return _logger(ch)
 
 
 def compute_management_for_groupid(text: str) -> str:

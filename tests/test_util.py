@@ -9,19 +9,27 @@ from pyiem.iemre import SOUTH, WEST
 from pydep import util
 
 
-def test_tqdm_logger(caplog):
-    """Test the logger."""
+def test_tqdm_logger_with_invalid_record(caplog):
+    """Test what happens when we log something unlogable."""
     log = util.tqdm_logger()
     with caplog.at_level(logging.INFO):
-        log.info("Test message")
+        log.warning("Test message")
     assert "Test message" in caplog.text
 
 
-def test_logger(caplog):
+def test_tqdm_logger(caplog: pytest.LogCaptureFixture):
+    """Test the logger."""
+    log = util.tqdm_logger()
+    with caplog.at_level(logging.INFO):
+        log.warning("Test message")
+    assert "Test message" in caplog.text
+
+
+def test_logger(caplog: pytest.LogCaptureFixture):
     """Test the logger."""
     log = util.logger()
     with caplog.at_level(logging.INFO):
-        log.info("Test message")
+        log.warning("Test message")
     assert "Test message" in caplog.text
 
 
