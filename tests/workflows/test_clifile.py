@@ -25,6 +25,16 @@ from pydep.workflows.clifile import (
 DUMMY_SCENARIO = -1
 
 
+def test_preflight_check(httpx_mock: HTTPXMock):
+    """Test that this works as we goose the response."""
+    content = (
+        b'{"data": [{"daily_high_f": 300, "daily_low_f": 200, '
+        b'"avg_windspeed_mps": 5, "srad_mj": 100}]}'
+    )
+    httpx_mock.add_response(content=content)
+    assert preflight_check(date(1800, 1, 1), "")
+
+
 def test_preflight_check_future():
     """Test that this returns false for a future date."""
     assert not preflight_check(date.today() + timedelta(days=10), "china")

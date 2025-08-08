@@ -62,7 +62,7 @@ def preflight_check(dt: date, domain: str) -> bool:
         return False
     data = resp.json()["data"]
     for col in "daily_high_f daily_low_f avg_windspeed_mps srad_mj".split():
-        if data[0][col] is None:
+        if data[0].get(col) is None:
             LOG.warning("Preflight check failed: %s is None", col)
             return False
     return True
