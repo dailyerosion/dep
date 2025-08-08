@@ -10,6 +10,7 @@ from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 from zoneinfo import ZoneInfo
 
+import httpx
 import numpy as np
 import pandas as pd
 import rasterio
@@ -43,6 +44,28 @@ ESTIMATED_YEARS = date.today().year - 2007 + 1
 
 class CLIFileWorkflowFailure(Exception):
     """Exception for CLIFileWorkflow failures."""
+
+
+def preflight_check(dt: date, domain: str) -> bool:
+    """Perform preflight checks before processing."""
+    nav = get_nav("IEMRE", domain)
+    # Thankfully, a mid-point in the domain has data
+    lon = (nav.right_edge + nav.left_edge) / 2
+    lat = (nav.top_edge + nav.bottom_edge) / 2
+    url = (
+        f"http://mesonet.agron.iastate.edu/iemre/daily/{dt:%Y-%m-%d}/"
+        f"{lat:.2f}/{lon:.2f}/json"
+    )
+    resp = httpx.get(url, timeout=60)
+    if resp.status_code != 200 or not resp.json().get("data", []):
+        LOG.warning("URL: %s returned %s %s", url, resp.status_code, resp.text)
+        return False
+    data = resp.json()["data"]
+    for col in "daily_high_f daily_low_f avg_windspeed_mps srad_mj".split():
+        if data[0][col] is None:
+            LOG.warning("Preflight check failed: %s is None", col)
+            return False
+    return True
 
 
 def load_clifiles(

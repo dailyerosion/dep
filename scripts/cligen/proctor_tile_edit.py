@@ -22,6 +22,7 @@ from pyiem.util import logger
 from pydep.workflows.clifile import (
     CLIFileWorkflowFailure,
     daily_editor_workflow,
+    preflight_check,
 )
 
 LOG = logger()
@@ -152,6 +153,9 @@ def main(scenario, dt: datetime, domain: str):
     """Go Main Go."""
     tilesz = 5
     dt = dt.date()
+    if not preflight_check(dt, domain):
+        LOG.warning("Aborting due to preflight_check failure")
+        sys.exit(3)
     fn = get_fn(dt, domain)
     if os.path.isfile(fn):
         filets = os.stat(fn)[stat.ST_MTIME]

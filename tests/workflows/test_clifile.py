@@ -8,7 +8,7 @@ ready to go in order to process 2vi  Jan 2017.
 """
 
 import re
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from pyiem.util import utc
@@ -19,9 +19,20 @@ from pydep.workflows.clifile import (
     CLIFileWorkflowFailure,
     daily_editor_workflow,
     get_sts_ets_at_localhour,
+    preflight_check,
 )
 
 DUMMY_SCENARIO = -1
+
+
+def test_preflight_check_future():
+    """Test that this returns false for a future date."""
+    assert not preflight_check(date.today() + timedelta(days=10), "china")
+
+
+def test_preflight_nodata():
+    """Test a request that should get empty data response."""
+    assert not preflight_check(date(1880, 1, 1), "china")
 
 
 def test_get_sts_ets_at_localhour():
