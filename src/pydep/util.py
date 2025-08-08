@@ -15,10 +15,11 @@ from tqdm import tqdm
 from pydep.reference import KWFACT_CLASSES, SLOPE_CLASSES
 
 
-class TqdmLoggingHandler(logging.Handler):
+class TqdmLoggingHandler(logging.Handler):  # skipcq
     """Custom logging handler that uses tqdm.write() for output."""
 
     def emit(self, record):
+        """Emit a log record."""
         try:
             msg = self.format(record)
             tqdm.write(msg)
@@ -31,10 +32,10 @@ def tqdm_logger() -> logging.Logger:
     ch = TqdmLoggingHandler()
     ch.setFormatter(CustomFormatter())
     # We want the root logger to control everything
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO if sys.stdout.isatty() else logging.WARNING)
-    logger.addHandler(ch)
-    return logger
+    log = logging.getLogger()
+    log.setLevel(logging.INFO if sys.stdout.isatty() else logging.WARNING)
+    log.addHandler(ch)
+    return log
 
 
 def logger() -> logging.Logger:
@@ -42,10 +43,10 @@ def logger() -> logging.Logger:
     ch = logging.StreamHandler()
     ch.setFormatter(CustomFormatter())
     # We want the root logger to control everything
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO if sys.stdout.isatty() else logging.WARNING)
-    logger.addHandler(ch)
-    return logger
+    log = logging.getLogger()
+    log.setLevel(logging.INFO if sys.stdout.isatty() else logging.WARNING)
+    log.addHandler(ch)
+    return log
 
 
 def compute_management_for_groupid(text: str) -> str:

@@ -1,10 +1,28 @@
 """test pydep.util"""
 
+import logging
+
 import pytest
 from pyiem.database import get_dbconnc
 from pyiem.iemre import SOUTH, WEST
 
 from pydep import util
+
+
+def test_tqdm_logger(caplog):
+    """Test the logger."""
+    log = util.tqdm_logger()
+    with caplog.at_level(logging.INFO):
+        log.info("Test message")
+    assert "Test message" in caplog.text
+
+
+def test_logger(caplog):
+    """Test the logger."""
+    log = util.logger()
+    with caplog.at_level(logging.INFO):
+        log.info("Test message")
+    assert "Test message" in caplog.text
 
 
 def test_compute_management_for_groupid():

@@ -88,14 +88,6 @@ class Tile:
             int((self.east - self.west) * 100),
         )
 
-    def find_grid_indices(self, lon: float, lat: float) -> tuple[int, int]:
-        """Find grid indices for given coordinates."""
-        return self.nav.find_ij(lon, lat)
-
-    def contains_point(self, lon: float, lat: float) -> bool:
-        """Check if a point is within this tile."""
-        return self.west <= lon < self.east and self.south <= lat < self.north
-
 
 class CLIFileWorkflowFailure(Exception):
     """Exception for CLIFileWorkflow failures."""
