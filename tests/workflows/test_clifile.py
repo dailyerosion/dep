@@ -17,6 +17,7 @@ from pytest_httpx import HTTPXMock
 from pydep.io.wepp import read_cli
 from pydep.workflows.clifile import (
     CLIFileWorkflowFailure,
+    Tile,
     daily_editor_workflow,
     get_sts_ets_at_localhour,
     preflight_check,
@@ -63,63 +64,64 @@ def test_get_sts_ets_at_localhour():
 
 def test_noclifiles():
     """Test that no climate files are found for this tile."""
-    assert (
-        daily_editor_workflow(
-            DUMMY_SCENARIO,
-            "",
-            date(2017, 1, 1),
-            -101,
-            -100,
-            88,
-            89,
-        )[1]
-        == 0
+    tile = Tile(
+        west=-101,
+        east=-100,
+        south=38,
+        north=39,
+        scenario=DUMMY_SCENARIO,
+        dt=date(2017, 1, 1),
+        domain="",
     )
+    assert daily_editor_workflow(tile)[1] == 0
 
 
 def test_bad_iemre():
     """Test that no climate files are found for this tile."""
     # We should not need to mock any web requests as the failure should
     # happen immediately
+    tile = Tile(
+        west=-96,
+        east=-95,
+        south=43,
+        north=44,
+        scenario=DUMMY_SCENARIO,
+        dt=date(2017, 1, 2),
+        domain="",
+    )
     with pytest.raises(CLIFileWorkflowFailure) as excinfo:
-        daily_editor_workflow(
-            DUMMY_SCENARIO,
-            "",
-            date(2017, 1, 2),
-            -96,
-            -95,
-            43,
-            44,
-        )
+        daily_editor_workflow(tile)
     assert "IEMRE data out of bounds!" in str(excinfo.value)
 
 
 def test_china_no_iemre_data():
     """Test IEMRE failure with no data."""
+    tile = Tile(
+        west=89,
+        east=94,
+        south=38,
+        north=43,
+        scenario=DUMMY_SCENARIO,
+        dt=date(2025, 7, 22),
+        domain="china",
+    )
     with pytest.raises(CLIFileWorkflowFailure) as excinfo:
-        daily_editor_workflow(
-            DUMMY_SCENARIO,
-            "china",
-            date(2025, 7, 22),
-            89,
-            94,
-            38,
-            43,
-        )
+        daily_editor_workflow(tile)
     assert "high_tmpk" in str(excinfo.value)
 
 
 def test_china():
     """Test the non-US domain code."""
-    daily_editor_workflow(
-        DUMMY_SCENARIO,
-        "china",
-        date(2025, 7, 21),
-        89,
-        94,
-        38,
-        43,
+    tile = Tile(
+        west=89,
+        east=94,
+        south=38,
+        north=43,
+        scenario=DUMMY_SCENARIO,
+        dt=date(2025, 7, 21),
+        domain="china",
     )
+    daily_editor_workflow(tile)
     clidf = read_cli("/tmp/E092.80xN39.30.cli")
     assert abs(clidf.at["2025-07-21", "pcpn"] - 0.0) < 0.01
 
@@ -138,14 +140,15 @@ def test_faked_stage4(httpx_mock: HTTPXMock):
     httpx_mock.add_response(
         content=n0r_content, url=re.compile(".*n0r.*"), is_reusable=True
     )
-    daily_editor_workflow(
-        DUMMY_SCENARIO,
-        "",
-        date(2017, 1, 2),
-        -101,
-        -96,
-        38,
-        43,
+    tile = Tile(
+        west=-101,
+        east=-96,
+        south=38,
+        north=43,
+        scenario=DUMMY_SCENARIO,
+        dt=date(2017, 1, 2),
+        domain="",
     )
+    daily_editor_workflow(tile)
     clidf = read_cli("/tmp/096.01x42.99.cli")
     assert abs(clidf.at["2017-01-02", "pcpn"] - 331.5) < 0.01

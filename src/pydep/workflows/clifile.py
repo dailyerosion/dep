@@ -4,6 +4,7 @@ import os
 import sys
 import traceback
 import warnings
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from io import StringIO
 from multiprocessing import cpu_count
@@ -42,6 +43,52 @@ MEMORY = {"stamp": datetime.now()}
 ESTIMATED_YEARS = date.today().year - 2007 + 1
 
 
+@dataclass
+class Tile:
+    """Tile information with embedded grid navigation."""
+
+    west: float
+    east: float
+    south: float
+    north: float
+    scenario: int
+    dt: date
+    domain: str
+    nav: CartesianGridNavigation = field(init=False)
+
+    def __post_init__(self):
+        """Create the grid navigation after initialization."""
+        self.nav = CartesianGridNavigation(
+            left_edge=self.west - GRID_SPACING / 2.0,
+            bottom_edge=self.south - GRID_SPACING / 2.0,
+            nx=int((self.east - self.west) / GRID_SPACING),
+            ny=int((self.north - self.south) / GRID_SPACING),
+            dx=GRID_SPACING,
+            dy=GRID_SPACING,
+        )
+
+    @property
+    def affine(self) -> Affine:
+        """Convenient access to the affine transformation."""
+        return self.nav.affine
+
+    @property
+    def shape(self) -> tuple[int, int]:
+        """Get the grid shape for this tile."""
+        return (
+            int((self.north - self.south) * 100),
+            int((self.east - self.west) * 100),
+        )
+
+    def find_grid_indices(self, lon: float, lat: float) -> tuple[int, int]:
+        """Find grid indices for given coordinates."""
+        return self.nav.find_ij(lon, lat)
+
+    def contains_point(self, lon: float, lat: float) -> bool:
+        """Check if a point is within this tile."""
+        return self.west <= lon < self.east and self.south <= lat < self.north
+
+
 class CLIFileWorkflowFailure(Exception):
     """Exception for CLIFileWorkflow failures."""
 
@@ -68,15 +115,13 @@ def preflight_check(dt: date, domain: str) -> bool:
     return True
 
 
-def load_clifiles(
-    scenario: int, domain: str, tilenav: CartesianGridNavigation
-) -> pd.DataFrame:
+def load_clifiles(tile: Tile) -> pd.DataFrame:
     """Return metadata for climate files within this tile.
 
     Important: The west and south values are inclusive, while the east and
     north values are exclusive.
     """
-    dbname = "idep" if domain == "" else f"dep_{domain}"
+    dbname = "idep" if tile.domain == "" else f"dep_{tile.domain}"
     with get_sqlalchemy_conn(dbname) as conn:
         return pd.read_sql(
             sql_helper("""
@@ -86,11 +131,11 @@ def load_clifiles(
                  """),
             conn,
             params={
-                "scenario": scenario,
-                "west": tilenav.left_edge,
-                "east": tilenav.right_edge,
-                "north": tilenav.top_edge,
-                "south": tilenav.bottom_edge,
+                "scenario": tile.scenario,
+                "west": tile.nav.left_edge,
+                "east": tile.nav.right_edge,
+                "north": tile.nav.top_edge,
+                "south": tile.nav.bottom_edge,
             },
         )
 
@@ -401,7 +446,6 @@ def _mrms_reader(
 
 def load_imerg(data, domain: str, dt: date, tile_affine: Affine):
     """Load the 30 minute IMERG data."""
-    LOG.info("called")
     # IMERG is stored in the **future**
     midnight, tomorrow = get_sts_ets_at_localhour(domain, dt, 0)
     toff = timedelta(minutes=30)
@@ -680,48 +724,26 @@ def edit_clifile(
     return True
 
 
-def daily_editor_workflow(
-    scenario: int,
-    domain: str,
-    dt: date,
-    west: int,
-    east: int,
-    south: int,
-    north: int,
-) -> list[bool, int, int]:
+def daily_editor_workflow(tile: Tile) -> list[bool, int, int]:
     """Do daily processing work.
 
     Args:
-        scenario (int): DEP Scenario ID
-        domain (str): Domain name
-        dt (date): Date to edit
-        west (int): West grid point (inclusive center point)
-        east (int): East grid point (exclusive center point)
-        south (int): South grid point (inclusive center point)
-        north (int): North grid point (exclusive center point)
+        tile (Tile): The tile object containing all relevant information.
 
     Returns:
         success (bool): No errors here.
         edited (int) Number of climate files successfully edited.
         errors (int) Number of climate files failed to edit.
     """
-    # Create a grid navigation object
-    tilenav = CartesianGridNavigation(
-        left_edge=west - GRID_SPACING / 2.0,
-        bottom_edge=south - GRID_SPACING / 2.0,
-        nx=int((east - west) / GRID_SPACING),
-        ny=int((north - south) / GRID_SPACING),
-        dx=GRID_SPACING,
-        dy=GRID_SPACING,
-    )
-    clidf = load_clifiles(scenario, domain, tilenav)
+
+    clidf = load_clifiles(tile)
     if clidf.empty:
-        LOG.info("No climate files found for scenario %s", scenario)
+        LOG.info("No climate files found for scenario %s", tile.scenario)
         return [True, 0, 0]
 
     # This is the outer edge of the grid and our west/south pts are inclusive
     # the grid is oriented from south to north (positive dy)
-    tile_affine = tilenav.affine
+    tile_affine = tile.affine
 
     # Fill out clidf with IEMRE values
     # 1. Max Temp C
@@ -729,23 +751,25 @@ def daily_editor_workflow(
     # 3. Radiation l/d
     # 4. wind mps
     # 6. Mean dewpoint C
-    load_iemre(clidf, domain, dt)
+    load_iemre(clidf, tile.domain, tile.dt)
 
-    shp = (int((north - south) * 100), int((east - west) * 100))
+    shp = tile.shape
     data = {
         "stage4": np.zeros(shp, np.float32),
         # CONUS is 2 minute, everybody else is 30 minute, for now
         "precip": np.zeros(
-            (*shp, (30 if domain == "" else 2) * 24), np.float32
+            (*shp, (30 if tile.domain == "" else 2) * 24), np.float32
         ),
     }
 
     # 5. wind direction (always zero)
     # 7. breakpoint precip mm
-    precip_workflow(domain, data, dt, tile_affine)
-    if domain == "":
-        write_grid(domain, data["stage4"], dt, tile_affine, fnadd="stage4")
-    write_grid(domain, np.sum(data["precip"], 2), dt, tile_affine)
+    precip_workflow(tile.domain, data, tile.dt, tile_affine)
+    if tile.domain == "":
+        write_grid(
+            tile.domain, data["stage4"], tile.dt, tile_affine, fnadd="stage4"
+        )
+    write_grid(tile.domain, np.sum(data["precip"], 2), tile.dt, tile_affine)
 
     counts = {"errors": 0, "success": 0}
 
@@ -759,8 +783,8 @@ def daily_editor_workflow(
         if counts["errors"] > 10:
             return False
         clifn = clirow["filepath"]
-        xidx = int((clirow["lon"] - west) * 100)
-        yidx = int((clirow["lat"] - south) * 100)
+        xidx = int((clirow["lon"] - tile.west) * 100)
+        yidx = int((clirow["lat"] - tile.south) * 100)
         # Ensure that our indices are within bnds, this should not be possible
         if xidx < 0 or xidx >= shp[1] or yidx < 0 or yidx >= shp[0]:
             LOG.warning(
@@ -793,7 +817,7 @@ def daily_editor_workflow(
 
             pool.apply_async(
                 _proxy,
-                (row.to_dict(), data, dt),
+                (row.to_dict(), data, tile.dt),
                 callback=_callback,
                 error_callback=LOG.error,
             )

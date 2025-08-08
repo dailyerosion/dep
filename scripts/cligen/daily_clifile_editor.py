@@ -17,6 +17,7 @@ from pyiem.util import logger
 
 from pydep.workflows.clifile import (
     CLIFileWorkflowFailure,
+    Tile,
     daily_editor_workflow,
 )
 
@@ -36,16 +37,17 @@ def main(
     scenario: int, west: int, east: int, south: int, north: int, dt: datetime
 ):
     """The workflow to get the weather data variables we want!"""
+    tile = Tile(
+        west=west,
+        east=east,
+        south=south,
+        north=north,
+        scenario=scenario,
+        dt=dt.date(),
+        domain="",
+    )
     try:
-        daily_editor_workflow(
-            scenario,
-            "",
-            dt.date(),
-            west,
-            east,
-            south,
-            north,
-        )
+        daily_editor_workflow(tile)
     except CLIFileWorkflowFailure:
         # Allow calling scripts to see this failure
         sys.exit(3)
