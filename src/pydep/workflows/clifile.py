@@ -57,6 +57,13 @@ class Tile:
     domain: str
     nav: CartesianGridNavigation = field(init=False)
 
+    def __str__(self):
+        """String representation."""
+        return (
+            f"Tile({self.dt}[{self.domain}] LO:{self.west}>{self.east} "
+            f"LA:{self.south}>{self.north})"
+        )
+
     def __post_init__(self):
         """Create the grid navigation after initialization."""
         self.nav = CartesianGridNavigation(
@@ -189,15 +196,15 @@ def iemre_bounds_check(clidf: pd.DataFrame, col: str, lower, upper) -> None:
         raise CLIFileWorkflowFailure("IEMRE data out of bounds!")
 
 
-def load_iemre(clidf: pd.DataFrame, domain: str, valid: date) -> None:
+def load_iemre(tile: Tile, clidf: pd.DataFrame) -> None:
     """Use IEM Reanalysis for non-precip data
 
     1/8 degree product is nearest neighbor resampled to the 0.01 degree grid
     """
     ds = get_grids(
-        valid,
+        tile.dt,
         varnames=["high_tmpk", "low_tmpk", "avg_dwpk", "wind_speed", "rsds"],
-        domain=domain,
+        domain=tile.domain,
     )
     # Ensure that we don't have all missing data
     if ds["high_tmpk"].isnull().all():
@@ -208,7 +215,7 @@ def load_iemre(clidf: pd.DataFrame, domain: str, valid: date) -> None:
     # Convert W m-2 to langleys per day
     slngly = ds["rsds"] * 86400 / 1_000_000.0 * 23.9
     wspd = ds["wind_speed"]
-    nav = get_nav("IEMRE", domain)
+    nav = get_nav("IEMRE", tile.domain)
     for idx, row in clidf.iterrows():
         i, j = nav.find_ij(row["lon"], row["lat"])
         clidf.at[idx, "solar"] = slngly[j, i]
@@ -225,18 +232,18 @@ def load_iemre(clidf: pd.DataFrame, domain: str, valid: date) -> None:
     iemre_bounds_check(clidf, "wind", 0, 40)
 
 
-def load_stage4(data, dt: date, tile_affine: Affine):
+def load_stage4(tile: Tile, data):
     """It sucks, but we need to load the stage IV data to give us something
     to benchmark the MRMS data against, to account for two things:
     1) Wind Farms
     2) Over-estimates
     """
     # The stage4 files store precip in the rears, so compute 1 AM
-    one_am, tomorrow = get_sts_ets_at_localhour("", dt, 1)
+    one_am, tomorrow = get_sts_ets_at_localhour("", tile.dt, 1)
 
     sts_tidx = hourly_offset(one_am)
     ets_tidx = hourly_offset(tomorrow)
-    ncfn = f"{ST4PATH}/{dt:%Y}_stage4_hourly.nc"
+    ncfn = f"{ST4PATH}/{tile.dt.year}_stage4_hourly.nc"
     if not os.path.isfile(ncfn):
         msg = f"Stage IV file {ncfn} does not exist, aborting workflow..."
         _warnlog(msg)
@@ -267,12 +274,12 @@ def load_stage4(data, dt: date, tile_affine: Affine):
         data["stage4"],
         src_transform=STAGE4.affine,
         src_crs=STAGE4.crs,
-        dst_transform=tile_affine,
+        dst_transform=tile.affine,
         dst_crs="EPSG:4326",
     )
 
 
-def qc_precip(data, dt: date, tile_affine: Affine):
+def qc_precip(tile: Tile, data):
     """Make some adjustments to the `precip` grid
 
     Not very sophisticated here, if the hires precip grid is within 33% of
@@ -281,7 +288,7 @@ def qc_precip(data, dt: date, tile_affine: Affine):
     """
     hires_total = np.sum(data["precip"], 2)
     # Only do this check for tiles west of -101, likely too crude for east
-    if dt.year >= 2015 and tile_affine.c < -101:
+    if tile.dt.year >= 2015 and tile.affine.c < -101:
         # Do an assessment of the hires_total (A2M MRMS), it may have too many
         # zeros where stage IV has actual data.
         a2m_zeros = hires_total < 0.01
@@ -289,7 +296,7 @@ def qc_precip(data, dt: date, tile_affine: Affine):
         score = np.sum(np.logical_and(a2m_zeros, s4)) / np.multiply(*s4.shape)
         if score > 0.005:  # 0.5% is arb, but good enough?
             _warnlog("MRMS had %.2f%% bad zeros, using legacy", score * 100)
-            load_precip_legacy(data, dt, tile_affine)
+            load_precip_legacy(tile, data)
             hires_total = np.sum(data["precip"], 2)
 
     # prevent zeros
@@ -304,12 +311,12 @@ def qc_precip(data, dt: date, tile_affine: Affine):
     data["precip"][np.isnan(data["precip"])] = 0.0
 
 
-def _reader(utcnow: datetime, tidx, shp, west: float, south: float):
+def _reader(tile: Tile, utcnow: datetime, tidx):
     """Read the legacy N0R data"""
     ppath = utcnow.strftime("%Y/%m/%d/GIS/uscomp/n0r_%Y%m%d%H%M.png")
-    x0 = int((west + 126.0) * 100)
-    ny, nx = shp
-    north = south + (ny + 1) * 0.01  # meh
+    x0 = int((tile.west + 126.0) * 100)
+    ny, nx = tile.shape
+    north = tile.south + (ny + 1) * 0.01  # meh
     y0 = int((50.0 - north) * 100)
     with archive_fetch(ppath) as fn:
         if fn is None:
@@ -329,11 +336,11 @@ def _reader(utcnow: datetime, tidx, shp, west: float, south: float):
     return tidx, np.flipud(dbz)
 
 
-def load_precip_legacy(data, valid, tile_affine: Affine):
+def load_precip_legacy(tile: Tile, data):
     """Compute a Legacy Precip product for dates prior to 1 Jan 2014"""
     ts = 12 * 24  # 5 minute
 
-    midnight, tomorrow = get_sts_ets_at_localhour("", valid, 0)
+    midnight, tomorrow = get_sts_ets_at_localhour("", tile.dt, 0)
 
     now = midnight
     # To avoid division by zero below when we have the strip of no-data 23-24N
@@ -362,7 +369,6 @@ def load_precip_legacy(data, valid, tile_affine: Affine):
                 m5[tidx] = precip
 
     tidx = 0
-    shp = data["stage4"].shape
     with ThreadPool(CPUCOUNT) as pool:
         # Load up the n0r data, every 5 minutes
         while now < tomorrow:
@@ -372,11 +378,9 @@ def load_precip_legacy(data, valid, tile_affine: Affine):
             pool.apply_async(
                 _reader,
                 (
+                    tile,
                     now.astimezone(UTC),
                     tidx,
-                    shp,
-                    tile_affine.c,
-                    tile_affine.f,
                 ),
                 callback=_cb_pl,
                 error_callback=LOG.error,
@@ -412,20 +416,18 @@ def load_precip_legacy(data, valid, tile_affine: Affine):
 
 
 def _mrms_reader(
+    tile: Tile,
     utcnow: datetime,
     tidx,
-    shp,
-    west_edge: float,
-    south_edge: float,
     a2m_divisor,
 ):
     """Read the MRMS data."""
     ppath = utcnow.strftime("%Y/%m/%d/GIS/mrms/a2m_%Y%m%d%H%M.png")
     # MRMS pixels are not centered on 0.01 degree grid, so we are not being
     # the most exact here.
-    x0 = int((west_edge + 130.0) * 100)
-    ny, nx = shp
-    north = south_edge + (ny + 1) * 0.01  # meh
+    x0 = int((tile.nav.left_edge + 130.0) * 100)
+    ny, nx = tile.shape
+    north = tile.nav.bottom_edge + (ny + 1) * 0.01  # meh
     y0 = int((55.0 - north) * 100)
     with archive_fetch(ppath) as fn:
         if fn is None:
@@ -440,17 +442,17 @@ def _mrms_reader(
     return tidx, np.flipud(imgdata)
 
 
-def load_imerg(data, domain: str, dt: date, tile_affine: Affine):
+def load_imerg(tile: Tile, data):
     """Load the 30 minute IMERG data."""
     # IMERG is stored in the **future**
-    midnight, tomorrow = get_sts_ets_at_localhour(domain, dt, 0)
+    midnight, tomorrow = get_sts_ets_at_localhour(tile.domain, tile.dt, 0)
     toff = timedelta(minutes=30)
     now = midnight + toff
     # IMERG is stored -180,90 to 180,-90 at 0.1x0.1
-    x0 = int((tile_affine.c + 180.0) * 10)
+    x0 = int((tile.affine.c + 180.0) * 10)
     # DEP storage is 0.01x0.01
     ny, nx, _ = data["precip"].shape
-    y0 = int((90.0 - tile_affine.f) * 10)
+    y0 = int((90.0 - tile.affine.f) * 10)
 
     tidx = 0
     while now <= tomorrow:
@@ -488,14 +490,14 @@ def load_imerg(data, domain: str, dt: date, tile_affine: Affine):
         now += timedelta(minutes=30)
 
 
-def load_precip(data, dt: date, tile_affine: Affine):
+def load_precip(tile: Tile, data):
     """Load the 2 minute precipitation data into our ginormus grid"""
     ts = 30 * 24  # 2 minute
 
-    midnight, tomorrow = get_sts_ets_at_localhour("", dt, 0)
+    midnight, tomorrow = get_sts_ets_at_localhour(tile.domain, tile.dt, 0)
 
     # Oopsy we discovered a problem
-    a2m_divisor = 10.0 if (dt < date(2015, 1, 1)) else 50.0
+    a2m_divisor = 10.0 if (tile.dt < date(2015, 1, 1)) else 50.0
 
     now = midnight
     # Require at least 75% data coverage, if not, we will abort back to legacy
@@ -510,17 +512,14 @@ def load_precip(data, dt: date, tile_affine: Affine):
             quorum["cnt"] -= 1
 
     tidx = 0
-    shp = data["stage4"].shape
     with ThreadPool(CPUCOUNT) as pool:
         while now < tomorrow:
             pool.apply_async(
                 _mrms_reader,
                 (
+                    tile,
                     now.astimezone(UTC),
                     tidx,
-                    shp,
-                    tile_affine.c,
-                    tile_affine.f,
                     a2m_divisor,
                 ),
                 callback=_cb_lp,
@@ -535,7 +534,7 @@ def load_precip(data, dt: date, tile_affine: Affine):
             "Failed 75%% quorum with MRMS a2m %.1f, loading legacy",
             quorum["cnt"],
         )
-        load_precip_legacy(data, dt, tile_affine)
+        load_precip_legacy(tile, data)
 
 
 def bpstr(ts, accum):
@@ -597,24 +596,21 @@ def compute_breakpoint(ar, accumThreshold=2.0, intensityThreshold=1.0):
     return bp
 
 
-def write_grid(
-    domain: str, grid: np.ndarray, valid, tile_affine: Affine, fnadd=""
-):
+def write_grid(tile: Tile, grid: np.ndarray, fnadd=""):
     """Save off the daily precip totals for usage later in computing huc_12"""
     if fnadd != "" and not sys.stdout.isatty():
-        LOG.debug("not writting extra grid to disk")
         return
-    basedir = f"/mnt/idep2/data/dailyprecip/{valid.year}"
-    if domain != "":
-        basedir = f"/mnt/dep/{domain}/data/dailyprecip/{valid.year}"
+    basedir = f"/mnt/idep2/data/dailyprecip/{tile.dt.year}"
+    if tile.domain != "":
+        basedir = f"/mnt/dep/{tile.domain}/data/dailyprecip/{tile.dt.year}"
     if not os.path.isdir(basedir):
         os.makedirs(basedir)
-    lat_prefix = "N" if tile_affine.f > 0 else "S"
-    lon_prefix = "E" if tile_affine.c > 0 else "W"
+    lat_prefix = "N" if tile.affine.f > 0 else "S"
+    lon_prefix = "E" if tile.affine.c > 0 else "W"
     fn = (
-        f"{basedir}/{valid:%Y%m%d}{fnadd}."
-        f"tile_{lon_prefix}{abs(tile_affine.c):.0f}_"
-        f"{lat_prefix}{abs(tile_affine.f):.0f}.geotiff"
+        f"{basedir}/{tile.dt:%Y%m%d}{fnadd}."
+        f"tile_{lon_prefix}{abs(tile.affine.c):.0f}_"
+        f"{lat_prefix}{abs(tile.affine.f):.0f}.geotiff"
     )
     with rasterio.open(
         fn,
@@ -625,26 +621,26 @@ def write_grid(
         count=1,
         dtype=grid.dtype,
         crs="EPSG:4326",
-        transform=tile_affine,
+        transform=tile.affine,
     ) as dst:
         dst.write(grid, 1)
 
 
-def precip_workflow(domain: str, data, valid, tile_affine: Affine):
+def precip_workflow(tile: Tile, data):
     """Drive the precipitation workflow"""
-    if domain == "":
-        load_stage4(data, valid, tile_affine)
+    if tile.domain == "":
+        load_stage4(tile, data)
         # We have MRMS a2m RASTER files prior to 1 Jan 2015, but these files
         # used a very poor choice of data interval of 0.1mm, which is not
         # large enough to capture low intensity events.  Files after 1 Jan 2015
         # used a better 0.02mm resolution
-        if valid.year < 2015:
-            load_precip_legacy(data, valid, tile_affine)
+        if tile.dt.year < 2015:
+            load_precip_legacy(tile, data)
         else:
-            load_precip(data, valid, tile_affine)
-        qc_precip(data, valid, tile_affine)
+            load_precip(tile, data)
+        qc_precip(tile, data)
     else:
-        load_imerg(data, domain, valid, tile_affine)
+        load_imerg(tile, data)
 
 
 def edit_clifile(
@@ -726,15 +722,12 @@ def daily_editor_workflow(tile: Tile) -> list[bool, int, int]:
         edited (int) Number of climate files successfully edited.
         errors (int) Number of climate files failed to edit.
     """
+    RUNTIME["log_prefix"] = f"{tile} "
 
     clidf = load_clifiles(tile)
     if clidf.empty:
-        _infolog("No climate files found for scenario %s", tile.scenario)
+        _infolog("No climate files to edit")
         return [True, 0, 0]
-
-    # This is the outer edge of the grid and our west/south pts are inclusive
-    # the grid is oriented from south to north (positive dy)
-    tile_affine = tile.affine
 
     # Fill out clidf with IEMRE values
     # 1. Max Temp C
@@ -742,7 +735,7 @@ def daily_editor_workflow(tile: Tile) -> list[bool, int, int]:
     # 3. Radiation l/d
     # 4. wind mps
     # 6. Mean dewpoint C
-    load_iemre(clidf, tile.domain, tile.dt)
+    load_iemre(tile, clidf)
 
     shp = tile.shape
     data = {
@@ -755,12 +748,10 @@ def daily_editor_workflow(tile: Tile) -> list[bool, int, int]:
 
     # 5. wind direction (always zero)
     # 7. breakpoint precip mm
-    precip_workflow(tile.domain, data, tile.dt, tile_affine)
+    precip_workflow(tile, data)
     if tile.domain == "":
-        write_grid(
-            tile.domain, data["stage4"], tile.dt, tile_affine, fnadd="stage4"
-        )
-    write_grid(tile.domain, np.sum(data["precip"], 2), tile.dt, tile_affine)
+        write_grid(tile, data["stage4"], fnadd="stage4")
+    write_grid(tile, np.sum(data["precip"], 2))
 
     counts = {"errors": 0, "success": 0}
 

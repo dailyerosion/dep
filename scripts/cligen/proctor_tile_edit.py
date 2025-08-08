@@ -75,8 +75,10 @@ def assemble_geotiffs(dt: date, domain: str):
     # Write out a GeoTIFF, we will store as a UInt16 with a scale factor
     # of 100, so we can store 0 to 655.35 mm of precipitation
     res = (res * 100.0).astype(np.uint16)
+    outfn = get_fn(dt, domain)
+    os.makedirs(os.path.dirname(outfn), exist_ok=True)
     with rasterio.open(
-        get_fn(dt, domain),
+        outfn,
         "w",
         driver="GTiff",
         compress="lzw",
@@ -167,7 +169,7 @@ def main(scenario, dt: datetime, domain: str):
     progress = tqdm(total=len(jobs), disable=not sys.stdout.isatty())
     # 12 Nov 2021 audit shows per process usage in the 2-3 GB range
     workers = int(min([4, cpu_count() / 4]))
-    progress.write(f"starting {workers} workers")
+    LOG.info("starting %s workers", workers)
     with ProcessPoolExecutor(max_workers=workers) as executor:
         for res in executor.map(myjob, jobs):
             if not res[0]:
