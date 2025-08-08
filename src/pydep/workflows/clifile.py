@@ -8,7 +8,6 @@ from datetime import date, datetime, timedelta, timezone
 from io import StringIO
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
-from typing import Optional
 from zoneinfo import ZoneInfo
 
 import numpy as np
@@ -23,7 +22,6 @@ from pyiem.models.gridnav import CartesianGridNavigation
 from pyiem.util import LOG, archive_fetch, convert_value, ncopen
 from rasterio.errors import NotGeoreferencedWarning
 from rasterio.warp import reproject
-from tqdm import tqdm
 
 from pydep.io.cli import daily_formatter
 from pydep.reference import GRID_SPACING
@@ -667,7 +665,7 @@ def daily_editor_workflow(
     east: int,
     south: int,
     north: int,
-) -> Optional[int]:
+) -> list[bool, int, int]:
     """Do daily processing work.
 
     Args:
@@ -678,6 +676,11 @@ def daily_editor_workflow(
         east (int): East grid point (exclusive center point)
         south (int): South grid point (inclusive center point)
         north (int): North grid point (exclusive center point)
+
+    Returns:
+        success (bool): No errors here.
+        edited (int) Number of climate files successfully edited.
+        errors (int) Number of climate files failed to edit.
     """
     # Create a grid navigation object
     tilenav = CartesianGridNavigation(
@@ -691,7 +694,7 @@ def daily_editor_workflow(
     clidf = load_clifiles(scenario, domain, tilenav)
     if clidf.empty:
         LOG.info("No climate files found for scenario %s", scenario)
-        return 0
+        return [True, 0, 0]
 
     # This is the outer edge of the grid and our west/south pts are inclusive
     # the grid is oriented from south to north (positive dy)
@@ -721,49 +724,46 @@ def daily_editor_workflow(
         write_grid(domain, data["stage4"], dt, tile_affine, fnadd="stage4")
     write_grid(domain, np.sum(data["precip"], 2), dt, tile_affine)
 
-    progress = tqdm(total=len(clidf), disable=not sys.stdout.isatty())
-    errors = {"cnt": 0}
+    counts = {"errors": 0, "success": 0}
+
+    def _callback(res):
+        """We got a result."""
+        counts["success" if res else "errors"] += 1
+
+    def _proxy(clirow: dict, data, valid):
+        """Proxy."""
+        # Short circuit any futher work
+        if counts["errors"] > 10:
+            return False
+        clifn = clirow["filepath"]
+        xidx = int((clirow["lon"] - west) * 100)
+        yidx = int((clirow["lat"] - south) * 100)
+        # Ensure that our indices are within bnds, this should not be possible
+        if xidx < 0 or xidx >= shp[1] or yidx < 0 or yidx >= shp[0]:
+            LOG.warning(
+                "clifile %s out of bounds x:%s[0-%s] y:%s[0-%s]",
+                clifn,
+                xidx,
+                shp[1],
+                yidx,
+                shp[0],
+            )
+            return False
+        try:
+            return edit_clifile(clirow, xidx, yidx, data, valid)
+        except Exception as _exp:
+            with StringIO() as sio:
+                traceback.print_exc(file=sio)
+                LOG.error(
+                    "edit_clifile(%s, %s, %s) failed: %s",
+                    xidx,
+                    yidx,
+                    clifn,
+                    sio.getvalue(),
+                )
+        return False
 
     with ThreadPool(CPUCOUNT) as pool:
-
-        def _callback(res):
-            """We got a result."""
-            if not res:
-                errors["cnt"] += 1
-            progress.update(1)
-
-        def _proxy(clirow: dict, data, valid):
-            """Proxy."""
-            if errors["cnt"] > 10:
-                return False
-            clifn = clirow["filepath"]
-            xidx = int((clirow["lon"] - west) * 100)
-            yidx = int((clirow["lat"] - south) * 100)
-            # Ensure that our indices are within bounds
-            if xidx < 0 or xidx >= shp[1] or yidx < 0 or yidx >= shp[0]:
-                LOG.warning(
-                    "clifile %s out of bounds x:%s[0-%s] y:%s[0-%s]",
-                    clifn,
-                    xidx,
-                    shp[1],
-                    yidx,
-                    shp[0],
-                )
-                return False
-            try:
-                return edit_clifile(clirow, xidx, yidx, data, valid)
-            except Exception as _exp:
-                with StringIO() as sio:
-                    traceback.print_exc(file=sio)
-                    LOG.error(
-                        "edit_clifile(%s, %s, %s) failed: %s",
-                        xidx,
-                        yidx,
-                        clifn,
-                        sio.getvalue(),
-                    )
-            return False
-
         for _, row in clidf.iterrows():
             if not os.path.isfile(row["filepath"]):
                 continue
@@ -777,6 +777,4 @@ def daily_editor_workflow(
         pool.close()
         pool.join()
 
-    if errors["cnt"] > 0:
-        LOG.info("Finished with %s errors", errors["cnt"])
-    return 0
+    return [counts["errors"] == 0, counts["success"], counts["errors"]]

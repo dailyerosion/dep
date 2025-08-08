@@ -104,7 +104,7 @@ def assemble_geotiffs(dt: date, domain: str):
         dst.write(np.flipud(res), 1)
 
 
-def myjob(tile: Tile) -> int | None:
+def myjob(tile: Tile) -> list[bool, int, int]:
     """Run this command and return any result."""
     try:
         return daily_editor_workflow(
@@ -130,7 +130,7 @@ def myjob(tile: Tile) -> int | None:
         )
         # Log the exception and full stack trace
         traceback.print_exc()
-    return None
+    return False, 0, 0
 
 
 @click.command()
@@ -185,7 +185,7 @@ def main(scenario, dt: datetime, domain: str):
     LOG.info("starting %s workers", workers)
     with ProcessPoolExecutor(max_workers=workers) as executor:
         for res in executor.map(myjob, jobs):
-            if res is None:
+            if not res[0]:
                 failed += 1
     if failed > 0:
         LOG.warning("Exiting with status 3 due to %s failure(s)", failed)
