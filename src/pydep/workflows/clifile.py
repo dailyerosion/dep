@@ -741,8 +741,6 @@ def daily_editor_workflow(tile: Tile) -> list[bool, int, int]:
     # 5. wind direction (always zero)
     # 7. breakpoint precip mm
     precip_workflow(tile, data)
-    if tile.domain == "":
-        write_grid(tile, data["stage4"], fnadd="stage4")
     write_grid(tile, np.sum(data["precip"], 2))
 
     counts = {"errors": 0, "success": 0}
