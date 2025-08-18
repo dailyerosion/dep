@@ -14,7 +14,7 @@ def main():
     with get_sqlalchemy_conn("idep") as conn:
         meta = pd.read_sql(
             sql_helper("""
-                select huc_12, flowpath, ofe,
+                select huc_12, fpath as flowpath, ofe,
                 st_x(st_pointn(st_transform(o.geom, 4326), 1)) as lon,
                 st_y(st_pointn(st_transform(o.geom, 4326), 1)) as lat,
                 o.bulk_slope,
