@@ -3,7 +3,8 @@ dependencies:
   - click
   - coverage
   # reading rasters
-  - gdal
+  - gdal>=3.10,<3.11
+  - libnetcdf=4.9.2
   - pyshp
   - tqdm
   - pandas
