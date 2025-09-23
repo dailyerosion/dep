@@ -21,7 +21,7 @@ def compute_average_slope_ratio(cursor, scenario):
 
 
 @click.command()
-@click.option("--scenario", type=int, required=True)
+@click.option("-s", "--scenario", type=int, required=True)
 def main(scenario: int):
     """Do great things."""
     pgconn = get_dbconn("idep")

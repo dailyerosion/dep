@@ -8,7 +8,7 @@ TARGETS = "crop error man ofe prj run slp sol wb yld env rot out".split()
 
 
 @click.command()
-@click.option("--scenario", type=int, required=True)
+@click.option("-s", "--scenario", type=int, required=True)
 def main(scenario: int):
     """Go Main Go."""
     myhucs = [x.strip() for x in open("myhucs.txt", encoding="utf8")]

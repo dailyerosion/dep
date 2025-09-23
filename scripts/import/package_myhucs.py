@@ -11,7 +11,7 @@ LOG = logger()
 
 
 @click.command()
-@click.option("--scenario", type=int, required=True, help="Scenario ID")
+@click.option("--scenario", "-s", type=int, required=True, help="Scenario ID")
 def main(scenario: int):
     """Go main Go."""
     myhucs = [s.strip() for s in open("myhucs.txt", encoding="utf8")]
