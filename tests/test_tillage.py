@@ -11,7 +11,7 @@ def test_gh266_pasture():
 
 def test_simple():
     """Test import of API."""
-    plants = ["C", "B", "W", "P"]
+    plants = ["C", "B", "W", "P", "G"]
     cfactors = list(range(1, 7))
     zones = ["IA_NORTH", "IA_SOUTH", "KS_NORTH"]
     for bp in plants:
