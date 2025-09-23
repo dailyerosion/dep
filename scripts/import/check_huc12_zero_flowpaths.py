@@ -6,7 +6,7 @@ from pyiem.database import get_sqlalchemy_conn, sql_helper
 
 
 @click.command()
-@click.option("--scenario", type=int, required=True)
+@click.option("-s", "--scenario", type=int, required=True)
 def main(scenario: int):
     """Go Main Go."""
     huc12s = [s.strip() for s in open("myhucs.txt", encoding="utf8")]

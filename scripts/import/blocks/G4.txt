@@ -1,0 +1,7 @@
+%(pdatem15)s  %(yr)s  1 Tillage    OpCropDef.TAND0002    {0.101600, 2}
+%(pdatem10)s  %(yr)s  1 Tillage    OpCropDef.TAND0002    {0.101600, 2}
+%(pdatem5)s  %(yr)s  1 Tillage    OpCropDef.FCSTACDP    {0.101600, 2}
+%(pdate)s  %(yr)s  1 Tillage    OpCropDef.PLDDO    {0.050800, 2}
+%(pdate)s  %(yr)s  1 Plant-Annual    %(plant)s     {0.762000}
+10  15  %(yr)s  1 Harvest-Annual    %(plant)s    {}
+11  1  %(yr)s  1 Tillage    OpCropDef.CHISSTSP    {0.203200, 1}

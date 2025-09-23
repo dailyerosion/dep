@@ -20,6 +20,14 @@ SOYBEAN_PLANT = {
     "IA_CENTRAL": date(2000, 5, 17),
     "IA_NORTH": date(2000, 5, 23),
 }
+SORGHUM_PLANT = {
+    "KS_SOUTH": date(2000, 4, 20),
+    "KS_CENTRAL": date(2000, 4, 25),
+    "KS_NORTH": date(2000, 4, 30),
+    "IA_SOUTH": date(2000, 4, 30),
+    "IA_CENTRAL": date(2000, 5, 5),
+    "IA_NORTH": date(2000, 5, 10),
+}
 CORN_PLANT = {
     "KS_SOUTH": date(2000, 4, 20),
     "KS_CENTRAL": date(2000, 4, 25),
@@ -43,6 +51,14 @@ SOYBEAN = {
     "IA_SOUTH": "CropDef.Soy_2192",
     "IA_CENTRAL": "CropDef.Soy_2193",
     "IA_NORTH": "CropDef.Soy_2194",
+}
+SORGHUM = {
+    "KS_SOUTH": "CropDef.sorghum3",
+    "KS_CENTRAL": "CropDef.sorghum3",
+    "KS_NORTH": "CropDef.sorghum3",
+    "IA_SOUTH": "CropDef.sorghum3",
+    "IA_CENTRAL": "CropDef.sorghum3",
+    "IA_NORTH": "CropDef.sorghum3",
 }
 WHEAT = {
     "KS_SOUTH": "CropDef.spwheat1",
@@ -94,7 +110,7 @@ def make_tillage(scenario, zone, prevcode, code, nextcode, cfactor, year: int):
             data = data[:pos]
 
     # The fall tillage operation is governed by the next year crop
-    if cfactor == "5" and nextcode == "C":
+    if cfactor == "5" and nextcode in ["C", "G"]:
         # Replace 11  1 operation with plow
         pos = data.find("11  1")
         if pos > 0:
@@ -104,7 +120,7 @@ def make_tillage(scenario, zone, prevcode, code, nextcode, cfactor, year: int):
             )
 
     # Anhydrous ammonia application when we are going into Corn
-    if nextcode == "C":
+    if nextcode in ["C", "G"]:
         # HACK: look for a present 1 Nov operation and insert this before it
         pos = data.find("11  1")
         extra = ""
@@ -137,6 +153,13 @@ def make_tillage(scenario, zone, prevcode, code, nextcode, cfactor, year: int):
         pdatem10 = (date - timedelta(days=10)).strftime("%m    %d")
         pdatem15 = (date - timedelta(days=15)).strftime("%m    %d")
         plant = SOYBEAN[zone]
+    elif code == "G":
+        date = SORGHUM_PLANT.get(scenario, SORGHUM_PLANT[zone])
+        plant = SORGHUM[zone]
+        pdate = date.strftime("%m    %d")
+        pdatem5 = (date - timedelta(days=5)).strftime("%m    %d")
+        pdatem10 = (date - timedelta(days=10)).strftime("%m    %d")
+        pdatem15 = (date - timedelta(days=15)).strftime("%m    %d")
     elif code == "W":
         date = SOYBEAN_PLANT.get(scenario, SOYBEAN_PLANT[zone])  # TODO
         plant = WHEAT_PLANT[zone]
