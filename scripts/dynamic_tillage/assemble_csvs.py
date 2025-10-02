@@ -2,38 +2,41 @@
 
 import glob
 
+import click
 import pandas as pd
 
 
-def main():
+@click.command()
+@click.option("--crop", required=True)
+def main(crop: str):
     """Go main Go."""
     dfs = []
     # plots directory is sym link managed
-    for csvfn in glob.glob("plots/corn*.csv"):
-        crop, _year, datum = csvfn.split("/")[-1][:-4].split("_")
-        if datum in ["IA", "MN", "KS", "NE"]:
+    for csvfn in glob.glob(f"plots/{crop}*.csv"):
+        _crop, _year, datum = csvfn.split("/")[-1][:-4].split("_")
+        if datum in ["KS", "NE"]:
             continue
         progress = pd.read_csv(csvfn, parse_dates=["valid"])
-        progress["district"] = datum
+        progress["datum"] = datum
         progress = progress.rename(
             columns={"dep_planted": f"{crop}_dep_planted"}
-        ).set_index(["district", "valid"])
+        ).set_index(["datum", "valid"])
         dfs.append(progress)
     jumbo = pd.concat(dfs)
     rectified = jumbo[
-        jumbo["corn planted"].notna() | jumbo["dep_corn_planted"].notna()
+        jumbo[f"{crop} planted"].notna() | jumbo[f"dep_{crop}_planted"].notna()
     ].copy()
 
     # Drop things with all nulls
     rectified = rectified[
-        rectified["dep_corn_planted"].notna()
+        rectified[f"dep_{crop}_planted"].notna()
         | rectified["dep_days_suitable"].notna()
     ]
 
     (
         rectified.reset_index()
-        .sort_values(["district", "valid"])
-        .to_csv("IA_district_dep_vs_nass_240830.csv", index=False)
+        .sort_values(["datum", "valid"])
+        .to_csv(f"{crop}_dep_vs_nass_251002.csv", index=False)
     )
 
 
