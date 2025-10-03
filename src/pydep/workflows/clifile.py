@@ -441,10 +441,10 @@ def load_imerg(tile: Tile, data):
     toff = timedelta(minutes=30)
     now = midnight + toff
     # IMERG is stored -180,90 to 180,-90 at 0.1x0.1
-    x0 = int((tile.affine.c + 180.0) * 10)
+    x0 = int((tile.west + 180.0) * 10)
     # DEP storage is 0.01x0.01
     ny, nx, _ = data["precip"].shape
-    y0 = int((90.0 - tile.affine.f) * 10)
+    y0 = int((90.0 - tile.north) * 10)
 
     tidx = 0
     while now <= tomorrow:
