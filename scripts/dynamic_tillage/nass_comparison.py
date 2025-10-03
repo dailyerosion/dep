@@ -18,15 +18,24 @@ from pyiem.util import logger
 
 LOG = logger()
 XREF = {
-    "nw": "IAC001",
-    "nc": "IAC002",
-    "ne": "IAC003",
-    "wc": "IAC004",
-    "c": "IAC005",
-    "ec": "IAC006",
-    "sw": "IAC007",
-    "sc": "IAC008",
-    "se": "IAC009",
+    "IA_NW": "IAC001",
+    "IA_NC": "IAC002",
+    "IA_NE": "IAC003",
+    "IA_WC": "IAC004",
+    "IA_C": "IAC005",
+    "IA_EC": "IAC006",
+    "IA_SW": "IAC007",
+    "IA_SC": "IAC008",
+    "IA_SE": "IAC009",
+    "MN_NW": "MNC001",
+    "MN_NC": "MNC002",
+    "MN_NE": "MNC003",
+    "MN_WC": "MNC004",
+    "MN_C": "MNC005",
+    "MN_EC": "MNC006",
+    "MN_SW": "MNC007",
+    "MN_SC": "MNC008",
+    "MN_SE": "MNC009",
 }
 UGCHACK = {
     "MNC005": "Becker",
@@ -66,7 +75,7 @@ def compute_limits(huc12s, year):
     return pd.DataFrame(rows).set_index("date")
 
 
-def get_geo_bounds(district, state, ugc: str | None):
+def get_geo_bounds(datum: str, ugc: str | None):
     """Figure out what the bounds are."""
     if ugc is not None:
         with get_sqlalchemy_conn("postgis") as conn:
@@ -83,7 +92,7 @@ def get_geo_bounds(district, state, ugc: str | None):
                 geom_col="geo",
                 index_col="ugc",
             )
-    if state is not None:
+    if len(datum) == 2:
         with get_sqlalchemy_conn("postgis") as conn:
             return gpd.read_postgis(
                 sql_helper(
@@ -94,7 +103,7 @@ def get_geo_bounds(district, state, ugc: str | None):
                 ),
                 conn,
                 crs=5070,
-                params={"state": state},
+                params={"state": datum},
                 geom_col="geo",
                 index_col="state_abbr",
             )
@@ -109,13 +118,13 @@ def get_geo_bounds(district, state, ugc: str | None):
             ),
             conn,
             crs=5070,
-            params={"sid": XREF[district]},
+            params={"sid": XREF[datum]},
             geom_col="geo",
             index_col="iemid",
         )
 
 
-def get_nass(year, state, district, crop) -> pd.DataFrame:
+def get_nass(year: int, datum: str, crop: str) -> pd.DataFrame:
     """Get the NASS data."""
     with get_sqlalchemy_conn("coop") as conn:
         nass = pd.read_sql(
@@ -124,7 +133,7 @@ def get_nass(year, state, district, crop) -> pd.DataFrame:
             select num_value,
             case when statisticcat_desc = 'DAYS SUITABLE'
             then 'days suitable' else '{crop} planted' end as metric,
-            week_ending as valid,
+            week_ending as date,
             state_alpha as datum
             from nass_quickstats where
             state_alpha in ('IA', 'NE', 'KS', 'MN') and
@@ -138,14 +147,14 @@ def get_nass(year, state, district, crop) -> pd.DataFrame:
             conn,
             params={"year": year},
         )
-        if state == "IA" or district is not None:  # Iowa has district
+        if datum.startswith("IA"):  # Iowa has district
             district = pd.read_sql(
                 sql_helper(
                     f"""
-                select valid, metric, nw, nc, ne, wc, c, ec, sw, sc, se
+                select valid as date, metric, nw, nc, ne, wc, c, ec, sw, sc, se
                 from nass_iowa
                 where metric in ('{crop} planted', 'days suitable')
-                and extract(year from valid) = :year ORDER by valid ASc
+                and extract(year from valid) = :year ORDER by valid ASC
                 """
                 ),
                 conn,
@@ -154,11 +163,11 @@ def get_nass(year, state, district, crop) -> pd.DataFrame:
             slices = []
             for dist in ["nw", "nc", "ne", "wc", "c", "ec", "sw", "sc", "se"]:
                 ddf = (
-                    district[["valid", "metric", dist]]
+                    district[["date", "metric", dist]]
                     .copy()
                     .rename(columns={dist: "num_value"})
                 )
-                ddf["datum"] = dist
+                ddf["datum"] = f"IA_{dist.upper()}"
                 slices.append(ddf)
             nass = pd.concat([nass, *slices])
     # NASS does not always include 0% and 100% in their data, so we need to
@@ -167,23 +176,23 @@ def get_nass(year, state, district, crop) -> pd.DataFrame:
     newrows = []
     for datum, gdf in nass[nass["metric"] == metric].groupby("datum"):
         if gdf["num_value"].min() > 0:
-            firstrow = gdf.loc[gdf["num_value"] > 0, "valid"].values[0]
+            firstrow = gdf.loc[gdf["num_value"] > 0, "date"].values[0]
             newrows.append(
                 {
                     "num_value": 0,
                     "metric": metric,
-                    "valid": firstrow - pd.Timedelta(days=7),
+                    "date": firstrow - pd.Timedelta(days=7),
                     "datum": datum,
                 }
             )
         # TODO, this may not always be right for in-progress years
         if gdf["num_value"].max() < 100:
-            lastrow = gdf.loc[gdf["num_value"] > 0, "valid"].values[-1]
+            lastrow = gdf.loc[gdf["num_value"] > 0, "date"].values[-1]
             newrows.append(
                 {
                     "num_value": 100,
                     "metric": metric,
-                    "valid": lastrow + pd.Timedelta(days=7),
+                    "date": lastrow + pd.Timedelta(days=7),
                     "datum": datum,
                 }
             )
@@ -191,19 +200,19 @@ def get_nass(year, state, district, crop) -> pd.DataFrame:
         nass = pd.concat([nass, pd.DataFrame(newrows)])
     # Make dataframe more usable
     nass = nass.pivot_table(
-        index=["datum", "valid"], columns="metric", values="num_value"
+        index=["datum", "date"], columns="metric", values="num_value"
     ).reset_index()
     # Create space for DEP to store things
     nass[f"dep_{crop}_planted"] = np.nan
     nass["dep_days_suitable"] = np.nan
-    nass["valid"] = pd.to_datetime(nass["valid"])
+    nass["date"] = pd.to_datetime(nass["date"])
     return nass
 
 
-def get_fields(year, district, state, ugc: str | None, crop) -> pd.DataFrame:
+def get_fields(year, datum: str, ugc: str | None, crop) -> pd.DataFrame:
     """Compute the fields."""
     charidx = year - 2007 + 1
-    boundsdf = get_geo_bounds(district, state, ugc)
+    boundsdf = get_geo_bounds(datum, ugc)
     # Figure out the planting dates
     with get_sqlalchemy_conn("idep") as conn:
         return pd.read_sql(
@@ -281,10 +290,10 @@ def plot_suitable(fig, nass, daily_limits):
     if nass is None:
         return None
     ax3 = fig.add_axes([0.1, 0.25, 0.8, 0.07])
-    for valid, row in nass[nass["days suitable"].notna()].iterrows():
+    for dt, row in nass[nass["days suitable"].notna()].iterrows():
         ax3.add_patch(
             Rectangle(
-                (valid - pd.Timedelta(days=7), 0),
+                (dt - pd.Timedelta(days=7), 0),
                 pd.Timedelta(days=7),
                 1,
                 ec="k",
@@ -292,22 +301,20 @@ def plot_suitable(fig, nass, daily_limits):
             )
         )
         ax3.text(
-            valid - pd.Timedelta(days=3.5),
+            dt - pd.Timedelta(days=3.5),
             0.5,
             f"{row['days suitable']:.1f}",
             ha="center",
             va="center",
         ).set_clip_on(True)
         # Value estimted from daily_limits
-        thisweek = daily_limits.loc[valid - pd.Timedelta(days=6) : valid][
-            "limited"
-        ]
+        thisweek = daily_limits.loc[dt - pd.Timedelta(days=6) : dt]["limited"]
         depdays = 7.0 - thisweek.mean() / 100.0 * 7
         if pd.notna(depdays) and len(thisweek.index) == 7:
-            nass.at[valid, "dep_days_suitable"] = depdays
+            nass.at[dt, "dep_days_suitable"] = depdays
             ax3.add_patch(
                 Rectangle(
-                    (valid - pd.Timedelta(days=7), 1),
+                    (dt - pd.Timedelta(days=7), 1),
                     pd.Timedelta(days=7),
                     1,
                     ec="k",
@@ -315,7 +322,7 @@ def plot_suitable(fig, nass, daily_limits):
                 )
             )
             ax3.text(
-                valid - pd.Timedelta(days=3.5),
+                dt - pd.Timedelta(days=3.5),
                 1.5,
                 f"{depdays:.1f}",
                 ha="center",
@@ -347,7 +354,7 @@ def plot_accum(
         # Plot the daily district data as a filled bar
         boxinfo = []
         positions = []
-        for dt, gdf in nass_all[nass_all["datum"] != "IA"].groupby("valid"):
+        for dt, gdf in nass_all[nass_all["datum"] != "IA"].groupby("date"):
             stats = gdf[f"{crop} planted"].describe()
             if pd.isna(stats["mean"]):
                 continue
@@ -372,7 +379,7 @@ def plot_accum(
             label="District Range",
         )
     if nass_all is not None:
-        nass = nass_all[nass_all["datum"] == datum].copy().set_index("valid")
+        nass = nass_all[nass_all["datum"] == datum].copy().set_index("date")
         ax2.scatter(
             nass.index.values,
             nass[f"{crop} planted"],
@@ -384,12 +391,12 @@ def plot_accum(
 
         # create a table in the lower right corner with the values from
         txt = ["Weekly Progress", "Date   NASS DEP"]
-        for valid, row in nass[nass["days suitable"].notna()].iterrows():
-            if valid not in accum.index:
+        for dt, row in nass[nass["days suitable"].notna()].iterrows():
+            if dt not in accum.index:
                 continue
-            dep = accum.at[valid, "percent"]
+            dep = accum.at[dt, "percent"]
             val = row[f"{crop} planted"]
-            txt.append(f"{valid:%b %-2d}:  {val:3.0f} {dep:3.0f}")
+            txt.append(f"{dt:%b %-2d}:  {val:3.0f} {dep:3.0f}")
         ax2.text(
             1.05,
             0.05,
@@ -447,10 +454,17 @@ def plot_dep(ax, year: int, state: Optional[str], district: Optional[str]):
     ax.plot(dates, progress, label="DEP Static")
 
 
+def get_deines(year: int, datum, _ugc, crop) -> pd.DataFrame | None:
+    """Sample what we need."""
+    if year > 2020:
+        return None
+    df = pd.read_csv(f"deines2023_datum_{crop}.csv", parse_dates=["date"])
+    return df[(df["year"] == year) & (df["datum"] == datum)].set_index("date")
+
+
 @click.command()
 @click.option("--year", required=True, type=int, help="Year to plot")
-@click.option("--district", type=str, help="NASS District (lowercase)")
-@click.option("--state", type=str, help="State to Process.")
+@click.option("--datum", type=str, help="Datum to Process.")
 @click.option("--ugc", type=str, help="UGC to Process, no NASS.")
 @click.option(
     "--crop",
@@ -463,8 +477,7 @@ def plot_dep(ax, year: int, state: Optional[str], district: Optional[str]):
 @click.option("--plotdep", is_flag=True, help="Plot DEP")
 def main(
     year: int,
-    district: Optional[str],
-    state: Optional[str],
+    datum: Optional[str],
     ugc: Optional[str],
     crop: str,
     plotv2: bool,
@@ -472,21 +485,26 @@ def main(
     plotdep: bool,
 ):
     """Go Main Go."""
-    datum: str = state if state is not None else district
-    ss = f"state_{state}"
-    pngname = (
-        f"plots/{crop}_progress_{year}_"
-        f"{district if district is not None else ss}.png"
-    )
+    nass_all = None
+    nass = None
     if ugc is not None:
         datum = ugc
-        nass_all = None
-        nass = None
-        pngname = f"plots/{crop}_progress_{year}_{ugc}.png"
-    else:
-        nass_all = get_nass(year, state, district, crop)
-        nass = nass_all[nass_all["datum"] == datum].copy().set_index("valid")
-    fields = get_fields(year, district, state, ugc, crop)
+    elif len(datum) == 2 or datum.startswith("IA"):
+        nass_all = get_nass(year, datum, crop)
+        nass = nass_all[nass_all["datum"] == datum].copy().set_index("date")
+
+    finaldf = pd.DataFrame(
+        index=pd.date_range(f"{year}/04/01", f"{year}/07/01", name="date")
+    )
+    finaldf["datum"] = datum
+
+    deinesdf = get_deines(year, datum, ugc, crop)
+    if deinesdf is not None:
+        finaldf[f"deines2023_{crop}_pct"] = deinesdf["pct"]
+        finaldf[f"deines2023_{crop}_acres"] = deinesdf["acres"]
+
+    pngname = f"plots/{crop}_progress_{year}_{datum}.png"
+    fields = get_fields(year, datum, ugc, crop)
 
     xticks, xticklabels = get_labels(year)
 
@@ -494,24 +512,28 @@ def main(
     daily_limits = compute_limits(fields["huc12"].unique(), year)
 
     # accumulate acres planted by date
-    accum = fields[["plant", "acres"]].groupby("plant").sum().cumsum()
+    fgb = fields[["plant", "acres"]].groupby("plant")
+    accum = fgb.sum().cumsum()
     accum["percent"] = accum["acres"] / fields["acres"].sum() * 100.0
     # Need to forward fill so that we have comparables with NASS
     ldate = f"{year}-06-22"
     if ldate >= f"{date.today():%Y-%m-%d}":
         ldate = f"{(date.today() - timedelta(days=1)):%Y-%m-%d}"
-    accum = accum.reindex(pd.date_range(f"{year}-04-11", ldate)).ffill()
+    accum = accum.reindex(pd.date_range(f"{year}-04-11", ldate))
+    finaldf[f"dep_{crop}_pct"] = accum["percent"]
+    finaldf[f"dep_{crop}_acres"] = fgb.sum()
     if nass is not None:
         nass = nass.reindex(accum.index)
-        nass.index.name = "valid"
+        nass.index.name = "date"
         nass[f"dep_{crop}_planted"] = accum["percent"]
+        finaldf[f"nass_{crop}_pct"] = nass[f"{crop} planted"]
 
-    if state is not None:
-        title = f"state of {state_names[state]}"
+    if len(datum) == 2:
+        title = f"state of {state_names[datum]}"
     elif ugc is not None:
         title = f"UGC {ugc.upper()}"
     else:
-        title = f"Iowa District {district.upper()}"
+        title = f"Crop Reporting District of {datum}"
     subtitle = f"Comparison with USDA NASS Weekly Progress for {title}"
     if ugc:
         subtitle = f"Progress for [{ugc}] {UGCHACK.get(ugc, ugc)}"
@@ -535,14 +557,16 @@ def main(
 
     # ////////////////////////////////////////////////////////////
     ax2 = plot_accum(fig, accum, crop, nass_all, datum)
+    if deinesdf is not None:
+        ax2.plot(deinesdf.index, deinesdf["pct"], label="Deines2023")
     ax2.set_xticks(xticks)
     ax2.set_xticklabels(xticklabels)
     if plotv2:
-        plot_v(ax2, 2, crop, year, district, state)
+        plot_v(ax2, 2, crop, year, datum)
     if plotv3:
-        plot_v(ax2, 3, crop, year, district, state)
+        plot_v(ax2, 3, crop, year, datum)
     if plotdep:
-        plot_dep(ax2, year, state, district)
+        plot_dep(ax2, year, datum)
     ax2.legend(loc=2)
 
     # Sync up the two xaxes
@@ -551,17 +575,12 @@ def main(
     if ax3:
         ax3.set_xlim(*ax2.get_xlim())
 
-    if nass is not None:
-        # plots is symlinked
-        nass.to_csv(
-            f"plots/{crop}_{year}_"
-            f"{district if district is not None else state}.csv",
-            float_format="%.2f",
-        )
+    # plots is symlinked
+    finaldf.to_csv(f"plots/{crop}_{year}_{datum}.csv", float_format="%.2f")
 
     # plots is symlinked
     fig.savefig(pngname)
-    LOG.info("%s done", year)
+    LOG.info("%s %s done", year, datum)
 
 
 if __name__ == "__main__":
