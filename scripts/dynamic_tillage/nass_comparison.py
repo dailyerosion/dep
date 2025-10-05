@@ -425,7 +425,7 @@ def plot_v(ax2, v: int, crop, year, district, state):
     )
 
 
-def plot_dep(ax, year: int, state: Optional[str], district: Optional[str]):
+def plot_dep(ax, year: int, datum: str):
     """Overlay the hard coded date."""
     progress = [100]
     lookup = {
@@ -441,11 +441,11 @@ def plot_dep(ax, year: int, state: Optional[str], district: Optional[str]):
         "se": date(year, 4, 30),
     }
     # This is not an exact science and corn only at the moment
-    if state == "IA":
+    if datum == "IA":
         dates = [date(year, 4, 30), date(year, 5, 5), date(year, 5, 10)]
         progress = [33, 66, 100]
     else:
-        key = state if state == "MN" else district
+        key = "MN"
         dates = [lookup[key]]
     dates.insert(0, dates[0] - timedelta(days=1))
     progress.insert(0, 0)

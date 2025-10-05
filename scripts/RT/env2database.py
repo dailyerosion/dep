@@ -18,8 +18,9 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import rasterio
+from pyiem.database import get_dbconn, get_dbconnstr
 from pyiem.grid.zs import CachingZonalStats
-from pyiem.util import get_dbconn, get_dbconnstr, logger
+from pyiem.util import logger
 from tqdm import tqdm
 
 from pydep.io.dep import read_env
