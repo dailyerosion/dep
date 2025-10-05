@@ -9,8 +9,8 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from affine import Affine
+from pyiem.database import get_dbconn
 from pyiem.iemre import NORTH, WEST
-from pyiem.util import get_dbconn
 from rasterstats import zonal_stats
 from tqdm import tqdm
 

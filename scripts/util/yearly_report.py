@@ -5,8 +5,8 @@ import sys
 
 import matplotlib.pyplot as plt
 from pandas import read_sql
+from pyiem.database import get_dbconnstr
 from pyiem.reference import state_names
-from pyiem.util import get_dbconnstr
 
 
 def main(argv):
