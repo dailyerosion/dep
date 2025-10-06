@@ -513,19 +513,22 @@ def main(
 
     # accumulate acres planted by date
     fgb = fields[["plant", "acres"]].groupby("plant")
-    accum = fgb.sum().cumsum()
-    accum["percent"] = accum["acres"] / fields["acres"].sum() * 100.0
     # Need to forward fill so that we have comparables with NASS
     ldate = f"{year}-06-22"
     if ldate >= f"{date.today():%Y-%m-%d}":
         ldate = f"{(date.today() - timedelta(days=1)):%Y-%m-%d}"
-    accum = accum.reindex(pd.date_range(f"{year}-04-11", ldate))
-    finaldf[f"dep_{crop}_pct"] = accum["percent"]
-    finaldf[f"dep_{crop}_acres"] = fgb.sum()
+    daily_acres = (
+        fgb.sum().reindex(pd.date_range(f"{year}-04-11", ldate)).fillna(0)
+    )
+    daily_acres["percent"] = (
+        daily_acres["acres"].cumsum() / fields["acres"].sum() * 100.0
+    )
+    finaldf[f"dep_{crop}_pct"] = daily_acres["percent"]
+    finaldf[f"dep_{crop}_acres"] = daily_acres["acres"]
     if nass is not None:
-        nass = nass.reindex(accum.index)
+        nass = nass.reindex(daily_acres.index)
         nass.index.name = "date"
-        nass[f"dep_{crop}_planted"] = accum["percent"]
+        nass[f"dep_{crop}_planted"] = daily_acres["percent"]
         finaldf[f"nass_{crop}_pct"] = nass[f"{crop} planted"]
 
     if len(datum) == 2:
@@ -556,7 +559,7 @@ def main(
     ax3 = plot_suitable(fig, nass, daily_limits)
 
     # ////////////////////////////////////////////////////////////
-    ax2 = plot_accum(fig, accum, crop, nass_all, datum)
+    ax2 = plot_accum(fig, daily_acres, crop, nass_all, datum)
     if deinesdf is not None:
         ax2.plot(deinesdf.index, deinesdf["pct"], label="Deines2023")
     ax2.set_xticks(xticks)

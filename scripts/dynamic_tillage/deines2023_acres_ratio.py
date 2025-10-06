@@ -7,15 +7,43 @@ import pandas as pd
 from pyiem.plot import figure_axes
 
 
-def main():
-    """Go Main Go."""
-
+def read_csvs() -> list[pd.DataFrame, pd.DataFrame]:
+    """Load up the csvs."""
     corndf = pd.read_csv("deines2023_datum_corn.csv", parse_dates=["date"])
     corndf["doy"] = corndf["date"].dt.day_of_year
     soybeansdf = pd.read_csv(
         "deines2023_datum_soybeans.csv", parse_dates=["date"]
     )
     soybeansdf["doy"] = soybeansdf["date"].dt.day_of_year
+
+    return corndf, soybeansdf
+
+
+def explore_rates():
+    """Figure out if we can tease out rates."""
+    corndf, soybeansdf = read_csvs()
+
+    for df, crop in zip(
+        [corndf, soybeansdf], ["corn", "soybeans"], strict=True
+    ):
+        for datum in df["datum"].unique():
+            vals = []
+            for year in range(2000, 2021):
+                ddf = df[(df["datum"] == datum) & (df["year"] == year)]
+                totalacres = ddf["acres"].sum()
+                maxval = (
+                    ddf["acres"].rolling(7).sum() / totalacres
+                ).max() * 100.0
+                vals.append(maxval)
+            ar = np.array(vals)
+            print(
+                f"{crop},{datum},{ar.min():.2f},{ar.mean():.2f},{ar.max():.2f}"
+            )
+
+
+def main():
+    """Go Main Go."""
+    corndf, soybeansdf = read_csvs()
 
     fig, ax = figure_axes(
         title=(
@@ -79,4 +107,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    explore_rates()

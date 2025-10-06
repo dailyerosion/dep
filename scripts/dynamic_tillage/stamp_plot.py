@@ -1,7 +1,5 @@
 """Create a Postage Stamp Plot of all the years of data."""
 
-import glob
-
 import click
 import matplotlib.cm as mpcm
 import matplotlib.colors as mpcolors
@@ -9,24 +7,30 @@ import numpy
 import pandas as pd
 from matplotlib.patches import Rectangle
 from pyiem.plot import figure_axes, get_cmap
-from pyiem.plot.use_agg import plt
 
 
 @click.command()
 @click.option("--crop", default="corn", help="Which crop to process")
-def main(crop: str):
+@click.option(
+    "--dots",
+    default="nass",
+    type=click.Choice(("nass", "deines2023", "dep")),
+)
+@click.option(
+    "--lines",
+    default="dep",
+    type=click.Choice(("nass", "deines2023", "dep")),
+)
+def main(crop: str, dots: str, lines: str):
     """Go main Go."""
-    dfs = []
-    # plots is symlinked
-    for csvfn in glob.glob(f"plots/{crop}_*.csv"):
-        _, _, datum = csvfn[:-4].split("_")
-        progress = pd.read_csv(csvfn, parse_dates=["valid"])
-        progress["datum"] = datum
-        dfs.append(progress)
-    jumbo = pd.concat(dfs)
-    jumbo["dayofyear"] = jumbo["valid"].dt.dayofyear
+    jumbo = pd.read_csv(f"{crop}_dep_vs_nass_251006.csv", parse_dates=["date"])
+    jumbo["dayofyear"] = jumbo["date"].dt.dayofyear
+
     fig, ax = figure_axes(
-        title=f"{crop.capitalize()} Planting Progress (DEP Lines, NASS Dots)",
+        title=(
+            f"{crop.capitalize()} Planting Progress "
+            f"({lines} Lines, {dots} Dots)"
+        ),
         logo="dep",
         figsize=(10, 8),
     )
@@ -39,42 +43,39 @@ def main(crop: str):
     ytilesize = 1.0 / 11.0
     cmap = get_cmap("RdYlGn_r")
     norm = mpcolors.BoundaryNorm([0, 10, 40, 70, 100], cmap.N)
-    for x, year in enumerate(range(2007, 2026)):
+    dotcol = f"{dots}_{crop}_pct"
+    linecol = f"{lines}_{crop}_pct"
+    lyear = 2021 if "deines2023" in (dots, lines) else 2020
+    for x, year in enumerate(range(2007, lyear)):
         # Psuedo axis definition
         x0 = x / 19.0
         xmin = pd.Timestamp(f"{year}-04-11").dayofyear
         xmax = pd.Timestamp(f"{year}-06-15").dayofyear
-        for y, (district, _color) in enumerate(
+        for y, (datum, _color) in enumerate(
             zip(
-                "sw sc se wc c ec nw nc ne IA MN".split(),
+                (
+                    "IA_SW IA_SC IA_SE IA_WC IA_C IA_EC IA_NW IA_NC "
+                    "IA_NE IA MN"
+                ).split(),
                 (
                     "red blue green orange tan purple "
                     "brown pink skyblue black gray"
                 ).split(),
-                strict=False,
+                strict=True,
             )
         ):
             # Psuedo axis definition
             y0 = y / 11.0
             df = jumbo[
-                (jumbo["valid"].dt.year == year)
-                & (jumbo["datum"] == district)
+                (jumbo["date"].dt.year == year)
+                & (jumbo["datum"] == datum)
                 & (jumbo["dayofyear"] >= xmin)
                 & (jumbo["dayofyear"] <= xmax)
             ]
-            nass = df[df[f"{crop} planted"].notna()]
             # Calculate RMSE
-            rmse = (
-                (nass[f"{crop} planted"] - nass[f"dep_{crop}_planted"])
-                .pow(2)
-                .mean()
-            ) ** 0.5
-            mae = (
-                (nass[f"{crop} planted"] - nass[f"dep_{crop}_planted"])
-                .abs()
-                .mean()
-            )
-            print(f"{year} {district} RMSE: {rmse:.2f} MAE: {mae:.2f}")
+            rmse = ((df[dotcol] - df[linecol]).pow(2).mean()) ** 0.5
+            mae = (df[dotcol] - df[linecol]).abs().mean()
+            print(f"{year} {datum} RMSE: {rmse:.2f} MAE: {mae:.2f}")
             background_color = cmap(norm(mae))
             ax.add_patch(
                 Rectangle(
@@ -87,13 +88,13 @@ def main(crop: str):
             )
             ax.plot(
                 x0 + (df["dayofyear"] - xmin) / (xmax - xmin) * xtilesize,
-                y0 + df[f"dep_{crop}_planted"] / 100.0 * ytilesize,
+                y0 + df[linecol] / 100.0 * ytilesize,
                 color="k",
                 zorder=3,
             )
             ax.scatter(
-                x0 + (nass["dayofyear"] - xmin) / (xmax - xmin) * xtilesize,
-                y0 + nass[f"{crop} planted"] / 100.0 * ytilesize,
+                x0 + (df["dayofyear"] - xmin) / (xmax - xmin) * xtilesize,
+                y0 + df[dotcol] / 100.0 * ytilesize,
                 color="k",
                 s=5,
                 zorder=4,
@@ -130,16 +131,16 @@ def main(crop: str):
 
     # Add colorbar
     ax2 = fig.add_axes((0.9, 0.1, 0.02, 0.8))
-    cb = plt.colorbar(
+    cb = fig.colorbar(
         mpcm.ScalarMappable(norm=norm, cmap=cmap),
         cax=ax2,
         orientation="vertical",
         alpha=0.5,
     )
-    cb.set_label("MAE of NASS vs DEP Planting Progress [%]")
+    cb.set_label(f"MAE of {dots} vs {lines} Planting Progress [%]")
 
     # plots is symlinked
-    fig.savefig(f"plots/{crop}_stamp_plot.png")
+    fig.savefig(f"plots/{crop}_{dots}_{lines}_stamp_plot.png")
 
 
 if __name__ == "__main__":
