@@ -5,15 +5,16 @@ from io import BytesIO
 
 import requests
 import tweepy
-from pyiem import util
+from pyiem.database import get_dbconn
+from pyiem.util import exponential_backoff, get_properties, logger
 
-LOG = util.logger()
+LOG = logger()
 
 
 def get_client():
     """Do the tweeting."""
-    props = util.get_properties()
-    cursor = util.get_dbconn("mesosite").cursor()
+    props = get_properties()
+    cursor = get_dbconn("mesosite").cursor()
     cursor.execute(
         "select access_token, access_token_secret from "
         "iembot_twitter_oauth WHERE screen_name = 'dailyerosion'",
@@ -48,7 +49,7 @@ def main():
         uri = (
             f"http://depbackend.local/auto/{yyyymmdd}_{yyyymmdd}_0_{vname}.png"
         )
-        req = util.exponential_backoff(requests.get, uri, timeout=120)
+        req = exponential_backoff(requests.get, uri, timeout=120)
         if req is None or req.status_code != 200:
             LOG.warning("Download %s failed", uri)
             continue
