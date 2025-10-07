@@ -6,7 +6,10 @@ import matplotlib.colors as mpcolors
 import numpy
 import pandas as pd
 from matplotlib.patches import Rectangle
-from pyiem.plot import figure_axes, get_cmap
+from pyiem.plot import figure_axes
+from pyiem.util import logger
+
+LOG = logger()
 
 
 @click.command()
@@ -41,8 +44,10 @@ def main(crop: str, dots: str, lines: str):
 
     xtilesize = 1.0 / 19.0
     ytilesize = 1.0 / 11.0
-    cmap = get_cmap("RdYlGn_r")
-    norm = mpcolors.BoundaryNorm([0, 10, 40, 70, 100], cmap.N)
+    cmap = mpcolors.ListedColormap(
+        ["#00441b", "#a1d99b", "#eeff00", "#d30000"]
+    )
+    norm = mpcolors.BoundaryNorm([0, 10, 20, 35, 100], cmap.N)
     dotcol = f"{dots}_{crop}_pct"
     linecol = f"{lines}_{crop}_pct"
     lyear = 2021 if "deines2023" in (dots, lines) else 2020
@@ -83,7 +88,7 @@ def main(crop: str, dots: str, lines: str):
                     xtilesize,
                     ytilesize,
                     color=background_color,
-                    alpha=0.5,
+                    alpha=1,
                 )
             )
             ax.plot(
@@ -135,12 +140,16 @@ def main(crop: str, dots: str, lines: str):
         mpcm.ScalarMappable(norm=norm, cmap=cmap),
         cax=ax2,
         orientation="vertical",
-        alpha=0.5,
+        spacing="proportional",
     )
-    cb.set_label(f"MAE of {dots} vs {lines} Planting Progress [%]")
+    cb.set_label(
+        f"MAE of {dots} vs {lines} Planting Progress [percentage points]"
+    )
 
     # plots is symlinked
-    fig.savefig(f"plots/{crop}_{dots}_{lines}_stamp_plot.png")
+    pngfn = f"plots/{crop}_{dots}_{lines}_stamp_plot.png"
+    LOG.info("Writing %s", pngfn)
+    fig.savefig(pngfn)
 
 
 if __name__ == "__main__":
