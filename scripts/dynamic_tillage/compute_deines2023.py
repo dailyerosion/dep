@@ -34,7 +34,7 @@ def main(crop: str):
     for datum in XREF:
         if XREF[datum]:
             fips = STATE2FIPS[datum[:2]]
-            geoids = [f"{fips}{x[3:]}" for x in XREF[datum]]
+            geoids = [int(f"{fips}{x[3:]}") for x in XREF[datum]]
             sample = df[df["GEOID"].isin(geoids)]
         else:
             sample = df[df["state"] == datum]  # hack

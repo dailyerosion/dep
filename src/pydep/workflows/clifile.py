@@ -443,11 +443,12 @@ def load_imerg(tile: Tile, data):
     # IMERG is stored -180,90 to 180,-90 at 0.1x0.1
     x0 = int((tile.west + 180.0) * 10)
     # DEP storage is 0.01x0.01
-    ny, nx, _ = data["precip"].shape
+    ny, nx, nt = data["precip"].shape
     y0 = int((90.0 - tile.north) * 10)
 
     tidx = 0
-    while now <= tomorrow:
+    # Belt and suspenders for the one-off of DST.
+    while now <= tomorrow and tidx < nt:
         # The precipitation total valid at this timestamp is found in the
         # previous 30 minute period file :/
         ppath = (now - toff).strftime("%Y/%m/%d/GIS/imerg/p30m_%Y%m%d%H%M.png")

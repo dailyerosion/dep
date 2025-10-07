@@ -6,6 +6,7 @@ import numpy as np
 import rasterio as rio
 from matplotlib.colors import BoundaryNorm
 from pyiem.database import get_sqlalchemy_conn, sql_helper
+from pyiem.grid.nav import get_nav
 from pyiem.plot import MapPlot, get_cmap
 from pyiem.reference import Z_OVERLAY
 
@@ -29,7 +30,7 @@ def main(year: int):
         """figure out the grid index."""
         return ~aff * (lon, lat)
 
-    with get_sqlalchemy_conn("idep") as pgconn:
+    with get_sqlalchemy_conn("dep_europe") as pgconn:
         pts = gpd.read_postgis(
             sql_helper("""
     with climo as (
@@ -56,9 +57,14 @@ def main(year: int):
     # clevs = [0, 250, 500, 750, 1000, 1500, 2000, 2500, 3000, 4000, 5000]
     clevs = np.arange(-60, 61, 20)
     norm = BoundaryNorm(clevs, cmap.N)
+    nav = get_nav("iemre", "europe")
     mp = MapPlot(
         logo="dep",
-        sector="conus",
+        sector="custom",
+        west=nav.left_edge,
+        east=nav.right_edge,
+        south=nav.bottom_edge,
+        north=nav.top_edge,
         title="R-Factor % Difference DEP 2007-2024 Minus GloRESatE",
         subtitle=f"Total Climate Files: {len(pts)}",
         caption="Daily Erosion Project",
@@ -80,7 +86,7 @@ def main(year: int):
         units="%",
         extend="both",
     )
-    mp.fig.savefig("gloresate_departure.png")
+    mp.fig.savefig("dep_clifiles.png")
 
 
 if __name__ == "__main__":

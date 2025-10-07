@@ -34,7 +34,7 @@ def main(crop: str):
     jumbo = pd.concat(dfs)
     (
         jumbo.sort_values(["datum", "date"]).to_csv(
-            f"{crop}_dep_vs_nass_{date.today():%Y%m%d}.csv", index=False
+            f"{crop}_dep_vs_nass_{date.today():%y%m%d}.csv", index=False
         )
     )
 
