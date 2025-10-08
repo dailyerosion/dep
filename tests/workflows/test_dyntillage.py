@@ -42,13 +42,35 @@ def reset_field_operations(conn):
     )
 
 
+def test_do_huc12_alldone():
+    """Test what happens when all the work is done!"""
+    with get_sqlalchemy_conn("idep") as conn:
+        reset_field_operations(conn)
+        for dy in range(1, 30):
+            dt = date(2025, 5, dy)
+            df, acres_planted, acres_tilled = do_huc12(
+                conn, -1, dt, "070801050902"
+            )
+            if dy == 29:
+                assert not df.empty
+                assert acres_planted == 0
+                assert acres_tilled == 0
+
+
+def test_do_huc12_nodata():
+    """Test something that yields no data."""
+    with get_sqlalchemy_conn("idep") as conn:
+        df, _, _ = do_huc12(conn, -1, date(2000, 1, 1), "AAAA")
+    assert df.empty
+
+
 def test_do_huc12_season():
     """Run for many days."""
     with get_sqlalchemy_conn("idep") as conn:
         reset_field_operations(conn)
         dates = [date(2025, 4, 14), date(2025, 4, 15), date(2025, 4, 16)]
         for dt in dates:
-            df, acres_planted, acres_tilled = do_huc12(
+            df, _acres_planted, acres_tilled = do_huc12(
                 conn, -1, dt, "070801050902"
             )
             total_acres = df["acres"].sum()
@@ -59,7 +81,7 @@ def test_do_huc12():
     """Can we do_huc12 ?"""
     with get_sqlalchemy_conn("idep") as conn:
         reset_field_operations(conn)
-        df, acres_planted, acres_tilled = do_huc12(
+        df, acres_planted, _acres_tilled = do_huc12(
             conn, -1, date(2025, 6, 13), "070801050902"
         )
     total_acres = df["acres"].sum()
