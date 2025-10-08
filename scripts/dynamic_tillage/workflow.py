@@ -17,16 +17,17 @@ import threading
 from datetime import date, datetime, timedelta
 from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
-from typing import Tuple
 
 import click
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from pyiem.database import get_dbconnc, get_sqlalchemy_conn, sql_helper
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.iemre import daily_offset, get_daily_mrms_ncname
 from pyiem.util import archive_fetch, logger, ncopen
 from tqdm import tqdm
+
+from pydep.workflows.dyntillage import do_huc12
 
 pd.set_option("future.no_silent_downcasting", True)
 LOG = logger()
@@ -112,164 +113,6 @@ def edit_rotfile(year, huc12, row):
         fh.write("".join(lines))
 
 
-def do_huc12(dt, huc12) -> Tuple[int, int]:
-    """Process a HUC12.
-
-    Returns the number of acres planted and tilled.  A negative value is a
-    sentinel that the HUC12 failed due to soil moisture constraint.
-    """
-    dbcolidx = dt.year - 2007 + 1
-    crops = ["B", "C", "L", "W"]
-    tillagerate = 0.10
-    maxrate = 0.06
-    # If before April 20, we only plant corn
-    if f"{dt:%m%d}" < "0420":
-        crops = ["C"]
-        maxrate = 0.03  # Life choice
-    elif f"{dt:%m%d}" > "0510":
-        maxrate = 0.10
-    with get_sqlalchemy_conn("idep") as conn:
-        # build up the cross reference of everyhing we need to know
-        df = pd.read_sql(
-            sql_helper(
-                """
-            with myofes as (
-                select o.ofe, p.fpath, o.fbndid
-                from flowpaths p, flowpath_ofes o, gssurgo g
-                WHERE o.flowpath = p.fid and p.huc_12 = :huc12
-                and p.scenario = 0 and o.gssurgo_id = g.id),
-            agg as (
-                SELECT ofe, fpath, f.fbndid, f.landuse,
-                f.management, f.acres, f.field_id
-                from fields f LEFT JOIN myofes m on (f.fbndid = m.fbndid)
-                WHERE f.huc12 = :huc12 and
-                substr(landuse, :dbcolidx, 1) = ANY(:crops)
-                ORDER by fpath, ofe)
-            select a.*, o.till1, o.till2, o.till3, o.plant, o.year,
-            plant >= :dt as plant_needed,
-            coalesce(
-                greatest(till1, till2, till3) >= :dt, false) as till_needed,
-            false as operation_done, 0 as sw1
-            from agg a, field_operations o
-            where a.field_id = o.field_id and o.year = :year
-            and o.plant is not null
-            """
-            ),
-            conn,
-            params={
-                "huc12": huc12,
-                "year": dt.year,
-                "dt": dt,
-                "crops": crops,
-                "dbcolidx": dbcolidx,
-            },
-            index_col=None,
-        )
-    if df.empty:
-        LOG.debug(
-            "No fields found for %s %s %s %s",
-            huc12,
-            dt,
-            crops,
-            dbcolidx,
-        )
-        return 0, 0
-
-    # Screen out when there are no fields that need planting or tilling
-    if (
-        not df["plant_needed"].any()
-        and not df["till_needed"].any()
-        and f"{dt:%m%d}" < "0614"
-    ):
-        LOG.debug("No fields need planting or tilling for %s", huc12)
-        return 0, 0
-
-    # There is an entry per OFE + field combination, but we only want 1
-    fields = df.groupby("fbndid").first().copy()
-
-    # We could be re-running for a given date, so we first total up the acres
-    acres_planted = fields[fields["plant"] == dt]["acres"].sum()
-    acres_tilled = (
-        fields[fields["till1"] == dt]["acres"].sum()
-        + fields[fields["till2"] == dt]["acres"].sum()
-        + fields[fields["till3"] == dt]["acres"].sum()
-    )
-    if pd.isnull(acres_planted):
-        acres_planted = 0
-    if pd.isnull(acres_tilled):
-        acres_tilled = 0
-
-    mud_it_in = f"{dt:%m%d}" >= "0610"
-
-    # Compute things for year
-    char_at = (dt.year - 2007) + 1
-    fields["crop"] = fields["landuse"].str.slice(char_at - 1, char_at)
-    fields["tillage"] = fields["management"].str.slice(char_at - 1, char_at)
-
-    total_acres = fields["acres"].sum()
-    # NB: Crude assessment of NASS peak daily planting rate, was 10%
-    limit = (total_acres * tillagerate) if not mud_it_in else total_acres + 1
-
-    # Work on tillage first, so to avoid planting on tilled fields
-    for fbndid, row in fields[fields["till_needed"]].iterrows():
-        acres_tilled += row["acres"]
-        fields.at[fbndid, "operation_done"] = True
-        for i in [1, 2, 3]:
-            if row[f"till{i}"] >= dt:
-                fields.at[fbndid, f"till{i}"] = dt
-                break
-        if acres_tilled > limit:
-            break
-
-    # Redine limit for planting
-    limit = (total_acres * maxrate) if not mud_it_in else total_acres + 1
-    # Now we need to plant
-    for fbndid, row in fields[fields["plant_needed"]].iterrows():
-        # We can't plant fields that were tilled or need tillage GH251
-        if row["operation_done"] or row["till_needed"]:
-            continue
-        acres_planted += row["acres"]
-        fields.at[fbndid, "plant"] = dt
-        fields.at[fbndid, "operation_done"] = True
-        if acres_planted > limit:
-            break
-
-    LOG.debug(
-        "plant: %.1f[%.1f%%] tilled: %.1f[%.1f%%] total: %.1f",
-        acres_planted,
-        acres_planted / total_acres * 100.0,
-        acres_tilled,
-        acres_tilled / total_acres * 100.0,
-        total_acres,
-    )
-
-    # Update the database
-    df2 = fields[fields["operation_done"]].reset_index()
-    if not df2.empty:
-        conn, cursor = get_dbconnc("idep")
-        cursor.executemany(
-            "update field_operations set plant = %s, till1 = %s, "
-            "till2 = %s, till3 = %s where field_id = %s and year = %s",
-            df2[
-                ["plant", "till1", "till2", "till3", "field_id", "year"]
-            ].itertuples(index=False),
-        )
-        cursor.close()
-        conn.commit()
-    # Update all the .rot files
-    if dt.month == 6 and dt.day == 14:
-        df2 = df[df["ofe"].notna()]
-    elif not df2.empty:
-        df2 = df[(df["field_id"].isin(df2["field_id"])) & (df["ofe"].notna())]
-    if RUNTIME["edit_rotfile"] or f"{dt:%m%d}" == "0614":
-        for _, row in df2.iterrows():
-            edit_rotfile(dt.year, huc12, row)
-        if RUNTIME["run_prj2wepp"]:
-            for fpath in df2["fpath"].unique():
-                prj2wepp(huc12, fpath)
-    return acres_planted, acres_tilled
-
-
 def estimate_soiltemp(huc12df, dt):
     """Write mean GFS soil temperature C into huc12df."""
     # Look back from 12z at most 24 hours for a file to use
@@ -319,7 +162,15 @@ def estimate_rainfall(huc12df: pd.DataFrame, dt: date):
 def job(arg):
     """Do the job."""
     dt, huc12 = arg
-    planted, tilled = do_huc12(dt, huc12)
+    with get_sqlalchemy_conn("idep") as conn:
+        df2, planted, tilled = do_huc12(conn, dt, huc12)
+    if RUNTIME["edit_rotfile"] or f"{dt:%m%d}" == "0614":
+        for _, row in df2.iterrows():
+            edit_rotfile(dt.year, huc12, row)
+        if RUNTIME["run_prj2wepp"]:
+            for fpath in df2["fpath"].unique():
+                prj2wepp(huc12, fpath)
+
     return huc12, planted, tilled
 
 
