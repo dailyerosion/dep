@@ -163,7 +163,14 @@ def job(arg):
     """Do the job."""
     dt, huc12 = arg
     with get_sqlalchemy_conn("idep") as conn:
-        df2, planted, tilled = do_huc12(conn, dt, huc12)
+        fields, planted, tilled = do_huc12(conn, dt, huc12)
+    df = fields[fields["operation_done"]]
+    # Update all the .rot files
+    if dt.month == 6 and dt.day == 14:
+        df2 = df[df["ofe"].notna()]
+    elif not df2.empty:
+        df2 = df[(df["field_id"].isin(df2["field_id"])) & (df["ofe"].notna())]
+
     if RUNTIME["edit_rotfile"] or f"{dt:%m%d}" == "0614":
         for _, row in df2.iterrows():
             edit_rotfile(dt.year, huc12, row)
