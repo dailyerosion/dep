@@ -204,10 +204,7 @@ def do_huc12(
         + fields[fields["till2"] == dt]["acres"].sum()
         + fields[fields["till3"] == dt]["acres"].sum()
     )
-    if pd.isnull(acres_planted):
-        acres_planted = 0
-    if pd.isnull(acres_tilled):
-        acres_tilled = 0
+    # Note, a check for NaN/None acres was removed as unreachable, hopefully
 
     acres_tilled = do_tillage(fields, dt, mud_it_in, acres_tilled)
     acres_planted = do_planting(fields, dt, mud_it_in, acres_planted)
@@ -239,9 +236,4 @@ def do_huc12(
             },
         )
         conn.commit()
-    # Update all the .rot files
-    if dt.month == 6 and dt.day == 14:
-        df2 = df[df["ofe"].notna()]
-    elif not df2.empty:
-        df2 = df[(df["field_id"].isin(df2["field_id"])) & (df["ofe"].notna())]
     return fields, float(acres_planted), float(acres_tilled)
