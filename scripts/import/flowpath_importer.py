@@ -375,7 +375,6 @@ def process_flowpath(
     cursor, scenario, db_fid, df: pd.DataFrame
 ) -> pd.DataFrame:
     """Do one flowpath please."""
-
     # Sort along the length column, which orders the points from top
     # to bottom, rename columns to simplify further code.
     df = df.sort_values("len", ascending=True)
