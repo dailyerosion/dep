@@ -44,6 +44,7 @@ def do_tillage(
     acres_already_tilled: float,
 ) -> float:
     """Handle tillage operations."""
+    dt = pd.Timestamp(dt)
     total_acres = fields["acres"].sum()
     # NB: Crude assessment of NASS peak daily planting rate, was 10%
     limit = (total_acres * 0.1) if not mud_it_in else total_acres
@@ -72,6 +73,7 @@ def do_planting(
     acres_already_planted: float,
 ) -> float:
     """Handle planting operations."""
+    dt = pd.Timestamp(dt)
     total_acres = fields["acres"].sum()
     doy = dt.timetuple().tm_yday - 1
     # What ratio of available planting acres should attempt soybeans?
@@ -128,13 +130,14 @@ def do_planting(
 
 
 def do_huc12(
-    conn: Connection, dt: date, huc12: str
+    conn: Connection, scenario: int, dt: date, huc12: str
 ) -> list[pd.DataFrame, int, int]:
     """Process a HUC12.
 
     Returns the number of acres planted and tilled.  A negative value is a
     sentinel that the HUC12 failed due to soil moisture constraint.
     """
+    dt = pd.Timestamp(dt)
     dbcolidx = dt.year - 2007 + 1
     # Only concerned about corn/soybeans for now
     crops = ["B", "C"]
@@ -148,7 +151,7 @@ def do_huc12(
             select o.ofe, p.fpath, o.fbndid
             from flowpaths p, flowpath_ofes o, gssurgo g
             WHERE o.flowpath = p.fid and p.huc_12 = :huc12
-            and p.scenario = 0 and o.gssurgo_id = g.id),
+            and p.scenario = :scenario and o.gssurgo_id = g.id),
         agg as (
             SELECT ofe, fpath, f.fbndid, f.landuse,
             f.management, f.acres, f.field_id
@@ -175,8 +178,10 @@ def do_huc12(
             "dt": dt,
             "crops": crops,
             "dbcolidx": dbcolidx,
+            "scenario": scenario,
         },
         index_col=None,
+        parse_dates=["till1", "till2", "till3", "plant"],
     )
     if df.empty:
         return df, 0, 0
@@ -209,13 +214,14 @@ def do_huc12(
 
     # Update the database
     df2 = fields[fields["operation_done"]].reset_index()
-    if not df2.empty:
+    for _, row in df2.iterrows():
         conn.execute(
-            "update field_operations set plant = %s, till1 = %s, "
-            "till2 = %s, till3 = %s where field_id = %s and year = %s",
-            df2[
-                ["plant", "till1", "till2", "till3", "field_id", "year"]
-            ].itertuples(index=False),
+            sql_helper(
+                "update field_operations set plant = :plant, till1 = :till1, "
+                "till2 = :till2, till3 = :till3 where field_id = :field_id "
+                "and year = :year"
+            ),
+            row.to_dict(),
         )
         conn.commit()
     # Update all the .rot files
@@ -223,4 +229,4 @@ def do_huc12(
         df2 = df[df["ofe"].notna()]
     elif not df2.empty:
         df2 = df[(df["field_id"].isin(df2["field_id"])) & (df["ofe"].notna())]
-    return df2, acres_planted, acres_tilled
+    return fields, float(acres_planted), float(acres_tilled)
