@@ -16,7 +16,7 @@ def fields() -> pd.DataFrame:
     return pd.DataFrame(
         {
             "acres": np.ones(10) * 100,
-            "crop": ["C"] * 5 + ["S"] * 5,
+            "crop": ["C"] * 5 + ["B"] * 5,
             "plant_needed": [True] * 10,
             "till_needed": [True] * 10,
             "till1": pd.to_datetime([date(2000, 7, 1)] * 10),  # Future
@@ -53,6 +53,7 @@ def test_do_huc12_alldone():
             )
             if dy == 29:
                 assert not df.empty
+                assert not df["plant_needed"].any()
                 assert acres_planted == 0
                 assert acres_tilled == 0
 
@@ -110,7 +111,7 @@ def test_mud_it_in_no_planting(fields):
 def test_no_soybeans_planted_before_season_starts(fields):
     """Test scenario with no soybeans planted, hopefully."""
     # Set everything to soybeans, ready to plant
-    fields["crop"] = "S"
+    fields["crop"] = "B"
     fields["till_needed"] = False
     dt = date(2000, 4, 4)
     acres_planted = do_planting(fields, dt, False, 0)

@@ -101,7 +101,7 @@ def do_planting(
     # 2. Plant corn up to corn_acres_limit
     # 3. Try again with soybeans up to planting_acres_limit
     for crop, limit in zip(
-        ["S", "C", "S"],
+        ["B", "C", "B"],
         [soybean_acres_limit, corn_acres_limit, planting_acres_limit],
         strict=True,
     ):
