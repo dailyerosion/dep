@@ -163,19 +163,19 @@ def job(arg):
     """Do the job."""
     dt, huc12 = arg
     with get_sqlalchemy_conn("idep") as conn:
-        fields, planted, tilled = do_huc12(conn, dt, huc12)
+        fields, planted, tilled = do_huc12(conn, 0, dt, huc12)
     df = fields[fields["operation_done"]]
     # Update all the .rot files
     if dt.month == 6 and dt.day == 14:
-        df2 = df[df["ofe"].notna()]
-    elif not df2.empty:
-        df2 = df[(df["field_id"].isin(df2["field_id"])) & (df["ofe"].notna())]
+        df = df[df["ofe"].notna()]
+    elif not df.empty:
+        df = df[(df["field_id"].isin(df["field_id"])) & (df["ofe"].notna())]
 
     if RUNTIME["edit_rotfile"] or f"{dt:%m%d}" == "0614":
-        for _, row in df2.iterrows():
+        for _, row in df.iterrows():
             edit_rotfile(dt.year, huc12, row)
         if RUNTIME["run_prj2wepp"]:
-            for fpath in df2["fpath"].unique():
+            for fpath in df["fpath"].unique():
                 prj2wepp(huc12, fpath)
 
     return huc12, planted, tilled

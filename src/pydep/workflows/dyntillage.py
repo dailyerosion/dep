@@ -175,7 +175,7 @@ def do_huc12(
         params={
             "huc12": huc12,
             "year": dt.year,
-            "dt": dt,
+            "dt": dt.date(),
             "crops": crops,
             "dbcolidx": dbcolidx,
             "scenario": scenario,
@@ -221,7 +221,22 @@ def do_huc12(
                 "till2 = :till2, till3 = :till3 where field_id = :field_id "
                 "and year = :year"
             ),
-            row.to_dict(),
+            {
+                "plant": row["plant"].date()
+                if not pd.isnull(row["plant"])
+                else None,
+                "till1": row["till1"].date()
+                if not pd.isnull(row["till1"])
+                else None,
+                "till2": row["till2"].date()
+                if not pd.isnull(row["till2"])
+                else None,
+                "till3": row["till3"].date()
+                if not pd.isnull(row["till3"])
+                else None,
+                "field_id": row["field_id"],
+                "year": dt.year,
+            },
         )
         conn.commit()
     # Update all the .rot files
