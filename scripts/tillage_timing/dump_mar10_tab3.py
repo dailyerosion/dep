@@ -12,7 +12,6 @@ LOG = logger()
 
 def do_scenario(scenario, hucs):
     """Process this scenario."""
-
     df = pd.read_csv("scenario%s_dates.txt" % (scenario,))
     m50 = df["total"].max() / 2.0
     tillage_date = df[df["total"] >= m50]["date"].iloc[0]

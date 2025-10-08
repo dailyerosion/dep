@@ -13,7 +13,6 @@ LOG = logger()
 
 def do_scenario(scenario, plantdate, hucs):
     """Process this scenario."""
-
     envdfs = []
     for huc12 in hucs:
         for fn in glob.glob(

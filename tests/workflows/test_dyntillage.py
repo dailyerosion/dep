@@ -12,7 +12,6 @@ from pydep.workflows.dyntillage import do_planting, do_tillage
 @pytest.fixture
 def fields() -> pd.DataFrame:
     """Return our test dataframe."""
-
     return pd.DataFrame(
         {
             "acres": np.ones(10) * 100,

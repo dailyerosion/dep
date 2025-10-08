@@ -45,8 +45,6 @@ def main(crop: str):
         source_col = (f"{crop} planted", state)
         nass[col_name] = nass[source_col].diff().shift(1)
 
-    nass.to_csv("/tmp/test.csv")
-
     (fig, ax) = figure_axes(
         title=f"NASS Weekly {crop} Planting Progress / Days Suitable",
         figsize=(10.72, 7.2),

@@ -33,7 +33,8 @@ target-version = "py310"
 
 line-length = 79
 lint.select = [
-  "B", # bugbear
+  "B",    # bugbear
+  "D202", # pydocstyle, blank line after docstring
   "E",
   "F",
   "I",
