@@ -99,10 +99,12 @@ def do_planting(
     # Tricky, we need to iterate 3 times
     # 1. Plant soybeans up to soybean_acres_limit
     # 2. Plant corn up to corn_acres_limit
-    # 3. Try again with soybeans up to planting_acres_limit
+    # 3. Try again with soybeans up to planting_acres_limit, but only early
+    #    in the season, otherwise we don't maintain the ratios
+    second_pass_limit = planting_acres_limit if soybeans_fract > 0.7 else 0
     for crop, limit in zip(
         ["B", "C", "B"],
-        [soybean_acres_limit, corn_acres_limit, planting_acres_limit],
+        [soybean_acres_limit, corn_acres_limit, second_pass_limit],
         strict=True,
     ):
         if acres_planted >= planting_acres_limit:
