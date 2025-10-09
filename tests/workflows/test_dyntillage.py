@@ -90,6 +90,25 @@ def test_do_huc12():
     assert acres_planted >= (total_acres * 0.1)
 
 
+def test_soybeans_early_too_aggressive(fields):
+    """Test that we are not too aggressive early in season with soybeans."""
+    # Scenario is 9 fields of soybeans and one of corn
+    fields["crop"] = ["B"] * 9 + ["C"]
+    # Goose acres to get a three pass result
+    fields["acres"] = [1, 1, 1, 1, 1, 1, 1, 1, 100, 1]
+    # Clear out tillage
+    fields["till_needed"] = False
+    # We are early in the season, so the ratio is small for soybeans
+    dt = date(2000, 4, 30)
+    acres_planted = do_planting(fields, dt, False, 0)
+    # Only the first soybean field should have been planted
+    assert (
+        len(fields[(fields["crop"] == "B") & fields["operation_done"]].index)
+        == 1
+    )
+    assert acres_planted == 2
+
+
 def test_mud_it_in(fields):
     """Test scenario with all fields that should get planted."""
     # No tillage needed
