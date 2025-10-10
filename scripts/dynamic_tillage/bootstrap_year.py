@@ -45,7 +45,7 @@ def main(year, scenario):
             params={
                 "scenario": scenario,
                 "dbcolidx": dbcolidx,
-                "crops": ["B", "C", "L", "W"],
+                "crops": ["B", "C"],
             },
             index_col="field_id",
         )

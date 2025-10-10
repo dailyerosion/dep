@@ -60,7 +60,7 @@ def main(huc12: str, year: int):
         hucstatusdfs.append(statusdf.loc[[huc12]])
     hucstatusdf = pd.concat(hucstatusdfs)
     huc12sm = pd.concat(smdfs)
-    huc12sm = huc12sm[huc12sm["crop"].isin(["C", "S"])]
+    huc12sm = huc12sm[huc12sm["crop"].isin(["C", "B"])]
     huc12sm["combo"] = (
         huc12sm["fpath"].astype(str) + "_" + huc12sm["ofe"].astype(str)
     )
