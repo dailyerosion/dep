@@ -14,11 +14,9 @@ def get_soybeans_planting_fraction() -> np.ndarray:
     # ~ Apr 27
     res[117:125] = np.linspace(0, 0.1, 8)
     # ~ May 4
-    res[124:137] = np.linspace(0.1, 0.8, 13)
+    res[124:137] = np.linspace(0.1, 0.5, 13)
     # ~ May 16
-    res[136:161] = np.linspace(0.8, 1.0, 25)
-    # ~ Jun 9
-    res[160:] = 1.0
+    res[136:] = 0.5
     return res
 
 
@@ -101,7 +99,7 @@ def do_planting(
     # 2. Plant corn up to corn_acres_limit
     # 3. Try again with soybeans up to planting_acres_limit, but only early
     #    in the season, otherwise we don't maintain the ratios
-    second_pass_limit = planting_acres_limit if soybeans_fract > 0.7 else 0
+    second_pass_limit = planting_acres_limit if soybeans_fract > 0.4 else 0
     for crop, limit in zip(
         ["B", "C", "B"],
         [soybean_acres_limit, corn_acres_limit, second_pass_limit],
