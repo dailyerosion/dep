@@ -106,7 +106,7 @@ def edit_rotfile(year, huc12, row):
             thisdt = row["plant"]
             if tokens[4] == "Tillage":
                 thisdt = dates.pop(0)
-            if thisdt is None:
+            if pd.isna(thisdt):
                 thisdt = row["plant"]
             lines[i] = f"{thisdt:%-m %-d} {yearindex} {' '.join(tokens[3:])}\n"
     with open(rotfn, "w", encoding="ascii") as fh:
@@ -164,19 +164,19 @@ def job(arg):
     dt, huc12 = arg
     with get_sqlalchemy_conn("idep") as conn:
         fields, planted, tilled = do_huc12(conn, 0, dt, huc12)
-    df = fields[fields["operation_done"]]
-    # Update all the .rot files
-    if dt.month == 6 and dt.day == 14:
-        df = df[df["ofe"].notna()]
-    elif not df.empty:
-        df = df[(df["field_id"].isin(df["field_id"])) & (df["ofe"].notna())]
+    # A HUC12 without any C or B, likely
+    if not RUNTIME["edit_rotfile"] or "ofe" not in fields.columns:
+        return huc12, planted, tilled
+    # Now we need to figure out which files need edited
+    fields = fields[fields["ofe"].notna()]
+    if f"{dt:%m%d}" != "0614":
+        fields = fields[fields["operation_done"]]
 
-    if RUNTIME["edit_rotfile"] or f"{dt:%m%d}" == "0614":
-        for _, row in df.iterrows():
-            edit_rotfile(dt.year, huc12, row)
-        if RUNTIME["run_prj2wepp"]:
-            for fpath in df["fpath"].unique():
-                prj2wepp(huc12, fpath)
+    for _, row in fields.iterrows():
+        edit_rotfile(dt.year, huc12, row)
+    if RUNTIME["run_prj2wepp"]:
+        for fpath in fields["fpath"].unique():
+            prj2wepp(huc12, fpath)
 
     return huc12, planted, tilled
 
