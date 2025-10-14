@@ -348,7 +348,7 @@ def plot_accum(
     ax2.plot(
         date2num(accum.index.date),
         accum["percent"].values,
-        label="DEP DynTillv4",
+        label="DEP DynTillv5",
     )
     if datum == "IA":
         # Plot the daily district data as a filled bar
@@ -411,16 +411,16 @@ def plot_accum(
     return ax2
 
 
-def plot_v(ax2, v: int, crop, year, district, state):
+def plot_v(ax2, v: int, crop, year, datum: str):
     """Plot v2."""
     v2df = pd.read_csv(
-        f"plotsv{v}/{crop}_{year}_{district if state is None else state}.csv",
-        parse_dates=["valid"],
+        f"plotsv{v}/{crop}_{year}_{datum}.csv",
+        parse_dates=["valid" if v != 4 else "date"],
     )
-    v2df["valid"] = v2df["valid"].dt.date
+    v2df["valid"] = v2df["valid" if v != 4 else "date"].dt.date
     ax2.plot(
         v2df["valid"].values,
-        v2df[f"dep_{crop}_planted"],
+        v2df[f"dep_{crop}_pct"],
         label=f"DEP DynTillv{v}",
     )
 
@@ -474,6 +474,7 @@ def get_deines(year: int, datum, _ugc, crop) -> pd.DataFrame | None:
 )
 @click.option("--plotv2", is_flag=True, help="Plot v2")
 @click.option("--plotv3", is_flag=True, help="Plot v3")
+@click.option("--plotv4", is_flag=True, help="Plot v4")
 @click.option("--plotdep", is_flag=True, help="Plot DEP")
 def main(
     year: int,
@@ -482,6 +483,7 @@ def main(
     crop: str,
     plotv2: bool,
     plotv3: bool,
+    plotv4: bool,
     plotdep: bool,
 ):
     """Go Main Go."""
@@ -568,6 +570,8 @@ def main(
         plot_v(ax2, 2, crop, year, datum)
     if plotv3:
         plot_v(ax2, 3, crop, year, datum)
+    if plotv4:
+        plot_v(ax2, 4, crop, year, datum)
     if plotdep:
         plot_dep(ax2, year, datum)
     ax2.legend(loc=2)

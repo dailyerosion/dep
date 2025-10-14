@@ -59,7 +59,6 @@ def get_elevation(lon, lat):
 
 def process(lon: float, lat: float, clifn: str, domain: str):
     """Edit the given climate file."""
-
     with open(clifn, encoding="utf-8") as fh:
         lines = fh.readlines()
     # Set Station Name to something descriptive
