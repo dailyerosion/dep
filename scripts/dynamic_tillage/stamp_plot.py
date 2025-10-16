@@ -26,7 +26,7 @@ LOG = logger()
 )
 def main(crop: str, dots: str, lines: str):
     """Go main Go."""
-    jumbo = pd.read_csv(f"{crop}_dep_vs_nass_251006.csv", parse_dates=["date"])
+    jumbo = pd.read_csv(f"plots/{crop}_progress.csv", parse_dates=["date"])
     jumbo["dayofyear"] = jumbo["date"].dt.dayofyear
 
     fig, ax = figure_axes(
@@ -43,14 +43,16 @@ def main(crop: str, dots: str, lines: str):
         ax.spines[side].set_visible(False)
 
     xtilesize = 1.0 / 19.0
-    ytilesize = 1.0 / 11.0
+    ytilesize = 1.0 / 12.0
+    # Sequential color scheme: dark green (best) → red (worst)
+    # Removes problematic yellow for better visibility
     cmap = mpcolors.ListedColormap(
-        ["#00441b", "#a1d99b", "#eeff00", "#d30000"]
+        ["#1a9850", "#91cf60", "#fc8d59", "#d73027"]
     )
     norm = mpcolors.BoundaryNorm([0, 10, 20, 35, 100], cmap.N)
     dotcol = f"{dots}_{crop}_pct"
     linecol = f"{lines}_{crop}_pct"
-    lyear = 2021 if "deines2023" in (dots, lines) else 2020
+    lyear = 2021 if "deines2023" in (dots, lines) else 2026
     for x, year in enumerate(range(2007, lyear)):
         # Psuedo axis definition
         x0 = x / 19.0
@@ -60,28 +62,31 @@ def main(crop: str, dots: str, lines: str):
             zip(
                 (
                     "IA_SW IA_SC IA_SE IA_WC IA_C IA_EC IA_NW IA_NC "
-                    "IA_NE IA MN"
+                    "IA_NE IA MN NE"
                 ).split(),
                 (
                     "red blue green orange tan purple "
-                    "brown pink skyblue black gray"
+                    "brown pink skyblue black gray white"
                 ).split(),
                 strict=True,
             )
         ):
             # Psuedo axis definition
-            y0 = y / 11.0
+            y0 = y / 12.0
             df = jumbo[
                 (jumbo["date"].dt.year == year)
                 & (jumbo["datum"] == datum)
                 & (jumbo["dayofyear"] >= xmin)
                 & (jumbo["dayofyear"] <= xmax)
             ]
+            if df.empty:
+                continue
             # Calculate RMSE
             rmse = ((df[dotcol] - df[linecol]).pow(2).mean()) ** 0.5
             mae = (df[dotcol] - df[linecol]).abs().mean()
             print(f"{year} {datum} RMSE: {rmse:.2f} MAE: {mae:.2f}")
             background_color = cmap(norm(mae))
+            # Colored border to indicate MAE
             ax.add_patch(
                 Rectangle(
                     (x0, y0),
@@ -89,6 +94,9 @@ def main(crop: str, dots: str, lines: str):
                     ytilesize,
                     color=background_color,
                     alpha=1,
+                    fill=False,
+                    linewidth=2.5,
+                    zorder=6,
                 )
             )
             ax.plot(
@@ -104,24 +112,32 @@ def main(crop: str, dots: str, lines: str):
                 s=5,
                 zorder=4,
             )
+            # MAE text in colored box
             ax.text(
                 x0 + 0.75 * xtilesize,
-                y0 + 0.15 * ytilesize,
+                y0 + 0.12 * ytilesize,
                 f"{mae:.0f}",
                 ha="center",
                 va="center",
-                color="b",
-                fontsize=14,
+                color="white",
+                fontsize=10,
+                weight="bold",
+                bbox=dict(
+                    boxstyle="round,pad=0.25",
+                    facecolor=background_color,
+                    edgecolor="none",
+                    alpha=0.95,
+                ),
                 zorder=5,
             )
 
     ax.set_xticks(numpy.arange(0, 0.99, 1.0 / 19.0) + xtilesize / 2.0)
     ax.set_xticklabels(range(2007, 2026), rotation=45)
-    ax.set_yticks(numpy.arange(0, 0.99, 1.0 / 11.0) + ytilesize / 2.0)
+    ax.set_yticks(numpy.arange(0, 0.99, 1.0 / 12.0) + ytilesize / 2.0)
     ax.set_yticklabels(
         (
             "IA\nSW IA\nSC IA\nSE IA\nWC IA\nC IA\nEC "
-            "IA\nNW IA\nNC IA\nNE IA MN"
+            "IA\nNW IA\nNC IA\nNE IA MN NE"
         ).split(" "),
         rotation=45,
         ha="right",
@@ -129,7 +145,7 @@ def main(crop: str, dots: str, lines: str):
     # Add gridlines
     for x in numpy.arange(0, 1.1, 1.0 / 19.0):
         ax.axvline(x, color="k", lw=0.5)
-    for y in numpy.arange(0, 1.01, 1.0 / 11.0):
+    for y in numpy.arange(0, 1.01, 1.0 / 12.0):
         ax.axhline(y, color="k", lw=0.5)
     ax.set_xlim(-0.01, 1.01)
     ax.set_ylim(-0.01, 1.01)
