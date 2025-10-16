@@ -2,6 +2,7 @@
 
 import os
 from datetime import date, timedelta
+from pathlib import Path
 from typing import Optional
 
 import click
@@ -413,8 +414,12 @@ def plot_accum(
 
 def plot_v(ax2, v: int, crop, year, datum: str):
     """Plot v2."""
+    path = Path(f"plotsv{v}/{crop}_{year}_{datum}.csv")
+    if not path.exists():
+        LOG.warning("Missing v%d file %s", v, path)
+        return
     v2df = pd.read_csv(
-        f"plotsv{v}/{crop}_{year}_{datum}.csv",
+        path,
         parse_dates=["valid" if v != 4 else "date"],
     )
     v2df["valid"] = v2df["valid" if v != 4 else "date"].dt.date
@@ -587,7 +592,7 @@ def main(
 
     # plots is symlinked
     fig.savefig(pngname)
-    LOG.info("%s %s done", year, datum)
+    LOG.info("%s %s %s done", year, datum, crop)
 
 
 if __name__ == "__main__":
