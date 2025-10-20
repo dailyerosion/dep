@@ -7,22 +7,23 @@ thought experiment for now.
 import sys
 
 import pandas as pd
-from pyiem.util import get_dbconn, get_sqlalchemy_conn, logger
+from pyiem.database import get_dbconn, get_sqlalchemy_conn
+from pyiem.util import logger
 
 from pydep.io.dep import read_wb
 
 LOG = logger()
 
 
-def run_mukey(mukey):
+def run_mukey(mukey) -> pd.DataFrame:
     """Do the mukey work!"""
     with get_sqlalchemy_conn("idep") as conn:
         # We limit to 50 OFEs as we likely(?) need not sample more than that
         df = pd.read_sql(
             """
             select huc_12, fpath, ofe, plastic_limit, o.bulk_slope,
-            wepp_min_sw, wepp_max_sw, management, landuse
-            from gssurgo g, flowpath_ofes o, flowpaths f
+            wepp_min_sw, wepp_max_sw, wepp_min_sw1, wepp_max_sw1,
+            management, landuse from gssurgo g, flowpath_ofes o, flowpaths f
             where o.gssurgo_id = g.id and g.mukey = %s and f.scenario = 0
             and f.fid = o.flowpath
             LIMIT 50
@@ -36,20 +37,19 @@ def run_mukey(mukey):
             f"{row['huc_12']}_{row['fpath']}.wb"
         )
         wbdf = read_wb(wbfn)
-        sw1 = wbdf[wbdf["ofe"] == row["ofe"]]["sw1"]
-        sw = wbdf[wbdf["ofe"] == row["ofe"]]["sw"]
-        df.at[idx, "wepp_min_sw"] = sw1.min()
-        df.at[idx, "wepp_max_sw"] = sw1.max()
-        df.at[idx, "min_sw"] = sw.min()
-        df.at[idx, "max_sw"] = sw.max()
+        ofedf = wbdf[wbdf["ofe"] == row["ofe"]]
+        df.at[idx, "wepp_min_sw1"] = ofedf["sw1"].min()
+        df.at[idx, "wepp_max_sw1"] = ofedf["sw1"].max()
+        df.at[idx, "wepp_min_sw"] = ofedf["sw"].min()
+        df.at[idx, "wepp_max_sw"] = ofedf["sw"].max()
     # We should have more than 1 OFE at the given max and min values
-    minval, maxval = df["wepp_min_sw"].min(), df["wepp_max_sw"].max()
-    if len(df[(df["wepp_max_sw"] - maxval).abs() < 0.01].index) < 2:
+    maxval = df["wepp_max_sw1"].max()
+    if len(df[(df["wepp_max_sw1"] - maxval).abs() < 0.01].index) < 2:
         LOG.warning("Failure quorum at maxval: %s", maxval)
         print(df.sort_values("bulk_slope"))
         sys.exit()
 
-    return minval, maxval
+    return df
 
 
 def main():
@@ -73,12 +73,24 @@ def main():
     cnt = 0
     for gid, row in df.iterrows():
         cnt += 1
-        minval, maxval = run_mukey(row["mukey"])
-        LOG.info("mukey: %s [%.3f-%.3f]", row["mukey"], minval, maxval)
+        obsdf = run_mukey(row["mukey"])
+        LOG.info(
+            "mukey: %s [%.3f-%.3f]",
+            row["mukey"],
+            obsdf["wepp_min_sw1"].min(),
+            obsdf["wepp_max_sw1"].max(),
+        )
         cursor.execute(
-            "UPDATE gssurgo SET wepp_min_sw = %s, wepp_max_sw = %s WHERE "
-            "id = %s",
-            (minval, maxval, gid),
+            "UPDATE gssurgo SET wepp_min_sw1 = %s, wepp_max_sw1 = %s, "
+            "wepp_min_sw = %s, wepp_max_sw = %s "
+            "WHERE id = %s",
+            (
+                obsdf["wepp_min_sw1"].min(),
+                obsdf["wepp_max_sw1"].max(),
+                obsdf["wepp_min_sw"].min(),
+                obsdf["wepp_max_sw"].max(),
+                gid,
+            ),
         )
         if cnt % 100 == 0:
             cursor.close()

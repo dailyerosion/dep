@@ -11,7 +11,7 @@ from pyiem.plot import figure
 
 def get_plastic_limit(huc12: str, year: int) -> pd.DataFrame:
     """Figure out what the plastic limit is."""
-    charat = year - 2007
+    charat = year - 2007 + 1
     with get_sqlalchemy_conn("idep") as conn:
         # build up the cross reference of everyhing we need to know
         return pd.read_sql(
@@ -228,7 +228,9 @@ def main(huc12: str, year: int):
                     )
 
     # plots directory is symlinked
-    fig.savefig(f"plots/sm_{huc12}_{year}.png")
+    pngfn = f"plots/sm_{huc12}_{year}.png"
+    print(f"Created {pngfn}")
+    fig.savefig(pngfn)
 
 
 if __name__ == "__main__":
