@@ -242,9 +242,11 @@ def main(scenario, dt, huc12, edr, run_prj2wepp):
         for huc12, gdf in smdf.groupby("huc12"):
             if huc12 not in huc12df.index:
                 continue
-            # Require that 50% of modelled OFEs are 0.8 of plastic limit
-            toowet = gdf["sw1"].gt(gdf["plastic_limit"] * 0.8).sum()
-            if toowet > (len(gdf.index) * 0.75):
+            # Require that 25% of modelled OFEs are below plastic limit
+            # compute_smstate applies business logic, like 0.8 * PL, so
+            # DO NOT do it here as well
+            total_below = gdf["sw1"].lt(gdf["plastic_limit"]).sum()
+            if total_below < (len(gdf.index) * 0.25):
                 huc12df.at[huc12, "limited_by_soilmoisture"] = True
 
     # restrict to HUC12s that are not limited
@@ -254,9 +256,12 @@ def main(scenario, dt, huc12, edr, run_prj2wepp):
         | huc12df["limited_by_soilmoisture"]
     )
     LOG.info(
-        "%s/%s HUC12s failed precip + soiltemp check",
+        "%s/%s HUC12s failed precip[%s], soiltemp[%s], sm[%s] check",
         huc12df["limited"].sum(),
         len(huc12df.index),
+        huc12df["limited_by_precip"].sum(),
+        huc12df["limited_by_soiltemp"].sum(),
+        huc12df["limited_by_soilmoisture"].sum(),
     )
 
     # Need to run from project dir so local userdb is found

@@ -9,6 +9,7 @@ Crontab entry at 3 PM Central for the previous date.
 
 import os
 import tempfile
+from datetime import date
 from functools import partial
 from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
@@ -24,8 +25,13 @@ from pydep.io.dep import read_wb
 
 LOG = logger()
 
+NON_PLASTIC_SOILS = (
+    "Sand,Fine sand,Coarse sand,Very fine sand,Loamy sand,Loamy fine sand,"
+    "Loamy coarse sand,Loamy very fine sandmSilt"
+).split(",")
 
-def job(dates, tmpdir, huc12) -> int:
+
+def job(dates: list[date], tmpdir, huc12: str) -> int:
     """Do work for a HUC12"""
     with get_sqlalchemy_conn("idep") as conn:
         # Build up cross reference of fields and flowpath/OFEs
@@ -34,9 +40,13 @@ def job(dates, tmpdir, huc12) -> int:
             sql_helper(
                 """
     select o.ofe, p.fpath, o.fbndid,
-    case when g.plastic_limit < 40 then
-        g.plastic_limit else
+    g.plastic_limit as raw_plastic_limit,
+    g.wepp_min_sw1 + (g.wepp_max_sw1 - g.wepp_min_sw1) * 0.5796 as fieldcap58,
+    case when g.textureclass = ANY(:nonplastic) or g.plastic_limit > 40
+    then
         g.wepp_min_sw1 + (g.wepp_max_sw1 - g.wepp_min_sw1) * 0.5796
+    else
+        g.plastic_limit * 0.8
     end as plastic_limit,
     p.fpath || '_' || o.ofe as combo, p.huc_12 as huc12,
     substr(o.landuse, :charat, 1) as crop
@@ -46,9 +56,14 @@ def job(dates, tmpdir, huc12) -> int:
             """
             ),
             conn,
-            params={"huc12": huc12, "charat": dates[0].year - 2007 + 1},
+            params={
+                "nonplastic": NON_PLASTIC_SOILS,
+                "huc12": huc12,
+                "charat": dates[0].year - 2007 + 1,
+            },
             index_col=None,
         )
+    # Provision the storage of the 0-10cm value from WEPP
     huc12df["sw1"] = pd.NA
     # expand the cross reference to include the dates, so the original
     # data frame now has one row per date per metadata row
@@ -62,16 +77,18 @@ def job(dates, tmpdir, huc12) -> int:
     for flowpath, flowpathdf in huc12df.groupby("fpath"):
         wbfn = f"/i/0/wb/{huc12[:8]}/{huc12[8:]}/{huc12}_{flowpath}.wb"
         if not os.path.isfile(wbfn):
+            LOG.info("Missing wb: %s", wbfn)
             continue
         try:
             reads += 1
             smdf = read_wb(wbfn)
         except Exception as exp:
             raise ValueError(f"Read {wbfn} failed") from exp
+        # Find the dates of interest
         smdf = smdf[smdf["date"].isin(dates)]
         for ofe, gdf in smdf.groupby("ofe"):
             ofedf = flowpathdf[flowpathdf["ofe"] == ofe]
-            # assume that we are aligned here, gasp
+            # Alignment assumption seems reasonable here.
             huc12df.loc[ofedf.index, "sw1"] = gdf["sw1"].values
     huc12df.to_feather(f"{tmpdir}/{huc12}.feather")
     return reads
