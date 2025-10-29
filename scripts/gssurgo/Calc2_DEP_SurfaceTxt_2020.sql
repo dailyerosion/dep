@@ -24,8 +24,9 @@ USE DEPSoils2020
 IF OBJECT_ID('dbo.DEP_SurfaceTexture') IS NOT NULL 
         DROP TABLE dbo.DEP_SurfaceTexture
 
-set search_path=gssurgo25;
-SELECT cokey
+set search_path=gssurgo24;
+SELECT mukey
+      ,cokey
       ,compname
       ,comppct_r
       ,chkey
