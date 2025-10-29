@@ -25,7 +25,8 @@ IF OBJECT_ID('dbo.DEP_SurfaceTexture') IS NOT NULL
         DROP TABLE dbo.DEP_SurfaceTexture
 
 set search_path=gssurgo25;
-SELECT cokey
+SELECT mukey
+      ,cokey
       ,compname
       ,comppct_r
       ,chkey

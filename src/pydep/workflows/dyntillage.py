@@ -139,7 +139,7 @@ def do_huc12(
     """
     dt = pd.Timestamp(dt)
     dbcolidx = dt.year - 2007 + 1
-    # Only concerned about corn/soybeans for now
+    # Only concerned about soybeans/corn for now
     crops = ["B", "C"]
     # No limits, other than 1 operation per field per day
     mud_it_in = f"{dt:%m%d}" >= "0610"

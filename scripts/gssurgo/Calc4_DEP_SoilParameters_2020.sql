@@ -59,6 +59,7 @@ SELECT DOM.mukey
       ,C.albedodry_r as Albedo
       ,HC.HrzCount
       ,chtgrp.tgtexture as Texture
+      ,chtgrp.txtxtclass as TextureClass
       ,hrz.chkey 
       ,hrz.hzname
       ,hrz.hzdept_r

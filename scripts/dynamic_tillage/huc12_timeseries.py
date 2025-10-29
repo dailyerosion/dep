@@ -18,7 +18,7 @@ def get_plastic_limit(huc12: str, year: int) -> pd.DataFrame:
             sql_helper(
                 """
                 select o.ofe, p.fpath, o.fbndid,
-                g.wepp_min_sw + (g.wepp_max_sw - g.wepp_min_sw) * 0.58
+                g.wepp_min_sw1 + (g.wepp_max_sw1 - g.wepp_min_sw1) * 0.58
                 as plastic_limit58,
                 g.plastic_limit,
                 p.fpath || '_' || o.ofe as combo,
