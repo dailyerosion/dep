@@ -39,10 +39,18 @@ def job(dates: list[date], tmpdir, huc12: str) -> int:
         huc12df = pd.read_sql(
             sql_helper(
                 """
+    with layers as (
+        select sf.mukey, sf.om,
+        rank() OVER (partition by mukey order by depthto_mm asc)
+        from gssurgo24.dep_soilfractions sf
+    ), toplayer as (
+        select mukey, om from layers where rank = 1
+    )
     select o.ofe, p.fpath, o.fbndid,
     g.plastic_limit as raw_plastic_limit,
     g.wepp_min_sw1 + (g.wepp_max_sw1 - g.wepp_min_sw1) * 0.5796 as fieldcap58,
-    case when g.textureclass = ANY(:nonplastic) or g.plastic_limit > 40
+    case when
+      g.textureclass = ANY(:nonplastic) or g.plastic_limit > 50 or tl.om > 10
     then
         g.wepp_min_sw1 + (g.wepp_max_sw1 - g.wepp_min_sw1) * 0.5796
     else
@@ -50,9 +58,11 @@ def job(dates: list[date], tmpdir, huc12: str) -> int:
     end as plastic_limit,
     p.fpath || '_' || o.ofe as combo, p.huc_12 as huc12,
     substr(o.landuse, :charat, 1) as crop
-    from flowpaths p, flowpath_ofes o, gssurgo g
-    WHERE o.flowpath = p.fid and p.huc_12 = :huc12
-    and p.scenario = 0 and o.gssurgo_id = g.id
+    from
+    flowpaths p LEFT JOIN flowpath_ofes o on p.fid = o.flowpath
+      LEFT JOIN gssurgo g on o.gssurgo_id = g.id
+      LEFT JOIN toplayer tl on g.mukey = tl.mukey::int
+    WHERE p.huc_12 = :huc12 and p.scenario = 0
             """
             ),
             conn,
