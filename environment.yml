@@ -11,6 +11,8 @@ dependencies:
   # image work
   - pillow
   - psycopg
+  # Data validation
+  - pydantic
   # daryl's helper library, there are downstream users, so discipline please!
   - pyiem
   # Fast geojson reading

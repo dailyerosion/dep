@@ -21,6 +21,7 @@ classifiers = [
 ]
 dynamic = [ "version" ]
 dependencies = [
+  "pydantic",
   "pyiem",
 ]
 urls."homepage" = "https://github.com/dailyerosion/dep"

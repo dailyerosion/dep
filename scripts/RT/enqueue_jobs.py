@@ -4,14 +4,19 @@ import datetime
 import json
 import os
 import time
-from io import StringIO
-from typing import Any
 
 import click
 import httpx
+import pandas as pd
 import pika
-from pyiem.database import get_dbconn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
+
+from pydep.workflows.wepprun import (
+    WeppJobPayload,
+    WeppRunConfig,
+    build_runfile,
+)
 
 YEARS = datetime.date.today().year - 2006
 WEPPEXE = "wepp20240930"
@@ -23,7 +28,7 @@ GRAPH_HUC12 = (
 ).split()
 
 
-def get_rabbitmqconn() -> tuple[Any, dict[str, str]]:
+def get_rabbitmqconn() -> tuple[pika.BlockingConnection, dict[str, str]]:
     """Load the configuration."""
     # load rabbitmq.json in the directory local to this script
     with open("rabbitmq.json", "r", encoding="utf-8") as fh:
@@ -43,196 +48,90 @@ def get_rabbitmqconn() -> tuple[Any, dict[str, str]]:
     )
 
 
-class WeppRun:
-    """Represents a single run of WEPP.
-
-    Filenames have a 51 character restriction.
-    """
-
-    def __init__(self, huc12, fpid, clifile, scenario, ofe_count, is_irr):
-        """We initialize with a huc12 identifier and a flowpath id"""
-        self.huc12 = huc12
-        self.huc8 = huc12[:8]
-        self.subdir = f"{huc12[:8]}/{huc12[8:]}"
-        self.fpid = fpid
-        self.clifile = clifile
-        self.scenario = scenario
-        self.ofe_count = ofe_count
-        self.is_irr = is_irr
-
-    def _getfn(self, prefix):
-        """boilerplate code to get a filename."""
-        return (
-            f"/i/{self.scenario}/{prefix}/{self.subdir}/"
-            f"{self.huc12}_{self.fpid}.{prefix}"
-        )
-
-    def get_wb_fn(self):
-        """Return the water balance filename for this run"""
-        return self._getfn("wb")
-
-    def get_env_fn(self):
-        """Return the event filename for this run"""
-        return self._getfn("env")
-
-    def get_ofe_fn(self):
-        """Return the filename used for OFE output"""
-        return self._getfn("ofe")
-
-    def get_man_fn(self):
-        """Return the management filename for this run"""
-        return self._getfn("man")
-
-    def get_slope_fn(self):
-        """Return the slope filename for this run"""
-        return self._getfn("slp")
-
-    def get_soil_fn(self):
-        """Return the soil filename for this run"""
-        return self._getfn("sol")
-
-    def get_clifile_fn(self):
-        """Return the climate filename for this run"""
-        return self.clifile
-
-    def get_runfile_fn(self):
-        """Return the run filename for this run"""
-        return self._getfn("run")
-
-    def get_yield_fn(self):
-        """Filename to be used for yield output"""
-        return self._getfn("yld")
-
-    def get_event_fn(self):
-        """Filename to be used for event output"""
-        return self._getfn("event")
-
-    def get_crop_fn(self):
-        """Filename to be used for crop output."""
-        return self._getfn("crop")
-
-    def get_graphics_fn(self):
-        """Filename to be used for crop output."""
-        return self._getfn("grph")
-
-    def get_out_fn(self):
-        """Filename to be used for soil loss output."""
-        return self._getfn("out")
-
-    def get_irrigation_fn(self):
-        """Filename providing irrigation data."""
-        return f"/i/{self.scenario}/irrigation/ofe{self.ofe_count}.txt"
-
-    def make_runfile(self):
-        """Create a runfile for our runs"""
-        out = StringIO()
-        out.write("E\n")  # English units
-        out.write("Yes\n")  # Run Hillslope
-        out.write("1\n")  # Continuous simulation
-        out.write("1\n")  # hillslope version
-        out.write("No\n")  # pass file output?
-        out.write("1\n")  # abbreviated annual output
-        out.write("No\n")  # initial conditions output
-        out.write("/dev/null\n")  # soil loss output file
-        # out.write(f"{self.get_out_fn()}\n")  # soil loss output file
-        if self.scenario == 0:
-            out.write("Yes\n")  # Do water balance output
-            out.write(f"{self.get_wb_fn()}\n")  # water balance output file
-        else:
-            out.write("No\n")
-        out.write("No\n")  # crop output
-        # out.write("%s\n" % (self.get_crop_fn(),))  # crop output file
-        out.write("No\n")  # soil output
-        out.write("No\n")  # distance and sed output
-        if self.huc12 in GRAPH_HUC12:
-            out.write("Yes\n")  # large graphics output
-            out.write(f"{self.get_graphics_fn()}\n")
-        else:
-            out.write("No\n")  # large graphics output
-        out.write("Yes\n")  # event by event output
-        out.write(f"{self.get_env_fn()}\n")  # event file output
-        out.write("No\n")  # element output
-        # out.write("%s\n" % (self.get_ofe_fn(),))
-        out.write("No\n")  # final summary output
-        out.write("No\n")  # daily winter output
-        out.write("Yes\n")  # plant yield output
-        out.write(f"{self.get_yield_fn()}\n")  # yield file
-        out.write(f"{self.get_man_fn()}\n")  # management file
-        out.write(f"{self.get_slope_fn()}\n")  # slope file
-        out.write(f"{self.get_clifile_fn()}\n")  # climate file
-        out.write(f"{self.get_soil_fn()}\n")  # soil file
-        if self.is_irr:
-            out.write("2\n")  # Irrigation
-            out.write(f"{self.get_irrigation_fn()}\n")
-        else:
-            out.write("0\n")  # Irrigation
-        out.write(f"{YEARS}\n")  # years 2007-
-        out.write("0\n")  # route all events
-        out.seek(0)
-        return out.read()
-
-
 @click.command()
 @click.option("-s", "--scenario", type=int, help="Scenario ID", default=0)
 @click.option(
     "--runerrors", is_flag=True, help="Run previous runs that errored."
 )
-def main(scenario: int, runerrors: bool):
+@click.option("--myhucs", help="Specify file of HUC12s to filter job.")
+@click.option("--queue", help="RabbitMQ destination", default="dep")
+def main(scenario: int, runerrors: bool, myhucs: str | None, queue: str):
     """Go main Go."""
     log = logger()
-    myhucs = []
-    if os.path.isfile("myhucs.txt"):
-        log.warning("Using myhucs.txt to filter job submission")
-        with open("myhucs.txt", encoding="ascii") as fh:
+    if myhucs:
+        log.warning("Using %s to filter job submission", myhucs)
+        with open(myhucs, encoding="ascii") as fh:
             myhucs = [s.strip() for s in fh]
-    idep = get_dbconn("idep")
-    icursor = idep.cursor()
 
-    # Figure out the source of flowpaths
-    icursor.execute(
-        "SELECT flowpath_scenario, climate_scenario from scenarios "
-        "where id = %s",
-        (scenario,),
-    )
-    flscenario, _clscenario = icursor.fetchone()
+    with get_sqlalchemy_conn("idep") as conn:
+        # Figure out the source of flowpaths
+        res = conn.execute(
+            sql_helper(
+                "SELECT flowpath_scenario from scenarios where id = :scenario"
+            ),
+            {"scenario": scenario},
+        )
+        flscenario = res.fetchone()[0]
 
-    icursor.execute(
-        "SELECT huc_12, fpath, filepath, ofe_count, irrigated "
-        "from flowpaths f JOIN climate_files c on (f.climate_file_id = c.id) "
-        "where f.scenario = %s",
-        (flscenario,),
-    )
-    totaljobs = icursor.rowcount
+        flowpathdf = pd.read_sql(
+            sql_helper(
+                """
+        SELECT huc_12, fpath, filepath, ofe_count, irrigated
+        from flowpaths f JOIN climate_files c on (f.climate_file_id = c.id)
+        where f.scenario = :flscenario {huclimit}
+        """,
+                huclimit=" and huc_12 = ANY(:hucs)" if myhucs else "",
+            ),
+            conn,
+            params={"flscenario": flscenario, "hucs": myhucs},
+        )
+    totaljobs = len(flowpathdf.index)
     connection, rabbit_config = get_rabbitmqconn()
     channel = connection.channel()
-    channel.queue_declare(queue="dep", durable=True)
+    # Declare queue as durable (survives broker restart)
+    # This is idempotent - safe to declare multiple times
+    channel.queue_declare(queue=queue, durable=True)
     sts = datetime.datetime.now()
-    for row in icursor:
-        if myhucs and row[0] not in myhucs:
-            continue
-        clfile = row[2]
-        if scenario >= 142:
-            # le sigh
-            clfile = clfile.replace("/0/", f"/{scenario}/")
+
+    weppconfig = WeppRunConfig(years=YEARS)
+
+    for row in flowpathdf.itertuples():
+        errfn = (
+            f"/i/0/error/{row.huc_12[:8]}/{row.huc_12[8:]}"
+            f"/{row.huc_12}_{row.fpath}.error"
+        )
         if runerrors:
-            errfn = (
-                f"/i/0/error/{row[0][:8]}/{row[0][8:]}/{row[0]}_{row[1]}.error"
-            )
             if not os.path.isfile(errfn):
                 continue
             os.unlink(errfn)
 
-        wr = WeppRun(row[0], row[1], clfile, scenario, row[3], row[4])
-        payload = {
-            "wepprun": wr.make_runfile(),
-            "weppexe": WEPPEXE,
-        }
+        # One offs
+        weppconfig.enable_graph_file = row.huc_12 in GRAPH_HUC12
+
+        payload = WeppJobPayload(
+            errorfn=errfn,
+            wepprun=build_runfile(
+                weppconfig,
+                f"/i/{scenario}/{{prefix}}/"
+                f"{row.huc_12[:8]}/{row.huc_12[8:]}/"
+                f"{row.huc_12}_{row.fpath}.{{prefix}}",
+                f"/i/{scenario}/{{prefix}}/"
+                f"{row.huc_12[:8]}/{row.huc_12[8:]}/"
+                f"{row.huc_12}_{row.fpath}.{{prefix}}",
+                row.filepath,
+                f"/i/{scenario}/irrigation/ofe{row.ofe_count}.txt",
+            ),
+            weppexe=WEPPEXE,
+        )
+        # Publish to default exchange ("") with routing_key=queue name
+        # This directly routes the message to the named queue
         channel.basic_publish(
-            exchange="",
-            routing_key="dep",
-            body=json.dumps(payload),
+            exchange="",  # Default exchange (nameless exchange)
+            routing_key=queue,  # Queue name to route to
+            body=payload.model_dump_json(),
             properties=pika.BasicProperties(
-                delivery_mode=2  # make message persistent
+                # Message survives broker restart
+                delivery_mode=pika.DeliveryMode.Persistent,
             ),
         )
     # Wait a few seconds for the dust to settle
@@ -242,7 +141,7 @@ def main(scenario: int, runerrors: bool):
     while True:
         now = datetime.datetime.now()
         req = httpx.get(
-            f"http://{rabbit_config['host']}:15672/api/queues/%2F/dep",
+            f"http://{rabbit_config['host']}:15672/api/queues/%2F/{queue}",
             auth=(rabbit_config["user"], rabbit_config["password"]),
             timeout=60,
         )
