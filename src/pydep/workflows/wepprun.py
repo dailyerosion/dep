@@ -54,14 +54,6 @@ class WeppJobPayload(BaseModel):
         The complete WEPP runfile content as a string. This multi-line
         string contains all the parameters and file paths WEPP needs to
         execute a simulation.
-
-    Examples
-    --------
-    >>> payload = WeppJobPayload(
-    ...     wepprun="E\\nYes\\n1\\n...",
-    ...     weppexe="wepp20240930"
-    ... )
-    >>> json_str = payload.model_dump_json()
     """
 
     errorfn: str = Field(
