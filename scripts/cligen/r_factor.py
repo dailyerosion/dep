@@ -53,8 +53,6 @@ def plot():
     )
     cmap = plt.get_cmap("turbo")
     clevs = np.arange(0, 300.1, 25.0)
-    # clevs = np.arange(0, 6000.1, 1000.0)
-    # clevs = np.arange(2007, 2020.1, 1)
     norm = mpcolors.BoundaryNorm(clevs, cmap.N)
     for huc_12, row in df.iterrows():
         val = df2.at[huc_12, colname]

@@ -50,7 +50,6 @@ agg as (
     (scenario,),
 )
 
-# bins = np.arange(0, 101, 10)
 bins = [-25, -10, -5, -2, 0, 2, 5, 10, 25]
 cmap = plt.get_cmap("BrBG_r")
 cmap.set_under("purple")

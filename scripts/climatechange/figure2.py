@@ -10,8 +10,6 @@ rcParams.update(
     }
 )
 
-# rcParams['font.sans-serif'] = ['Tahoma']
-
 DATA = [
     0.10443217650431767,
     0.097604593311172,
@@ -56,7 +54,6 @@ def main():
     ax.bar(range(-14, 15), [x * 100 for x in DATA], color="blue")
     ax.grid(True)
     ax.set_xlabel("Shift in Days (negative is earlier)")
-    # ylabel = "Percent Change in Soil Loss (baseline: 7.8 $t$ $ha^{-1}$)"
     ylabel = "Percent Change in Soil Loss (baseline: 3.0 $T$ $a^{-1}$)"
     ax.set_ylabel(ylabel)
     ax.set_ylim(-12, 12)

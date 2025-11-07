@@ -41,7 +41,6 @@ def main(argv):
         ) * 100.0
         yticklabels.append("%s %4.2f%%" % (date.strftime("%b %d"), total))
         x = delta.index.to_pydatetime()
-        # res = ax.scatter(x, delta.values + (scenario - 60))
         for idx, val in enumerate(delta):
             ax.arrow(
                 x[idx],

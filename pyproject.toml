@@ -37,6 +37,8 @@ lint.select = [
   "B",    # bugbear
   "D202", # pydocstyle, blank line after docstring
   "E",    # pycodestyle errors
+  "E722", # bare except (catch without exception type)
+  "ERA",  # eradicate (commented out code)
   "F",    # pyflakes
   "I",    # isort
   # "PD",   # pandas
@@ -44,6 +46,8 @@ lint.select = [
   "PLE",    # pylint error
   "PLW",    # pylint warning
   "RET",    # return
+  "S110",   # try-except-pass (empty except with pass)
+  "SIM105", # try-except-pass (suppressible exception, use contextlib.suppress)
   "SIM115", # open() without context manager (use 'with' statement)
   "T",      # types
 ]

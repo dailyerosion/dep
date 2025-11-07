@@ -59,14 +59,12 @@ def myread(filename):
 def main():
     """Go Main Go"""
     df22 = myread("18_102400120405_9.crop")
-    # df23 = myread('23_102400120405_9.crop')
     df24 = myread("24_102400120405_9.crop")
 
     for plotvar in COLS:
         print("Processing %s" % (plotvar,))
         (fig, axes) = plt.subplots(1, 1, figsize=(12, 6))
         axes.plot(df22["date"], df22[plotvar], label="CC No Cover NoTill")
-        # axes.plot(df23['date'], df23['inter'], label='CS Cover NoTill')
         axes.plot(df24["date"], df24[plotvar], label="CC Cover NoTill")
         axes.grid(True)
         axes.set_ylabel(plotvar)

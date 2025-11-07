@@ -77,7 +77,6 @@ x = np.arange(0, sz)
 y = []
 scenario_y = []
 baseline_y = []
-# key = sz / 4
 minval = [0, 1000.0]
 for i in range(sz):
     d0[i] = d7[i]
@@ -100,8 +99,6 @@ ax.set_title(
     % (titles2[scenario],)
 )
 ax.plot(x / float(x[-1]) * 100.0, y, label="Conversion")
-# ax.plot(x / float(x[-1]) * 100., scenario_y, label='Scenario Accum')
-# ax.plot(x / float(x[-1]) * 100., baseline_y, label='Baseline Accum')
 ax.grid(True)
 ax.set_xticks([0, 5, 10, 25, 50, 75, 90, 95, 100])
 ax.legend(loc="best")

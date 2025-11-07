@@ -141,7 +141,6 @@ def compute_slope(fid):
 
 def do_flowpath(zone, huc_12, fid, fpath):
     """Process a given flowpathid"""
-    # slope = compute_slope(fid)
     # I need bad soilfiles so that the length can be computed
     cursor2.execute(
         """SELECT segid, elevation, length, f.surgo,
@@ -381,8 +380,6 @@ def main(argv):
         (SCENARIO,),
     )
     for row in tqdm(cursor, total=cursor.rowcount):
-        # SLP.write("%s,%.6f\n" % (row['fid'], compute_slope(row['fid'])))
-        # continue
         zone = "IA_CENTRAL"
         data = do_flowpath(zone, row["huc_12"], row["fid"], row["fpath"])
         if data is not None:
@@ -390,10 +387,8 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    # SLP = open('maxslope.txt', 'w')
     main(sys.argv)
     cursor3.close()
     PGCONN.commit()
     for fn in MISSED_SOILS:
         print("%6s %s" % (MISSED_SOILS[fn], fn))
-    # SLP.close()

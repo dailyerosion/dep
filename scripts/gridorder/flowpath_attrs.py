@@ -59,7 +59,6 @@ def dohuc(huc):
     zst = zdbf.to_dataframe()
     zst.columns = ["value", "count", "area", "max", "fpath", "gridorder"]
     zst = zst.sort_values(["fpath", "gridorder"], ascending=True)
-    # print(zst)
     df = read_postgis(
         """
     SELECT fpath, fid, st_transform(geom, 4326) as geo, huc_12 from flowpaths

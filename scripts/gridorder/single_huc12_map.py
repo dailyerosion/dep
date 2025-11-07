@@ -75,7 +75,6 @@ def main(argv):
             lw=2.0,
             transform=ccrs.PlateCarree(),
         )
-    # ax.add_image(GoogleTiles(), 4)
     print(ax.get_extent())
     fig.savefig("test.png")
 

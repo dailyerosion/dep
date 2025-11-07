@@ -41,8 +41,6 @@ def main(argv):
                 lines[23] = lines[23].replace(
                     "/i/%s/sol" % (use_scenario,), "/i/%s/sol" % (scenario,)
                 )
-                # hard code climate
-                # lines[21] = "/i/0/cli/093x041/093.07x040.71.cli\n"
                 with open(newfn, "w") as fh:
                     fh.write("".join(lines))
             os.chdir("..")

@@ -13,7 +13,6 @@ CLIFILE = re.compile(
     ('File = "/i/%s/cli/...x.../...\...x(...\...)\.cli') % (SCENARIO,)
 )
 LENGTH = re.compile("Length = (\d+\.\d+)")
-# ROTS = ['CSOA', 'OACS', 'SOAC']
 ROTS = ["CSO", "OCS", "SOC"]
 
 

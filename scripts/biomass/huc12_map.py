@@ -50,7 +50,6 @@ def main():
         (scenario,),
     )
 
-    # bins = np.arange(0, 101, 10)
     bins = [-5, -2, -1, -0.5, 0, 0.5, 1, 2, 5]
     cmap = plt.get_cmap("BrBG_r")
     cmap.set_under("purple")

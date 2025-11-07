@@ -3,6 +3,7 @@
 see GH #39
 """
 
+import contextlib
 import os
 import sys
 from multiprocessing.pool import ThreadPool
@@ -45,11 +46,9 @@ def editor(arg):
     newfn = fn.replace("/i/0/", f"/i/{scenario}/")
     newdir = os.path.dirname(newfn)
     if not os.path.isdir(newdir):
-        try:
-            # subject to race conditions
+        # This is racy
+        with contextlib.suppress(FileExistsError):
             os.makedirs(newdir)
-        except FileExistsError:
-            pass
     with open(newfn, "w", encoding="utf8") as fp:
         with open(fn, encoding="utf8") as fpin:
             linenum = 0

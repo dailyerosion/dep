@@ -215,7 +215,6 @@ def load_flowpath_from_db(pgconn, fid):
 
 def do_flowpath(pgconn, scenario, zone, metadata):
     """Process a given flowpathid"""
-    # slope = compute_slope(fid)
     # I need bad soilfiles so that the length can be computed
     df = load_flowpath_from_db(pgconn, metadata["fid"])
 
@@ -429,4 +428,3 @@ def generate_combos():
 
 if __name__ == "__main__":
     main()
-    # generate_combos()

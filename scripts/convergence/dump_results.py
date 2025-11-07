@@ -1,6 +1,6 @@
 """blah."""
 
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 
 pgconn = get_dbconn("idep")
 cursor = pgconn.cursor()

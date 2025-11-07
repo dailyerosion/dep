@@ -50,7 +50,5 @@ def operation_maker(crop, tillage_class, last_crop="C"):
         "operations/fall_tillage/fall_%s_%s.txt" % (croptype, fall), "r"
     ) as f:
         fall_tillage = f.readlines()
-    # with open('tillage/%s.txt' % (tillage_class), 'r') as t:
-    #    Tillage_lines=t.readlines()
     everything = spring_tillage + planting + harvest + fall_tillage
     return "".join(everything)

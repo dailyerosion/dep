@@ -111,7 +111,6 @@ def main():
     """Go Main Go."""
     xref = build_xref()
     for name, hucs in xref.items():
-        # fns = []
         fns = workflow(hucs)
         excel_summary(hucs, name)
         fns.append("%s.xlsx" % (name,))
