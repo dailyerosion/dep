@@ -8,7 +8,8 @@ cursor = DBCONN.cursor()
 
 def read_slope(fn):
     """Go."""
-    lines = open(fn).readlines()
+    with open(fn) as fh:
+        lines = fh.readlines()
     data = []
     for line in lines:
         if len(line.strip()) == 0 or line[0] == "#":

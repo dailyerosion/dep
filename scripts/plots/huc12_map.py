@@ -40,8 +40,6 @@ def main(argv):
     mp = MapPlot(
         continentalcolor="#EEEEEE",
         nologo=True,
-        # sector='custom',
-        # south=36.8, north=45.0, west=-99.2, east=-88.9,
         subtitle="",
         title=("DEP MLRA identifier assignment using HUC12 Centroid"),
     )
@@ -96,7 +94,6 @@ def main(argv):
 
     mp.draw_colorbar(bins, cmap, norm, units="MLRA ID")
 
-    # mp.drawcounties()
     mp.postprocess(filename="test.png")
 
 

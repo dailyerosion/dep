@@ -15,7 +15,6 @@
 **/*.png
 **/*.feather
 **/*.zip
-**/plots
 /.vscode
 prj2wepp/wepp/hill.slp
 prj2wepp/wepp/data/managements

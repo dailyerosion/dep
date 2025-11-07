@@ -64,12 +64,6 @@ def main():
     mp.draw_colorbar(bins, cmap, norm, extend="max", title="Percent")
     mp.postprocess(filename="/tmp/huc12_agland.png")
 
-    # gdf = df.groupby('fps').count()
-    # gdf.columns = ['count', ]
-    # gdf['cumsum'] = gdf['count'].cumsum()
-    # gdf['percent'] = gdf['cumsum'] / gdf['count'].sum() * 100.
-    # gdf.to_csv('/tmp/huc12_flowpath_cnts.csv')
-
 
 if __name__ == "__main__":
     main()
