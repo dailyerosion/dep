@@ -103,7 +103,6 @@ def main():
         bins = V2RAMP[v]
     norm = mpcolors.BoundaryNorm(bins, cmap.N)
 
-    # m.ax.add_geometries(df['geo'], ccrs.PlateCarree())
     for _, row in df.iterrows():
         c = cmap(norm([row["data"]]))[0]
         arr = np.asarray(row["geo"].exterior)
@@ -113,7 +112,6 @@ def main():
         p = Polygon(points[:, :2], fc=c, ec="k", zorder=2, lw=0.1)
         m.ax.add_patch(p)
 
-    # m.ax.add_collection(PatchCollection(patches, match_original=True))
     m.drawcounties()
     m.drawcities()
     lbl = [round(_, 2) for _ in bins]

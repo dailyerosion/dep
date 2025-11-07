@@ -40,9 +40,6 @@ def main():
     )
     ax.grid(True)
     ax.set_title("2008-2020 DEP OFE Soil Delivery by Crop Rotation Class")
-    # sns.jointplot(
-    # hue='rotclass',
-    #    x='slope[1]', y='delivery[t/a/yr]', data=df, kind='reg')
     plt.savefig("test.png")
 
 

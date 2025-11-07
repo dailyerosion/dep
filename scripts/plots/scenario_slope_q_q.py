@@ -80,7 +80,6 @@ def read_data():
 
 def main():
     """Go Main Go"""
-    # huc12 = argv[1]
     read_data()
     fig, ax = plt.subplots(1, 1)
     df = pd.read_csv("/tmp/slopes.csv")
@@ -94,10 +93,6 @@ def main():
             label="%s avg: %.1fm" % (scenario, gdf["length"].mean()),
             histtype="step",
         )
-        # gdf["maxslope"].plot.hist(
-        #    bins=500, cumulative=True, density=1, ax=ax,
-        #    label="%s peak, avg: %.1f%%" % (scenario, gdf['maxslope'].mean()),
-        #    histtype='step')
     ax.set_yticks(np.arange(0, 1.01, 0.1))
     ax.set_xlim(0, 375)
     ax.grid(True)

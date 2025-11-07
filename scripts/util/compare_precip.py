@@ -144,5 +144,3 @@ def one():
 
 if __name__ == "__main__":
     one()
-    # for year in range(2007, 2017):
-    #    two(year)

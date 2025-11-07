@@ -121,7 +121,6 @@ def main():
                             # "Flowpath ID": flowpath,
                             "HUC12": huc_12,
                             "Situation": XREF[scenario],
-                            # "Year": year,
                             "Date for daily max rainfall": result_full.at[
                                 key, "date"
                             ],
@@ -131,9 +130,6 @@ def main():
                             "Avg Flowpath Length(m)": avg_len_full.at[
                                 (scenario, huc_12), "len"
                             ],
-                            # "Flowpath length(m)": float(
-                            #    fdf[(fdf["fpath"] == flowpath)]["len"]
-                            # ),
                             "Yearly Rainfall (mm)": result_full.at[
                                 key, "precip"
                             ],
@@ -146,10 +142,6 @@ def main():
                             "Yearly Detachment (kg/m2)": result_full.at[
                                 key, "av_det"
                             ],
-                            # "Slope Gradient(%)": float(
-                            #    fdf[(fdf["fpath"] == flowpath)]["bulk_slope"]
-                            # )
-                            # * 100.0,
                             "Number of flowpath >22.1": flowpath_counts_221.at[
                                 (scenario, huc_12), "len"
                             ],

@@ -39,18 +39,19 @@ COLS = [
 def myread(filename):
     """Read my file,  please"""
     rows = []
-    for i, line in enumerate(open(filename)):
-        if i < 13:
-            continue
-        tokens = line.strip().split()
-        if len(tokens) < 9:
-            continue
-        date = datetime.date(int(tokens[2]), 1, 1)
-        date = date + datetime.timedelta(days=(int(tokens[1]) - 1))
-        mydict = dict(date=date)
-        for j in range(3, 3 + len(COLS)):
-            mydict[COLS[j - 3]] = float(tokens[i])
-        rows.append(mydict)
+    with open(filename) as fp:
+        for i, line in enumerate(fp):
+            if i < 13:
+                continue
+            tokens = line.strip().split()
+            if len(tokens) < 9:
+                continue
+            date = datetime.date(int(tokens[2]), 1, 1)
+            date = date + datetime.timedelta(days=(int(tokens[1]) - 1))
+            mydict = dict(date=date)
+            for j in range(3, 3 + len(COLS)):
+                mydict[COLS[j - 3]] = float(tokens[i])
+            rows.append(mydict)
 
     return pd.DataFrame(rows)
 
@@ -58,14 +59,12 @@ def myread(filename):
 def main():
     """Go Main Go"""
     df22 = myread("18_102400120405_9.crop")
-    # df23 = myread('23_102400120405_9.crop')
     df24 = myread("24_102400120405_9.crop")
 
     for plotvar in COLS:
         print("Processing %s" % (plotvar,))
         (fig, axes) = plt.subplots(1, 1, figsize=(12, 6))
         axes.plot(df22["date"], df22[plotvar], label="CC No Cover NoTill")
-        # axes.plot(df23['date'], df23['inter'], label='CS Cover NoTill')
         axes.plot(df24["date"], df24[plotvar], label="CC Cover NoTill")
         axes.grid(True)
         axes.set_ylabel(plotvar)

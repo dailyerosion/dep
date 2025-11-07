@@ -45,7 +45,8 @@ def read_data():
         for scenario in [0, 1002]:
             os.chdir("/i/%s/sol/%s/%s" % (scenario, huc12[:8], huc12[8:]))
             for fn in glob.glob("*.sol"):
-                lines = open(fn).readlines()
+                with open(fn) as fh:
+                    lines = fh.readlines()
                 # this fails sometimes
                 kr.append(float(lines[3].split()[-3]))
                 if kr[-1] > 0.1:
@@ -61,7 +62,6 @@ def read_data():
 
 def main():
     """Go Main Go"""
-    # huc12 = argv[1]
     read_data()
     fig, ax = plt.subplots(1, 1)
     df = pd.read_csv("/tmp/soils.csv")
@@ -75,10 +75,6 @@ def main():
             label="%s avg: %.4f" % (scenario, gdf["kr"].mean()),
             histtype="step",
         )
-        # gdf["maxslope"].plot.hist(
-        #    bins=500, cumulative=True, density=1, ax=ax,
-        #    label="%s peak, avg: %.1f%%" % (scenario, gdf['maxslope'].mean()),
-        #    histtype='step')
     ax.set_yticks(np.arange(0, 1.01, 0.1))
     ax.set_xlim(0, 0.012)
     ax.grid(True)

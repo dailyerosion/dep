@@ -141,7 +141,6 @@ def compute_slope(fid):
 
 def do_flowpath(zone, huc_12, fid, fpath):
     """Process a given flowpathid"""
-    # slope = compute_slope(fid)
     # I need bad soilfiles so that the length can be computed
     cursor2.execute(
         """SELECT segid, elevation, length, f.surgo,
@@ -313,8 +312,6 @@ def do_flowpath(zone, huc_12, fid, fpath):
 
 def write_prj(data):
     """Create the WEPP prj file"""
-    out = open(data["prj_fn"], "w")
-
     # Profile format
     # [x] The first number is the hillslope aspect,
     # [?] the second is the profile width in meters.
@@ -322,9 +319,9 @@ def write_prj(data):
     # [x] and the total distance in meters.
     # [x] The last line contains the fraction of the distance down the slope
     # [x] and the slope at that point.
-
-    out.write(
-        """#
+    with open(data["prj_fn"], "w") as fp:
+        fp.write(
+            """#
 # WEPP project written: %(date)s
 #
 Version = 98.6
@@ -363,9 +360,8 @@ RunOptions {
    SmallEventByPass = 1
 }
 """
-        % data
-    )
-    out.close()
+            % data
+        )
 
 
 def main(argv):
@@ -384,8 +380,6 @@ def main(argv):
         (SCENARIO,),
     )
     for row in tqdm(cursor, total=cursor.rowcount):
-        # SLP.write("%s,%.6f\n" % (row['fid'], compute_slope(row['fid'])))
-        # continue
         zone = "IA_CENTRAL"
         data = do_flowpath(zone, row["huc_12"], row["fid"], row["fpath"])
         if data is not None:
@@ -393,10 +387,8 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    # SLP = open('maxslope.txt', 'w')
     main(sys.argv)
     cursor3.close()
     PGCONN.commit()
     for fn in MISSED_SOILS:
         print("%6s %s" % (MISSED_SOILS[fn], fn))
-    # SLP.close()

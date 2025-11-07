@@ -44,7 +44,8 @@ def do_scenario(scenario, hucs):
 
 def main():
     """Go Main Go."""
-    hucs = [x.strip() for x in open("myhucs.txt").readlines()]
+    with open("myhucs.txt") as fh:
+        hucs = [x.strip() for x in fh.readlines()]
     for scenario in range(81, 91):
         do_scenario(scenario, hucs)
 

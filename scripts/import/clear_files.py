@@ -11,7 +11,8 @@ TARGETS = "crop error man ofe prj run slp sol wb yld env rot out".split()
 @click.option("-s", "--scenario", type=int, required=True)
 def main(scenario: int):
     """Go Main Go."""
-    myhucs = [x.strip() for x in open("myhucs.txt", encoding="utf8")]
+    with open("myhucs.txt", encoding="utf8") as fh:
+        myhucs = [x.strip() for x in fh.readlines()]
     for huc12 in myhucs:
         removed = 0
         for subdir in TARGETS:

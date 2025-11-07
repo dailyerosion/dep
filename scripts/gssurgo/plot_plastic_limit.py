@@ -63,7 +63,6 @@ def main():
         | (soils["om"] < 0.2)
         | (soils["om"] > 6.9)
     )
-    # oob = soils[soils["out_of_bounds"]]
     ok = soils[~soils["out_of_bounds"]]
 
     huc12stats = (
@@ -86,11 +85,7 @@ def main():
 
     mp = MapPlot(
         title=("DEP HUC12 Mean PL * 0.9 [SM%] for Plastic Soils minus PL58%"),
-        subtitle=(
-            "Clay [11%-74%] and Organic Matter [0.2%-6.9%] "
-            # f"{len(oob.index):,} of out {len(soils.index):,} total, "
-            # f"{(len(oob.index) / len(soils.index)) * 100:.1f}%"
-        ),
+        subtitle=("Clay [11%-74%] and Organic Matter [0.2%-6.9%] "),
         caption="Daily Erosion Project",
         logo="dep",
         sector="custom",
@@ -111,30 +106,6 @@ def main():
         aspect=None,
         ax=mp.ax,
     )
-    """
-    mp.ax.scatter(
-        oob["lon"],
-        oob["lat"],
-        s=2,
-        color="r",
-        zorder=Z_OVERLAY2,
-    )
-    mp.ax.scatter(
-        ok["lon"],
-        ok["lat"],
-        s=2,
-        color="g",
-        zorder=Z_OVERLAY2,
-    )
-    mp.ax.legend(
-        [
-            Rectangle((0, 0), 1, 1, fc="r"),
-            Rectangle((0, 0), 1, 1, fc="g"),
-        ],
-        ["Non-plastic soils", "Plastic soils (overlay)"],
-        loc=1,
-    )
-    """
     mp.draw_colorbar(
         clevs,
         cmap,

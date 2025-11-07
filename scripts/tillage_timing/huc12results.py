@@ -1,7 +1,7 @@
 """Create summary tables."""
 
 from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 
 
 def main():
@@ -13,7 +13,8 @@ def main():
         141,
     ]
     scens.insert(0, 0)
-    myhucs = [x.strip() for x in open("myhucs.txt").readlines()]
+    with open("myhucs.txt") as fh:
+        myhucs = [x.strip() for x in fh.readlines()]
     for scenario in scens:
         df = read_sql(
             """

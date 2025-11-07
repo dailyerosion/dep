@@ -36,7 +36,6 @@ def main():
     read_data()
     fig, ax = plt.subplots(1, 1)
     df = pd.read_csv("/tmp/slopes.csv")
-    # print(df['slopes'].describe())
     df["slopes"].plot.hist(bins=100, cumulative=True, normed=1, ax=ax)
     ax.set_yticks(np.arange(0, 1.01, 0.1))
     ax.set_xlim(0, 30)

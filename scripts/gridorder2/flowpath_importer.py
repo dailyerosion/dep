@@ -336,12 +336,6 @@ def process(cursor, filename, huc12df, snapdf):
     """
     # We get the huc12 code based on the filename
     huc12 = filename.split(".")[0].split("_")[-1][-12:]
-    # lencolname = "%sLen%s" % (PREFIX, huc12)
-    # res = huc12df[huc12df[lencolname] == 0].groupby(
-    #   "%s%s" % (PREFIX, huc12)).count()
-    # for _, row in res[res[lencolname] > 1].iterrows():
-    #    print(row)
-    # return
 
     delete_previous(cursor, huc12)
     # the inbound dataframe has lots of data, one row per flowpath point
@@ -363,7 +357,6 @@ def process(cursor, filename, huc12df, snapdf):
             delete_flowpath(cursor, db_fid)
             print(df)
             print(df[[f"gord_{huc12}", f"fpLen{huc12}"]])
-            # sys.exit()
     return huc12
 
 

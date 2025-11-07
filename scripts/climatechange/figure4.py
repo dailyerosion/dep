@@ -40,7 +40,6 @@ def main():
     ax.grid(True)
     ax.set_xticks(range(len(DATA)))
     ax.set_xlabel("Precipitation Intensity Adjustment")
-    # ylabel = r"Percent Change in Soil Loss (baseline: 7.8 $t$ $ha^{-1}$)"
     ylabel = r"Percent Change in Soil Loss (baseline: 3.0 $T$ $a^{-1}$)"
     ax.set_ylabel(ylabel)
     ax.set_xticklabels(

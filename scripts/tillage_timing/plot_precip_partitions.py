@@ -10,7 +10,8 @@ from pyiem.util import get_dbconn
 
 def main():
     """Go Main Go."""
-    myhucs = [x.strip() for x in open("myhucs.txt").readlines()]
+    with open("myhucs.txt") as fh:
+        myhucs = [x.strip() for x in fh.readlines()]
     pgconn = get_dbconn("idep")
     df = read_sql(
         """

@@ -21,7 +21,8 @@ def main(argv):
                 if not os.path.isdir(newdir):
                     continue
                 newfn = "%s/%s" % (newdir, fn)
-                lines = open(fn).readlines()
+                with open(fn) as fp:
+                    lines = fp.readlines()
                 if len(lines) < 22:
                     print("Bad fn? %s" % (fn,))
                     continue
@@ -40,11 +41,8 @@ def main(argv):
                 lines[23] = lines[23].replace(
                     "/i/%s/sol" % (use_scenario,), "/i/%s/sol" % (scenario,)
                 )
-                # hard code climate
-                # lines[21] = "/i/0/cli/093x041/093.07x040.71.cli\n"
-                fh = open(newfn, "w")
-                fh.write("".join(lines))
-                fh.close()
+                with open(newfn, "w") as fh:
+                    fh.write("".join(lines))
             os.chdir("..")
         os.chdir("..")
 

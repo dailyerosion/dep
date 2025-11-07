@@ -1,5 +1,6 @@
 """Collect the water balance for a given today"""
 
+import contextlib
 import datetime
 import multiprocessing
 import os
@@ -147,29 +148,36 @@ if __name__ == "__main__":
 
     # Begin the processing work now!
     POOL = multiprocessing.Pool()
-    FPS = {}
-    for _date in DATES:
-        key = _date.strftime("%Y%m%d")
-        FPS[key] = open("%s_wb.csv" % (_date.strftime("%Y%m%d"),), "w")
-        FPS[key].write("HUC12,VALID,PRECIP_MM,ET_MM,RUNOFF_MM\n")
-    for _res in tqdm(
-        POOL.imap_unordered(do_huc12, HUC12S),
-        total=len(HUC12S),
-        disable=(not sys.stdout.isatty()),
-    ):
-        for date, _huc12, et, runoff in _res:
-            if et is None or np.isnan(et):
-                continue
-            key = date.strftime("%Y%m%d")
-            FPS[key].write(
-                ("%s,%s,%.2f,%.2f,%.2f\n")
-                % (
-                    _huc12,
-                    date.strftime("%Y-%m-%d"),
-                    PRECIP[date][_huc12],
-                    et,
-                    runoff,
-                )
+
+    # Use ExitStack to manage multiple file handles properly
+    with contextlib.ExitStack() as stack:
+        FPS = {}
+        for _date in DATES:
+            key = _date.strftime("%Y%m%d")
+            # Open file and register it with the ExitStack for proper cleanup
+            fp = stack.enter_context(
+                open("%s_wb.csv" % (_date.strftime("%Y%m%d"),), "w")
             )
-    for key in FPS:
-        FPS[key].close()
+            FPS[key] = fp
+            fp.write("HUC12,VALID,PRECIP_MM,ET_MM,RUNOFF_MM\n")
+
+        for _res in tqdm(
+            POOL.imap_unordered(do_huc12, HUC12S),
+            total=len(HUC12S),
+            disable=(not sys.stdout.isatty()),
+        ):
+            for date, _huc12, et, runoff in _res:
+                if et is None or np.isnan(et):
+                    continue
+                key = date.strftime("%Y%m%d")
+                FPS[key].write(
+                    ("%s,%s,%.2f,%.2f,%.2f\n")
+                    % (
+                        _huc12,
+                        date.strftime("%Y-%m-%d"),
+                        PRECIP[date][_huc12],
+                        et,
+                        runoff,
+                    )
+                )
+        # Files are automatically closed when exiting the ExitStack context

@@ -142,8 +142,6 @@ for huc12 in ["070600060701"]:  # HUC12s:
     fig.savefig("%s_%s.pdf" % (huc12, YEAR), dpi=600)
     plt.close()
 
-# df = pd.DataFrame(results)
-# df.to_csv('results.csv')
 df = pd.read_csv("results.csv")
 (fig, ax) = plt.subplots(1, 1)
 ax.scatter(df["one"].values * 10.0, df["ten"].values * 10.0)

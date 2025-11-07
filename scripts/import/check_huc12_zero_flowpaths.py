@@ -9,7 +9,8 @@ from pyiem.database import get_sqlalchemy_conn, sql_helper
 @click.option("-s", "--scenario", type=int, required=True)
 def main(scenario: int):
     """Go Main Go."""
-    huc12s = [s.strip() for s in open("myhucs.txt", encoding="utf8")]
+    with open("myhucs.txt", encoding="utf8") as fh:
+        huc12s = [s.strip() for s in fh.readlines()]
     with get_sqlalchemy_conn("idep") as conn:
         df = pd.read_sql(
             sql_helper(

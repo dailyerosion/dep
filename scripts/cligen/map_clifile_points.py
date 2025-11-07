@@ -54,7 +54,6 @@ def main(year: int):
     print(pts["ratio"].describe())
 
     cmap = get_cmap("RdBu")
-    # clevs = [0, 250, 500, 750, 1000, 1500, 2000, 2500, 3000, 4000, 5000]
     clevs = np.arange(-60, 61, 20)
     norm = BoundaryNorm(clevs, cmap.N)
     nav = get_nav("iemre", "europe")

@@ -15,7 +15,8 @@ def main(argv):
     fn = argv[1]
     outfn = argv[2]
 
-    lines = open(fn).readlines()
+    with open(fn) as fp:
+        lines = fp.readlines()
     linenum = 15
     daily = []
     bp = []

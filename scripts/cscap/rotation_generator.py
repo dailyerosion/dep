@@ -183,9 +183,9 @@ def do(scenario, filename, phase):
         phase,
         filename,
     )
-    o = open(fullpath, "w")
-    o.write(
-        """#
+    with open(fullpath, "w") as fp:
+        fp.write(
+            """#
 # WEPP rotation saved on: Wed Feb 22 03:31:21 PM 2017
 #
 # Created with WEPPWIN verion: Sep 17 2012
@@ -200,32 +200,31 @@ InitialConditions = IniCropDef.Default {0.000000, 0}
 
 Operations {
 """
-    )
-    rot = SCENARIOS[scenario]
-    if phase == 2:
-        # Flip the order
-        rot = SCENARIOS[scenario][::-1]
-    # We need 2007 through 2017, so eleven years
-    rots = rot + rot + rot + rot + rot + rot
-    year = 2007
-    limit = 2018
-    for rot in rots[:11]:
-        lastmonth = 0
-        for month, day, operation, label in rot:
-            if month < lastmonth:
+        )
+        rot = SCENARIOS[scenario]
+        if phase == 2:
+            # Flip the order
+            rot = SCENARIOS[scenario][::-1]
+        # We need 2007 through 2017, so eleven years
+        rots = rot + rot + rot + rot + rot + rot
+        year = 2007
+        limit = 2018
+        for rot in rots[:11]:
+            lastmonth = 0
+            for month, day, operation, label in rot:
+                if month < lastmonth:
+                    year += 1
+                lastmonth = month
+                if year >= limit:
+                    break
+                fp.write(
+                    "%s %s %s %s\n"
+                    % (month, day, year - 2006, BLOCKS[operation][label])
+                )
+            if lastmonth > 8:
                 year += 1
-            lastmonth = month
-            if year >= limit:
-                break
-            o.write(
-                "%s %s %s %s\n"
-                % (month, day, year - 2006, BLOCKS[operation][label])
-            )
-        if lastmonth > 8:
-            year += 1
 
-    o.write("""}""")
-    o.close()
+        fp.write("""}""")
 
 
 def main(argv):

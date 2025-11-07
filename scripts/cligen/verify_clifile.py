@@ -10,7 +10,6 @@ def main(argv):
         lines = fh.readlines()
     tokens = lines[4].strip().split()
     syear = int(tokens[4])
-    # simyears = int(tokens[5])
     linenum = 15
     yesterday = datetime.date(syear - 1, 12, 31)
     while linenum < len(lines):

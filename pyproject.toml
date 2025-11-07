@@ -33,18 +33,25 @@ version_scheme = "post-release"
 target-version = "py310"
 
 line-length = 79
+# Don't respect gitignore so we can lint gitignored scripts/plots directory
+respect-gitignore = false
 lint.select = [
   "B",    # bugbear
   "D202", # pydocstyle, blank line after docstring
-  "E",
-  "F",
-  "I",
-  # "PD",  # pandas
-  "PIE", # perf
-  "PLE", # pylint error
-  "PLW", # pylint warning
-  "RET", # return
-  "T",   # types
+  "E",    # pycodestyle errors
+  "E722", # bare except (catch without exception type)
+  "ERA",  # eradicate (commented out code)
+  "F",    # pyflakes
+  "I",    # isort
+  # "PD",   # pandas
+  "PIE",    # perf
+  "PLE",    # pylint error
+  "PLW",    # pylint warning
+  "RET",    # return
+  "S110",   # try-except-pass (empty except with pass)
+  "SIM105", # try-except-pass (suppressible exception, use contextlib.suppress)
+  "SIM115", # open() without context manager (use 'with' statement)
+  "T",      # types
 ]
 # per memory issues microsoft/pylance-release/issues/5739
 # per type checking pain microsoft/pylance-release/issues/6373

@@ -53,7 +53,6 @@ def main():
         "Additional 1 $inch$ $h^{-1}$ Storms per Spring Season each Year"
     )
     ax.set_ylim(0, 110)
-    # ylabel = r"Percent Change in Soil Loss (baseline: 7.8 $t$ $ha^{-1}$)"
     ylabel = r"Percent Change in Soil Loss (baseline: 3.0 $T$ $a^{-1}$)"
     ax.set_ylabel(ylabel)
     ax.set_xticks(range(1, 11))

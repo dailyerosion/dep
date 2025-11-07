@@ -107,7 +107,6 @@ def main():
                 )
             )
         ax.barh(range(len(hucs)), vals, zorder=2)
-        # ax.set_xlim(0, max(vals) * 1.1)
         ax.set_xticks(range(0, int(max(vals)) + 1, 1 if max(vals) < 9 else 2))
         ax.set_xlabel("Precip [inch]")
     fig.text(

@@ -163,11 +163,6 @@ def main(argv):
     )
     """
 
-    # mp.ax.legend(
-    #    [Rectangle((0, 0), 1, 1, fc="#00cc00")],
-    #    ["Field with 1+ OFE"],
-    #    fancybox=True,
-    # )
     mp.draw_colorbar(
         bins, cmap, norm, extend="max", units="Delivery tonnes / hectare"
     )

@@ -43,14 +43,6 @@ def main():
         state="MN",
         caption="Daily Erosion Project",
         title="Minnesota DEP HUC12 Mode of Tillage Class",
-        # subtitle=(
-        #    "Number of HUC12s with <40%% Row Crop (%.0f/%.0f %.2f%%)"
-        #    % (
-        #        len(df[df["ag"] < 40].index),
-        #        len(df.index),
-        #        len(df[df["ag"] < 40].index) / len(df.index) * 100.0,
-        #    )
-        # ),
     )
     for _i, row in df.iterrows():
         c = cmap(norm([row["mode_management"]]))[0]
@@ -63,12 +55,6 @@ def main():
     mp.drawcounties()
     mp.draw_colorbar(bins, cmap, norm, extend="neither", title="Class")
     mp.postprocess(filename="/tmp/huc12_tillage.png")
-
-    # gdf = df.groupby('fps').count()
-    # gdf.columns = ['count', ]
-    # gdf['cumsum'] = gdf['count'].cumsum()
-    # gdf['percent'] = gdf['cumsum'] / gdf['count'].sum() * 100.
-    # gdf.to_csv('/tmp/huc12_flowpath_cnts.csv')
 
 
 if __name__ == "__main__":

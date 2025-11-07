@@ -43,7 +43,8 @@ def main(argv):
                 slope_percent = (0 - bulk) * 100.0
                 if slope_percent >= SLOPE_THRESHOLD:
                     hits += 1
-                lines = open(fn).readlines()
+                with open(fn) as fp:
+                    lines = fp.readlines()
                 for i, line in enumerate(lines):
                     if line.find("EventFile") > 0:
                         lines[i] = line.replace(
@@ -56,9 +57,8 @@ def main(argv):
                         lines[i] = (
                             '        File = "IDEP2/CSCAP/SWITCHGRASS.rot"\n'
                         )
-                fp = open(newfn, "w")
-                fp.write("".join(lines))
-                fp.close()
+                with open(newfn, "w") as fp:
+                    fp.write("".join(lines))
             os.chdir("..")
         os.chdir("..")
 
