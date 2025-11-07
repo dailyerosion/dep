@@ -24,3 +24,4 @@ prj2wepp/tmp**
 /build
 **/pydep.egg-info/
 scripts/RT/rabbitmq.json
+scripts/dynamic_tillage/plots*
