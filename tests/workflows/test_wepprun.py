@@ -7,6 +7,16 @@ from pydep.workflows.wepprun import (
 )
 
 
+def test_251107_grph_filename():
+    """Production issue assuming we named things graph, sigh."""
+    config = WeppRunConfig(years=18, irrigation=2)
+    config.enable_graph_file = True
+    runfile = build_runfile(
+        config, "/i/0/{prefix}/unused", "/i/0/{prefix}/unused", "", ""
+    )
+    assert "/grph/" in runfile
+
+
 def test_build_runfile():
     """Test the building of a runfile."""
     config = WeppRunConfig(years=18, irrigation=2)
