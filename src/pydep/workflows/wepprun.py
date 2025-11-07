@@ -162,7 +162,7 @@ def build_runfile(
     sio.write(f"{_output_logic(config.enable_crop_file, 'crop')}\n")
     sio.write(f"{_output_logic(config.enable_soil_file, 'soil')}\n")
     sio.write(f"{_output_logic(config.enable_sed_file, 'sed')}\n")
-    sio.write(f"{_output_logic(config.enable_graph_file, 'graph')}\n")
+    sio.write(f"{_output_logic(config.enable_graph_file, 'grph')}\n")
     sio.write(f"{_output_logic(config.enable_env_file, 'env')}\n")
     sio.write(f"{_output_logic(config.enable_ofe_file, 'ofe')}\n")
     sio.write(f"{_output_logic(config.enable_summary_file, 'summary')}\n")
