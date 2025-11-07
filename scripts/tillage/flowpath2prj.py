@@ -313,8 +313,6 @@ def do_flowpath(zone, huc_12, fid, fpath):
 
 def write_prj(data):
     """Create the WEPP prj file"""
-    out = open(data["prj_fn"], "w")
-
     # Profile format
     # [x] The first number is the hillslope aspect,
     # [?] the second is the profile width in meters.
@@ -322,9 +320,9 @@ def write_prj(data):
     # [x] and the total distance in meters.
     # [x] The last line contains the fraction of the distance down the slope
     # [x] and the slope at that point.
-
-    out.write(
-        """#
+    with open(data["prj_fn"], "w") as fp:
+        fp.write(
+            """#
 # WEPP project written: %(date)s
 #
 Version = 98.6
@@ -363,9 +361,8 @@ RunOptions {
    SmallEventByPass = 1
 }
 """
-        % data
-    )
-    out.close()
+            % data
+        )
 
 
 def main(argv):

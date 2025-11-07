@@ -15,7 +15,8 @@ LOG = logger()
 @click.option("--scenario", "-s", type=int, required=True, help="Scenario ID")
 def main(scenario: int):
     """Go main Go."""
-    myhucs = [s.strip() for s in open("myhucs.txt")]
+    with open("myhucs.txt") as fh:
+        myhucs = [s.strip() for s in fh.readlines()]
     LOG.info("Packaging %s huc12s for delivery", len(myhucs))
 
     scenario_dir = Path(f"/i/{scenario}")

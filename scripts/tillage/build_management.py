@@ -14,7 +14,7 @@ See import/flowpath2prj.py
 import datetime
 import os
 
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 from tillage_utility import operation_maker
 from tqdm import tqdm
 
@@ -144,9 +144,9 @@ def do_rotation(zone, code, cfactor):
     data["year12"] = read_file(zone, code[11], cfactor, 12, code[10])  # 2018
     data["year13"] = read_file(zone, code[12], cfactor, 13, code[11])  # 2018
 
-    fp = open(fn, "w")
-    fp.write(
-        """#
+    with open(fn, "w") as fp:
+        fp.write(
+            """#
 # WEPP rotation saved on: %(date)s
 #
 # Created with scripts/mangen/build_management.py
@@ -175,9 +175,8 @@ Operations {
 %(year13)s
 }
 """
-        % data
-    )
-    fp.close()
+            % data
+        )
 
 
 def main():

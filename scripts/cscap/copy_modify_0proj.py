@@ -28,16 +28,17 @@ def main():
             os.chdir(huc4)
             for fn in glob.glob("*.prj"):
                 newfn = "/i/%s/prj/%s/%s/%s" % (SCENARIO, huc8, huc4, fn)
-                old = open(fn).read().replace("/i/0/", "/i/%s/" % (SCENARIO,))
+                with open(fn) as fp:
+                    old = fp.read().replace("/i/0/", "/i/%s/" % (SCENARIO,))
                 thelength = LENGTH.findall(old)
                 # using the legacy crops, not region specific
                 rotfn = "IDEP2/CSCAP/%s_%s" % (i % 2 + 1, FILENAMES[SCENARIO])
                 pos1 = old.find("Management {")
                 pos2 = old.find("RunOptions {")
-                o = open(newfn, "w")
-                o.write(old[:pos1])
-                o.write(
-                    """Management {
+                with open(newfn, "w") as fp:
+                    fp.write(old[:pos1])
+                    fp.write(
+                        """Management {
    Breaks = 0
     %s {
         Distance = %s
@@ -46,10 +47,9 @@ def main():
 
 }
 """
-                    % (rotfn, thelength[0], rotfn)
-                )
-                o.write(old[pos2:])
-                o.close()
+                        % (rotfn, thelength[0], rotfn)
+                    )
+                    fp.write(old[pos2:])
                 i += 1
             os.chdir("..")
         os.chdir("..")

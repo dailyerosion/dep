@@ -39,18 +39,19 @@ COLS = [
 def myread(filename):
     """Read my file,  please"""
     rows = []
-    for i, line in enumerate(open(filename)):
-        if i < 13:
-            continue
-        tokens = line.strip().split()
-        if len(tokens) < 9:
-            continue
-        date = datetime.date(int(tokens[2]), 1, 1)
-        date = date + datetime.timedelta(days=(int(tokens[1]) - 1))
-        mydict = dict(date=date)
-        for j in range(3, 3 + len(COLS)):
-            mydict[COLS[j - 3]] = float(tokens[i])
-        rows.append(mydict)
+    with open(filename) as fp:
+        for i, line in enumerate(fp):
+            if i < 13:
+                continue
+            tokens = line.strip().split()
+            if len(tokens) < 9:
+                continue
+            date = datetime.date(int(tokens[2]), 1, 1)
+            date = date + datetime.timedelta(days=(int(tokens[1]) - 1))
+            mydict = dict(date=date)
+            for j in range(3, 3 + len(COLS)):
+                mydict[COLS[j - 3]] = float(tokens[i])
+            rows.append(mydict)
 
     return pd.DataFrame(rows)
 

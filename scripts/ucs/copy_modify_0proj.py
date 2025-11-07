@@ -27,7 +27,8 @@ def main():
             os.chdir(huc4)
             for fn in glob.glob("*.prj"):
                 newfn = "/i/%s/prj/%s/%s/%s" % (SCENARIO, huc8, huc4, fn)
-                old = open(fn).read().replace("/i/0/", "/i/%s/" % (SCENARIO,))
+                with open(fn) as fh:
+                    old = fh.read().replace("/i/0/", "/i/%s/" % (SCENARIO,))
                 ll = LENGTH.findall(old)
                 res = CLIFILE.findall(old)
                 lat = float(res[0])

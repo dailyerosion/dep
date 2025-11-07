@@ -4,7 +4,8 @@ import os
 import sys
 
 import numpy as np
-from pyiem.util import get_dbconn, logger
+from pyiem.database import get_dbconn
+from pyiem.util import logger
 from tqdm import tqdm
 
 from pydep.io.wepp import read_env
@@ -44,7 +45,8 @@ def load_lengths(hucs):
 
 def main():
     """Go Main Go."""
-    hucs = open("myhucs.txt").read().strip().split("\n")
+    with open("myhucs.txt") as fh:
+        hucs = [x.strip() for x in fh.readlines()]
     scenarios = [0]
     scenarios.extend(list(range(130, 140)))
     deltas = []

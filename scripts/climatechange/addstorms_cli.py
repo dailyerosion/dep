@@ -10,7 +10,8 @@ from tqdm import tqdm
 
 from pydep.io.wepp import read_cli
 
-MYHUCS = [x.strip() for x in open("myhucs.txt")]
+with open("myhucs.txt") as fh:
+    MYHUCS = [x.strip() for x in fh.readlines()]
 
 
 def do(origfn, scenario, numstorms):
@@ -35,7 +36,8 @@ def do(origfn, scenario, numstorms):
     dates = df2.reset_index()["level_1"].dt.date.values
     # Edit the new climate file
     with open(newfn, "w") as fh:
-        lines = open(origfn).readlines()
+        with open(origfn) as origfh:
+            lines = origfh.readlines()
         linenum = 0
         while linenum < len(lines):
             if linenum < 15:

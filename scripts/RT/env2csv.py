@@ -186,35 +186,36 @@ def do_huc12(arg):
 
 def main(argv):
     """Go Main Go."""
-    csvfp = open("output.csv", "w")
-    csvfp.write(
-        (
-            "hillslope ID, HUC12 ID, precipitation, "
-            "runoff, detachment, soil loss\n"
+    with open("output.csv", "w") as csvfp:
+        csvfp.write(
+            (
+                "hillslope ID, HUC12 ID, precipitation, "
+                "runoff, detachment, soil loss\n"
+            )
         )
-    )
-    scenario = int(argv[1])
-    lengths = load_lengths(scenario)
-    dates = determine_dates(sys.argv)
-    huc12s = find_huc12s(scenario)
-    precip = load_precip(dates, huc12s)
-    jobs = []
-    for huc12 in huc12s:
-        if huc12 not in precip:
-            LOG.info("Skipping huc12 %s with no precip", huc12)
-            continue
-        jobs.append([scenario, huc12, lengths[huc12], dates, precip[huc12]])
+        scenario = int(argv[1])
+        lengths = load_lengths(scenario)
+        dates = determine_dates(sys.argv)
+        huc12s = find_huc12s(scenario)
+        precip = load_precip(dates, huc12s)
+        jobs = []
+        for huc12 in huc12s:
+            if huc12 not in precip:
+                LOG.info("Skipping huc12 %s with no precip", huc12)
+                continue
+            jobs.append(
+                [scenario, huc12, lengths[huc12], dates, precip[huc12]]
+            )
 
-    # Begin the processing work now!
-    # NB: Usage of a ThreadPool here ended in tears (so slow)
-    pool = Pool()
-    for res in tqdm(
-        pool.imap_unordered(do_huc12, jobs),
-        total=len(jobs),
-        disable=(not sys.stdout.isatty()),
-    ):
-        csvfp.write(res)
-    csvfp.close()
+        # Begin the processing work now!
+        # NB: Usage of a ThreadPool here ended in tears (so slow)
+        pool = Pool()
+        for res in tqdm(
+            pool.imap_unordered(do_huc12, jobs),
+            total=len(jobs),
+            disable=(not sys.stdout.isatty()),
+        ):
+            csvfp.write(res)
 
 
 if __name__ == "__main__":

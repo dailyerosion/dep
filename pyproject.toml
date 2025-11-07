@@ -36,15 +36,16 @@ line-length = 79
 lint.select = [
   "B",    # bugbear
   "D202", # pydocstyle, blank line after docstring
-  "E",
-  "F",
-  "I",
-  # "PD",  # pandas
-  "PIE", # perf
-  "PLE", # pylint error
-  "PLW", # pylint warning
-  "RET", # return
-  "T",   # types
+  "E",    # pycodestyle errors
+  "F",    # pyflakes
+  "I",    # isort
+  # "PD",   # pandas
+  "PIE",    # perf
+  "PLE",    # pylint error
+  "PLW",    # pylint warning
+  "RET",    # return
+  "SIM115", # open() without context manager (use 'with' statement)
+  "T",      # types
 ]
 # per memory issues microsoft/pylance-release/issues/5739
 # per type checking pain microsoft/pylance-release/issues/6373

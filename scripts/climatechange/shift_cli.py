@@ -8,7 +8,8 @@ from pandas.io.sql import read_sql
 from pyiem.util import get_dbconn
 from tqdm import tqdm
 
-MYHUCS = [x.strip() for x in open("myhucs.txt")]
+with open("myhucs.txt") as fh:
+    MYHUCS = [x.strip() for x in fh.readlines()]
 FLOOR = date(2007, 1, 1)
 CEILING = date(2020, 12, 31)
 
@@ -22,7 +23,8 @@ def do(origfn, scenario, dayshift):
     if not os.path.isdir(newdir):
         os.makedirs(newdir)
     with open(newfn, "w") as fh:
-        lines = open(origfn).readlines()
+        with open(origfn) as iplh:
+            lines = iplh.readlines()
         linenum = 0
         while linenum < len(lines):
             if linenum < 15:

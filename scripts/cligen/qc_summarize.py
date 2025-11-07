@@ -64,8 +64,9 @@ def do_qc(fn, df, year):
     if len(df.index) != len(df.resample("D").mean().index):
         print("ERROR: Appears to be missing dates!")
 
-    if open(fn).read()[-1] != "\n":
-        print("ERROR: File does not end with \\n")
+    with open(fn, encoding="utf-8") as fh:
+        if fh.read()[-1] != "\n":
+            print("ERROR: File does not end with \\n")
 
     print("--------- Summary stats from the .cli file")
     print("YEAR |  RAIN | MAXRATE | MAXACC | #DAYS | #>1RT | RAD/D")

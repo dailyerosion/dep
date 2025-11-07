@@ -42,7 +42,8 @@ def do_scenario(scenario, plantdate, hucs):
 def main():
     """Go Main Go."""
     apr10 = datetime.date(2000, 4, 10)
-    hucs = [x.strip() for x in open("myhucs.txt").readlines()]
+    with open("myhucs.txt") as fh:
+        hucs = [x.strip() for x in fh.readlines()]
     for scenario in range(59, 70):
         plantdate = apr10 + datetime.timedelta(days=(scenario - 59) * 5)
         do_scenario(scenario, plantdate, hucs)

@@ -49,8 +49,9 @@ def main(argv):
                 row["fpath"],
             )
             prj2 = "/i/%s/%s" % (scenario, prj)
-            if open(prj2).read().find("SWITCHGRASS.rot") > 0:
-                hits += 1
+            with open(prj2) as fp:
+                if fp.read().find("SWITCHGRASS.rot") > 0:
+                    hits += 1
         print("%.2f," % (hits / float(len(df.index)) * 100.0,), end="")
     print()
 

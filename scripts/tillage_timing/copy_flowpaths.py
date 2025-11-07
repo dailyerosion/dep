@@ -11,7 +11,8 @@ LOG = logger()
 def main(argv):
     """Run for a scenario."""
     scenario = int(argv[1])
-    myhucs = [s.strip() for s in open("myhucs.txt")]
+    with open("myhucs.txt") as fh:
+        myhucs = [s.strip() for s in fh.readlines()]
     # Get df of flowpaths
     pgconn = get_dbconn("idep")
     cursor = pgconn.cursor()

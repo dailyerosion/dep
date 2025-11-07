@@ -110,7 +110,8 @@ def dohuc(huc):
             huc,
             fpath,
         )
-        lines = open(slpfn).readlines()
+        with open(slpfn) as fp:
+            lines = fp.readlines()
         ofes = int(lines[5])
         pos = 0
         for ofe, ln in enumerate(range(7, 7 + ofes * 2, 2)):

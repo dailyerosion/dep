@@ -731,14 +731,16 @@ precip = [
 
 
 def get_results():
-    for line in open("/i/0/env/10240010/0109/102400100109_44.env"):
-        tokens = line.strip().split()
-        if tokens[0] == "11" and tokens[1] == "6" and tokens[2] == "9":
-            return dict(
-                runoff=float(tokens[4]),
-                loss=float(tokens[5]),
-                delivery=float(tokens[12]),
-            )
+    """."""
+    with open("/i/0/env/10240010/0109/102400100109_44.env") as fh:
+        for line in fh:
+            tokens = line.strip().split()
+            if tokens[0] == "11" and tokens[1] == "6" and tokens[2] == "9":
+                return dict(
+                    runoff=float(tokens[4]),
+                    loss=float(tokens[5]),
+                    delivery=float(tokens[12]),
+                )
     return None
 
 
@@ -763,15 +765,15 @@ def get_maxrate(bpdata):
 
 
 def edit(bpdata):
-    o = open("/i/0/cli/095x041/094.86x040.84.cli").read()
-    pos1 = o.find("11\t6\t2015")
-    pos2 = o.find("12\t6\t2015")
-    out = open("/i/0/cli/095x041/094.86x040.84.cli", "w")
-    newdata = (
-        "11\t6\t2015\t%(points)s\t25.0\t20.0\t269\t4.2\t0\t20.0\n%(bp)s\n"
-    ) % dict(points=len(bpdata), bp=("\n".join(bpdata)))
-    out.write(o[:pos1] + newdata + o[pos2:])
-    out.close()
+    with open("/i/0/cli/095x041/094.86x040.84.cli") as fh:
+        pos1 = fh.find("11\t6\t2015")
+        pos2 = fh.find("12\t6\t2015")
+        with open("/i/0/cli/095x041/094.86x040.84.cli", "w") as out:
+            newdata = (
+                "11\t6\t2015\t%(points)s\t25.0\t20.0\t"
+                "269\t4.2\t0\t20.0\n%(bp)s\n"
+            ) % dict(points=len(bpdata), bp=("\n".join(bpdata)))
+            out.write(fh[:pos1] + newdata + fh[pos2:])
 
 
 def run():
