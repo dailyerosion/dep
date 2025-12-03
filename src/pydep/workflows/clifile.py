@@ -133,7 +133,7 @@ def load_clifiles(tile: Tile) -> pd.DataFrame:
     Important: The west and south values are inclusive, while the east and
     north values are exclusive.
     """
-    dbname = "idep" if tile.domain == "" else f"dep_{tile.domain}"
+    dbname = "idep" if tile.domain in ["", "conus"] else f"dep_{tile.domain}"
     with get_sqlalchemy_conn(dbname) as conn:
         return pd.read_sql(
             sql_helper("""
