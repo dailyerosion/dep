@@ -33,8 +33,17 @@ LOG = logger()
 @click.option(
     "--date", "dt", type=click.DateTime(), required=True, help="Date"
 )
+@click.option(
+    "--domain", default="", type=str, required=False, help="DEP Domain"
+)
 def main(
-    scenario: int, west: int, east: int, south: int, north: int, dt: datetime
+    scenario: int,
+    west: int,
+    east: int,
+    south: int,
+    north: int,
+    dt: datetime,
+    domain: str,
 ):
     """The workflow to get the weather data variables we want!"""
     tile = Tile(
@@ -44,11 +53,16 @@ def main(
         north=north,
         scenario=scenario,
         dt=dt.date(),
-        domain="",
+        domain=domain,
     )
     try:
         daily_editor_workflow(tile)
-    except CLIFileWorkflowFailure:
+    except CLIFileWorkflowFailure as exp:
+        LOG.exception(
+            "CLIFileWorkflowFailure %s: %s",
+            tile,
+            exp,
+        )
         # Allow calling scripts to see this failure
         sys.exit(3)
 
