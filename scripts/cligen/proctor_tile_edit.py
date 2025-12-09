@@ -31,7 +31,7 @@ LOG = tqdm_logger()
 
 def get_fn(dt: date, domain: str) -> str:
     """Return the filename for this date."""
-    if domain == "":
+    if domain == "conus":
         return f"/mnt/idep2/data/dailyprecip/{dt.year}/{dt:%Y%m%d}.geotiff"
     return f"/mnt/dep/{domain}/data/dailyprecip/{dt.year}/{dt:%Y%m%d}.geotiff"
 
@@ -128,7 +128,7 @@ def myjob(tile: Tile) -> list[bool, int, int]:
 @click.option(
     "--domain",
     type=str,
-    default="",
+    default="conus",
     help="Domain to process",
 )
 def main(scenario, dt: datetime, domain: str):

@@ -594,7 +594,7 @@ def write_grid(tile: Tile, grid: np.ndarray, fnadd=""):
     if fnadd != "" and not sys.stdout.isatty():
         return
     basedir = f"/mnt/idep2/data/dailyprecip/{tile.dt.year}"
-    if tile.domain != "":
+    if tile.domain not in ["", "conus"]:
         basedir = f"/mnt/dep/{tile.domain}/data/dailyprecip/{tile.dt.year}"
     if not os.path.isdir(basedir):
         os.makedirs(basedir)
@@ -621,7 +621,7 @@ def write_grid(tile: Tile, grid: np.ndarray, fnadd=""):
 
 def precip_workflow(tile: Tile, data):
     """Drive the precipitation workflow"""
-    if tile.domain == "":
+    if tile.domain == "conus":
         load_stage4(tile, data)
         # We have MRMS a2m RASTER files prior to 1 Jan 2015, but these files
         # used a very poor choice of data interval of 0.1mm, which is not
@@ -735,7 +735,7 @@ def daily_editor_workflow(tile: Tile) -> list[bool, int, int]:
         "stage4": np.zeros(shp, np.float32),
         # CONUS is 2 minute, everybody else is 30 minute, for now
         "precip": np.zeros(
-            (*shp, (30 if tile.domain == "" else 2) * 24), np.float32
+            (*shp, (30 if tile.domain == "conus" else 2) * 24), np.float32
         ),
     }
 

@@ -52,7 +52,9 @@ def main(domain: str):
     nc = ncopen("/tmp/IMERG_land_sea_mask.nc")
     mask = nc.variables["landseamask"][:]
     nc.close()
-    conn, cursor = get_dbconnc("idep" if domain == "" else f"dep_{domain}")
+    conn, cursor = get_dbconnc(
+        "idep" if domain == "conus" else f"dep_{domain}"
+    )
     progress = tqdm(np.arange(left, nav.right_edge + 0.1, 0.1))
     for lon in progress:
         for lat in np.arange(bottom, nav.top_edge + 0.1, 0.1):
