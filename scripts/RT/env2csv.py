@@ -31,7 +31,8 @@ def find_huc12s(scenario):
     if os.path.isfile("myhucs.txt"):
         LOG.warning("Using myhucs.txt to guide processing...")
         CONFIG["subset"] = True
-        return [s.strip() for s in open("myhucs.txt").readlines()]
+        with open("myhucs.txt") as fh:
+            return [s.strip() for s in fh.readlines()]
 
     res = []
     for huc8 in os.listdir("/i/%s/env" % (scenario,)):

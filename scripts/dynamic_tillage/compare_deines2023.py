@@ -21,6 +21,7 @@ def main(year: int, crop: str, district: str):
         (deines_all["district"] == district) & (deines_all["year"] == year)
     ].copy()
 
+    nass = None
     if district.startswith("IA"):
         with get_sqlalchemy_conn("coop") as conn:
             nass = pd.read_sql(
@@ -73,7 +74,7 @@ def main(year: int, crop: str, district: str):
         lw=2,
     )
 
-    if district.startswith("IA"):
+    if district.startswith("IA") and nass is not None:
         ax.plot(
             nass["valid"],
             nass["datum"],
