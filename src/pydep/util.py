@@ -127,7 +127,7 @@ def get_cli_fname(lon: float, lat: float, scenario: int = 0):
     domain = get_domain(lon, lat)
     if domain is None:
         raise ValueError(f"lon: {lon} lat: {lat} outside any IEMRE domain")
-    if domain == "conus":
+    if domain in ["", "conus"]:
         # Legacy nomenclature
         return (
             f"/i/{scenario}/cli/{math.floor(abs(lon)):03.0f}x"
