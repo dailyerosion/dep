@@ -231,7 +231,7 @@ def load_stage4(tile: Tile, data):
     2) Over-estimates
     """
     # The stage4 files store precip in the rears, so compute 1 AM
-    one_am, tomorrow = get_sts_ets_at_localhour("", tile.dt, 1)
+    one_am, tomorrow = get_sts_ets_at_localhour("conus", tile.dt, 1)
 
     sts_tidx = hourly_offset(one_am)
     ets_tidx = hourly_offset(tomorrow)
@@ -332,7 +332,7 @@ def load_precip_legacy(tile: Tile, data):
     """Compute a Legacy Precip product for dates prior to 1 Jan 2014"""
     ts = 12 * 24  # 5 minute
 
-    midnight, tomorrow = get_sts_ets_at_localhour("", tile.dt, 0)
+    midnight, tomorrow = get_sts_ets_at_localhour("conus", tile.dt, 0)
 
     now = midnight
     # To avoid division by zero below when we have the strip of no-data 23-24N

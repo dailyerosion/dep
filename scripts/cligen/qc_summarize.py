@@ -2,11 +2,11 @@
 
 import datetime
 import sys
+from zoneinfo import ZoneInfo
 
 import netCDF4
 import numpy as np
 import pandas as pd
-import pytz
 import requests
 from pyiem.iemre import hourly_offset
 from pyiem.util import c2f, mm2inch
@@ -38,10 +38,10 @@ def compute_stage4(lon, lat, year):
     for date in df.index.values:
         date2 = datetime.datetime.utcfromtimestamp(date.tolist() / 1e9)
         ts = datetime.datetime(date2.year, date2.month, date2.day, 6)
-        ts = ts.replace(tzinfo=pytz.utc)
-        ts = ts.astimezone(pytz.timezone("America/Chicago"))
+        ts = ts.replace(tzinfo=datetime.timezone.utc)
+        ts = ts.astimezone(ZoneInfo("America/Chicago"))
         ts = ts.replace(hour=0)
-        ts = ts.astimezone(pytz.utc)
+        ts = ts.astimezone(datetime.timezone.utc)
         tidx = hourly_offset(ts)
         # values are in the rears
         val = np.ma.sum(p01i[tidx + 1 : tidx + 25])

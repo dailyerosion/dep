@@ -34,7 +34,7 @@ def test_preflight_check(httpx_mock: HTTPXMock):
         b'"avg_windspeed_mps": 5, "srad_mj": 100}]}'
     )
     httpx_mock.add_response(content=content)
-    assert preflight_check(date(1800, 1, 1), "")
+    assert preflight_check(date(1800, 1, 1), "conus")
 
 
 def test_preflight_check_future():
@@ -49,7 +49,7 @@ def test_preflight_nodata():
 
 def test_get_sts_ets_at_localhour():
     """Test that we can compute the start and end times for a domain date."""
-    sts, ets = get_sts_ets_at_localhour("", date(2017, 1, 2), 0)
+    sts, ets = get_sts_ets_at_localhour("conus", date(2017, 1, 2), 0)
     assert sts == utc(2017, 1, 2, 6)
     assert ets == utc(2017, 1, 3, 6)
     sts, ets = get_sts_ets_at_localhour("china", date(2017, 1, 2), 0)
