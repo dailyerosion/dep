@@ -72,7 +72,7 @@ def test_noclifiles():
         north=39,
         scenario=DUMMY_SCENARIO,
         dt=date(2017, 1, 1),
-        domain="",
+        domain="conus",
     )
     assert daily_editor_workflow(tile)[1] == 0
 
@@ -86,7 +86,7 @@ def test_no_stage4():
         north=44,
         scenario=DUMMY_SCENARIO,
         dt=date(1980, 1, 2),
-        domain="",
+        domain="conus",
     )
     with pytest.raises(CLIFileWorkflowFailure) as excinfo:
         precip_workflow(tile, {})
@@ -104,7 +104,7 @@ def test_bad_iemre():
         north=44,
         scenario=DUMMY_SCENARIO,
         dt=date(2017, 1, 2),
-        domain="",
+        domain="conus",
     )
     with pytest.raises(CLIFileWorkflowFailure) as excinfo:
         daily_editor_workflow(tile)
@@ -164,7 +164,7 @@ def test_faked_stage4(httpx_mock: HTTPXMock):
         north=43,
         scenario=DUMMY_SCENARIO,
         dt=date(2017, 1, 2),
-        domain="",
+        domain="conus",
     )
     daily_editor_workflow(tile)
     clidf = read_cli("/tmp/096.01x42.99.cli")

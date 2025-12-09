@@ -23,7 +23,7 @@ def check_has_clifiles(bounds: BOUNDS):
     return False
 
 
-def compute_tile_bounds(xtile, ytile, domain="") -> BOUNDS:
+def compute_tile_bounds(xtile, ytile, domain="conus") -> BOUNDS:
     """Return a BOUNDS namedtuple."""
     dom = iemre.DOMAINS[domain]
     south = dom["south"] + ytile * CLIMATE_TILE_SIZE
