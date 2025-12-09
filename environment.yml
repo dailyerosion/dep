@@ -14,7 +14,7 @@ dependencies:
   # Data validation
   - pydantic
   # daryl's helper library, there are downstream users, so discipline please!
-  - pyiem
+  - pyiem>=1.26.0
   # Fast geojson reading
   - pyogrio
   # For testing
