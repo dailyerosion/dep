@@ -12,7 +12,7 @@ from pydep.io.cli import (
 
 def test_compute_bounds():
     """Test that we compute bounds properly."""
-    res = compute_tile_bounds(1, 1, domain="")
+    res = compute_tile_bounds(1, 1, domain="conus")
     assert res == BOUNDS(south=28, north=33, east=-116, west=-121)
 
 
