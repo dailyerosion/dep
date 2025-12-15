@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon
+from pyiem.database import get_dbconn
 from pyiem.plot import MapPlot
-from pyiem.util import get_dbconn
 from shapely.wkb import loads
+
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 DBCONN = get_dbconn("idep")
 cursor = DBCONN.cursor()
@@ -30,11 +32,11 @@ m = MapPlot(
 cursor.execute(
     """
 with baseline as (
-    SELECT huc_12, sum(avg_delivery) * 4.463 as loss from results_by_huc12
+    SELECT huc_12, sum(avg_delivery) * %s as loss from results_by_huc12
     where valid between '2008-01-01' and '2016-01-01' and
     scenario = 0 GROUP by huc_12),
 scenario as (
-    SELECT huc_12, sum(avg_delivery) * 4.463 as loss from results_by_huc12
+    SELECT huc_12, sum(avg_delivery) * %s as loss from results_by_huc12
     where valid between '2008-01-01' and '2016-01-01' and
     scenario = %s GROUP by huc_12),
 agg as (
@@ -47,7 +49,7 @@ agg as (
  WHERE i.states ~* 'IA' ORDER by val DESC
 
 """,
-    (scenario,),
+    (KG_M2_TO_TON_ACRE, KG_M2_TO_TON_ACRE, scenario),
 )
 
 bins = [-25, -10, -5, -2, 0, 2, 5, 10, 25]

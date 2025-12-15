@@ -2,8 +2,10 @@
 
 from geopandas import read_postgis
 from pandas.io.sql import read_sql
+from pyiem.database import get_dbconn
 from pyiem.plot.geoplot import MapPlot
-from pyiem.util import get_dbconn
+
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 
 def main():
@@ -26,8 +28,8 @@ def main():
     df2 = read_sql(
         """WITH data as (
     SELECT r.huc_12,
-    sum(avg_loss) * 4.463 / %s as detach,
-    sum(avg_delivery) * 4.463 / %s as delivery,
+    sum(avg_loss) * %s / %s as detach,
+    sum(avg_delivery) * %s / %s as delivery,
     sum(avg_runoff) / 25.4 / %s as runoff
     from results_by_huc12 r
     , huc12 h WHERE r.huc_12 = h.huc_12 and h.states ~* 'IA'
@@ -40,7 +42,14 @@ def main():
     WHERE h.scenario = 0 GROUP by ugc ORDER by delivery desc
     """,
         pgconn,
-        params=(years, years, years, scenario),
+        params=(
+            KG_M2_TO_TON_ACRE,
+            years,
+            KG_M2_TO_TON_ACRE,
+            years,
+            years,
+            scenario,
+        ),
         index_col="ugc",
     )
     newcols = {

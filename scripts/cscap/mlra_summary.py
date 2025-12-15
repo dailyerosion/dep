@@ -3,8 +3,10 @@
 import sys
 
 from pandas.io.sql import read_sql
+from pyiem.database import get_dbconn
 from pyiem.plot.use_agg import plt
-from pyiem.util import get_dbconn
+
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 LABELS = {
     29: "CC No-Till",
@@ -47,15 +49,15 @@ def main(argv):
             SELECT huc_12 from huc12 where scenario = 0 and mlra_id = %s
         )
         select r.huc_12, scenario, extract(year from valid)::int as year,
-        sum(avg_loss) * 4.463 as loss, sum(avg_runoff) as runoff,
-        sum(avg_delivery) * 4.463 as delivery
+        sum(avg_loss) * %s as loss, sum(avg_runoff) as runoff,
+        sum(avg_delivery) * %s as delivery
         from results_by_huc12 r JOIN myhucs h on (r.huc_12 = h.huc_12)
         where r.valid >= '2008-01-01' and r.valid < '2017-01-01'
         and (scenario = 28 or scenario = %s)
         GROUP by r.huc_12, year, scenario
         """,
             pgconn,
-            params=(mlra_id, scenario),
+            params=(mlra_id, KG_M2_TO_TON_ACRE, KG_M2_TO_TON_ACRE, scenario),
             index_col=None,
         )
         gdf = df.groupby(("scenario", "year")).mean()

@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 
+from pydep.reference import KG_M2_TO_TON_ACRE
+
 
 def main():
     """Go Main Go."""
@@ -28,7 +30,7 @@ def main():
         accum = 0
         for _, row in df2.iterrows():
             x.append(row["valid"])
-            accum += row["avg_loss"] * 4.463
+            accum += row["avg_loss"] * KG_M2_TO_TON_ACRE
             y.append(accum)
         ax.plot(x, y, label=label)
 

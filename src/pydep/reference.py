@@ -8,3 +8,6 @@ KWFACT_CLASSES = [-99, 0.28, 0.32]
 
 # Spacing of our precip grid
 GRID_SPACING = 0.01
+
+# Conversion of kg/m2 to ton/acre, verbatim from what pint reports
+KG_M2_TO_TON_ACRE = 4.46091345

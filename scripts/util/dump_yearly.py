@@ -1,7 +1,9 @@
 """Dump some monthly data"""
 
 import pandas as pd
-from pyiem.util import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn
+
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 # East Nish
 DATA4 = """102400030603
@@ -179,8 +181,8 @@ def main():
         df = pd.read_sql(
             """
             SELECT huc_12, extract(year from valid) as year,
-            sum(avg_loss) * 4.463 as loss_ton_per_acre,
-            sum(avg_delivery) * 4.463 as delivery_ton_per_acre,
+            sum(avg_loss) * %s as loss_ton_per_acre,
+            sum(avg_delivery) * %s as delivery_ton_per_acre,
             sum(qc_precip) / 25.4 as precip_inch,
             sum(avg_runoff) / 25.4 as runoff_inch
             from results_by_huc12 WHERE
@@ -188,7 +190,7 @@ def main():
             and valid < '2018-01-01' GROUP by huc_12, year
         """,
             pgconn,
-            params=(HUCS,),
+            params=(KG_M2_TO_TON_ACRE, KG_M2_TO_TON_ACRE, HUCS),
         )
     with pd.ExcelWriter("dep_yearly.xlsx") as writer:
         df.to_excel(writer, "Yearly Totals", index=False)

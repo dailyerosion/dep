@@ -3,6 +3,8 @@
 from pandas.io.sql import read_sql
 from pyiem.database import get_dbconn
 
+from pydep.reference import KG_M2_TO_TON_ACRE
+
 
 def main():
     """Go Main Go."""
@@ -19,8 +21,8 @@ def main():
         df = read_sql(
             """
             SELECT
-            sum(avg_loss) * 4.463 as detach,
-            sum(avg_delivery) * 4.463 as delivery,
+            sum(avg_loss) * %s as detach,
+            sum(avg_delivery) * %s as delivery,
             sum(avg_runoff) as runoff,
             sum(avg_precip) as precip
             from results_by_huc12 r
@@ -28,7 +30,12 @@ def main():
             and r.valid < '2021-01-01' and scenario = %s and huc_12 in %s
         """,
             pgconn,
-            params=(scenario, tuple(myhucs)),
+            params=(
+                KG_M2_TO_TON_ACRE,
+                KG_M2_TO_TON_ACRE,
+                scenario,
+                tuple(myhucs),
+            ),
         )
         row = df.iloc[0]
         div = years * 30.0

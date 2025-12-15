@@ -7,9 +7,11 @@ import matplotlib.colors as mpcolors
 import numpy as np
 from geopandas import read_postgis
 from matplotlib.patches import Polygon
+from pyiem.database import get_dbconn
 from pyiem.plot import MapPlot
 from pyiem.plot.use_agg import plt
-from pyiem.util import get_dbconn
+
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 V2NAME = {
     "avg_loss": "Detachment",
@@ -22,9 +24,9 @@ V2NAME = {
     "avg_runoff_metric": "Runoff",
 }
 V2MULTI = {
-    "avg_loss": 4.463,
+    "avg_loss": KG_M2_TO_TON_ACRE,
     "qc_precip": 1.0 / 25.4,
-    "avg_delivery": 4.463,
+    "avg_delivery": KG_M2_TO_TON_ACRE,
     "avg_runoff": 1.0 / 25.4,
     "avg_loss_metric": 10.0,
     "qc_precip_metric": 1.0,

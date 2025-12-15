@@ -7,6 +7,7 @@ import sys
 
 from pydep.io.dep import read_wb
 from pydep.io.wepp import read_env
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 
 def main():
@@ -37,7 +38,7 @@ def main():
                 sys.exit(1)
 
         df = read_env("wepp_env.txt")
-        avg_det = df["av_det"].sum() / 15.0 * 4.463
+        avg_det = df["av_det"].sum() / 15.0 * KG_M2_TO_TON_ACRE
         with open("answer.json", "r", encoding="ascii") as fh:
             answer = json.load(fh)
         failed = abs(avg_det - answer["av_det"]) > 0.01

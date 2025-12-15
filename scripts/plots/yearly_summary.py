@@ -10,6 +10,8 @@ from matplotlib.patches import Polygon
 from pyiem.database import get_dbconn
 from pyiem.plot import MapPlot
 
+from pydep.reference import KG_M2_TO_TON_ACRE
+
 V2NAME = {
     "avg_loss": "Detachment",
     "qc_precip": "Precipitation",
@@ -17,9 +19,9 @@ V2NAME = {
     "avg_runoff": "Runoff",
 }
 V2MULTI = {
-    "avg_loss": 4.463,
+    "avg_loss": KG_M2_TO_TON_ACRE,
     "qc_precip": 1.0 / 25.4,
-    "avg_delivery": 4.463,
+    "avg_delivery": KG_M2_TO_TON_ACRE,
     "avg_runoff": 1.0 / 25.4,
 }
 V2UNITS = {

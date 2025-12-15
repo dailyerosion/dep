@@ -5,7 +5,9 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
+
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 
 def main():
@@ -22,20 +24,18 @@ def main():
     }
 
     df = read_sql(
-        """SELECT r.huc_12, r.scenario,
-        sum(avg_loss) * 4.463 as detach, sum(avg_delivery) * 4.463 as delivery,
+        f"""SELECT r.huc_12, r.scenario,
+        sum(avg_loss) * %s as detach, sum(avg_delivery) * %s as delivery,
         sum(avg_runoff) / 25.4 as runoff
         from results_by_huc12 r
         , huc12 h WHERE r.huc_12 = h.huc_12 and h.states ~* 'IA'
         and r.scenario in (0, %s) and h.scenario = 0 and r.valid < '2017-01-01'
         and r.valid > '2008-01-01'
         GROUP by r.scenario, r.huc_12
-        ORDER by """
-        + varname
-        + """ ASC
+        ORDER by {varname} ASC
         """,
         pgconn,
-        params=(scenario,),
+        params=(KG_M2_TO_TON_ACRE, KG_M2_TO_TON_ACRE, scenario),
         index_col=None,
     )
 
