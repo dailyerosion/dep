@@ -2,6 +2,8 @@
 
 import pandas as pd
 
+from pydep.reference import KG_M2_TO_TON_ACRE
+
 DATA = {
     "070802090102": [
         92,
@@ -78,17 +80,21 @@ def main():
         sdf = sdf[sdf["catchment"].isin(catchments)]
         print(len(sdf.index), len(catchments))
         print(f"{huc12}")
+        d1 = bdf["delivery[t/a/yr]"].mean() * KG_M2_TO_TON_ACRE
+        d2 = bdf["detach[t/a/yr]"].mean() * KG_M2_TO_TON_ACRE
         print(
             f" Baseline- "
             f"Runoff: {(bdf['runoff[mm/yr]'].mean() / 25.4):.2f} in/yr "
-            f"Delivery: {(bdf['delivery[t/a/yr]'].mean() * 4.463):.2f} T/a/yr "
-            f"Detachment: {(bdf['detach[t/a/yr]'].mean() * 4.463):.2f} T/a/yr"
+            f"Delivery: {d1:.2f} T/a/yr "
+            f"Detachment: {d2:.2f} T/a/yr"
         )
+        d1 = sdf["delivery[t/a/yr]"].mean() * KG_M2_TO_TON_ACRE
+        d2 = sdf["detach[t/a/yr]"].mean() * KG_M2_TO_TON_ACRE
         print(
             f" Treatment- "
             f"Runoff: {(sdf['runoff[mm/yr]'].mean() / 25.4):.2f} in/yr "
-            f"Delivery: {(sdf['delivery[t/a/yr]'].mean() * 4.463):.2f} T/a/yr "
-            f"Detachment: {(sdf['detach[t/a/yr]'].mean() * 4.463):.2f} T/a/yr"
+            f"Delivery: {d1:.2f} T/a/yr "
+            f"Detachment: {d2:.2f} T/a/yr"
         )
 
 

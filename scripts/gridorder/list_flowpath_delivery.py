@@ -8,6 +8,7 @@ import psycopg
 from pandas.io.sql import read_sql
 
 from pydep.io.wepp import read_env
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 SCEN2CODE = [None, 12, 13, 14, 0, 15, 16]
 PGCONN = psycopg.connect(dbname="idep")
@@ -34,7 +35,9 @@ def get_results(huc12):
                 % (scenario, huc12[:8], huc12[8:], huc12, fpath)
             )
             res = res[res["date"] < datetime.date(2017, 1, 1)]
-            res["delivery"] = res["sed_del"] / row["length"] * 4.463
+            res["delivery"] = (
+                res["sed_del"] / row["length"] * KG_M2_TO_TON_ACRE
+            )
             df.at[fpath, "G%s_delivery_ta" % (gorder,)] = (
                 res["delivery"].sum() / 10.0
             )

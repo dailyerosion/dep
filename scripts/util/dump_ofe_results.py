@@ -12,6 +12,7 @@ from pyiem.util import logger
 from tqdm import tqdm
 
 from pydep.io.wepp import read_env, read_ofe
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 LOG = logger()
 # 2007 is skipped
@@ -42,13 +43,15 @@ def fpmagic(cursor, scenario, envfn, rows, huc12, fpath, mlrarsym):
         "bulk_slope[1]": meta[1],
         "max_slope[1]": meta[2],
         "runoff[mm/yr]": filtered["runoff"].sum() / YEARS,
-        "detach[t/a/yr]": filtered["av_det"].sum() / YEARS * 4.463,
+        "detach[t/a/yr]": filtered["av_det"].sum() / YEARS * KG_M2_TO_TON_ACRE,
         "length[m]": fplen,
-        "delivery[t/a/yr]": filtered["delivery"].sum() / YEARS * 4.463,
+        "delivery[t/a/yr]": filtered["delivery"].sum()
+        / YEARS
+        * KG_M2_TO_TON_ACRE,
     }
     for year in range(2007, 2025):
         df2 = eventdf[eventdf["year"] == year]
-        res[f"delivery_{year}_t/a"] = df2["delivery"].sum() * 4.463
+        res[f"delivery_{year}_t/a"] = df2["delivery"].sum() * KG_M2_TO_TON_ACRE
         res[f"runoff_{year}_mm"] = df2["runoff"].sum()
     rows.append(res)
 
@@ -148,7 +151,10 @@ def do_huc12(cursor, scenario, huc12):
             length = meta_ofe["length"].values[0]
             accum_length += length
             thisdelivery = (
-                myofe["sedleave"].sum() / YEARS / accum_length * 4.463
+                myofe["sedleave"].sum()
+                / YEARS
+                / accum_length
+                * KG_M2_TO_TON_ACRE
             )
             groupid: str = meta_ofe["groupid"].values[0]
             res = {
@@ -183,7 +189,9 @@ def do_huc12(cursor, scenario, huc12):
             lastdelivery = thisdelivery
             for year in range(2018, 2024):
                 df2 = myofe[myofe["year"] == year]
-                thisdelivery = df2["sedleave"].sum() / accum_length * 4.463
+                thisdelivery = (
+                    df2["sedleave"].sum() / accum_length * KG_M2_TO_TON_ACRE
+                )
                 res[f"delivery_{year}[t/a]"] = thisdelivery
                 res[f"ofe_loss_{year}[t/a]"] = (
                     thisdelivery - lastdelivery_byyear[year]

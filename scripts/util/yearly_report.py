@@ -8,6 +8,8 @@ from pandas import read_sql
 from pyiem.database import get_dbconnstr
 from pyiem.reference import state_names
 
+from pydep.reference import KG_M2_TO_TON_ACRE
+
 
 def main(argv):
     """Do What We Wanted"""
@@ -32,12 +34,18 @@ def main(argv):
 
         SELECT yr, round((avg(precip) / 25.4)::numeric, 2) as precip_in,
         round((avg(runoff) / 25.4)::numeric, 2) as runoff_in,
-        round((avg(delivery) * 4.463)::numeric, 2) as delivery_ta,
-        round((avg(detachment) * 4.463)::numeric, 2) as detachment_ta
+        round((avg(delivery) * %s)::numeric, 2) as delivery_ta,
+        round((avg(detachment) * %s)::numeric, 2) as detachment_ta
         from agg GROUP by yr ORDER by yr
     """,
         get_dbconnstr("idep"),
-        params=(state, scenario, datetime.date(lyear, 12, 31)),
+        params=(
+            state,
+            scenario,
+            datetime.date(lyear, 12, 31),
+            KG_M2_TO_TON_ACRE,
+            KG_M2_TO_TON_ACRE,
+        ),
         index_col="yr",
     )
 

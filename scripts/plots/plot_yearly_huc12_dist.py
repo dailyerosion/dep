@@ -2,18 +2,23 @@
 
 import seaborn as sns
 from pandas.io.sql import read_sql
+from pyiem.database import get_dbconn
 from pyiem.plot.use_agg import plt
-from pyiem.util import get_dbconn
+
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 
 def main():
     """Go Main Go."""
     df = read_sql(
-        "SELECT r.huc_12, sum(avg_delivery) * 4.463 as delivery from "
+        "SELECT r.huc_12, sum(avg_delivery) * :fact as delivery from "
         "results_by_huc12 r, huc12 h WHERE r.scenario = 0 and "
         "h.scenario = 0 and r.huc_12 = h.huc_12 and h.states = 'IA' and "
         "valid >= '2019-01-01' and valid < '2020-01-01' GROUP by r.huc_12",
         get_dbconn("idep"),
+        params={
+            "fact": KG_M2_TO_TON_ACRE,
+        },
         index_col="huc_12",
     )
     ax = sns.distplot(df["delivery"], hist=True, color="g", rug=False)

@@ -3,6 +3,8 @@
 import pandas as pd
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 
+from pydep.reference import KG_M2_TO_TON_ACRE
+
 SCENARIO2TILLAGE = {
     0: "Baseline",
     156: "1 to 2",
@@ -42,15 +44,18 @@ def iowa():
         SELECT h.*, a.yr, a.scenario,
         round((precip / 25.4)::numeric, 2) as precip_in,
         round((runoff / 25.4)::numeric, 2) as runoff_in,
-        round((delivery * 4.463)::numeric, 2) as delivery_ta,
-        round((detachment * 4.463)::numeric, 2) as detachment_ta
+        round((delivery * :factor)::numeric, 2) as delivery_ta,
+        round((detachment * :factor)::numeric, 2) as detachment_ta
         from annual a, huc12meta h WHERE a.huc_12 = h.huc_12
         ORDER by yr, scenario
 
         """
             ),
             conn,
-            params={"scenarios": list(SCENARIO2TILLAGE.keys())},
+            params={
+                "scenarios": list(SCENARIO2TILLAGE.keys()),
+                "factor": KG_M2_TO_TON_ACRE,
+            },
         )
     annualdf.rename(
         columns={

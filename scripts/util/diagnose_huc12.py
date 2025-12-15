@@ -6,12 +6,12 @@ import sys
 
 import pandas as pd
 from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 
 from pydep.io.wepp import read_env
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 YEARS = datetime.date.today().year - 2007 + 1
-CONV = 4.463
 
 
 def get_lengths(huc12, scenario):
@@ -39,8 +39,10 @@ def summarize_hillslopes(huc12, scenario):
         dfs.append(df)
     df = pd.concat(dfs)
     df = df.join(lengths, on="flowpath")
-    df["delivery_ta"] = df["sed_del"] / df["length"] * CONV / YEARS
-    flowpath = 424  # df2.index[0]
+    df["delivery_ta"] = (
+        df["sed_del"] / df["length"] * KG_M2_TO_TON_ACRE / YEARS
+    )
+    flowpath = 424
     print(
         df[df["flowpath"] == flowpath]
         .groupby("year")

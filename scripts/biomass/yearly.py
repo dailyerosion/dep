@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from pandas.io.sql import read_sql
 from pyiem.database import get_dbconn
 
+from pydep.reference import KG_M2_TO_TON_ACRE
+
 PGCONN = get_dbconn("idep")
 
 
@@ -30,12 +32,12 @@ def get_scenario(scenario):
             c.yr = r.yr))
         select yr,
         avg(runoff) / 25.4 as runoff_in,
-        avg(delivery) * 4.463 as delivery_ta,
-        avg(detachment) * 4.463 as detachment_ta
+        avg(delivery) * %s as delivery_ta,
+        avg(detachment) * %s as detachment_ta
         from agg GROUP by yr ORDER by yr ASC
     """,
         PGCONN,
-        params=(scenario,),
+        params=(scenario, KG_M2_TO_TON_ACRE, KG_M2_TO_TON_ACRE),
         index_col="yr",
     )
 

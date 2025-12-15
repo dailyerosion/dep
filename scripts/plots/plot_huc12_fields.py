@@ -5,9 +5,11 @@ import sys
 import geopandas as gpd
 import matplotlib.colors as mpcolors
 import pandas as pd
+from pyiem.database import get_sqlalchemy_conn
 from pyiem.plot import MapPlot
 from pyiem.reference import Z_POLITICAL
-from pyiem.util import get_sqlalchemy_conn
+
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 
 def main(argv):
@@ -26,12 +28,13 @@ def main(argv):
     with get_sqlalchemy_conn("idep") as conn:
         huc12res = pd.read_sql(
             """
-            SELECT huc_12, sum(avg_delivery) * 4.463 * 2.24  as del_tonnes from
+            SELECT huc_12, sum(avg_delivery) * %s * 2.24  as del_tonnes from
             results_by_huc12 where scenario = 0 and
             valid >= '2010-01-01' and valid < '2011-01-01'
             GROUP by huc_12
             """,
             conn,
+            params=(KG_M2_TO_TON_ACRE,),
             index_col="huc_12",
         )
         df = gpd.read_postgis(

@@ -5,7 +5,9 @@ The 2007, 2008, and 2009 data looks wonky now, lets just do 2010 thru 2015
 
 import matplotlib.pyplot as plt
 from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
+
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 pgconn = get_dbconn("wepp")
 
@@ -15,10 +17,11 @@ df = read_sql(
         select nri_id, sum(loss) / 6. as val from results r JOIN combos c
         ON (r.run_id = c.id) WHERE valid between '2010-01-01' and '2016-01-01'
         GROUP by nri_id)
-    SELECT s.nri_id, s.val * 4.463 as delivery, n.len * 0.3048 as length
+    SELECT s.nri_id, s.val * %s as delivery, n.len * 0.3048 as length
     from sums s JOIN nri n on (s.nri_id = n.id)
     """,
     pgconn,
+    params=(KG_M2_TO_TON_ACRE,),
     index_col="nri_id",
 )
 

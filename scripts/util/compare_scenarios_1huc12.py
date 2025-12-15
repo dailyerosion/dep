@@ -8,6 +8,7 @@ from pyiem.plot.use_agg import plt
 from tqdm import tqdm
 
 from pydep.io.wepp import read_env
+from pydep.reference import KG_M2_TO_TON_ACRE
 
 MYHUCS = [
     "070600060701",
@@ -54,7 +55,7 @@ def main():
                 fpath = int(fn.split("/")[-1].split(".")[0].split("_")[1])
                 df = read_env(fn)
                 df["fpath"] = fpath
-                df["av_det"] = df["av_det"] * 4.463
+                df["av_det"] = df["av_det"] * KG_M2_TO_TON_ACRE
                 df["scenario"] = scenario
                 dfs.append(df)
         df = pd.concat(dfs)

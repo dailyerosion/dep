@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from matplotlib.colors import LogNorm
 
+from pydep.reference import KG_M2_TO_TON_ACRE
+
 GRIDORDER = sys.argv[1]
 
 
@@ -21,9 +23,9 @@ def summarize():
                 dict(
                     flowpath=fp,
                     length=length,
-                    avg_det=(row["av_det"] * 4.463),
+                    avg_det=(row["av_det"] * KG_M2_TO_TON_ACRE),
                     runoff=row["runoff"],
-                    delivery=(row["delivery"] * 4.463),
+                    delivery=(row["delivery"] * KG_M2_TO_TON_ACRE),
                 )
             )
 
