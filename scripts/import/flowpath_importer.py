@@ -44,7 +44,7 @@ KNOBS = {
     "CLIMATE_SCENARIO": 0,
 }
 
-YEARS = 2025 - 2007 + 1
+YEARS = 2026 - 2007 + 1
 SOILFY = 2024
 ROTATION_FIELD = "CropRotatn_CY_2023"  # Tied to ACPF
 SOILCOL = f"SOL_FY_{SOILFY}"
@@ -96,14 +96,14 @@ def fillout_codes(df):
     """ "Get the right full-string codes."""
     if KNOBS["CONSTANT_LANDUSE"] is None:
         s = df[ROTATION_FIELD].str
-        df["landuse"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1]
+        df["landuse"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1] + s[-2]
         if df["landuse"].str.len().min() != YEARS:
             raise ValueError(f"landuse is not {YEARS} chars")
     else:
         df["landuse"] = KNOBS["CONSTANT_LANDUSE"] * YEARS
     if KNOBS["CONSTANT_MANAGEMENT"] is None:
         s = df["Management_CY_2023"].str
-        df["management"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1]
+        df["management"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1] + s[-2]
         if df["management"].str.len().min() != YEARS:
             raise ValueError(f"management is not {YEARS} chars")
     else:

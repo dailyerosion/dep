@@ -18,13 +18,7 @@ from tqdm import tqdm
 LOG = logger()
 
 
-def parse_filename(filename):
-    """The filename tells us the location."""
-    tokens = filename.rsplit(".", 1)[0].split("x")
-    return float(tokens[0]) * -1.0, float(tokens[1])
-
-
-def workflow(filename, newyear, analogyear):
+def workflow(filename: str, newyear: int, analogyear: int):
     """Effort this file, please"""
     with open(filename, encoding="ascii") as fh:
         lines = fh.readlines()
@@ -67,7 +61,7 @@ def compute_analog_year(year):
 @click.command()
 @click.option("--scenario", type=int, default=0)
 @click.option("--year", type=int, default=date.today().year + 1)
-def main(scenario, year):
+def main(scenario: int, year: int):
     """Go Main Go"""
     analogyear = compute_analog_year(year)
     LOG.info("Using analog year %s for new year %s", analogyear, year)

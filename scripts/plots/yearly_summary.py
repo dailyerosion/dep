@@ -1,5 +1,7 @@
-import datetime
+"""Legacy stuff."""
+
 import sys
+from datetime import date, datetime
 
 import cartopy.crs as ccrs
 import matplotlib.colors as mpcolors
@@ -42,8 +44,8 @@ def main():
     """Go Main."""
     year = int(sys.argv[1])
     v = sys.argv[2]
-    ts = datetime.date(year, 1, 1)
-    ts2 = datetime.date(year, 12, 31)
+    ts = date(year, 1, 1)
+    ts2 = date(year, 12, 31)
     scenario = 0
 
     # suggested for runoff and precip
@@ -79,8 +81,8 @@ def main():
 
     # Check that we have data for this date!
     cursor.execute("SELECT value from properties where key = 'last_date_0'")
-    datetime.datetime.strptime(cursor.fetchone()[0], "%Y-%m-%d")
-    datetime.date(2007, 1, 1)
+    _ = datetime.strptime(cursor.fetchone()[0], "%Y-%m-%d")
+
     df = read_postgis(
         f"""
     WITH data as (

@@ -1,17 +1,17 @@
 """Sometimes, we just want to zero out a precip event."""
 
-import datetime
 import glob
 import os
 import sys
+from datetime import date, timedelta
 
 
-def do(fn, date):
+def do(fn, dt: date):
     """Do."""
     with open(fn, encoding="utf-8") as fh:
         data = fh.read()
-    dt2 = date + datetime.timedelta(days=1)
-    pos1 = data.find(date.strftime("%-d\t%-m\t%Y"))
+    dt2 = dt + timedelta(days=1)
+    pos1 = data.find(dt.strftime("%-d\t%-m\t%Y"))
     pos2 = data.find(dt2.strftime("%-d\t%-m\t%Y"))
     if -1 in [pos1, pos2]:
         print("Couldn't find date in", fn)
@@ -30,12 +30,12 @@ def do(fn, date):
 
 def main(argv):
     """Go main."""
-    date = datetime.date(int(argv[1]), int(argv[2]), int(argv[3]))
+    dt = date(int(argv[1]), int(argv[2]), int(argv[3]))
     os.chdir("/i/0/cli")
     for zone in glob.glob("*"):
         os.chdir(zone)
         for fn in glob.glob("*.cli"):
-            do(fn, date)
+            do(fn, dt)
         os.chdir("..")
 
 

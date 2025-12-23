@@ -8,10 +8,10 @@ also do any of the following:
 """
 
 import argparse
-import datetime
 import os
 import re
 import sys
+from datetime import date, timedelta
 from multiprocessing import Pool, cpu_count
 
 import geopandas as gpd
@@ -65,10 +65,10 @@ def determine_dates(args):
     res = []
     dateformat = re.compile("^(?P<yr>[0-9]{4})-(?P<mo>[0-9]+)-(?P<dy>[0-9]+)$")
     monthformat = re.compile("^(?P<yr>[0-9]{4})-(?P<mo>[0-9]+)$")
-    lastdate = datetime.date.today() - datetime.timedelta(days=1)
-    for date in args.date:
+    lastdate = date.today() - timedelta(days=1)
+    for dtstr in args.date:
         # Option 1: YYYY-m-d
-        m = dateformat.match(date)
+        m = dateformat.match(dtstr)
         if m:
             d = m.groupdict()
             dt = pd.Timestamp(
@@ -79,29 +79,29 @@ def determine_dates(args):
             LOG.debug("conv %s to %s", date, res[-1])
             continue
         # Option 2: all
-        if date == "all":
+        if dtstr == "all":
             res.extend(pd.date_range("2007/01/01", lastdate))
             LOG.debug("all dates size %s", len(res))
             continue
         # Option 3: A month's worth
-        m = monthformat.match(date)
+        m = monthformat.match(dtstr)
         if m:
             d = m.groupdict()
-            sts = datetime.date(int(d["yr"]), int(d["mo"]), 1)
-            ets = sts + datetime.timedelta(days=35)
-            ets = ets.replace(day=1) - datetime.timedelta(days=1)
+            sts = date(int(d["yr"]), int(d["mo"]), 1)
+            ets = sts + timedelta(days=35)
+            ets = ets.replace(day=1) - timedelta(days=1)
             res.extend(pd.date_range(sts, min([lastdate, ets])))
     return res
 
 
-def compute_res(df, date, slopes, qc_precip):
+def compute_res(df, dt: date, slopes, qc_precip):
     """Compute things"""
     allhits = slopes == len(df.index)
     slopes = float(slopes)
     # NB: code was added to WEPP to output every precipitation/runoff event,
     # so the average precip here is more accurate than before.
     return dict(
-        date=date,
+        date=dt,
         count=len(df.index),
         min_precip=(df.precip.min() if allhits else 0),
         avg_precip=(df.precip.sum() / slopes),
@@ -149,9 +149,9 @@ def load_precip(dates, huc12s):
     # 2. Loop over dates
     res = {}
     progress = tqdm(dates, disable=(not sys.stdout.isatty()))
-    for date in progress:
-        progress.set_description(date.strftime("%Y-%m-%d"))
-        fn = date.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.geotiff")
+    for dt in progress:
+        progress.set_description(dt.strftime("%Y-%m-%d"))
+        fn = dt.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.geotiff")
         if not os.path.isfile(fn):
             LOG.info("Missing precip: %s", fn)
             for huc12 in huc12df.index.values:
@@ -308,9 +308,9 @@ def do_huc12(arg):
     hillslopes = len(frames)
     rows = []
     deleted = delete_previous_entries(icursor, scenario, huc12, dates)
-    for i, date in enumerate(dates):
+    for i, dt in enumerate(dates):
         # df['date'] is datetime64, so need to cast
-        df2 = df[df["date"] == pd.Timestamp(date)]
+        df2 = df[df["date"] == pd.Timestamp(dt)]
         # We have no data, any previous entries were deleted above already
         qc_precip = precip[i]
         if df2.empty and qc_precip == 0:

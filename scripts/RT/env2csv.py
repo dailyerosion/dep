@@ -1,14 +1,11 @@
 """Dump a days worth of output to file."""
 
-# stdlib
-import datetime
 import os
 import sys
+from datetime import date, timedelta
 from multiprocessing import Pool
 
 import geopandas as gpd
-
-# third party
 import numpy as np
 import pandas as pd
 from affine import Affine
@@ -53,36 +50,36 @@ def readfile(fn, lengths):
 def determine_dates(argv):
     """Figure out which dates we are interested in processing"""
     res = []
-    today = datetime.date.today()
+    today = date.today()
     if len(argv) == 2:
         # Option 1, we have no arguments, so we assume yesterday
-        res.append(today - datetime.timedelta(days=1))
+        res.append(today - timedelta(days=1))
     elif len(argv) == 3:
         # Option 2, we are running for an entire year, gulp
         if argv[2] == "all":
-            now = datetime.date(2007, 1, 1)
-            ets = datetime.date.today()
+            now = date(2007, 1, 1)
+            ets = date.today()
         else:
-            now = datetime.date(int(argv[2]), 1, 1)
-            ets = datetime.date(int(argv[2]) + 1, 1, 1)
+            now = date(int(argv[2]), 1, 1)
+            ets = date(int(argv[2]) + 1, 1, 1)
         while now < ets:
             if now >= today:
                 break
             res.append(now)
-            now += datetime.timedelta(days=1)
+            now += timedelta(days=1)
     elif len(argv) == 4:
         # Option 3, we are running for a month
-        now = datetime.date(int(argv[2]), int(argv[3]), 1)
-        ets = now + datetime.timedelta(days=35)
+        now = date(int(argv[2]), int(argv[3]), 1)
+        ets = now + timedelta(days=35)
         ets = ets.replace(day=1)
         while now < ets:
             if now >= today:
                 break
             res.append(now)
-            now += datetime.timedelta(days=1)
+            now += timedelta(days=1)
     elif len(argv) == 5:
         # Option 4, we are running for one date
-        res.append(datetime.date(int(argv[2]), int(argv[3]), int(argv[4])))
+        res.append(date(int(argv[2]), int(argv[3]), int(argv[4])))
     return res
 
 
@@ -116,8 +113,8 @@ def load_precip(dates, huc12s):
         huc12df = huc12df.loc[huc12s]
     # 2. Loop over dates
     res = {}
-    for date in tqdm(dates, disable=(not sys.stdout.isatty())):
-        fn = date.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.npy")
+    for dt in tqdm(dates, disable=not sys.stdout.isatty()):
+        fn = dt.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.npy")
         if not os.path.isfile(fn):
             print("Missing precip: %s" % (fn,))
             for huc12 in huc12df.index.values:
@@ -168,9 +165,9 @@ def do_huc12(arg):
     df = pd.concat(frames)
     df = df.fillna(0)
     res = ""
-    for _, date in enumerate(dates):
+    for _, dt in enumerate(dates):
         # df['date'] is datetime64, so need to cast
-        df2 = df[df["date"].dt.date == date]
+        df2 = df[df["date"].dt.date == dt]
         for _, row in df2.iterrows():
             # hillslope ID, HUC12 ID, precip, runoff, detachment, soil loss
             res += "%s,%s,%.2f,%.4f,%.4f,%.4f\n" % (

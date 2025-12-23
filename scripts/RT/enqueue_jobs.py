@@ -1,9 +1,9 @@
 """Place jobs into our DEP queue!"""
 
-import datetime
 import json
 import os
 import time
+from datetime import date, datetime
 
 import click
 import httpx
@@ -18,7 +18,7 @@ from pydep.workflows.wepprun import (
     build_runfile,
 )
 
-YEARS = datetime.date.today().year - 2006
+YEARS = date.today().year - 2006
 WEPPEXE = "wepp20240930"
 
 # These are HUC12s that we currently need graph output for SWEEP
@@ -91,7 +91,7 @@ def main(scenario: int, runerrors: bool, myhucs: str | None, queue: str):
     # Declare queue as durable (survives broker restart)
     # This is idempotent - safe to declare multiple times
     channel.queue_declare(queue=queue, durable=True)
-    sts = datetime.datetime.now()
+    sts = datetime.now()
 
     weppconfig = WeppRunConfig(years=YEARS)
 
@@ -139,7 +139,7 @@ def main(scenario: int, runerrors: bool, myhucs: str | None, queue: str):
     connection.close()
     percentile = 1.0001
     while True:
-        now = datetime.datetime.now()
+        now = datetime.now()
         req = httpx.get(
             f"http://{rabbit_config['host']}:15672/api/queues/%2F/{queue}",
             auth=(rabbit_config["user"], rabbit_config["password"]),

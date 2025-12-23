@@ -99,7 +99,7 @@ def omnibus(domain: str):
 
 
 @click.command()
-@click.option("--domain", required=True, help="The domain to edit")
+@click.option("--domain", default="conus", help="The domain to edit")
 @click.option("--filename", help="The file to edit")
 @click.option("--lon", type=float, help="Longitude of the grid cell")
 @click.option("--lat", type=float, help="Latitude of the grid cell")

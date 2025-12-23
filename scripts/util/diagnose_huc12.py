@@ -1,23 +1,22 @@
 """Do some diagnostics on what the raw DEP files are telling us"""
 
-import datetime
 import glob
 import sys
+from datetime import date
 
 import pandas as pd
-from pandas.io.sql import read_sql
 from pyiem.database import get_dbconn
 
 from pydep.io.wepp import read_env
 from pydep.reference import KG_M2_TO_TON_ACRE
 
-YEARS = datetime.date.today().year - 2007 + 1
+YEARS = date.today().year - 2007 + 1
 
 
-def get_lengths(huc12, scenario):
+def get_lengths(huc12, scenario) -> pd.DataFrame:
     """Figure out our slope lengths."""
     pgconn = get_dbconn("idep")
-    return read_sql(
+    return pd.read_sql(
         "SELECT fpath, ST_Length(geom) as length from flowpaths "
         "where scenario = %s and huc_12 = %s",
         pgconn,
