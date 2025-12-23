@@ -1,7 +1,7 @@
 """Verify that a climate file is well formed."""
 
-import datetime
 import sys
+from datetime import date, timedelta
 
 
 def main(argv):
@@ -11,18 +11,16 @@ def main(argv):
     tokens = lines[4].strip().split()
     syear = int(tokens[4])
     linenum = 15
-    yesterday = datetime.date(syear - 1, 12, 31)
+    yesterday = date(syear - 1, 12, 31)
     while linenum < len(lines):
         tokens = lines[linenum].split()
         if len(tokens) < 4:
             print(f"linenum: {linenum} has len(tokens): {len(tokens)}")
-        thisdate = datetime.date(
-            int(tokens[2]), int(tokens[1]), int(tokens[0])
-        )
-        if (thisdate - yesterday) != datetime.timedelta(days=1):
+        thisdate = date(int(tokens[2]), int(tokens[1]), int(tokens[0]))
+        if (thisdate - yesterday) != timedelta(days=1):
             print(
                 f"linenum: {linenum} has date: {thisdate}, "
-                f"not {yesterday + datetime.timedelta(days=1)}"
+                f"not {yesterday + timedelta(days=1)}"
             )
         yesterday = thisdate
         lastprecip = -1

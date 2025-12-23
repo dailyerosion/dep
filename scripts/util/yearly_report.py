@@ -1,7 +1,7 @@
 """Generate a report for the yearly DEP totals"""
 
-import datetime
 import sys
+from datetime import date, datetime
 
 import matplotlib.pyplot as plt
 from pandas import read_sql
@@ -15,7 +15,7 @@ def main(argv):
     """Do What We Wanted"""
     scenario = int(argv[1])
     state = argv[2]
-    lyear = datetime.date.today().year - 1
+    lyear = date.today().year - 1
     print(f"This report covers the inclusive years 2008-{lyear} for {state}")
 
     df = read_sql(
@@ -42,7 +42,7 @@ def main(argv):
         params=(
             state,
             scenario,
-            datetime.date(lyear, 12, 31),
+            date(lyear, 12, 31),
             KG_M2_TO_TON_ACRE,
             KG_M2_TO_TON_ACRE,
         ),
@@ -79,7 +79,7 @@ def main(argv):
     fig.text(
         0.01,
         0.01,
-        f"Plot generated {datetime.datetime.now():%d %B %Y}",
+        f"Plot generated {datetime.now():%d %B %Y}",
     )
     fig.savefig("test.png")
 

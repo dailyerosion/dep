@@ -1,13 +1,13 @@
 """Something precip related."""
 
-import datetime
+from datetime import date
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from pandas.io.sql import read_sql
+from pyiem.database import get_dbconn
 from pyiem.network import Table as NetworkTable
 from pyiem.plot import MapPlot
-from pyiem.util import get_dbconn, mm2inch
+from pyiem.util import mm2inch
 
 
 def two(year):
@@ -51,7 +51,7 @@ def two(year):
         select sum(qc_precip) from results_by_huc12
         WHERE valid between %s and %s and huc_12 = %s and scenario = 0
         """,
-            (datetime.date(year, 1, 1), datetime.date(year, 12, 31), huc12),
+            (date(year, 1, 1), date(year, 12, 31), huc12),
         )
         val = icursor.fetchone()[0]
         if val is None:
@@ -102,7 +102,7 @@ def one():
     icursor = idep.cursor()
 
     # Get obs
-    df = read_sql(
+    df = pd.read_sql(
         """SELECT day, min(pday) as min_pday, avg(pday) as avg_pday,
         max(pday) as max_pday
         from summary_2014 s JOIN stations t on
@@ -118,7 +118,7 @@ def one():
         "SELECT count(*) from huc12 where states = 'IA' and scenario =0"
     )
     huccount = icursor.fetchone()[0]
-    df2 = read_sql(
+    df2 = pd.read_sql(
         """
         WITH iahuc12 as (
             SELECT huc_12 from huc12 where states = 'IA' and scenario = 0

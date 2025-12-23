@@ -1,10 +1,10 @@
 """Collect the water balance for a given today"""
 
 import contextlib
-import datetime
 import multiprocessing
 import os
 import sys
+from datetime import date, timedelta
 
 import geopandas as gpd
 import numpy as np
@@ -42,36 +42,36 @@ def readfile(huc12, fn):
 def determine_dates(argv):
     """Figure out which dates we are interested in processing"""
     res = []
-    today = datetime.date.today()
+    today = date.today()
     if len(argv) == 2:
         # Option 1, we have no arguments, so we assume yesterday
-        res.append(today - datetime.timedelta(days=1))
+        res.append(today - timedelta(days=1))
     elif len(argv) == 3:
         # Option 2, we are running for an entire year, gulp
         if argv[2] == "all":
-            now = datetime.date(2007, 1, 1)
-            ets = datetime.date.today()
+            now = date(2007, 1, 1)
+            ets = date.today()
         else:
-            now = datetime.date(int(argv[2]), 1, 1)
-            ets = datetime.date(int(argv[2]) + 1, 1, 1)
+            now = date(int(argv[2]), 1, 1)
+            ets = date(int(argv[2]) + 1, 1, 1)
         while now < ets:
             if now >= today:
                 break
             res.append(now)
-            now += datetime.timedelta(days=1)
+            now += timedelta(days=1)
     elif len(argv) == 4:
         # Option 3, we are running for a month
-        now = datetime.date(int(argv[2]), int(argv[3]), 1)
-        ets = now + datetime.timedelta(days=35)
+        now = date(int(argv[2]), int(argv[3]), 1)
+        ets = now + timedelta(days=35)
         ets = ets.replace(day=1)
         while now < ets:
             if now >= today:
                 break
             res.append(now)
-            now += datetime.timedelta(days=1)
+            now += timedelta(days=1)
     elif len(argv) == 5:
         # Option 4, we are running for one date
-        res.append(datetime.date(int(argv[2]), int(argv[3]), int(argv[4])))
+        res.append(date(int(argv[2]), int(argv[3]), int(argv[4])))
     return res
 
 
@@ -166,16 +166,16 @@ if __name__ == "__main__":
             total=len(HUC12S),
             disable=(not sys.stdout.isatty()),
         ):
-            for date, _huc12, et, runoff in _res:
+            for dt, _huc12, et, runoff in _res:
                 if et is None or np.isnan(et):
                     continue
-                key = date.strftime("%Y%m%d")
+                key = dt.strftime("%Y%m%d")
                 FPS[key].write(
                     ("%s,%s,%.2f,%.2f,%.2f\n")
                     % (
                         _huc12,
-                        date.strftime("%Y-%m-%d"),
-                        PRECIP[date][_huc12],
+                        dt.strftime("%Y-%m-%d"),
+                        PRECIP[dt][_huc12],
                         et,
                         runoff,
                     )
