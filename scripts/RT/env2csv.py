@@ -113,7 +113,7 @@ def load_precip(dates, huc12s):
         huc12df = huc12df.loc[huc12s]
     # 2. Loop over dates
     res = {}
-    for dt in tqdm(dates, disable=(not sys.stdout.isatty())):
+    for dt in tqdm(dates, disable=not sys.stdout.isatty()):
         fn = dt.strftime("/mnt/idep2/data/dailyprecip/%Y/%Y%m%d.npy")
         if not os.path.isfile(fn):
             print("Missing precip: %s" % (fn,))

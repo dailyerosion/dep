@@ -94,14 +94,14 @@ def determine_dates(args):
     return res
 
 
-def compute_res(df, date, slopes, qc_precip):
+def compute_res(df, dt: date, slopes, qc_precip):
     """Compute things"""
     allhits = slopes == len(df.index)
     slopes = float(slopes)
     # NB: code was added to WEPP to output every precipitation/runoff event,
     # so the average precip here is more accurate than before.
     return dict(
-        date=date,
+        date=dt,
         count=len(df.index),
         min_precip=(df.precip.min() if allhits else 0),
         avg_precip=(df.precip.sum() / slopes),
