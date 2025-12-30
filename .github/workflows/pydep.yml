@@ -17,9 +17,8 @@ jobs:
     strategy:
       matrix:
         # Min supported is 3.10
-        # IEM runs 3.11
-        # 3.13 is the latest release
-        PYTHON_VERSION: ["3.10", "3.11", "3.13"]
+        # IEM runs 3.14 (latest)
+        PYTHON_VERSION: ["3.10", "3.13", "3.14"]
     env:
       PYTHON_VERSION: ${{ matrix.PYTHON_VERSION }}
     steps:
@@ -48,7 +47,6 @@ jobs:
         condarc: |
           channels:
             - conda-forge
-            - defaults
         create-args: >-
           python=${{ env.PYTHON_VERSION }}
         environment-name: prod
@@ -71,7 +69,7 @@ jobs:
         python -m coverage xml
 
     - name: Upload codecov
-      if: ${{ env.PYTHON_VERSION == '3.13' }}
+      if: ${{ env.PYTHON_VERSION == '3.14' }}
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
