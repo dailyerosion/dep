@@ -27,7 +27,7 @@ LOG = logger()
 
 NON_PLASTIC_SOILS = (
     "Sand,Fine sand,Coarse sand,Very fine sand,Loamy sand,Loamy fine sand,"
-    "Loamy coarse sand,Loamy very fine sandmSilt"
+    "Loamy coarse sand,Loamy very fine sand,Silt"
 ).split(",")
 
 
@@ -50,7 +50,8 @@ def job(dates: list[date], tmpdir, huc12: str) -> int:
     g.plastic_limit as raw_plastic_limit,
     g.wepp_min_sw1 + (g.wepp_max_sw1 - g.wepp_min_sw1) * 0.5796 as fieldcap58,
     case when
-      g.textureclass = ANY(:nonplastic) or g.plastic_limit > 50 or tl.om > 10
+        g.textureclass = ANY(:nonplastic) or g.plastic_limit > 50 or tl.om > 10
+        or strpos(hydrogroup, 'D') > 0
     then
         g.wepp_min_sw1 + (g.wepp_max_sw1 - g.wepp_min_sw1) * 0.5796
     else
