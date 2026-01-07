@@ -76,7 +76,7 @@ def determine_dates(args):
             )
             if dt not in res:
                 res.append(dt)
-            LOG.debug("conv %s to %s", date, res[-1])
+            LOG.debug("conv %s to %s", dt, res[-1])
             continue
         # Option 2: all
         if dtstr == "all":
@@ -316,7 +316,7 @@ def do_huc12(arg):
         if df2.empty and qc_precip == 0:
             continue
         # Do computation
-        rows.append(compute_res(df2, date, hillslopes, qc_precip))
+        rows.append(compute_res(df2, dt, hillslopes, qc_precip))
     if not rows:
         icursor.close()
         pgconn.commit()
