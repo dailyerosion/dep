@@ -83,7 +83,7 @@ def plot_map_progress(
         loc=2,
     )
 
-    mp.fig.savefig(f"{i:04.0f}.png")
+    mp.fig.savefig(f"plots/{i:04.0f}.png")
     mp.close()
 
 

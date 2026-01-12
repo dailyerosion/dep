@@ -103,7 +103,7 @@ def main():
     ax.set_ylabel("Percentage of Daily Acres Planted to Soybeans")
     ax.set_yticks([0, 5, 10, 25, 50, 75, 90, 95, 100])
     ax.set_xlabel("Approximate Date for (Day of Year)")
-    fig.savefig("ratio.png")
+    fig.savefig("plots/ratio.png")
 
 
 if __name__ == "__main__":

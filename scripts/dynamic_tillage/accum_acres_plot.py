@@ -61,7 +61,7 @@ def plot_map_progress(i, dt):
         zorder=100,
     )
     mp.draw_colorbar(bins, cmap, norm, units="Percent", extend="max")
-    mp.fig.savefig(f"plant{i:04.0f}.png")
+    mp.fig.savefig(f"plots/plant{i:04.0f}.png")
     mp.close()
 
 
@@ -112,7 +112,7 @@ def plot_map(i, dt, huc12df, fields):
         loc=2,
     )
 
-    mp.fig.savefig(f"{i:04.0f}.png")
+    mp.fig.savefig(f"plots/{i:04.0f}.png")
     mp.close()
 
 
@@ -169,7 +169,7 @@ def plot_timeseries(year, df, huc12):
     ax2.set_ylabel("Acreas Worked per Day (bars)")
     ax.set_zorder(ax2.get_zorder() + 1)
     ax.patch.set_visible(False)
-    fig.savefig(f"{year}_timeseries.png")
+    fig.savefig(f"plots/{year}_timeseries.png")
 
 
 def main():
@@ -217,7 +217,7 @@ def main():
     ax.set_ylabel("Acres Planted [%]")
     ax.set_yticks([0, 5, 10, 25, 50, 75, 90, 95, 100])
     ax.legend(loc=4, ncol=3)
-    fig.savefig("test.png")
+    fig.savefig("plots/test.png")
 
 
 if __name__ == "__main__":

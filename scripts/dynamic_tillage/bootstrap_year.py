@@ -16,7 +16,7 @@ LOG = logger()
 @click.command()
 @click.option("--year", type=int, help="Year to bootstrap", required=True)
 @click.option("--scenario", type=int, default=0)
-def main(year, scenario):
+def main(year: int, scenario: int):
     """Run for the given year."""
     dbcolidx = year - 2007 + 1
     with get_sqlalchemy_conn("idep") as conn:
