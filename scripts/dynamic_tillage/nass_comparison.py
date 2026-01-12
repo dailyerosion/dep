@@ -420,9 +420,9 @@ def plot_v(ax2, v: int, crop, year, datum: str):
         return
     v2df = pd.read_csv(
         path,
-        parse_dates=["valid" if v != 4 else "date"],
+        parse_dates=["valid" if v < 4 else "date"],
     )
-    v2df["valid"] = v2df["valid" if v != 4 else "date"].dt.date
+    v2df["valid"] = v2df["valid" if v < 4 else "date"].dt.date
     ax2.plot(
         v2df["valid"].values,
         v2df[f"dep_{crop}_pct"],
@@ -480,6 +480,7 @@ def get_deines(year: int, datum, _ugc, crop) -> pd.DataFrame | None:
 @click.option("--plotv2", is_flag=True, help="Plot v2")
 @click.option("--plotv3", is_flag=True, help="Plot v3")
 @click.option("--plotv4", is_flag=True, help="Plot v4")
+@click.option("--plotv51", is_flag=True, help="Plot v5.1")
 @click.option("--plotdep", is_flag=True, help="Plot DEP")
 def main(
     year: int,
@@ -489,6 +490,7 @@ def main(
     plotv2: bool,
     plotv3: bool,
     plotv4: bool,
+    plotv51: bool,
     plotdep: bool,
 ):
     """Go Main Go."""
@@ -577,6 +579,8 @@ def main(
         plot_v(ax2, 3, crop, year, datum)
     if plotv4:
         plot_v(ax2, 4, crop, year, datum)
+    if plotv51:
+        plot_v(ax2, 5.1, crop, year, datum)
     if plotdep:
         plot_dep(ax2, year, datum)
     ax2.legend(loc=2)

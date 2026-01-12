@@ -199,7 +199,7 @@ def main(workable: float):
     ax2.grid(True)
     ax2.legend(loc=(0, 1), ncol=2)
 
-    fig.savefig("simulation.png")
+    fig.savefig("plots/simulation.png")
 
 
 if __name__ == "__main__":
