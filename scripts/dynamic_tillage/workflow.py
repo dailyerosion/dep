@@ -35,6 +35,8 @@ CPU_COUNT = min([4, cpu_count() / 2])
 HUC12STATUSDIR = "/mnt/idep2/data/huc12status"
 PROJDIR = "/opt/dep/prj2wepp"
 EXE = f"{PROJDIR}/prj2wepp"
+# Quorum for OFE fraction within HUC12 to be below plastic limit
+OFE_PL_QUORUM = 0.5
 
 
 def setup_thread():
@@ -236,11 +238,11 @@ def main(scenario, dt, huc12, edr, run_prj2wepp):
         for huc12, gdf in smdf.groupby("huc12"):
             if huc12 not in huc12df.index:
                 continue
-            # Require that 25% of modelled OFEs are below plastic limit
+            # Require that fraction of modelled OFEs are below plastic limit
             # compute_smstate applies business logic, like 0.8 * PL, so
             # DO NOT do it here as well
             total_below = gdf["sw1"].lt(gdf["plastic_limit"]).sum()
-            if total_below < (len(gdf.index) * 0.25):
+            if total_below < (len(gdf.index) * OFE_PL_QUORUM):
                 huc12df.at[huc12, "limited_by_soilmoisture"] = True
 
     # restrict to HUC12s that are not limited
