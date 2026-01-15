@@ -35,10 +35,6 @@ CPU_COUNT = min([4, cpu_count() / 2])
 HUC12STATUSDIR = "/mnt/idep2/data/huc12status"
 PROJDIR = "/opt/dep/prj2wepp"
 EXE = f"{PROJDIR}/prj2wepp"
-RUNTIME = {
-    "edit_rotfile": False,
-    "run_prj2wepp": False,
-}
 
 
 def setup_thread():
@@ -159,13 +155,13 @@ def estimate_rainfall(huc12df: pd.DataFrame, dt: date):
         huc12df.at[idx, "precip_mm"] = p01d[y, x]
 
 
-def job(arg):
+def job(arg: list[date, str, bool, bool]):
     """Do the job."""
-    dt, huc12 = arg
+    dt, huc12, edit_rotfile, run_prj2wepp = arg
     with get_sqlalchemy_conn("idep") as conn:
         fields, planted, tilled = do_huc12(conn, 0, dt, huc12)
     # A HUC12 without any C or B, likely
-    if not RUNTIME["edit_rotfile"] or "ofe" not in fields.columns:
+    if not edit_rotfile or "ofe" not in fields.columns:
         return huc12, planted, tilled
     # Now we need to figure out which files need edited
     fields = fields[fields["ofe"].notna()]
@@ -174,7 +170,7 @@ def job(arg):
 
     for _, row in fields.iterrows():
         edit_rotfile(dt.year, huc12, row)
-    if RUNTIME["run_prj2wepp"]:
+    if run_prj2wepp:
         for fpath in fields["fpath"].unique():
             prj2wepp(huc12, fpath)
 
@@ -189,8 +185,6 @@ def job(arg):
 @click.option("--run_prj2wepp", type=bool, default=False)
 def main(scenario, dt, huc12, edr, run_prj2wepp):
     """Go Main Go."""
-    RUNTIME["edit_rotfile"] = edr
-    RUNTIME["run_prj2wepp"] = run_prj2wepp
     # Deal with dates not datetime
     dt = dt.date()
     LOG.info("Processing %s for scenario %s", dt, scenario)
@@ -269,7 +263,7 @@ def main(scenario, dt, huc12, edr, run_prj2wepp):
 
     queue = []
     for huc12 in huc12df[~huc12df["limited"]].index:
-        queue.append((dt, huc12))
+        queue.append((dt, huc12, edr, run_prj2wepp))
 
     LOG.warning("%s processes for %s huc12s", CPU_COUNT, len(queue))
     progress = tqdm(total=len(queue), disable=not os.isatty(1))
