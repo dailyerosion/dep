@@ -81,7 +81,7 @@ def prj2wepp(huc12, fpath):
     return True
 
 
-def edit_rotfile(year, huc12, row):
+def do_edit_rotfile(year, huc12, row):
     """Edit up our .rot files."""
     yearindex = str(year - 2007 + 1)
     rotfn = (
@@ -171,7 +171,7 @@ def job(arg: list[date, str, bool, bool]):
         fields = fields[fields["operation_done"]]
 
     for _, row in fields.iterrows():
-        edit_rotfile(dt.year, huc12, row)
+        do_edit_rotfile(dt.year, huc12, row)
     if run_prj2wepp:
         for fpath in fields["fpath"].unique():
             prj2wepp(huc12, fpath)
