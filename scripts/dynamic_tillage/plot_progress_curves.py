@@ -73,7 +73,6 @@ def main():
             )
             * 100.0
         )
-        progress.to_csv(f"{state}.csv")
 
         lp = ax2.plot(
             progress.index,

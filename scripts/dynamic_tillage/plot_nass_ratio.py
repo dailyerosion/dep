@@ -7,6 +7,8 @@ import pandas as pd
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import figure_axes
 
+print("BUG, this script needs to use the partitioned rates, not total...")
+
 
 @click.command()
 @click.option("--crop", required=True)

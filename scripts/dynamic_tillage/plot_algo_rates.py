@@ -8,7 +8,6 @@ from pyiem.plot import figure_axes
 from pydep.workflows.dyntillage import (
     get_planting_fraction,
     get_soybeans_planting_fraction,
-    get_soybeans_planting_fraction_new,
 )
 
 
@@ -20,14 +19,6 @@ def main():
         soybeans_frac > 0.4, planting_frac, soybeans_frac * planting_frac
     )
 
-    soybeans_frac_new = get_soybeans_planting_fraction_new()
-    planting_frac = get_planting_fraction()
-    soybeans_max_new = np.where(
-        soybeans_frac_new >= 0.5,
-        planting_frac,
-        soybeans_frac_new * planting_frac,
-    )
-
     (fig, ax) = figure_axes(
         title="DynTill v5 Planting Rates Illustration",
         logo="dep",
@@ -37,26 +28,19 @@ def main():
         np.arange(len(soybeans_frac)),
         planting_frac * soybeans_frac,
         label="Soybeans Minimum v5.0",
+        ds="steps-post",
     )
     ax.plot(
         np.arange(len(soybeans_frac)),
         soybeans_max,
         label="Soybeans Maximum v5.0",
-    )
-    ax.plot(
-        np.arange(len(soybeans_frac)),
-        planting_frac * soybeans_frac_new,
-        label="Soybeans Minimum v5.1",
-    )
-    ax.plot(
-        np.arange(len(soybeans_frac)),
-        soybeans_max_new,
-        label="Soybeans Maximum v5.1",
+        ds="steps-post",
     )
     ax.plot(
         np.arange(len(soybeans_frac)),
         planting_frac,
         label="Total",
+        ds="steps-post",
     )
     xticks = []
     xticklabels = []
