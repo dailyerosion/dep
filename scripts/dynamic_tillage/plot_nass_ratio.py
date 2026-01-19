@@ -3,17 +3,23 @@
 from datetime import date, timedelta
 
 import click
+import numpy as np
 import pandas as pd
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import figure_axes
 
-print("BUG, this script needs to use the partitioned rates, not total...")
+from pydep.workflows.dyntillage import (
+    get_planting_fraction,
+    get_soybeans_planting_fraction,
+)
 
 
 @click.command()
 @click.option("--crop", required=True)
 def main(crop: str):
     """Go Main Go."""
+    total_traction = get_planting_fraction()
+    soybeans_fraction = get_soybeans_planting_fraction()
     with get_sqlalchemy_conn("coop") as conn:
         nass = pd.read_sql(
             sql_helper(
@@ -73,20 +79,19 @@ def main(crop: str):
     ax.set_xticks(xticks)
     ax.set_xticklabels(xticklabels)
 
-    xs = [
-        (date(2000, 4, 11), date(2000, 4, 23), 2),
-        (date(2000, 4, 24), date(2000, 4, 30), 4),
-        (date(2000, 5, 1), date(2000, 5, 7), 7),
-        (date(2000, 5, 8), date(2000, 7, 1), 10),
-    ]
-    for x1, x2, val in xs:
-        ax.plot(
-            [x1.timetuple().tm_yday, x2.timetuple().tm_yday],
-            [val, val],
-            color="k",
-            lw=3,
-            zorder=10,
-        )
+    if crop == "soybeans":
+        rates = total_traction * soybeans_fraction * 100.0
+    else:
+        rates = total_traction * (1.0 - soybeans_fraction) * 100.0
+
+    ax.plot(
+        np.arange(1, 367),  # hack around leap day
+        rates,
+        ds="steps-post",
+        lw=2,
+        color="k",
+    )
+
     ax.set_xlim(*xlim)
 
     ax.set_ylabel(f"Weekly {crop} Planting Progress / Days Suitable [pp/d]")
