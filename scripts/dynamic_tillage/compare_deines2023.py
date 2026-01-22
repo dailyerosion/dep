@@ -15,7 +15,7 @@ def main(year: int, crop: str, district: str):
     """Go main Go."""
     counties = XREF[district]
     deines_all = pd.read_csv(
-        f"deines2023_district_{crop}.csv", parse_dates=["date"]
+        f"deines2023/deines2023_district_{crop}.csv", parse_dates=["date"]
     )
     deines = deines_all[
         (deines_all["district"] == district) & (deines_all["year"] == year)
@@ -88,7 +88,7 @@ def main(year: int, crop: str, district: str):
     ax.set_yticks([0, 5, 10, 25, 50, 75, 90, 95, 100])
     ax.set_ylabel("Percentage of Acres Planted [%]")
 
-    fig.savefig("test.png")
+    fig.savefig(f"plots/comparison_{year}_{district}_{crop}.png")
 
 
 if __name__ == "__main__":

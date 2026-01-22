@@ -22,7 +22,7 @@ def main():
             geom_col="geom",
             index_col="huc_12",
         )
-        hucdf.to_csv("myhucs.csv")
+        hucdf.to_csv("plots/myhucs.csv")
         mlras = hucdf["mlra_id"].unique().tolist()
         mlradf = gpd.read_postgis(
             sql_helper(

@@ -25,7 +25,8 @@ def main(crop: str):
     XREF["NE"] = []
 
     df = pd.read_csv(
-        f"{'c' if crop == 'corn' else 's'}cp.csv", parse_dates=["date"]
+        f"deines2023/{'c' if crop == 'corn' else 's'}cp.csv",
+        parse_dates=["date"],
     )
     df["acres"] = df["area_daily_m2"] * 0.000247105
 
@@ -53,7 +54,9 @@ def main(crop: str):
                         "pct": row["pct"],
                     }
                 )
-    pd.DataFrame(results).to_csv(f"deines2023_datum_{crop}.csv", index=False)
+    pd.DataFrame(results).to_csv(
+        f"deines2023/deines2023_datum_{crop}.csv", index=False
+    )
 
 
 if __name__ == "__main__":
