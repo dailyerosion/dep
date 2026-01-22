@@ -6,8 +6,8 @@ import sys
 import matplotlib.dates as mdates
 import pandas as pd
 from pandas.io.sql import read_sql
+from pyiem.database import get_dbconn
 from pyiem.plot.use_agg import plt
-from pyiem.util import get_dbconn
 
 
 def main(argv):

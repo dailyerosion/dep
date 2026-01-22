@@ -1,6 +1,6 @@
 """Assign a MLRA_ID to the huc12 table"""
 
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 
 
 def main():

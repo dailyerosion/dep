@@ -16,7 +16,8 @@ import sys
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from pyiem.util import get_dbconn, logger
+from pyiem.database import get_dbconn
+from pyiem.util import logger
 
 LOG = logger()
 print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")

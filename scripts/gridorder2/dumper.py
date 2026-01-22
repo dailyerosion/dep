@@ -1,7 +1,7 @@
 """Generate the requested output."""
 
 import pandas as pd
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 from tqdm import tqdm
 
 from pydep.io.wepp import read_env

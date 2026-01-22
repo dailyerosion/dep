@@ -5,7 +5,7 @@ import sys
 from datetime import date, timedelta
 
 from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 from tqdm import tqdm
 
 with open("myhucs.txt") as fh:

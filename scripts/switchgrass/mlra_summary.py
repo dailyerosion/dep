@@ -2,8 +2,8 @@
 
 # third party
 from pandas.io.sql import read_sql
+from pyiem.database import get_dbconn
 from pyiem.plot.use_agg import plt
-from pyiem.util import get_dbconn
 
 LABELS = {
     36: "Slopes > 3% to Switchgrass",

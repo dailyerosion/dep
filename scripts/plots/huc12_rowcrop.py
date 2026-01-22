@@ -5,9 +5,9 @@ import matplotlib.colors as mpcolors
 import numpy as np
 from geopandas import read_postgis
 from matplotlib.patches import Polygon
+from pyiem.database import get_dbconn
 from pyiem.plot import get_cmap
 from pyiem.plot.geoplot import MapPlot
-from pyiem.util import get_dbconn
 
 
 def main():
