@@ -2,7 +2,7 @@
 
 import matplotlib.pyplot as plt
 from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 
 HUCS = """
 Headwaters Cedar Creek 071000060202

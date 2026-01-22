@@ -7,8 +7,8 @@ import matplotlib.colors as mpcolors
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Polygon
+from pyiem.database import get_dbconn
 from pyiem.plot import MapPlot
-from pyiem.util import get_dbconn
 from shapely.wkb import loads
 
 from pydep.reference import KG_M2_TO_TON_ACRE

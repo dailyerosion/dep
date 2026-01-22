@@ -4,7 +4,7 @@ import sys
 
 import pandas as pd
 import seaborn as sns
-from pyiem.util import get_dbconnstr
+from pyiem.database import get_dbconnstr
 
 from pydep.io.dep import read_wb
 

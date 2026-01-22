@@ -1,7 +1,7 @@
 """Summarize for MLRA."""
 
 from pandas.io.sql import read_sql
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 
 LABELS = {
     36: "Slopes > 3% to Switchgrass",

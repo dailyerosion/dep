@@ -1,7 +1,7 @@
 """Dump flowpaths to a shapefile."""
 
 from geopandas import read_postgis
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 
 
 def main():

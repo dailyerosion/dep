@@ -1,6 +1,6 @@
 """Go."""
 
-from pyiem.util import get_dbconn
+from pyiem.database import get_dbconn
 
 DBCONN = get_dbconn("wepp")
 cursor = DBCONN.cursor()

@@ -6,9 +6,9 @@ import cartopy.crs as ccrs
 import matplotlib.colors as mpcolors
 import numpy as np
 from matplotlib.patches import Polygon
+from pyiem.database import get_dbconn
 from pyiem.plot import MapPlot
 from pyiem.plot.use_agg import plt
-from pyiem.util import get_dbconn
 from shapely.wkb import loads
 
 MYHUCS = [
