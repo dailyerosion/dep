@@ -463,7 +463,9 @@ def get_deines(year: int, datum, _ugc, crop) -> pd.DataFrame | None:
     """Sample what we need."""
     if year > 2020:
         return None
-    df = pd.read_csv(f"deines2023_datum_{crop}.csv", parse_dates=["date"])
+    df = pd.read_csv(
+        f"deines2023/deines2023_datum_{crop}.csv", parse_dates=["date"]
+    )
     return df[(df["year"] == year) & (df["datum"] == datum)].set_index("date")
 
 
@@ -566,6 +568,9 @@ def main(
     # axes showing the days suitable as little boxes for each seven day period
     # and the value of the days suitable for that period in the middle
     ax3 = plot_suitable(fig, nass, daily_limits)
+    # This is now computed
+    finaldf["dep_days_suitable"] = nass["dep_days_suitable"]
+    finaldf["nass_days_suitable"] = nass["days suitable"]
 
     # ////////////////////////////////////////////////////////////
     ax2 = plot_accum(fig, daily_acres, crop, nass_all, datum)

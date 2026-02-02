@@ -55,7 +55,7 @@ def main(huc12):
                     lastdt = dt
             if lastline != "":
                 outfh.write(f"{lastline}\n")
-            while now < datetime(2025, 1, 1):
+            while now < datetime(2027, 1, 1):
                 outfh.write(f"{now:%Y %03j} 0\n")
                 now = now + timedelta(days=1)
 

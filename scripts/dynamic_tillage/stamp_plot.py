@@ -53,7 +53,7 @@ def main(crop: str, dots: str, lines: str):
     dotcol = f"{dots}_{crop}_pct"
     linecol = f"{lines}_{crop}_pct"
     lyear = 2021 if "deines2023" in (dots, lines) else 2026
-    for x, year in enumerate(range(2007, lyear)):
+    for x, year in enumerate(range(2008, lyear)):
         # Psuedo axis definition
         x0 = x / 19.0
         xmin = pd.Timestamp(f"{year}-04-11").dayofyear
@@ -132,7 +132,7 @@ def main(crop: str, dots: str, lines: str):
             )
 
     ax.set_xticks(numpy.arange(0, 0.99, 1.0 / 19.0) + xtilesize / 2.0)
-    ax.set_xticklabels(range(2007, 2026), rotation=45)
+    ax.set_xticklabels(range(2008, 2026), rotation=45)
     ax.set_yticks(numpy.arange(0, 0.99, 1.0 / 12.0) + ytilesize / 2.0)
     ax.set_yticklabels(
         (
