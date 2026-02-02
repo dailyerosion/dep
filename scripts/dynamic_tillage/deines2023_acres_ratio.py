@@ -9,10 +9,12 @@ from pyiem.plot import figure_axes
 
 def read_csvs() -> list[pd.DataFrame, pd.DataFrame]:
     """Load up the csvs."""
-    corndf = pd.read_csv("deines2023_datum_corn.csv", parse_dates=["date"])
+    corndf = pd.read_csv(
+        "deines2023/deines2023_datum_corn.csv", parse_dates=["date"]
+    )
     corndf["doy"] = corndf["date"].dt.day_of_year
     soybeansdf = pd.read_csv(
-        "deines2023_datum_soybeans.csv", parse_dates=["date"]
+        "deines2023/deines2023_datum_soybeans.csv", parse_dates=["date"]
     )
     soybeansdf["doy"] = soybeansdf["date"].dt.day_of_year
 

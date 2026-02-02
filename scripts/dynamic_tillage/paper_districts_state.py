@@ -22,6 +22,7 @@ LOOKUP = {
     "IAC007": DATES_AND_COLORS["April 30"],
     "IAC008": DATES_AND_COLORS["April 30"],
     "IAC009": DATES_AND_COLORS["April 30"],
+    "NE": DATES_AND_COLORS["April 30"],
 }
 
 
@@ -82,10 +83,10 @@ def main():
         title="",
         subtitle="",
         sector="custom",
-        south=40.1,
+        south=38.1,
         north=49.4,
-        west=-96.2,
-        east=-91.9,
+        west=-100.2,
+        east=-92.9,
         continentalcolor="white",
         stateborderwidth=0,
         nocaption=True,
@@ -139,7 +140,7 @@ def main():
                 label="Corn: May 10\nSoybean: May 22",
             ),
         ],
-        loc=(0.03, 0.65),
+        loc=(0.13, 0.75),
         title="Static Planting Dates",
     )
     legend.set_zorder(Z_OVERLAY + 2)
@@ -165,7 +166,7 @@ def main():
                 label="U.S. States",
             ),
         ],
-        loc=(0.03, 0.45),
+        loc=(0.13, 0.55),
         title="Map Elements",
     )
     clegend.set_zorder(Z_OVERLAY + 2)
