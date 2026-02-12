@@ -150,16 +150,15 @@ def run_sweep(payload: SweepJobPayload) -> SweepJobResult | None:
     with open(sweepoutfn, encoding="utf-8") as fh:
         tokens = fh.read().strip().split()
         # total soil loss, saltation loss, suspension loss, PM10 loss
-        # TODO: units
         erosion = float(tokens[0])
     return SweepJobResult(
         field_id=payload.field_id,
         dt=payload.dt,
-        scenario=0,  # FIXME
+        scenario=payload.scenario,
         erosion=erosion,
         max_wmps=max(windobs),
         avg_wmps=sum(windobs) / len(windobs),
-        drct=0,  # FIXME
+        drct=0,  # hard coded at the moment
     )
 
 

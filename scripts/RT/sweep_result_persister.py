@@ -16,6 +16,7 @@ RABBITMQ_QUEUE = "sweep_results"
 
 
 def persist_to_database(cursor, result: SweepJobResult):
+    """Insert the result into the database."""
     cursor.execute(
         """
     insert into field_wind_erosion_results (field_id, scenario,
@@ -43,6 +44,7 @@ def main():
     db_queue = Queue()
 
     def db_worker():
+        """Run in a thread."""
         conn, cursor = get_dbconnc("idep")
         while True:
             result = db_queue.get()
@@ -59,6 +61,7 @@ def main():
     threading.Thread(target=db_worker, daemon=True).start()
 
     def callback(ch, method, _properties, body):
+        """ "Run in a thread."""
         try:
             result = SweepJobResult(**json.loads(body))
             db_queue.put(result)

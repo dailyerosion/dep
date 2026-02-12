@@ -19,9 +19,17 @@ classifiers = [
 ]
 dynamic = [ "version" ]
 dependencies = [
+  "gdal",
+  "httpx",
+  "numpy",
+  "pandas",
   "pika",
   "pydantic",
   "pyiem",
+  "rasterio",
+  "scipy",
+  "sqlalchemy",
+  "tqdm",
 ]
 urls."homepage" = "https://github.com/dailyerosion/dep"
 
@@ -35,6 +43,7 @@ line-length = 79
 respect-gitignore = false
 lint.select = [
   "B",      # bugbear
+  "D103",   # pydocstyle, missing docstring in public method
   "D202",   # pydocstyle, blank line after docstring
   "E",      # pycodestyle errors
   "E722",   # bare except (catch without exception type)
