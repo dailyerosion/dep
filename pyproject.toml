@@ -1,6 +1,5 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-
 requires = [ "setuptools>=64", "setuptools-scm>=8" ]
 
 [project]
@@ -9,7 +8,6 @@ description = "Daily Erosion Project Python package"
 readme = "README.md"
 keywords = [ "agriculture", "climate", "erosion", "meteorology" ]
 license = { text = "Apache" }
-
 requires-python = ">=3.10"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
@@ -21,6 +19,7 @@ classifiers = [
 ]
 dynamic = [ "version" ]
 dependencies = [
+  "pika",
   "pydantic",
   "pyiem",
 ]
@@ -31,18 +30,17 @@ version_scheme = "post-release"
 
 [tool.ruff]
 target-version = "py310"
-
 line-length = 79
 # Don't respect gitignore so we can lint gitignored scripts/plots directory
 respect-gitignore = false
 lint.select = [
-  "B",    # bugbear
-  "D202", # pydocstyle, blank line after docstring
-  "E",    # pycodestyle errors
-  "E722", # bare except (catch without exception type)
-  "ERA",  # eradicate (commented out code)
-  "F",    # pyflakes
-  "I",    # isort
+  "B",      # bugbear
+  "D202",   # pydocstyle, blank line after docstring
+  "E",      # pycodestyle errors
+  "E722",   # bare except (catch without exception type)
+  "ERA",    # eradicate (commented out code)
+  "F",      # pyflakes
+  "I",      # isort
   # "PD",   # pandas
   "PIE",    # perf
   "PLE",    # pylint error

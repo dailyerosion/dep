@@ -1,6 +1,5 @@
 """We do work when jobs are placed in the queue."""
 
-import json
 import os
 import socket
 import subprocess
@@ -12,10 +11,10 @@ from functools import partial
 from pathlib import Path
 
 import click
-import pika
 from pydantic import ValidationError
 from pyiem.util import logger
 
+from pydep.util import get_rabbitmqconn
 from pydep.workflows.wepprun import WeppJobPayload
 
 LOG = logger()
@@ -23,23 +22,6 @@ MEMORY = {
     "runs": 0,
     "timestamp": time.time(),
 }
-
-
-def get_rabbitmqconn():
-    """Load the configuration."""
-    # load rabbitmq.json in the directory local to this script
-    with open("rabbitmq.json", "r", encoding="utf-8") as fh:
-        config = json.load(fh)
-    return pika.BlockingConnection(
-        pika.ConnectionParameters(
-            host=config["host"],
-            port=config["port"],
-            virtual_host=config["vhost"],
-            credentials=pika.credentials.PlainCredentials(
-                config["user"], config["password"]
-            ),
-        )
-    )
 
 
 def drain(ch, delivery_tag, _payload):
