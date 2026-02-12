@@ -16,8 +16,8 @@ from pika.channel import Channel
 from pydantic import ValidationError
 from pyiem.util import logger
 
-from pydep.util import get_rabbitmqconn
-from pydep.workflows.sweeprun import SweepJobPayload, SweepJobResult
+from dailyerosion.util import get_rabbitmqconn
+from dailyerosion.workflows.sweeprun import SweepJobPayload, SweepJobResult
 
 LOG = logger()
 MEMORY = {

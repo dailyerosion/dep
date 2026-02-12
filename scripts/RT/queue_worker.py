@@ -14,8 +14,8 @@ import click
 from pydantic import ValidationError
 from pyiem.util import logger
 
-from pydep.util import get_rabbitmqconn
-from pydep.workflows.wepprun import WeppJobPayload
+from dailyerosion.util import get_rabbitmqconn
+from dailyerosion.workflows.wepprun import WeppJobPayload
 
 LOG = logger()
 MEMORY = {

@@ -1,4 +1,4 @@
-"""pydep readers for WEPP input/output files."""
+"""dailyerosion readers for WEPP input/output files."""
 
 import datetime
 import re
@@ -6,7 +6,7 @@ import re
 import numpy as np
 import pandas as pd
 
-from pydep.rfactor import calc_rfactor
+from dailyerosion.rfactor import calc_rfactor
 
 YLD_CROPTYPE = re.compile(r"Crop Type #\s+(?P<num>\d+)\s+is (?P<name>[^\s]+)")
 YLD_DATA = re.compile(

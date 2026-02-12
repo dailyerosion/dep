@@ -27,7 +27,7 @@ from pyiem.iemre import daily_offset, get_daily_mrms_ncname
 from pyiem.util import archive_fetch, logger, ncopen
 from tqdm import tqdm
 
-from pydep.workflows.dyntillage import do_huc12
+from dailyerosion.workflows.dyntillage import do_huc12
 
 pd.set_option("future.no_silent_downcasting", True)
 LOG = logger()

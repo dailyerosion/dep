@@ -6,7 +6,7 @@ import sys
 import matplotlib.dates as mdates
 from pyiem.plot.use_agg import plt
 
-from pydep.io.wepp import read_crop
+from dailyerosion.io.wepp import read_crop
 
 
 def main(argv):

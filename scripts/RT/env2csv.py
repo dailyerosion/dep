@@ -15,8 +15,8 @@ from pyiem.util import logger
 from rasterstats import zonal_stats
 from tqdm import tqdm
 
-from pydep.io.wepp import read_env
-from pydep.util import load_scenarios
+from dailyerosion.io.wepp import read_env
+from dailyerosion.util import load_scenarios
 
 LOG = logger()
 PRECIP_AFF = Affine(0.01, 0.0, WEST, 0.0, -0.01, NORTH)

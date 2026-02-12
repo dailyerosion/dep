@@ -9,7 +9,7 @@ import psycopg
 from pyiem.database import get_dbconn
 from tqdm import tqdm
 
-from pydep.io.wepp import read_env
+from dailyerosion.io.wepp import read_env
 
 
 def find_huc12s():

@@ -9,7 +9,7 @@ import sys
 
 from tqdm import tqdm
 
-from pydep.io.wepp import read_slp
+from dailyerosion.io.wepp import read_slp
 
 
 def main(argv):

@@ -1,4 +1,4 @@
-"""pydep helper util methods."""
+"""dailyerosion helper util methods."""
 
 import json
 import logging
@@ -14,7 +14,7 @@ from pyiem.iemre import get_domain
 from pyiem.util import CustomFormatter
 from tqdm import tqdm
 
-from pydep.reference import KWFACT_CLASSES, SLOPE_CLASSES
+from dailyerosion.reference import KWFACT_CLASSES, SLOPE_CLASSES
 
 
 class TqdmLoggingHandler(logging.Handler):  # skipcq
@@ -28,11 +28,11 @@ class TqdmLoggingHandler(logging.Handler):  # skipcq
 def _logger(ch: logging.Handler) -> logging.Logger:
     """Helper to get the logger."""
     ch.setFormatter(CustomFormatter())
-    # We lamely get both pydep and pyiem loggers here
+    # We lamely get both dailyerosion and pyiem loggers here
     log = logging.getLogger("pyiem")
     log.setLevel(logging.INFO if sys.stdout.isatty() else logging.WARNING)
     log.addHandler(ch)
-    log = logging.getLogger("pydep")
+    log = logging.getLogger("dailyerosion")
     log.setLevel(logging.INFO if sys.stdout.isatty() else logging.WARNING)
     log.addHandler(ch)
     return log

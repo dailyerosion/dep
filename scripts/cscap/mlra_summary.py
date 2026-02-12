@@ -6,7 +6,7 @@ from pandas.io.sql import read_sql
 from pyiem.database import get_dbconn
 from pyiem.plot.use_agg import plt
 
-from pydep.reference import KG_M2_TO_TON_ACRE
+from dailyerosion.reference import KG_M2_TO_TON_ACRE
 
 LABELS = {
     29: "CC No-Till",

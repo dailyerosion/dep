@@ -7,8 +7,8 @@ import pandas as pd
 import psycopg
 from pandas.io.sql import read_sql
 
-from pydep.io.wepp import read_env
-from pydep.reference import KG_M2_TO_TON_ACRE
+from dailyerosion.io.wepp import read_env
+from dailyerosion.reference import KG_M2_TO_TON_ACRE
 
 SCEN2CODE = [None, 12, 13, 14, 0, 15, 16]
 PGCONN = psycopg.connect(dbname="idep")

@@ -23,6 +23,5 @@ prj2wepp/wepp/runs/p0*
 prj2wepp/tmp**
 .coverage
 /build
-**/pydep.egg-info/
 scripts/RT/rabbitmq.json
 scripts/dynamic_tillage/plots*

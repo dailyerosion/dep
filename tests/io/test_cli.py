@@ -1,8 +1,8 @@
-"""Test pydep.io.cli stuff."""
+"""Test dailyerosion.io.cli stuff."""
 
 from datetime import date
 
-from pydep.io.cli import (
+from dailyerosion.io.cli import (
     BOUNDS,
     check_has_clifiles,
     compute_tile_bounds,

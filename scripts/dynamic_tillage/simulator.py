@@ -9,7 +9,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.patches import Rectangle
 from pyiem.plot import figure
 
-from pydep.workflows.dyntillage import (
+from dailyerosion.workflows.dyntillage import (
     do_planting,
     do_tillage,
     get_planting_fraction,

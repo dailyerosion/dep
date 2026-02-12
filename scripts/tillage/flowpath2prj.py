@@ -10,7 +10,7 @@ from psycopg.rows import dict_row
 from pyiem.database import get_dbconn
 from tqdm import tqdm
 
-from pydep.util import get_cli_fname
+from dailyerosion.util import get_cli_fname
 
 SCENARIO = int(sys.argv[1])
 TILLAGE_CLASS = int(sys.argv[2])

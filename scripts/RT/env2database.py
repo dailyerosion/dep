@@ -23,8 +23,8 @@ from pyiem.grid.zs import CachingZonalStats
 from pyiem.util import logger
 from tqdm import tqdm
 
-from pydep.io.dep import read_env
-from pydep.util import load_scenarios
+from dailyerosion.io.dep import read_env
+from dailyerosion.util import load_scenarios
 
 LOG = logger()
 CONFIG = {"subset": False}

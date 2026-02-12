@@ -1,6 +1,6 @@
-"""Test pydep.workflows.wepprun module."""
+"""Test dailyerosion.workflows.wepprun module."""
 
-from pydep.workflows.wepprun import (
+from dailyerosion.workflows.wepprun import (
     WeppJobPayload,
     WeppRunConfig,
     build_runfile,

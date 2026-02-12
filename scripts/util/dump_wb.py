@@ -6,7 +6,7 @@ import sys
 
 from tqdm import tqdm
 
-from pydep.io.dep import read_wb
+from dailyerosion.io.dep import read_wb
 
 
 def run(huc12):

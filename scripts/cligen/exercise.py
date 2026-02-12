@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from pydep.workflows.clifile import compute_breakpoint
+from dailyerosion.workflows.clifile import compute_breakpoint
 
 # Jun 11 2015
 precip = [

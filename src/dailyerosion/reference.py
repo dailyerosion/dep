@@ -1,4 +1,4 @@
-"""pydep static reference data."""
+"""dailyerosion static reference data."""
 
 # Classification of slope % into classes (right inclusive)
 SLOPE_CLASSES = [-99, 2, 4, 6, 12]

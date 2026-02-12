@@ -9,7 +9,7 @@ from pyiem.database import get_dbconn
 from pyiem.plot import MapPlot
 from shapely.wkb import loads
 
-from pydep.reference import KG_M2_TO_TON_ACRE
+from dailyerosion.reference import KG_M2_TO_TON_ACRE
 
 DBCONN = get_dbconn("idep")
 cursor = DBCONN.cursor()

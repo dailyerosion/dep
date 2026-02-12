@@ -14,7 +14,7 @@ from pyiem.grid.nav import get_nav
 from pyiem.util import ncopen
 from tqdm import tqdm
 
-from pydep.util import get_cli_fname
+from dailyerosion.util import get_cli_fname
 
 
 def finder(lon, lat, clscenario):

@@ -3,7 +3,7 @@
 import datetime
 import os
 
-from pydep.io.wepp import (
+from dailyerosion.io.wepp import (
     intensity,
     read_cli,
     read_crop,

@@ -10,7 +10,7 @@ from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import figure
 from tqdm import tqdm
 
-from pydep.io.dep import read_wb
+from dailyerosion.io.dep import read_wb
 
 
 def get_plastic_limit(huc12: str, year: int) -> pd.DataFrame:

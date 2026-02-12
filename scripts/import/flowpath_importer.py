@@ -22,7 +22,7 @@ from pyiem.util import logger
 from shapely.geometry import LineString
 from tqdm import tqdm
 
-from pydep.util import (
+from dailyerosion.util import (
     clear_huc12data,
     compute_management_for_groupid,
     get_cli_fname,

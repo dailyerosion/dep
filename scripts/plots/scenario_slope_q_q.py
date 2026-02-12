@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from pyiem.util import utc
 
-from pydep.io.wepp import read_slp
+from dailyerosion.io.wepp import read_slp
 
 
 def read_data():

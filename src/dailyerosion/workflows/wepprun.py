@@ -7,7 +7,7 @@ Integration Example
 -------------------
 To use WeppJobPayload in your scripts::
 
-    from pydep.workflows.wepprun import WeppJobPayload
+    from dailyerosion.workflows.wepprun import WeppJobPayload
     import json
     import pika
 

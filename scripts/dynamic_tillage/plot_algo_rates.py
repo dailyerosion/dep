@@ -5,7 +5,7 @@ from datetime import date, timedelta
 import numpy as np
 from pyiem.plot import figure_axes
 
-from pydep.workflows.dyntillage import (
+from dailyerosion.workflows.dyntillage import (
     get_planting_fraction,
     get_soybeans_planting_fraction,
 )

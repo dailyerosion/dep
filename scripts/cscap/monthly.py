@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from pandas.io.sql import read_sql
 from pyiem.database import get_dbconn
 
-from pydep.reference import KG_M2_TO_TON_ACRE
+from dailyerosion.reference import KG_M2_TO_TON_ACRE
 
 PGCONN = get_dbconn("idep")
 

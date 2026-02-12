@@ -14,8 +14,8 @@ from datetime import datetime
 
 import click
 
-from pydep.util import logger
-from pydep.workflows.clifile import (
+from dailyerosion.util import logger
+from dailyerosion.workflows.clifile import (
     CLIFileWorkflowFailure,
     Tile,
     daily_editor_workflow,

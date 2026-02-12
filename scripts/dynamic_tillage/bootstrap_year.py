@@ -8,7 +8,7 @@ from pyiem.database import get_dbconnc, get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
 from tqdm import tqdm
 
-from pydep.tillage import make_tillage
+from dailyerosion.tillage import make_tillage
 
 LOG = logger()
 

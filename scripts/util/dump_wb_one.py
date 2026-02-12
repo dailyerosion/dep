@@ -7,7 +7,7 @@ import os
 
 import pandas as pd
 
-from pydep.io.dep import read_wb
+from dailyerosion.io.dep import read_wb
 
 
 def main():

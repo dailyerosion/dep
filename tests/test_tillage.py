@@ -1,6 +1,6 @@
-"""Test pydep.tillage."""
+"""Test dailyerosion.tillage."""
 
-from pydep import tillage
+from dailyerosion import tillage
 
 
 def test_gh266_pasture():

@@ -5,7 +5,7 @@ import sys
 
 from pyiem.plot.use_agg import plt
 
-from pydep.io.dep import read_wb
+from dailyerosion.io.dep import read_wb
 
 
 def main(argv):

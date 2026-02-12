@@ -1,4 +1,4 @@
-"""test pydep.util"""
+"""test dailyerosion.util"""
 
 import logging
 
@@ -6,7 +6,7 @@ import pytest
 from pyiem.database import get_dbconnc
 from pyiem.iemre import SOUTH, WEST
 
-from pydep import util
+from dailyerosion import util
 
 
 def test_tqdm_logger_with_invalid_record(caplog):

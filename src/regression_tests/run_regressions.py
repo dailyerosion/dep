@@ -5,9 +5,9 @@ import os
 import subprocess
 import sys
 
-from pydep.io.dep import read_wb
-from pydep.io.wepp import read_env
-from pydep.reference import KG_M2_TO_TON_ACRE
+from dailyerosion.io.dep import read_wb
+from dailyerosion.io.wepp import read_env
+from dailyerosion.reference import KG_M2_TO_TON_ACRE
 
 
 def main():

@@ -1,5 +1,9 @@
 <!-- markdownlint-configure-file {"MD024": { "siblings_only": true } } -->
-# Changelog for pydep Python library
+# Changelog for dailyerosion Python library
+
+## **1.1.2** (12 Feb 2026)
+
+- Renamed library to `dailyerosion`.
 
 ## **1.1.1** (12 Feb 2026)
 
@@ -13,4 +17,4 @@
 
 ### Bug Fixes
 
-- Add pydep.util helper to fetch a RabbitMQ connection.
+- Add dailyerosion.util helper to fetch a RabbitMQ connection.

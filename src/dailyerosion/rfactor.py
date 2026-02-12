@@ -1,4 +1,4 @@
-"""pydep's R-factor calculations."""
+"""dailyerosion's R-factor calculations."""
 
 from datetime import date
 

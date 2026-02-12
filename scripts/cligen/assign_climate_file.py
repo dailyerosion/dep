@@ -5,7 +5,7 @@ import sys
 from pyiem.database import get_dbconn
 from pyiem.util import logger
 
-from pydep.util import get_cli_fname
+from dailyerosion.util import get_cli_fname
 
 LOG = logger()
 
