@@ -1,5 +1,6 @@
 /.project
 /.pydevproject
+/dist
 /data/
 /.buildpath
 *.o

@@ -1,7 +1,7 @@
 <!-- markdownlint-configure-file {"MD024": { "siblings_only": true } } -->
 # Changelog for pydep Python library
 
-## **1.1.0** (12 Feb 2026)
+## **1.1.1** (12 Feb 2026)
 
 - First release made to pypi and hopefully conda-forge.
 
