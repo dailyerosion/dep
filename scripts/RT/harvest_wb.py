@@ -15,7 +15,7 @@ from pyiem.iemre import NORTH, WEST
 from rasterstats import zonal_stats
 from tqdm import tqdm
 
-from pydep.io.dep import read_wb
+from dailyerosion.io.dep import read_wb
 
 PRECIP_AFF = Affine(0.01, 0.0, WEST, 0.0, -0.01, NORTH)
 

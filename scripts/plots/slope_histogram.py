@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from pydep.io.wepp import read_slp
+from dailyerosion.io.wepp import read_slp
 
 
 def read_data():

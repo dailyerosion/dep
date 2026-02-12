@@ -14,8 +14,8 @@ import pytest
 from pyiem.util import utc
 from pytest_httpx import HTTPXMock
 
-from pydep.io.wepp import read_cli
-from pydep.workflows.clifile import (
+from dailyerosion.io.wepp import read_cli
+from dailyerosion.workflows.clifile import (
     CLIFileWorkflowFailure,
     Tile,
     daily_editor_workflow,

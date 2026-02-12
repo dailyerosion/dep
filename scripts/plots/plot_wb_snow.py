@@ -6,7 +6,7 @@ import pandas as pd
 import seaborn as sns
 from pyiem.database import get_dbconnstr
 
-from pydep.io.dep import read_wb
+from dailyerosion.io.dep import read_wb
 
 
 def main(argv):

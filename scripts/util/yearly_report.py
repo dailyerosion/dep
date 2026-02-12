@@ -8,7 +8,7 @@ from pandas import read_sql
 from pyiem.database import get_dbconnstr
 from pyiem.reference import state_names
 
-from pydep.reference import KG_M2_TO_TON_ACRE
+from dailyerosion.reference import KG_M2_TO_TON_ACRE
 
 
 def main(argv):

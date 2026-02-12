@@ -5,7 +5,7 @@ import pandas as pd
 import requests
 from pyiem.database import get_sqlalchemy_conn
 
-from pydep.reference import KG_M2_TO_TON_ACRE
+from dailyerosion.reference import KG_M2_TO_TON_ACRE
 
 LOOKUP = {
     "10240003": "East Nishnabotna River",

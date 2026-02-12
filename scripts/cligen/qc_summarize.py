@@ -11,7 +11,7 @@ import requests
 from pyiem.iemre import hourly_offset
 from pyiem.util import c2f, mm2inch
 
-from pydep.io.wepp import read_cli
+from dailyerosion.io.wepp import read_cli
 
 LDATE = (datetime.date.today() - datetime.timedelta(days=1)).strftime(
     "%Y-%m-%d"

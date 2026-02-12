@@ -10,7 +10,7 @@ from pyiem.iemre import find_ij, get_dailyc_ncname
 from pyiem.util import convert_value, logger, ncopen
 from tqdm import tqdm
 
-from pydep.util import get_cli_fname
+from dailyerosion.util import get_cli_fname
 
 LOG = logger()
 # Untracked here, but this version was used to fix the header column labels

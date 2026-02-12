@@ -6,7 +6,7 @@ import sys
 import matplotlib.dates as mdates
 from pyiem.plot.use_agg import plt
 
-from pydep.io.wepp import read_env
+from dailyerosion.io.wepp import read_env
 
 
 def main(argv):

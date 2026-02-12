@@ -6,8 +6,8 @@ from queue import Queue
 
 from pyiem.database import get_dbconnc
 
-from pydep.util import get_rabbitmqconn
-from pydep.workflows.sweeprun import SweepJobResult
+from dailyerosion.util import get_rabbitmqconn
+from dailyerosion.workflows.sweeprun import SweepJobResult
 
 RABBITMQ_QUEUE = "sweep_results"
 

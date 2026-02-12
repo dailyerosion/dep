@@ -8,7 +8,7 @@ from pyiem.database import get_dbconn
 from pyiem.util import logger
 from tqdm import tqdm
 
-from pydep.io.wepp import read_env
+from dailyerosion.io.wepp import read_env
 
 LOG = logger()
 

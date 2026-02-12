@@ -25,9 +25,9 @@ from pyiem.util import archive_fetch, convert_value, ncopen
 from rasterio.errors import NotGeoreferencedWarning
 from rasterio.warp import reproject
 
-from pydep import LOG
-from pydep.io.cli import daily_formatter
-from pydep.reference import GRID_SPACING
+from dailyerosion import LOG
+from dailyerosion.io.cli import daily_formatter
+from dailyerosion.reference import GRID_SPACING
 
 # NB: This seems to be some thread safety issue with GDAL
 warnings.simplefilter("ignore", NotGeoreferencedWarning)

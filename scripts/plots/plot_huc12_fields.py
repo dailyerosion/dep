@@ -9,7 +9,7 @@ from pyiem.database import get_sqlalchemy_conn
 from pyiem.plot import MapPlot
 from pyiem.reference import Z_POLITICAL
 
-from pydep.reference import KG_M2_TO_TON_ACRE
+from dailyerosion.reference import KG_M2_TO_TON_ACRE
 
 
 def main(argv):

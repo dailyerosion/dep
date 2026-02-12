@@ -12,7 +12,7 @@ import pandas as pd
 from pyiem.database import get_dbconn
 from tqdm import tqdm
 
-from pydep.io.wepp import read_yld
+from dailyerosion.io.wepp import read_yld
 
 
 def readfile(huc12, filename):

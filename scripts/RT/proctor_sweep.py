@@ -39,7 +39,7 @@ from pyiem.util import logger
 from sqlalchemy.engine import Connection
 from tqdm import tqdm
 
-from pydep.io.man import man2df, read_man
+from dailyerosion.io.man import man2df, read_man
 
 LOG = logger()
 IEMRE = "http://mesonet.agron.iastate.edu/iemre/hourly"

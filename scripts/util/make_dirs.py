@@ -6,7 +6,7 @@ import click
 from pyiem.database import get_dbconn
 from pyiem.util import logger
 
-from pydep.util import load_scenarios
+from dailyerosion.util import load_scenarios
 
 LOG = logger()
 PREFIXES = (

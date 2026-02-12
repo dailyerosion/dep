@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.colors import LogNorm
 
-from pydep.reference import KG_M2_TO_TON_ACRE
+from dailyerosion.reference import KG_M2_TO_TON_ACRE
 
 GRIDORDER = sys.argv[1]
 

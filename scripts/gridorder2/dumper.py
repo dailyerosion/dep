@@ -4,7 +4,7 @@ import pandas as pd
 from pyiem.database import get_dbconn
 from tqdm import tqdm
 
-from pydep.io.wepp import read_env
+from dailyerosion.io.wepp import read_env
 
 HUCS = (
     "102400090102 102300020307 102400020604 102801020801 071000040902 "

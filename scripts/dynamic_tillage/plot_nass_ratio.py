@@ -8,7 +8,7 @@ import pandas as pd
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import figure
 
-from pydep.workflows.dyntillage import (
+from dailyerosion.workflows.dyntillage import (
     get_planting_fraction,
     get_soybeans_planting_fraction,
 )

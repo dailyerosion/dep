@@ -43,8 +43,8 @@ from pyiem.database import get_dbconn, get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
 from tqdm import tqdm
 
-from pydep.tillage import make_tillage
-from pydep.util import load_scenarios
+from dailyerosion.tillage import make_tillage
+from dailyerosion.util import load_scenarios
 
 LOG = logger()
 MISSED_SOILS = {}

@@ -18,8 +18,8 @@ from affine import Affine
 from pyiem.grid.nav import get_nav
 from tqdm import tqdm
 
-from pydep.util import tqdm_logger
-from pydep.workflows.clifile import (
+from dailyerosion.util import tqdm_logger
+from dailyerosion.workflows.clifile import (
     CLIFileWorkflowFailure,
     Tile,
     daily_editor_workflow,

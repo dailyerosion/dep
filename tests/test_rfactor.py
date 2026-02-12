@@ -2,7 +2,7 @@
 
 import os
 
-from pydep.rfactor import compute_rfactor_from_cli
+from dailyerosion.rfactor import compute_rfactor_from_cli
 
 
 def get_path(name):

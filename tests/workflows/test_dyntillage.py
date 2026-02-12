@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 
-from pydep.workflows.dyntillage import do_huc12, do_planting, do_tillage
+from dailyerosion.workflows.dyntillage import do_huc12, do_planting, do_tillage
 
 
 @pytest.fixture

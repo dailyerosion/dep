@@ -2,7 +2,7 @@
 
 import os
 
-from pydep.io.man import man2df, read_man
+from dailyerosion.io.man import man2df, read_man
 
 
 def get_path(name):

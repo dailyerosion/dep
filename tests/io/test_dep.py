@@ -1,8 +1,8 @@
-"""Test reading pydep.io.dep stuff."""
+"""Test reading dailyerosion.io.dep stuff."""
 
 import os
 
-from pydep.io.dep import read_env, read_wb
+from dailyerosion.io.dep import read_env, read_wb
 
 
 def test_empty():

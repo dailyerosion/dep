@@ -1,5 +1,5 @@
 
-name: pydep CI
+name: dailyerosion CI
 on:
   push:
     branches: [ main ]
@@ -65,7 +65,7 @@ jobs:
     - name: Build and test
       run: |
         python -m pip install . --upgrade --no-deps
-        python -m pytest --cov=pydep tests
+        python -m pytest --cov=dailyerosion tests
         python -m coverage xml
 
     - name: Upload codecov

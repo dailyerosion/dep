@@ -11,8 +11,8 @@ import pika
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
 
-from pydep.util import get_rabbitmqconn
-from pydep.workflows.wepprun import (
+from dailyerosion.util import get_rabbitmqconn
+from dailyerosion.workflows.wepprun import (
     WeppJobPayload,
     WeppRunConfig,
     build_runfile,

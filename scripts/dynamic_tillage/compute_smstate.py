@@ -21,7 +21,7 @@ from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
 from tqdm import tqdm
 
-from pydep.io.dep import read_wb
+from dailyerosion.io.dep import read_wb
 
 LOG = logger()
 

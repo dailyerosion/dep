@@ -11,8 +11,8 @@ from pyiem.database import get_dbconn, get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
 from tqdm import tqdm
 
-from pydep.io.wepp import read_env, read_ofe
-from pydep.reference import KG_M2_TO_TON_ACRE
+from dailyerosion.io.wepp import read_env, read_ofe
+from dailyerosion.reference import KG_M2_TO_TON_ACRE
 
 LOG = logger()
 # 2007 is skipped

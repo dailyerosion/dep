@@ -14,7 +14,7 @@ from pyiem.plot import MapPlot
 from pyiem.plot.use_agg import plt
 from tqdm import tqdm
 
-from pydep.rfactor import compute_rfactor_from_cli
+from dailyerosion.rfactor import compute_rfactor_from_cli
 
 
 def plot():
