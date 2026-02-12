@@ -5,6 +5,7 @@ from pyiem.database import get_dbconn
 
 
 def old():
+    """Placeholder."""
     (fig, ax) = plt.subplots(1, 1)
     ax.grid(True)
     for gridorder in range(1, 7):
@@ -29,6 +30,7 @@ def old():
 
 
 def main():
+    """Placeholder."""
     pgconn = get_dbconn("wepp")
     dfv1 = read_sql(
         """

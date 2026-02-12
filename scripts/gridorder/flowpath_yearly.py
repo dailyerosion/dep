@@ -12,6 +12,7 @@ GRIDORDER = sys.argv[1]
 
 
 def summarize():
+    """Placeholder."""
     res = []
     for fn in glob.glob("dfs/*.csv"):
         df = pd.read_csv(fn)
@@ -34,6 +35,7 @@ def summarize():
 
 
 def plot1(df):
+    """Placeholder."""
     (fig, ax) = plt.subplots(1, 1)
     plt.hist2d(df["length"], df["avg_det"], bins=[160, 320], norm=LogNorm())
     plt.colorbar(label="Flowpaths")
@@ -66,6 +68,7 @@ def plot1(df):
 
 
 def main():
+    """Placeholder."""
     df = pd.read_csv("flowpaths%s.csv" % (GRIDORDER,))
     x = []
     y = []

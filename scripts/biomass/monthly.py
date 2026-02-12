@@ -12,6 +12,7 @@ PGCONN = get_dbconn("idep")
 
 
 def get_scenario(scenario):
+    """Placeholder."""
     return read_sql(
         """
         WITH yearly as (

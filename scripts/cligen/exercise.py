@@ -748,6 +748,7 @@ def get_results():
 
 
 def get_maxrate(bpdata):
+    """Placeholder."""
     t = []
     r = []
     for line in bpdata:
@@ -768,6 +769,7 @@ def get_maxrate(bpdata):
 
 
 def edit(bpdata):
+    """Placeholder."""
     with open("/i/0/cli/095x041/094.86x040.84.cli") as fh:
         pos1 = fh.find("11\t6\t2015")
         pos2 = fh.find("12\t6\t2015")
@@ -780,6 +782,7 @@ def edit(bpdata):
 
 
 def run():
+    """Placeholder."""
     print(
         "%2s %2s %2s %6s %6s %6s %6s"
         % ("I", "A", "SZ", "MAXR", "RUNOF", "LOSS", "DELIV")
@@ -827,6 +830,7 @@ def run():
 
 
 def plot():
+    """Placeholder."""
     df = pd.read_pickle("exercise.pickle")
 
     units = {

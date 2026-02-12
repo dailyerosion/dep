@@ -54,6 +54,7 @@ def do_huc12(huc12):
 
 
 def load_lengths():
+    """Placeholder."""
     idep = psycopg.connect(dname="idep", host="iemdb")
     icursor = idep.cursor()
     res = {}
