@@ -61,7 +61,7 @@ def main():
     threading.Thread(target=db_worker, daemon=True).start()
 
     def callback(ch, method, _properties, body):
-        """ "Run in a thread."""
+        """Run in a thread."""
         try:
             result = SweepJobResult(**json.loads(body))
             db_queue.put(result)
