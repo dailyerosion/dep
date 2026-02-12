@@ -33,6 +33,11 @@ dependencies = [
 ]
 urls."homepage" = "https://github.com/dailyerosion/dep"
 
+[tool.setuptools]
+package-dir = { "" = "src" }
+packages.find.where = [ "src" ]
+packages.find.include = [ "pydep*" ]
+
 [tool.setuptools_scm]
 version_scheme = "post-release"
 
