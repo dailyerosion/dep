@@ -22,7 +22,7 @@ import os
 import shutil
 import subprocess
 import sys
-from datetime import date
+from datetime import datetime
 from multiprocessing import Pool
 
 import click
@@ -30,8 +30,13 @@ import numpy as np
 import pandas as pd
 import requests
 from enqueue_jobs import GRAPH_HUC12
-from pyiem.database import get_sqlalchemy_conn, sql_helper
+from pyiem.database import (
+    get_sqlalchemy_conn,
+    sql_helper,
+    with_sqlalchemy_conn,
+)
 from pyiem.util import logger
+from sqlalchemy.engine import Connection
 from tqdm import tqdm
 
 from pydep.io.man import man2df, read_man
@@ -40,16 +45,16 @@ LOG = logger()
 IEMRE = "http://mesonet.agron.iastate.edu/iemre/hourly"
 
 
-def run_command(cmd: str) -> bool:
+def run_command(cmd: list[str]) -> bool:
     """Common command running logic."""
     with subprocess.Popen(
-        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     ) as proc:
         (stdout, stderr) = proc.communicate()
         if proc.returncode != 0:
             LOG.error(
                 "Command %s failed with %s\n%s",
-                cmd,
+                " ".join(cmd),
                 stdout.decode("utf-8"),
                 stderr.decode("utf-8"),
             )
@@ -57,14 +62,17 @@ def run_command(cmd: str) -> bool:
     return True
 
 
-def get_wind_obs(dt, lon, lat) -> list:
+def get_wind_obs(dt: datetime, lon: float, lat: float) -> list[float]:
     """Get what we need from IEMRE."""
+    # Hopefully the two decimal degrees results in some caching
     uri = f"{IEMRE}/{dt:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
     attempts = 0
     res = {"data": []}
     while attempts < 3:
         try:
-            res = requests.get(uri, timeout=30).json()
+            resp = requests.get(uri, timeout=30)
+            resp.raise_for_status()
+            res = resp.json()
             break
         except Exception as exp:
             print(uri)
@@ -143,19 +151,26 @@ def workflow(arg):
     with open(sweepinfn, "w", encoding="utf-8") as fh:
         fh.write("".join(lines))
     # 2. Run Rscript to replace grph file content
-    cmd = (
-        f"Rscript --vanilla magic.R {sweepinfn} "
-        f"{sweepinfn.replace('sweepin', 'grph')} "
-        f"{sweepinfn.replace('sweepin', 'sol')} "
-        f"{row['date'].year} "
-        f"{sweepinfn.replace('sweepin', 'rot')[:-4]}_1.txt "
-        f"{row['date']:%j} "
-        f"{cropcode}"
-    )
+    cmd = [
+        "Rscript",
+        "--vanilla",
+        "magic.R",
+        sweepinfn,
+        sweepinfn.replace("sweepin", "grph"),
+        sweepinfn.replace("sweepin", "sol"),
+        f"{row['date'].year}",
+        sweepinfn.replace("sweepin", "rot")[:-4] + "_1.txt",
+        f"{row['date']:%j}",
+        f"{cropcode}",
+    ]
     if not run_command(cmd):
         return None, None
     # 3. Run sweep with given sweepin file, writing to sweepout
-    cmd = f'~/bin/sweep -i"{sweepinfn}" -Erod'
+    cmd = [
+        "~/bin/sweep",
+        f"-i{sweepinfn}",  # yuck
+        "-Erod",
+    ]
     if not run_command(cmd):
         return None, None
     # Move the erod file into the sweepout directory
@@ -170,40 +185,47 @@ def workflow(arg):
     return idx, erosion
 
 
-def write_database(scenario: int, dt: date, results: pd.DataFrame):
+@with_sqlalchemy_conn("idep")
+def write_database(
+    scenario: int,
+    dt: datetime,
+    results: pd.DataFrame,
+    conn: Connection | None = None,
+):
     """Write things to the database."""
-    with get_sqlalchemy_conn("idep") as conn:
-        res = conn.execute(
+    res = conn.execute(
+        sql_helper("""
+                delete from wind_results_by_huc12 where scenario = :scenario
+                and valid = :dt
+        """),
+        {"scenario": scenario, "dt": dt},
+    )
+    LOG.info("deleted %s result rows", res.rowcount)
+    for huc12, row in results.iterrows():
+        # Life choice to not store zeros
+        if row[("erosion", "mean")] == 0:
+            continue
+        conn.execute(
             sql_helper("""
-                 delete from wind_results_by_huc12 where scenario = :scenario
-                 and valid = :dt
-            """),
-            {"scenario": scenario, "dt": dt},
+            insert into wind_results_by_huc12
+            (scenario, valid, huc_12, avg_loss) VALUES
+            (:scenario, :valid, :huc12, :avg_loss)
+                    """),
+            {
+                "scenario": scenario,
+                "valid": dt,
+                "huc12": huc12,
+                "avg_loss": row[("erosion", "mean")],
+            },
         )
-        LOG.info("deleted %s result rows", res.rowcount)
-        for huc12, row in results.iterrows():
-            if row[("erosion", "mean")] == 0:
-                continue
-            conn.execute(
-                sql_helper("""
-                insert into wind_results_by_huc12
-                (scenario, valid, huc_12, avg_loss) VALUES
-                (:scenario, :valid, :huc12, :avg_loss)
-                     """),
-                {
-                    "scenario": scenario,
-                    "valid": dt,
-                    "huc12": huc12,
-                    "avg_loss": row[("erosion", "mean")],
-                },
-            )
-        conn.commit()
+    conn.commit()
 
 
 @click.command()
 @click.option("--scenario", "-s", default=0, type=int, help="Scenario to run")
 @click.option("--date", "dt", type=click.DateTime(), help="Date to run")
-def main(scenario, dt):
+@click.option("--workers", type=int, default=4, help="Number of workers")
+def main(scenario: int, dt: datetime, workers: int):
     """Go Main Go."""
     with get_sqlalchemy_conn("idep") as conn:
         df = pd.read_sql(
@@ -223,7 +245,8 @@ def main(scenario, dt):
     LOG.info("found %s flowpaths to run for %s", len(df.index), dt)
     jobs = list(df.iterrows())
     # hard coded CPU count for now as using them all is too much
-    with Pool(4) as pool:
+    LOG.info("Starting %s workers", workers)
+    with Pool(workers) as pool:
         progress = tqdm(
             pool.imap_unordered(workflow, jobs),
             total=len(df.index),

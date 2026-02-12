@@ -179,6 +179,7 @@ FILENAMES = {
 
 
 def do(scenario, filename, phase):
+    """Placeholder."""
     fullpath = ("../../prj2wepp/wepp/data/managements/IDEP2/CSCAP/%s_%s") % (
         phase,
         filename,
@@ -228,6 +229,7 @@ Operations {
 
 
 def main(argv):
+    """Placeholder."""
     for scenario, filename in FILENAMES.iteritems():
         do(scenario, filename, 1)
         do(scenario, filename, 2)

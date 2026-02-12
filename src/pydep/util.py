@@ -1,5 +1,6 @@
 """pydep helper util methods."""
 
+import json
 import logging
 import math
 import sys
@@ -7,6 +8,7 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
+import pika
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.iemre import get_domain
 from pyiem.util import CustomFormatter
@@ -140,4 +142,24 @@ def get_cli_fname(lon: float, lat: float, scenario: int = 0):
         f"{'S' if lat < 0 else 'N'}{math.floor(abs(lat)):02.0f}/"
         f"{'W' if lon < 0 else 'E'}{abs(lon):06.2f}x"
         f"{'S' if lat < 0 else 'N'}{abs(lat):05.2f}.cli"
+    )
+
+
+def get_rabbitmqconn() -> tuple[pika.BlockingConnection, dict[str, str]]:
+    """Load the configuration."""
+    # load rabbitmq.json in the cwd
+    with open("rabbitmq.json", "r", encoding="utf-8") as fh:
+        config = json.load(fh)
+    return (
+        pika.BlockingConnection(
+            pika.ConnectionParameters(
+                host=config["host"],
+                port=config["port"],
+                virtual_host=config["vhost"],
+                credentials=pika.credentials.PlainCredentials(
+                    config["user"], config["password"]
+                ),
+            )
+        ),
+        config,
     )

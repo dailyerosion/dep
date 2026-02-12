@@ -1,6 +1,5 @@
 """Place jobs into our DEP queue!"""
 
-import json
 import os
 import time
 from datetime import date, datetime
@@ -12,6 +11,7 @@ import pika
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
 
+from pydep.util import get_rabbitmqconn
 from pydep.workflows.wepprun import (
     WeppJobPayload,
     WeppRunConfig,
@@ -28,26 +28,6 @@ GRAPH_HUC12 = (
     "090203010403 070200070501 070102050503 090203030703 090203030702 "
     "090203030304 090201081002 070102020203 070200080101 101702040106"
 ).split()
-
-
-def get_rabbitmqconn() -> tuple[pika.BlockingConnection, dict[str, str]]:
-    """Load the configuration."""
-    # load rabbitmq.json in the directory local to this script
-    with open("rabbitmq.json", "r", encoding="utf-8") as fh:
-        config = json.load(fh)
-    return (
-        pika.BlockingConnection(
-            pika.ConnectionParameters(
-                host=config["host"],
-                port=config["port"],
-                virtual_host=config["vhost"],
-                credentials=pika.credentials.PlainCredentials(
-                    config["user"], config["password"]
-                ),
-            )
-        ),
-        config,
-    )
 
 
 @click.command()

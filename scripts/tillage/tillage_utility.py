@@ -1,4 +1,5 @@
 def operation_maker(crop, tillage_class, last_crop="C"):
+    """Placeholder."""
     if crop in ["U", "F"]:
         return ""
     tillage_number = tillage_class - 1
