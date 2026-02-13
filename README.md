@@ -8,7 +8,6 @@ Much of this code is highly custom to what our project aims to do, but hopefully
 
 - **config** website configuration files
 - **data** un-versioned local input data files
-- **database** Postgresql database schema management
 - **docs** some more documentation
 - **include** mostly PHP include files for the website functionality
 - **prj2wepp** installation/support files for the usage of [prj2wepp](http://milford.nserl.purdue.edu/weppdocs/prj2wepp/), which allows for some preprocessing of WEPP inputs
@@ -19,6 +18,12 @@ So this code base makes two general assumptions that may be necessary for your l
 
 1. This code resides at `/opt/dep`
 2. The file storage of input and output data for this project resides at `/i/<scenario>`
+
+## dailyerosion python library
+
+This repository also includes a python library called `dailyerosion`, which easily be
+installed via `pip` from pypi or within `conda-forge`.  See `src/dailyerosion` for the
+python source code.
 
 ## Concept of Scenarios
 

@@ -115,7 +115,7 @@ def run_consumer(queue: str, jobfunc, executor):
     """Our main runloop."""
     LOG.info("Starting queue_worker for queue: %s", queue)
 
-    conn = get_rabbitmqconn()
+    conn, _config = get_rabbitmqconn()
     channel = conn.channel()
     # Declare queue as durable (must match producer)
     # This is idempotent - safe to declare multiple times
