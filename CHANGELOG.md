@@ -1,6 +1,16 @@
 <!-- markdownlint-configure-file {"MD024": { "siblings_only": true } } -->
 # Changelog for dailyerosion Python library
 
+## Unreleased Version
+
+### API Changes
+
+### New Features
+
+- Allow provision of the RabbitMQ settings file for `get_rabbitmqconn`.
+
+### Bug Fixes
+
 ## **1.1.2** (12 Feb 2026)
 
 - Renamed library to `dailyerosion`.
