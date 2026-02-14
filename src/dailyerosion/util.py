@@ -4,11 +4,13 @@ import json
 import logging
 import math
 import sys
+from pathlib import Path
 from typing import Tuple
 
 import numpy as np
 import pandas as pd
 import pika
+from pika.credentials import PlainCredentials
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.iemre import get_domain
 from pyiem.util import CustomFormatter
@@ -145,10 +147,12 @@ def get_cli_fname(lon: float, lat: float, scenario: int = 0):
     )
 
 
-def get_rabbitmqconn() -> tuple[pika.BlockingConnection, dict[str, str]]:
+def get_rabbitmqconn(
+    settings_file: str | Path = "rabbitmq.json",
+) -> tuple[pika.BlockingConnection, dict[str, str]]:
     """Load the configuration."""
     # load rabbitmq.json in the cwd
-    with open("rabbitmq.json", "r", encoding="utf-8") as fh:
+    with open(settings_file, "r", encoding="utf-8") as fh:
         config = json.load(fh)
     return (
         pika.BlockingConnection(
@@ -156,7 +160,7 @@ def get_rabbitmqconn() -> tuple[pika.BlockingConnection, dict[str, str]]:
                 host=config["host"],
                 port=config["port"],
                 virtual_host=config["vhost"],
-                credentials=pika.credentials.PlainCredentials(
+                credentials=PlainCredentials(
                     config["user"], config["password"]
                 ),
             )
