@@ -167,7 +167,7 @@ def workflow(arg):
         return None, None
     # 3. Run sweep with given sweepin file, writing to sweepout
     cmd = [
-        "~/bin/sweep",
+        "/opt/dep/bin/sweep",
         f"-i{sweepinfn}",  # yuck
         "-Erod",
     ]
