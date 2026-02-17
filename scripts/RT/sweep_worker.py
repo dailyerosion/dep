@@ -9,6 +9,7 @@ import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from functools import partial
+from pathlib import Path
 
 import click
 import requests
@@ -99,6 +100,14 @@ def run_sweep(payload: SweepJobPayload) -> SweepJobResult | None:
     if not os.path.isfile(sweepinfn):
         LOG.warning("%s does not exist, copying template", sweepinfn)
         shutil.copyfile("sweepin_template.txt", sweepinfn)
+    # This needs to be fixed at some point, but we are going to use
+    # a common file until morale improves
+    graphfn = Path(sweepinfn.replace("sweepin", "grph"))
+    eventsfn = sweepinfn.replace("sweepin", "rot")[:-4] + "_1.txt"
+    if not graphfn.exists():
+        graphfn = "/i/0/grph/09020106/0605/090201060605_69.grph"
+        eventsfn = graphfn.replace("grph", "rot")[:-4] + "_1.txt"
+
     sweepoutfn = sweepinfn.replace("sweepin", "sweepout")
     # sweep arbitarily sets the erod output file to be the same as the
     # sweepin, but with a erod extension.
@@ -126,10 +135,10 @@ def run_sweep(payload: SweepJobPayload) -> SweepJobResult | None:
         "--vanilla",
         "magic.R",
         sweepinfn,
-        sweepinfn.replace("sweepin", "grph"),
+        graphfn,
         sweepinfn.replace("sweepin", "sol"),
         f"{payload.dt.year}",
-        sweepinfn.replace("sweepin", "rot")[:-4] + "_1.txt",
+        eventsfn,
         f"{payload.dt:%j}",
         f"{payload.crop}",
     ]
