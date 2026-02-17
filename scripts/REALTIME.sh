@@ -17,4 +17,4 @@ cd ../RT
 python enqueue_jobs.py -s 0 && python env2database.py -s 0 --date $(date --date '16 hours ago' +'%Y-%m-%d') && python spam_twitter.py
 
 # Run Wind Erosion!
-python proctor_sweep.py -s 0 --date $(date --date '16 hours ago' +'%Y-%m-%d')
+python enqueue_sweep_jobs.py -s 0 --date $(date --date '16 hours ago' +'%Y-%m-%d')
