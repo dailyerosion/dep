@@ -7,13 +7,30 @@ import click
 import httpx
 import pandas as pd
 import pika
+from enqueue_jobs import GRAPH_HUC12
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
+from sqlalchemy.engine import Connection
 
 from dailyerosion.util import get_rabbitmqconn
 from dailyerosion.workflows.sweeprun import SweepJobPayload
 
 LOG = logger()
+
+
+def clean_database(conn: Connection, dt, hucs):
+    """Remove current entries."""
+    res = conn.execute(
+        sql_helper("""
+    delete from field_wind_erosion_results r USING fields f
+    WHERE r.valid = :dt and r.field_id = f.field_id and f.huc12 = ANY(:hucs)
+    and f.scenario = 0
+                   """),
+        {"dt": dt, "hucs": hucs},
+    )
+    loglvl = LOG.info if res.rowcount == 0 else LOG.warning
+    loglvl("Removed %s previous field_wind_erosion_results", res.rowcount)
+    conn.commit()
 
 
 @click.command()
@@ -46,7 +63,8 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
         st_pointn(st_transform(o.geom, 4326), 1) as pt
         from flowpath_ofes o, flowpaths f, huc12 h
         where o.flowpath = f.fid and f.huc_12 = h.huc_12 and
-        h.states ~* 'MN' and f.scenario = 0 and o.ofe = 1)
+        (h.states ~* 'MN' or h.huc_12 = ANY(:graphhucs))
+        and f.scenario = 0 and o.ofe = 1)
     select field_id, fpath, huc_12, st_x(pt) as lon, st_y(pt) as lat, crop
     from data
     where row_number = 1 and crop in ('C', 'B') {huclimit}
@@ -54,8 +72,14 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
                 huclimit=" and huc_12 = ANY(:hucs)" if myhucs else "",
             ),
             conn,
-            params={"hucs": myhucs, "charat": dt.year - 2007 + 1},
+            params={
+                "graphhucs": GRAPH_HUC12,
+                "hucs": myhucs,
+                "charat": dt.year - 2007 + 1,
+            },
         )
+        # Remove current entries, only for HUC12s of interest!
+        clean_database(conn, dt, fieldsdf["huc_12"].unique().tolist())
     totaljobs = len(fieldsdf.index)
     connection, rabbit_config = get_rabbitmqconn()
     channel = connection.channel()
