@@ -13,6 +13,8 @@ from pathlib import Path
 
 import click
 import requests
+from metpy.calc import wind_direction
+from metpy.units import units
 from pika.channel import Channel
 from pydantic import ValidationError
 from pyiem.util import logger
@@ -51,7 +53,7 @@ def run_command(cmd: list[str]) -> bool:
     return True
 
 
-def get_wind_obs(dt: date, lon: float, lat: float) -> list[float]:
+def get_wind_obs(dt: date, lon: float, lat: float) -> list[float, list[float]]:
     """Get what we need from IEMRE."""
     # Hopefully the two decimal degrees results in some caching
     uri = f"{IEMRE}/{dt:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
@@ -71,15 +73,23 @@ def get_wind_obs(dt: date, lon: float, lat: float) -> list[float]:
             LOG.warning("Failed to get %s, returning 1s", uri)
             return [1.0] * 24
     hourly = []
+    drct = 0
+    maxvel = 0
     for entry in res["data"]:
         try:
             vel = (entry["uwnd_mps"] ** 2 + entry["vwnd_mps"] ** 2) ** 0.5
+            if vel > maxvel:
+                maxvel = vel
+                drct = wind_direction(
+                    entry["uwnd_mps"] * units("m/s"),
+                    entry["vwnd_mps"] * units("m/s"),
+                ).magnitude
         except Exception:
             vel = 1.0
         hourly.append(vel)
     for _i in range(len(hourly), 24):
         hourly.append(1.0)
-    return hourly
+    return drct, hourly
 
 
 def run_sweep(payload: SweepJobPayload) -> SweepJobResult | None:
@@ -112,11 +122,14 @@ def run_sweep(payload: SweepJobPayload) -> SweepJobResult | None:
     # sweep arbitarily sets the erod output file to be the same as the
     # sweepin, but with a erod extension.
     erodfn = sweepinfn.replace(".sweepin", ".erod")
-    windobs = get_wind_obs(payload.dt, payload.lon, payload.lat)
+    drct, windobs = get_wind_obs(payload.dt, payload.lon, payload.lat)
     with open(sweepinfn, "r", encoding="utf-8") as fh:
         lines = list(fh.readlines())
     found = False
     for linenum, line in enumerate(lines):
+        if " awadir, R" in line:
+            lines[linenum + 1] = f" {drct:.1f}\n"
+            continue
         if not found and line.find(" awu(i)") > -1:
             found = True
             continue
@@ -167,7 +180,7 @@ def run_sweep(payload: SweepJobPayload) -> SweepJobResult | None:
         erosion=erosion,
         max_wmps=max(windobs),
         avg_wmps=sum(windobs) / len(windobs),
-        drct=0,  # hard coded at the moment
+        drct=drct,
     )
 
 
