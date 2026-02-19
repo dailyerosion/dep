@@ -73,6 +73,6 @@ lint.per-file-ignores."scripts/**/*.py" = [
 
 [tool.pyright]
 autoSearchPaths = false
-exclude = [ "data/", "prj2wepp/" ]
+exclude = [ "**/node_modules", "**/.*", "**/__pycache__", "data/", "prj2wepp/" ]
 ignore = [ "data/", "prj2wepp/" ]
 typeCheckingMode = "off"
