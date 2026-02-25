@@ -56,6 +56,7 @@ require(dplyr)
 
 #*******************shouldn't be any user input required down here*************
 # colnames from commented portion of grph_0.txt
+# listed below in row 60 are all of the grph_0 inputs. I believe that SWEEP is only using the following out of the total: "Precip_in", "IrrDpth_in", "CnpyHt_ft", "LAI", "Rsd_t-a", "BlkDens_lbs-ft3", "SoilWaterLyr1", "RndRough_in", "FrstDepth_in", "SnwDepth_in", SnwMeltWater_in", "DaysSinceDisturb", "CropType"    
 colnames<-c("year","Day","Precip_in","AvDet_t-a","MxDet_t-a","DetPt_ft","AvDepo_t-a","MxDepo_t-a","DepoPt_ft","SedLving_lb-ft",
             "5d_avMntmp_F","5d_avMxtmp_F","dlyMntmp_F","dlyMxtmp_F","IrrDpth_in","IrrVol_in","Runoff_in","IntRillNetLoss_t-a","CnpyHt_ft","CnpyCov",
             "LAI","IntRillCover","RillCover","AbvGrndliveBiom_t-a","LiveRootMass_t-a","LRM_0-15cm_t-a","LRM_15-30cm_t-a","LRM_30-60cm_t-a","Rtdepth_in","StndngDeadBiom_t-a",
@@ -637,3 +638,4 @@ if (i == DayofYear){
   cslagm_0<-cslagm_1    
     
 } # End of loop
+
