@@ -37,6 +37,9 @@ XREF = {
     "MN_SW": "MNC007",
     "MN_SC": "MNC008",
     "MN_SE": "MNC009",
+    "NE_NE": "NEC003",
+    "NE_EC": "NEC006",
+    "NE_SE": "NEC009",
 }
 UGCHACK = {
     "MNC005": "Becker",
@@ -569,8 +572,9 @@ def main(
     # and the value of the days suitable for that period in the middle
     ax3 = plot_suitable(fig, nass, daily_limits)
     # This is now computed
-    finaldf["dep_days_suitable"] = nass["dep_days_suitable"]
-    finaldf["nass_days_suitable"] = nass["days suitable"]
+    if nass is not None:
+        finaldf["dep_days_suitable"] = nass["dep_days_suitable"]
+        finaldf["nass_days_suitable"] = nass["days suitable"]
 
     # ////////////////////////////////////////////////////////////
     ax2 = plot_accum(fig, daily_acres, crop, nass_all, datum)

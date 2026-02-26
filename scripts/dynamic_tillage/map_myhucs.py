@@ -33,18 +33,16 @@ def main():
             geom_col="geom",
             index_col="mlra_id",
         )
-
+    _subtitle = f"{len(hucdf.index)} HUC12s selected over {len(mlras)} MLRAs"
+    print(_subtitle)
     mp = MapPlot(
         sector="custom",
         south=36.8,
         north=49.4,
         west=-99.2,
         east=-88.9,
-        logo="dep",
-        title="HUC12s Selected for Erosion Sensitivity Test",
-        subtitle=(
-            f"{len(hucdf.index)} HUC12s selected over {len(mlras)} MLRAs"
-        ),
+        logo=None,
+        title="",
         nocaption=True,
     )
     mlradf.to_crs(mp.panels[0].crs).plot(
@@ -62,7 +60,7 @@ def main():
         lw=2,
         zorder=Z_OVERLAY,
     )
-    mp.fig.savefig("plots/myhucs.png")
+    mp.fig.savefig("plots/myhucs.png", dpi=300)
 
 
 if __name__ == "__main__":

@@ -68,12 +68,15 @@ def main(huc12: str, year: int):
         huc12sm["combo"].map(pldf.set_index("combo")["plastic_limit"]) * 0.8
     )
     huc12sm["crop"] = huc12sm["combo"].map(pldf.set_index("combo")["crop"])
-    huc12sm["below_pl"] = huc12sm["sw1"] < huc12sm["pl0.8"]
+    huc12sm["below_pl"] = huc12sm["sw1"] < huc12sm["plastic_limit"]
+
+    _title = f"DEP: {huc12} Dynamic Tillage Diagnostic"
+    _subtitle = f"11 April - 15 June {year}"
 
     fig = figure(
-        title=f"DEP: {huc12} Dynamic Tillage Diagnostic",
-        subtitle=f"11 April - 15 June {year}",
-        logo="dep",
+        title="",
+        subtitle="",
+        logo=None,
         figsize=(8, 9),  # Made figure taller to accommodate indicators
     )
     yaxsize = 0.2
@@ -103,7 +106,7 @@ def main(huc12: str, year: int):
     # Original plotting code
     ax.xaxis.set_major_formatter(DateFormatter("%-d %b"))
     ax.text(
-        0, 1, "* SM Evaluation using previous date", transform=ax.transAxes
+        0, 1.02, "* SM Evaluation using previous date", transform=ax.transAxes
     )
     for dt, gdf in huc12sm.groupby("date"):
         ax.bar(
@@ -114,11 +117,11 @@ def main(huc12: str, year: int):
             align="center",
             edgecolor="black",
         )
-    ax.axhline(25, lw=2, color="k")
+    ax.axhline(50, lw=2, color="k")
     ax.set_ylim(0, 100)
     ax.set_yticks([0, 10, 25, 50, 75, 90, 100])
     ax.grid(True)
-    ax.set_ylabel("Percent of OFEs\nBelow 0.8*PL")
+    ax.set_ylabel("Percent of OFEs\nBelow Computed Plastic Limit")
 
     ax2.bar(
         hucstatusdf["date"],
@@ -144,10 +147,13 @@ def main(huc12: str, year: int):
     ax3.axhline(6, lw=2, color="k")
     ax3.grid(True)
 
+    xlim = (hucstatusdf["date"].min(), hucstatusdf["date"].max())
+
     # Add background shading for status
     for _ax, label in zip(
         [ax, ax2, ax3], ["soilmoisture", "precip", "soiltemp"], strict=False
     ):
+        _ax.set_xlim(*xlim)
         prev_status = None
         span_start = None
 
@@ -182,7 +188,6 @@ def main(huc12: str, year: int):
         "Soil Moisture",
     ]
     for ax_idx, status_ax in enumerate(status_axes):
-        xlim = (hucstatusdf["date"].min(), hucstatusdf["date"].max())
         status_ax.set_xlim(*xlim)
         status_ax.set_ylim(-0.5, 0.5)
         status_ax.set_xticks([])
