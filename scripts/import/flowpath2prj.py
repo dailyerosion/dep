@@ -246,8 +246,8 @@ def do_flowpath(pgconn, scenario, zone, metadata):
     # prj2wepp is doing with the slope files and prescribe them below
     slpdata = ""
     for _ofe, gdf in df.groupby("ofe"):
-        lens = gdf["length"].values / gdf["length"].values[-1]
-        slopes = gdf["slope"].values
+        lens = gdf["length"].to_numpy() / gdf["length"].values[-1]
+        slopes = gdf["slope"].to_numpy().copy()
         # First value is null, so we just repeat it
         slopes[0] = slopes[1]
         tokens = [
