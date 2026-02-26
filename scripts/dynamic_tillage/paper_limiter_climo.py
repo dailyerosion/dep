@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import BoundaryNorm
-from pyiem.database import get_sqlalchemy_conn
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import figure, get_cmap
 from pyiem.util import load_geodf
 
@@ -18,9 +18,11 @@ def main():
 
     with get_sqlalchemy_conn("idep") as conn:
         huc12df = gpd.read_postgis(
-            "SELECT huc_12, st_transform(simple_geom, 4326) as geom "
-            "from huc12 where scenario = 0 and "
-            "(states ~* 'IA' or states ~* 'MN')",
+            sql_helper("""
+    SELECT huc_12, st_transform(simple_geom, 4326) as geom
+    from huc12 where scenario = 0 and
+    (states ~* 'IA' or states ~* 'MN' or states ~* 'NE')
+            """),
             conn,
             geom_col="geom",
             index_col="huc_12",
@@ -42,7 +44,7 @@ def main():
     fig = figure(
         title="",
         logo=None,
-        figsize=(8.24, 7.68),
+        figsize=(10.24, 7.68),
     )
     opts = [
         [0.03, 0.52, "Soil Temp Limit", "limited_by_soiltemp_pct"],
