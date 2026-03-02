@@ -37,10 +37,10 @@ in the remaining operations for dates in the future.
 ## SQL
 
     with scen as (
-        select huc_12, extract(week from valid) as datum, sum(avg_loss) from results_by_huc12 where scenario = 171 and valid < '2025-01-01'
+        select huc_12, extract(week from valid) as datum, sum(avg_loss) from results_by_huc12 where scenario = 172 and valid < '2026-01-01' and valid >= '2008-01-01'
         group by huc_12, datum),
     prod as (
-        select huc_12, extract(week from valid) as datum, sum(avg_loss) from results_by_huc12 where scenario = 0 and valid < '2025-01-01'
+        select huc_12, extract(week from valid) as datum, sum(avg_loss) from results_by_huc12 where scenario = 0 and valid < '2026-01-01' and valid >= '2008-01-01'
         group by huc_12, datum),
     agg as (
         select s.huc_12, s.datum, s.sum as scen_sum, p.sum as p_sum from scen s
@@ -48,8 +48,8 @@ in the remaining operations for dates in the future.
     agg2 as (
         select datum, sum(scen_sum) as ss, sum(p_sum) as ps from agg
         GROUP by datum order by datum)
-    select '2020-01-01'::date + (datum - 1) * '7 days'::interval, ss, ps,
-    (ps - ss) / ss * 100. as ratio from agg2 order by datum;
+    select '2020-01-01'::date + (datum - 1) * '7 days'::interval, ps, ss,
+    (ss - ps) / ps * 100. as ratio from agg2 order by datum;
 
 Mud it in report
 

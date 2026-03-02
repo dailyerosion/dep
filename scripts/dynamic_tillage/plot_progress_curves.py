@@ -96,12 +96,12 @@ def main():
             Line2D([0, 1], [0, 1], color="k", lw=2),
             Line2D([0, 1], [0, 1], color="g", lw=2),
         ],
-        ["Range", "25-75% Range", "Mean", "Range"],
+        ["Range", "25-75% Range", "Mean", "Min-Max Range"],
         loc="upper center",
         ncol=4,
     )
 
-    fig.savefig("plots/nass_progress_climo.png")
+    fig.savefig("plots/nass_progress_climo.png", dpi=300)
 
 
 if __name__ == "__main__":
