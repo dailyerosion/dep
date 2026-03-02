@@ -98,9 +98,11 @@ def main(crop: str, dots: str, lines: str):
             ]
             if df.empty:
                 continue
+            # Only compute over Sunday's, so to match NASS.
+            sundays = df.loc[df["date"].dt.weekday == 6]
             # Calculate RMSE
-            _rmse = ((df[dotcol] - df[linecol]).pow(2).mean()) ** 0.5
-            mae = (df[dotcol] - df[linecol]).abs().mean()
+            _rmse = ((sundays[dotcol] - sundays[linecol]).pow(2).mean()) ** 0.5
+            mae = (sundays[dotcol] - sundays[linecol]).abs().mean()
             background_color = cmap(norm(mae))
             # Colored border to indicate MAE
             ax.add_patch(
