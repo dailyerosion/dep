@@ -39,8 +39,9 @@ from math import atan2, degrees, pi
 
 import click
 import pandas as pd
-from pyiem.database import get_dbconn, get_sqlalchemy_conn, sql_helper
+from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
+from sqlalchemy.engine import Connection
 from tqdm import tqdm
 
 from dailyerosion.tillage import make_tillage
@@ -55,6 +56,7 @@ MIN_SLOPE = 0.003
 # Things to control for
 KNOBS = {
     "dummy_slope": True,  # Write placeholder into prj file
+    "single_ofe": False,  # Simplify the flowpath into one OFE
 }
 
 # Note that the default used below is
@@ -182,9 +184,9 @@ def compute_aspect(x0, y0, x1, y1):
     return degrees(rads)
 
 
-def load_flowpath_from_db(pgconn, fid):
+def load_flowpath_from_db(conn: Connection, fid: int) -> pd.DataFrame:
     """Fetch me the flowpath."""
-    return pd.read_sql(
+    flowpath = pd.read_sql(
         sql_helper(
             """
         with data as (
@@ -207,16 +209,55 @@ def load_flowpath_from_db(pgconn, fid):
         ORDER by ofe asc, length asc
     """
         ),
-        pgconn,
+        conn,
         params={"fid": fid, "min_slope": MIN_SLOPE},
         index_col=None,
     )
+    if KNOBS["single_ofe"] and flowpath["ofe"].max() > 1:
+        # This is the algorithm, take the first / longest OFE and update
+        # all points to that OFE
+        sample_row = flowpath[
+            flowpath["length"] == flowpath["length"].max()
+        ].iloc[0]
+        # real_length was a hack storage per OFE
+        real_length = flowpath.groupby("ofe").first()["real_length"].sum()
+        flowpath["real_length"] = real_length
+        # Everything is now OFE 1
+        flowpath["ofe"] = 1
+        # Copy columns to hard code things
+        for col in ["soilfile", "management", "landuse"]:
+            flowpath[col] = sample_row[col]
+        # The length column now needs fixed.
+        new_length = []
+        offset = 0
+        for val in flowpath["length"].to_numpy():
+            if val < 0.1 and new_length:
+                offset = new_length[-1]
+            new_length.append(val + offset)
+        flowpath["length"] = new_length
+        # And now we have duplicate length entries to remove
+        flowpath = flowpath.drop_duplicates(subset=["length"])
+        # prj2wepp can only take 20 points
+        if len(flowpath.index) > 19:  # better safe than sorry.
+            # We need to keep the first and last point, then take the
+            # next 17 largest slope values
+            steepest = flowpath.iloc[1:-1].sort_values(
+                "slope", ascending=False
+            )
+            flowpath = pd.concat(
+                [
+                    flowpath.iloc[[0]],
+                    steepest.iloc[:17],
+                    flowpath.iloc[[-1]],
+                ]
+            ).sort_values("length")
+    return flowpath
 
 
-def do_flowpath(pgconn, scenario, zone, metadata):
+def do_flowpath(conn: Connection, scenario: int, zone: str, metadata: dict):
     """Process a given flowpathid"""
     # I need bad soilfiles so that the length can be computed
-    df = load_flowpath_from_db(pgconn, metadata["fid"])
+    df = load_flowpath_from_db(conn, metadata["fid"])
 
     res = {}
     res["clifile"] = metadata["climate_file"]
@@ -363,17 +404,16 @@ def get_flowpath_scenario(scenario):
     return int(sdf.at[scenario, "flowpath_scenario"])
 
 
-def workflow(pgconn, scenario):
+def workflow(conn: Connection, scenario: int):
     """Go main go"""
-    conn = get_dbconn("idep")
-    cursor = conn.cursor()
     df = pd.read_sql(
-        """
+        sql_helper("""
     SELECT ST_ymax(ST_Transform(f.geom, 4326)) as lat, fpath, fid, huc_12,
     filepath as climate_file from flowpaths f JOIN climate_files c on
-    (f.climate_file_id = c.id) WHERE f.scenario = %s ORDER by huc_12 ASC""",
-        pgconn,
-        params=(get_flowpath_scenario(scenario),),
+    (f.climate_file_id = c.id) WHERE f.scenario = :scenario ORDER by huc_12 ASC
+                   """),
+        conn,
+        params={"scenario": get_flowpath_scenario(scenario)},
     )
     if os.path.isfile("myhucs.txt"):
         myhucs = []
@@ -391,12 +431,10 @@ def workflow(pgconn, scenario):
             zone = "IA_CENTRAL"
         elif row["lat"] >= 40.5:
             zone = "IA_SOUTH"
-        data = do_flowpath(pgconn, scenario, zone, row)
+        data = do_flowpath(conn, scenario, zone, row)
         if data is not None:
             data["years"] = YEARS
             write_prj(data)
-    cursor.close()
-    conn.commit()
     for fn, sn in MISSED_SOILS.items():
         print(f"{sn:6s} {fn}")
 
@@ -410,9 +448,17 @@ def workflow(pgconn, scenario):
     type=bool,
     help="Write slope placeholder instead of real data",
 )
-def main(scenario: int, ds: bool):
+@click.option(
+    "--single-ofe",
+    "so",
+    default=False,
+    is_flag=True,
+    help="Simplify the flowpath into one OFE (for testing purposes)",
+)
+def main(scenario: int, ds: bool, so: bool):
     """Go main go"""
     KNOBS["dummy_slope"] = ds
+    KNOBS["single_ofe"] = so
     with get_sqlalchemy_conn("idep") as pgconn:
         workflow(pgconn, scenario)
 
