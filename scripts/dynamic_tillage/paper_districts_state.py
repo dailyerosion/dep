@@ -12,7 +12,15 @@ DATES_AND_COLORS = {
     "May 10": "#31a354",
 }
 LOOKUP = {
-    "MN": DATES_AND_COLORS["May 10"],
+    "MNC001": DATES_AND_COLORS["May 10"],
+    "MNC002": DATES_AND_COLORS["May 10"],
+    "MNC003": DATES_AND_COLORS["May 10"],
+    "MNC004": DATES_AND_COLORS["May 10"],
+    "MNC005": DATES_AND_COLORS["May 10"],
+    "MNC006": DATES_AND_COLORS["May 10"],
+    "MNC007": DATES_AND_COLORS["May 10"],
+    "MNC008": DATES_AND_COLORS["May 10"],
+    "MNC009": DATES_AND_COLORS["May 10"],
     "IAC001": DATES_AND_COLORS["May 10"],
     "IAC002": DATES_AND_COLORS["May 10"],
     "IAC003": DATES_AND_COLORS["May 10"],
@@ -22,8 +30,40 @@ LOOKUP = {
     "IAC007": DATES_AND_COLORS["April 30"],
     "IAC008": DATES_AND_COLORS["April 30"],
     "IAC009": DATES_AND_COLORS["April 30"],
-    "NE": DATES_AND_COLORS["April 30"],
+    "NEC001": DATES_AND_COLORS["May 5"],
+    "NEC002": DATES_AND_COLORS["May 5"],
+    "NEC003": DATES_AND_COLORS["May 5"],
+    "NEC004": DATES_AND_COLORS["April 30"],
+    "NEC005": DATES_AND_COLORS["April 30"],
+    "NEC006": DATES_AND_COLORS["April 30"],
+    "NEC007": DATES_AND_COLORS["April 30"],
+    "NEC008": DATES_AND_COLORS["April 30"],
+    "NEC009": DATES_AND_COLORS["April 30"],
 }
+
+
+def overlay_huc12s(mp: MapPlot) -> None:
+    """Add more to plot."""
+    with open("myhucs.txt") as fh:
+        huc12s = [line.strip() for line in fh]
+    with get_sqlalchemy_conn("idep") as conn:
+        hucdf = gpd.read_postgis(
+            sql_helper("""
+                select huc_12, geom, mlra_id, dominant_tillage,
+                average_slope_ratio, name from huc12
+                where huc_12 = ANY(:hucs) and scenario = 0
+            """),
+            conn,
+            params={"hucs": huc12s},
+            geom_col="geom",
+            index_col="huc_12",
+        )
+    hucdf.to_crs(mp.panels[0].crs).plot(
+        ax=mp.panels[0].ax,
+        color="r",
+        aspect=None,
+        zorder=Z_OVERLAY + 2,
+    )
 
 
 def overlay_iowa_districts(mp: MapPlot) -> None:
@@ -34,8 +74,9 @@ def overlay_iowa_districts(mp: MapPlot) -> None:
                 """
                 SELECT c.geom, t.id
                 from climodat_regions c JOIN stations t on
-                (c.iemid = t.iemid) WHERE t.network = 'IACLIMATE'
-                and substr(id, 1, 3) = 'IAC'
+                (c.iemid = t.iemid) WHERE t.network in (
+                'IACLIMATE', 'NECLIMATE', 'MNCLIMATE')
+                and substr(id, 1, 3) in ('IAC', 'NEC', 'MNC')
                 """
             ),
             conn,
@@ -51,6 +92,14 @@ def overlay_iowa_districts(mp: MapPlot) -> None:
         linewidth=2,
         aspect=None,
         zorder=Z_OVERLAY + 1,
+    )
+    ignored = ["MNC003", "MNC002"]
+    districts[districts["id"].isin(ignored)].to_crs(mp.panels[0].crs).plot(
+        ax=mp.panels[0].ax,
+        color="None",
+        hatch="/",
+        aspect=None,
+        zorder=Z_OVERLAY + 2,
     )
 
 
@@ -93,6 +142,7 @@ def main():
     )
     states = overlay_states(mp)
     overlay_iowa_districts(mp)
+    overlay_huc12s(mp)
 
     # Create inset map showing contiguous US with a frame color of #eee
     inset_ax = mp.fig.add_axes([0.02, 0.02, 0.2, 0.15], xticks=[], yticks=[])
@@ -155,7 +205,16 @@ def main():
                 1,
                 facecolor="None",
                 edgecolor="blue",
-                label="Iowa Crop Reporting Districts",
+                label="Crop Reporting Districts (CRD)",
+            ),
+            Rectangle(
+                [0, 0],
+                1,
+                1,
+                facecolor="None",
+                edgecolor="blue",
+                hatch="/",
+                label="CRDs lacking sufficient Ag",
             ),
             Rectangle(
                 [0, 0],
@@ -165,8 +224,15 @@ def main():
                 edgecolor="black",
                 label="U.S. States",
             ),
+            Rectangle(
+                [0, 0],
+                1,
+                1,
+                color="r",
+                label="Sampled HUC12s",
+            ),
         ],
-        loc=(0.13, 0.55),
+        loc=(0.13, 0.5),
         title="Map Elements",
     )
     clegend.set_zorder(Z_OVERLAY + 2)

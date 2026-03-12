@@ -141,7 +141,7 @@ def main(scenario, dt: datetime, domain: str):
     fn = get_fn(dt, domain)
     if os.path.isfile(fn):
         filets = os.stat(fn)[stat.ST_MTIME]
-        LOG.warning(
+        LOG.info(
             "%s[%s] was last processed on %s", dt, domain, time.ctime(filets)
         )
     jobs: list[Tile] = []

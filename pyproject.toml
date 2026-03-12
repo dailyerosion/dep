@@ -31,7 +31,7 @@ dependencies = [
   "sqlalchemy",
   "tqdm",
 ]
-urls."homepage" = "https://github.com/dailyerosion/dep"
+urls.homepage = "https://github.com/dailyerosion/dep"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
