@@ -34,7 +34,7 @@ USE DEPSoils2020
 IF OBJECT_ID('dbo.DEP_SoilFractions') IS NOT NULL 
         DROP TABLE dbo.DEP_SoilFractions
 
-set search_path=gssurgo25;
+set search_path=gssurgo26;
 SELECT mukey
       , cokey
       , compname
@@ -90,7 +90,7 @@ SELECT mukey
           ) bRow
 WHERE NOT (bRow.rowNbr = 1 and ( CEC7 is null or Clay is null or Sand is null))
 ORDER BY mukey, hzdept_r;
-GO
+
 
 -- Alter precision/scale and allow NULL 
 ALTER TABLE DEP_SoilFractions ALTER COLUMN OM DECIMAL(8,3) NULL;
@@ -99,9 +99,9 @@ ALTER TABLE DEP_SoilFractions ALTER COLUMN VFSand DECIMAL(8,3) NULL;
 ALTER TABLE DEP_SoilFractions ALTER COLUMN Silt DECIMAL(8,3) NULL;
 ALTER TABLE DEP_SoilFractions ALTER COLUMN Clay DECIMAL(8,3) NULL;
 ALTER TABLE DEP_SoilFractions ALTER COLUMN CEC7 DECIMAL(8,3) NULL;
-GO
+
 
 UPDATE DEP_SoilFractions
  SET FragTot = 0
 WHERE FragTot IS NULL;
-GO
+

@@ -1,6 +1,6 @@
 USE DEP_Soils
 GO
-set search_path=gssurgo25;
+set search_path=gssurgo26;
 SELECT sp.mukey
       ,sp.cokey
       ,sp.compname

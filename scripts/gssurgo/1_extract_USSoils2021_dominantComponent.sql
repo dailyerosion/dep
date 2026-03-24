@@ -13,7 +13,7 @@ USE US_Soils2
 IF OBJECT_ID('dbo.US_DomComponents') IS NOT NULL 
         DROP TABLE dbo.US_DomComponents
 
-set search_path=gssurgo25;
+set search_path=gssurgo26;
 SELECT mukey
       ,cokey
       ,compname
@@ -31,6 +31,3 @@ SELECT mukey
       ) muSelect
   where muSelect.rowNbr = 1 
   order by mukey, comppct_r DESC;
-GO
-
-

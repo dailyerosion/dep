@@ -33,7 +33,7 @@ USE DEPSoils2020
 
 IF OBJECT_ID('dbo.DEP_HrzCount') IS NOT NULL 
         DROP TABLE dbo.DEP_HrzCount
-set search_path=gssurgo25;
+set search_path=gssurgo26;
  SELECT dom.cokey
       , Count(F.chkey) as HrzCount
       
