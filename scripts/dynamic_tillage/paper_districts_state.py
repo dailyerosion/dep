@@ -142,7 +142,6 @@ def main():
     )
     states = overlay_states(mp)
     overlay_iowa_districts(mp)
-    overlay_huc12s(mp)
 
     # Create inset map showing contiguous US with a frame color of #eee
     inset_ax = mp.fig.add_axes([0.02, 0.02, 0.2, 0.15], xticks=[], yticks=[])
@@ -154,9 +153,15 @@ def main():
         linewidth=0.5,
         aspect=None,
     )
+    extent = mp.panels[0].get_extent()
     inset_ax.add_patch(
         Rectangle(
-            (-101.2, 40.1), 14.3, 9.3, fill=False, edgecolor="red", linewidth=2
+            (extent[0], extent[2]),
+            extent[1] - extent[0],
+            extent[3] - extent[2],
+            fill=False,
+            edgecolor="red",
+            linewidth=2,
         )
     )
     inset_ax.set_xlim(-125, -66.5)
@@ -223,13 +228,6 @@ def main():
                 facecolor="None",
                 edgecolor="black",
                 label="U.S. States",
-            ),
-            Rectangle(
-                [0, 0],
-                1,
-                1,
-                color="r",
-                label="Sampled HUC12s",
             ),
         ],
         loc=(0.13, 0.5),
