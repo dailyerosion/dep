@@ -24,7 +24,7 @@ USE DEPSoils2020
 IF OBJECT_ID('dbo.DEP_SurfaceTexture') IS NOT NULL 
         DROP TABLE dbo.DEP_SurfaceTexture
 
-set search_path=gssurgo25;
+set search_path=gssurgo26;
 SELECT mukey
       ,cokey
       ,compname
@@ -57,6 +57,3 @@ SELECT mukey
       ) txtQ  
   where txtQ.rowNbr = 1 --and chtgrp.rvindicator = 'Yes'
   order by mukey, comppct_r DESC;
-GO
-
-
