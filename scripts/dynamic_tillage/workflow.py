@@ -172,7 +172,7 @@ def job(arg: list[date, str, bool, bool]):
 
     for _, row in fields.iterrows():
         do_edit_rotfile(dt.year, huc12, row)
-    if run_prj2wepp:
+    if run_prj2wepp and not fields.empty:
         for fpath in fields["fpath"].unique():
             prj2wepp(huc12, fpath)
 
