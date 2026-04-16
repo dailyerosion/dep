@@ -29,7 +29,6 @@ from tqdm import tqdm
 
 from dailyerosion.workflows.dyntillage import do_huc12
 
-pd.set_option("future.no_silent_downcasting", True)
 LOG = logger()
 CPU_COUNT = min([4, cpu_count() / 2])
 HUC12STATUSDIR = "/mnt/idep2/data/huc12status"

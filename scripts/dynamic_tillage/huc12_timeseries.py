@@ -104,12 +104,15 @@ def main(huc12: str, year: int):
         )
 
     # Original plotting code
-    ax.xaxis.set_major_formatter(DateFormatter("%-d %b"))
-    ax.text(
-        0, 1.02, "* SM Evaluation using previous date", transform=ax.transAxes
+    ax3.xaxis.set_major_formatter(DateFormatter("%-d %b"))
+    ax3.text(
+        0,
+        1.02,
+        "* Soil Moisture Evaluation using previous date",
+        transform=ax3.transAxes,
     )
     for dt, gdf in huc12sm.groupby("date"):
-        ax.bar(
+        ax3.bar(
             dt + pd.Timedelta(hours=24),
             gdf["below_pl"].sum() / gdf["below_pl"].size * 100,
             color="r",
@@ -117,11 +120,11 @@ def main(huc12: str, year: int):
             align="center",
             edgecolor="black",
         )
-    ax.axhline(50, lw=2, color="k")
-    ax.set_ylim(0, 100)
-    ax.set_yticks([0, 10, 25, 50, 75, 90, 100])
-    ax.grid(True)
-    ax.set_ylabel("Percent of OFEs\nBelow Computed Plastic Limit")
+    ax3.axhline(50, lw=2, color="k")
+    ax3.set_ylim(0, 100)
+    ax3.set_yticks([0, 10, 25, 50, 75, 90, 100])
+    ax3.grid(True)
+    ax3.set_ylabel("Percent of OFEs\nBelow Computed Plastic Limit")
 
     ax2.bar(
         hucstatusdf["date"],
@@ -136,22 +139,25 @@ def main(huc12: str, year: int):
 
     # Filter temperature data
     temp_data = hucstatusdf[hucstatusdf["tsoil_avg"] < 80]
-    ax3.bar(
+    ax.bar(
         temp_data["date"],
         temp_data["tsoil_avg"],
         width=0.4,
         color="b",
         lw=2,
     )
-    ax3.set_ylabel("Forecast Soil Temp [C]")
-    ax3.axhline(6, lw=2, color="k")
-    ax3.grid(True)
+    ax.set_ylabel("Forecast Soil Temp [C]")
+    ax.axhline(6, lw=2, color="k")
+    ax.grid(True)
 
-    xlim = (hucstatusdf["date"].min(), hucstatusdf["date"].max())
+    xlim = (
+        hucstatusdf["date"].min() - pd.Timedelta(days=1),
+        hucstatusdf["date"].max() + pd.Timedelta(days=1),
+    )
 
     # Add background shading for status
     for _ax, label in zip(
-        [ax, ax2, ax3], ["soilmoisture", "precip", "soiltemp"], strict=False
+        [ax3, ax2, ax], ["soilmoisture", "precip", "soiltemp"], strict=False
     ):
         _ax.set_xlim(*xlim)
         prev_status = None
@@ -183,9 +189,9 @@ def main(huc12: str, year: int):
     # Add status indicators
     labels = [
         "Combined Status",
-        "Soil Temperature",
-        "Precipitation",
         "Soil Moisture",
+        "Precipitation",
+        "Soil Temperature",
     ]
     for ax_idx, status_ax in enumerate(status_axes):
         status_ax.set_xlim(*xlim)
@@ -204,7 +210,7 @@ def main(huc12: str, year: int):
         )
 
         if ax_idx > 0:  # Individual status indicators
-            var_names = ["", "soiltemp", "precip", "soilmoisture"]
+            var_names = ["", "soilmoisture", "precip", "soiltemp"]
             for _idx, row in hucstatusdf.iterrows():
                 text_props = {"ha": "center", "va": "center"}
                 if row[f"limited_by_{var_names[ax_idx]}"]:
@@ -235,7 +241,7 @@ def main(huc12: str, year: int):
     # plots directory is symlinked
     pngfn = f"plots/sm_{huc12}_{year}.png"
     print(f"Created {pngfn}")
-    fig.savefig(pngfn)
+    fig.savefig(pngfn, dpi=300)
 
 
 if __name__ == "__main__":
