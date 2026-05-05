@@ -128,12 +128,24 @@ def estimate_soiltemp(huc12df, dt):
                 y = np.digitize(huc12df["lat"].values, nc.variables["lat"][:])
                 x = np.digitize(huc12df["lon"].values, nc.variables["lon"][:])
                 for i, idx in enumerate(huc12df.index.values):
-                    # The crude GFS may have this cell in the great lakes, so
-                    # we do a crude check
-                    off = 0 if tmin[y[i], x[i]] > -40 else 5
-                    huc12df.at[idx, "tsoil_min"] = tmin[y[i] - off, x[i] - off]
-                    huc12df.at[idx, "tsoil_avg"] = tavg[y[i] - off, x[i] - off]
-                    huc12df.at[idx, "tsoil_max"] = tmax[y[i] - off, x[i] - off]
+                    # The crude GFS may not have a soil temperature at the
+                    # given grid cell, so we move left and down to find one.
+                    gfs_offset = 0
+                    while gfs_offset < 6:
+                        if not tmin.mask[y[i] - gfs_offset, x[i] - gfs_offset]:
+                            break
+                        gfs_offset = gfs_offset + 1
+                    if gfs_offset > 0:
+                        LOG.info("Applying offset %s", gfs_offset)
+                    huc12df.at[idx, "tsoil_min"] = tmin[
+                        y[i] - gfs_offset, x[i] - gfs_offset
+                    ]
+                    huc12df.at[idx, "tsoil_avg"] = tavg[
+                        y[i] - gfs_offset, x[i] - gfs_offset
+                    ]
+                    huc12df.at[idx, "tsoil_max"] = tmax[
+                        y[i] - gfs_offset, x[i] - gfs_offset
+                    ]
                 break
 
 
