@@ -5,6 +5,8 @@
 
 ### API Changes
 
+- Require python 3.11+.
+
 ### New Features
 
 - Allow provision of the RabbitMQ settings file for `get_rabbitmqconn`.
