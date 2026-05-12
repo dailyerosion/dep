@@ -29,7 +29,7 @@ import click
 import numpy as np
 import pandas as pd
 import requests
-from enqueue_jobs import GRAPH_HUC12
+from enqueue_wepp_jobs import GRAPH_HUC12
 from pyiem.database import (
     get_sqlalchemy_conn,
     sql_helper,
