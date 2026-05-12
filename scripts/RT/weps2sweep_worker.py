@@ -210,7 +210,7 @@ def run_weps(payload: WEPS2SweepJobPayload) -> None:
         Validated SWEEP job payload containing runfile content and executable.
     """
     simulation_day = (payload.dt - DAY1).days + 1
-    with TemporaryDirectory(delete=True) as tmpdir:
+    with TemporaryDirectory() as tmpdir:
         runfile = generate_runfile(payload.lon, payload.lat)
         with open(Path(tmpdir) / "weps.run", "w") as fh:
             fh.write(runfile)
@@ -345,7 +345,7 @@ def main(workers: int, drainme: bool, queue: str):
     """Go main Go."""
     jobfunc = run if not drainme else drain
     # Start a thread to print timing every 300 seconds
-    threading.Thread(target=print_timing).start()
+    threading.Thread(target=print_timing, daemon=True).start()
     while True:
         # Start a threadpool executor that is associated with a rabbitmq
         # connection.  Run until something bad happens, then start again!

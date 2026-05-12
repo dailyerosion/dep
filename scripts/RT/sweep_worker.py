@@ -289,7 +289,7 @@ def main(workers: int, drainme: bool, queue: str):
     """Go main Go."""
     jobfunc = run if not drainme else drain
     # Start a thread to print timing every 300 seconds
-    threading.Thread(target=print_timing).start()
+    threading.Thread(target=print_timing, daemon=True).start()
     while True:
         # Start a threadpool executor that is associated with a rabbitmq
         # connection.  Run until something bad happens, then start again!
