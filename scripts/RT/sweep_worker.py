@@ -22,6 +22,7 @@ from pyiem.util import logger
 
 from dailyerosion.util import get_rabbitmqconn
 from dailyerosion.workflows.sweeprun import SweepJobPayload, SweepJobResult
+from dailyerosion.workflows.worker import sanitize_exe
 
 LOG = logger()
 MEMORY = {
@@ -167,7 +168,7 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
     # We are ready to run, gasp
 
     cmd = [
-        payload.sweepexe,
+        sanitize_exe(payload.sweepexe),
         "-ierod.sweep",
         "-Erod",
     ]

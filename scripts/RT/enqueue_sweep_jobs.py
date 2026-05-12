@@ -7,7 +7,7 @@ import click
 import httpx
 import pandas as pd
 import pika
-from enqueue_jobs import GRAPH_HUC12
+from enqueue_wepp_jobs import GRAPH_HUC12
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
 from sqlalchemy.engine import Connection

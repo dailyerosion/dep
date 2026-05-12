@@ -30,6 +30,7 @@ from pyiem.util import logger
 
 from dailyerosion.util import get_rabbitmqconn
 from dailyerosion.workflows.weps2sweeprun import WEPS2SweepJobPayload
+from dailyerosion.workflows.worker import sanitize_exe
 
 LOG = logger()
 MEMORY = {
@@ -222,7 +223,7 @@ def run_weps(payload: WEPS2SweepJobPayload) -> None:
         ]:
             shutil.copyfile(f"/i/0/weps_test/{hack}", Path(tmpdir) / hack)
         cmd = [
-            payload.wepsexe,
+            sanitize_exe(payload.wepsexe),
             "-c0",  # no soil conditioning output
             "-E1",  # Don't run soil erosion, which we should not need
             "-e0",  # Don't create all sweep files
