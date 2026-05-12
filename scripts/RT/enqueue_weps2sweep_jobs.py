@@ -1,4 +1,15 @@
-"""Generate DEP SWEEP jobs to be run."""
+"""Enqueue WEPS jobs we want run.
+
+The goal here is to run WEPS for "today" and generate the necessary SWEEP input
+files with realistic values to run the model after DEP/WEPP runs.  We are
+threading an ugly neddle here.
+
+Division of Labor
+=================
+
+ - Enqueue WEPS jobs to rabbitmq for `weps_worker.py` to deal with
+
+"""
 
 import time
 from datetime import datetime
@@ -10,27 +21,11 @@ import pika
 from enqueue_jobs import GRAPH_HUC12
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
-from sqlalchemy.engine import Connection
 
 from dailyerosion.util import get_rabbitmqconn
-from dailyerosion.workflows.sweeprun import SweepJobPayload
+from dailyerosion.workflows.weps2sweeprun import WEPS2SweepJobPayload
 
 LOG = logger()
-
-
-def clean_database(conn: Connection, dt, hucs):
-    """Remove current entries."""
-    res = conn.execute(
-        sql_helper("""
-    delete from field_wind_erosion_results r USING fields f
-    WHERE r.valid = :dt and r.field_id = f.field_id and f.huc12 = ANY(:hucs)
-    and f.scenario = 0
-                   """),
-        {"dt": dt, "hucs": hucs},
-    )
-    loglvl = LOG.info if res.rowcount == 0 else LOG.warning
-    loglvl("Removed %s previous field_wind_erosion_results", res.rowcount)
-    conn.commit()
 
 
 @click.command()
@@ -43,7 +38,7 @@ def clean_database(conn: Connection, dt, hucs):
 )
 @click.option("-s", "--scenario", type=int, help="Scenario ID", default=0)
 @click.option("--myhucs", help="Specify file of HUC12s to filter job.")
-@click.option("--queue", help="RabbitMQ destination", default="depsweep")
+@click.option("--queue", help="RabbitMQ destination", default="depweps")
 def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
     """Go main Go."""
     dt = date.date()
@@ -60,13 +55,13 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
         select o.field_id,
         row_number() over (partition by field_id ORDER by fpath asc),
         substr(o.landuse, :charat, 1) as crop, f.fpath, h.huc_12,
-        st_pointn(st_transform(o.geom, 4326), 1) as pt
-        from flowpath_ofes o, flowpaths f, huc12 h
+        st_pointn(st_transform(o.geom, 4326), 1) as pt, c.filepath as clifile
+        from flowpath_ofes o, flowpaths f, huc12 h, climate_files c
         where o.flowpath = f.fid and f.huc_12 = h.huc_12 and
         (h.states ~* 'MN' or h.huc_12 = ANY(:graphhucs))
-        and f.scenario = 0 and o.ofe = 1)
-    select field_id, fpath, huc_12, st_x(pt) as lon, st_y(pt) as lat, crop
-    from data
+        and f.scenario = 0 and o.ofe = 1 and f.climate_file_id = c.id)
+    select field_id, fpath, huc_12, st_x(pt) as lon, st_y(pt) as lat, crop,
+    clifile from data
     where row_number = 1 and crop in ('C', 'B') {huclimit}
         """,
                 huclimit=" and huc_12 = ANY(:hucs)" if myhucs else "",
@@ -78,8 +73,9 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
                 "charat": dt.year - 2007 + 1,
             },
         )
-        # Remove current entries, only for HUC12s of interest!
-        clean_database(conn, dt, fieldsdf["huc_12"].unique().tolist())
+    if fieldsdf.empty:
+        LOG.warning("No fields found with query, exiting")
+        return
     totaljobs = len(fieldsdf.index)
     connection, rabbit_config = get_rabbitmqconn()
     channel = connection.channel()
@@ -89,12 +85,11 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
     sts = datetime.now()
 
     for row in fieldsdf.itertuples():
-        payload = SweepJobPayload(
-            sweepexe="/opt/dep/bin/sweep_dep",
+        payload = WEPS2SweepJobPayload(
+            wepsexe="/opt/dep/bin/weps_dep",
             field_id=row.field_id,
             fpath=row.fpath,
             huc_12=row.huc_12,
-            crop=row.crop,
             dt=dt,
             scenario=scenario,
             lon=row.lon,

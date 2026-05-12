@@ -1,6 +1,5 @@
 """We do work when jobs are placed in the queue."""
 
-import os
 import shutil
 import subprocess
 import threading
@@ -10,9 +9,11 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from functools import partial
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import click
 import requests
+from lxml import etree
 from metpy.calc import wind_direction
 from metpy.units import units
 from pika.channel import Channel
@@ -36,10 +37,10 @@ def drain(ch, delivery_tag, _payload):
     ch.connection.add_callback_threadsafe(cb)
 
 
-def run_command(cmd: list[str]) -> bool:
+def run_command(cmd: list[str], tempdir: str) -> bool:
     """Common command running logic."""
     with subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=tempdir
     ) as proc:
         (stdout, stderr) = proc.communicate()
         if proc.returncode != 0:
@@ -92,7 +93,7 @@ def get_wind_obs(dt: date, lon: float, lat: float) -> list[float, list[float]]:
     return drct, hourly
 
 
-def run_sweep(payload: SweepJobPayload) -> SweepJobResult | None:
+def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
     """Actually run wepp, really.
 
     Parameters
@@ -100,76 +101,79 @@ def run_sweep(payload: SweepJobPayload) -> SweepJobResult | None:
     payload : SweepJobPayload
         Validated SWEEP job payload containing runfile content and executable.
     """
-    # We run timeout to keep things from hanging indefinitely, we tried 60
-    # seconds but it was too short as sometimes latency happens.
-    sweepinfn = (
-        f"/i/{payload.scenario}/sweepin/{payload.huc_12[:8]}/"
-        f"{payload.huc_12[8:12]}/{payload.huc_12}_{payload.fpath}.sweepin"
+    # Build the SWEEP XML filepath
+    basefn = (
+        Path("/i")
+        / f"{payload.scenario}"
+        / "sweepin"
+        / f"{payload.huc_12[:8]}"
+        / f"{payload.huc_12[8:12]}"
+        / f"{payload.huc_12}_{payload.fpath}"
     )
-    # Compute the management df to get the crop code needed for downstream
-    if not os.path.isfile(sweepinfn):
-        LOG.warning("%s does not exist, copying template", sweepinfn)
-        shutil.copyfile("sweepin_template.txt", sweepinfn)
-    # This needs to be fixed at some point, but we are going to use
-    # a common file until morale improves
-    graphfn = Path(sweepinfn.replace("sweepin", "grph"))
-    eventsfn = sweepinfn.replace("sweepin", "rot")[:-4] + "_1.txt"
-    if not graphfn.exists():
-        graphfn = "/i/0/grph/09020106/0605/090201060605_69.grph"
-        eventsfn = graphfn.replace("grph", "rot")[:-4] + "_1.txt"
-
-    sweepoutfn = sweepinfn.replace("sweepin", "sweepout")
-    # sweep arbitarily sets the erod output file to be the same as the
-    # sweepin, but with a erod extension.
-    erodfn = sweepinfn.replace(".sweepin", ".erod")
+    # Get the wind information
     drct, windobs = get_wind_obs(payload.dt, payload.lon, payload.lat)
-    with open(sweepinfn, "r", encoding="utf-8") as fh:
-        lines = list(fh.readlines())
-    found = False
-    for linenum, line in enumerate(lines):
-        if " awadir, R" in line:
-            lines[linenum + 1] = f" {drct:.1f}\n"
-            continue
-        if not found and line.find(" awu(i)") > -1:
-            found = True
-            continue
-        if found and not line.startswith("#"):
-            for i in range(4):
-                sl = slice(i * 6, (i + 1) * 6)
-                lines[linenum + i] = (
-                    " ".join([str(round(x, 2)) for x in windobs[sl]]) + "\n"
-                )
-            break
-    with open(sweepinfn, "w", encoding="utf-8") as fh:
-        fh.write("".join(lines))
-    # 2. Run Rscript to replace grph file content
-    cmd = [
-        "Rscript",
-        "--vanilla",
-        "magic.R",
-        sweepinfn,
-        graphfn,
-        sweepinfn.replace("sweepin", "sol"),
-        f"{payload.dt.year}",
-        eventsfn,
-        f"{payload.dt:%j}",
-        f"{payload.crop}",
-    ]
-    if not run_command(cmd):
-        return None
-    # 3. Run sweep with given sweepin file, writing to sweepout
+    # Load the XML
+    tree = etree.parse(str(basefn) + ".sweep")
+    # Update the XML with the provided content
+    root = tree.getroot()
+    # Update the hourly wind information found in the XML file at
+    # sweepData/SCI_WindSpeeds/SCI_WindSpeed
+    wind_nodes = root.findall("./SCI_WindSpeeds/SCI_WindSpeed")
+    if len(wind_nodes) != 24:
+        raise ValueError(
+            f"Expected 24 SCI_WindSpeed nodes in {basefn}, found "
+            f"{len(wind_nodes)}"
+        )
+    if len(windobs) != 24:
+        raise ValueError(
+            f"Expected 24 hourly wind values, found {len(windobs)}"
+        )
+
+    # Honor SCI_index if present so we always set the intended hour.
+    wind_nodes = sorted(
+        wind_nodes,
+        key=lambda node: int(node.get("SCI_index", "0")),
+    )
+    for i, node in enumerate(wind_nodes):
+        node.text = f"{windobs[i]:.14f}"
+
+    # Copy in and update the references to various files
+    shutil.copyfile(f"{basefn}.treat", f"{tempdir}/sweep.treat")
+    shutil.copyfile(f"{basefn}.soilsurf", f"{tempdir}/sweep.soilsurf")
+    sci_treat = root.find("./SCI_Subregions/SCI_Subregion/SCI_treat")
+    sci_treat.text = "sweep.treat"
+    sci_soilsurf = root.find("./SCI_Subregions/SCI_Subregion/SCI_soilsurf")
+    sci_soilsurf.text = "sweep.soilsurf"
+
+    # hacks again
+    sci_ifc = root.find("./SCI_Subregions/SCI_Subregion/GUI_soilifc")
+    sci_ifc.text = "sweep.ifc"
+    shutil.copyfile(
+        "/i/0/weps_test/Bearden_I119A_70_SICL.ifc", f"{tempdir}/sweep.ifc"
+    )
+    shutil.copyfile("/i/0/weps_test/erod.grdx", f"{tempdir}/erod.grdx")
+    grdnode = root.find("./SCI_GridFile")
+    grdnode.text = "erod.grdx"
+
+    # Write out the XML file
+    tree.write(
+        f"{tempdir}/erod.sweep",
+        encoding="ISO-8859-1",
+        xml_declaration=True,
+        doctype='<!DOCTYPE sweepData SYSTEM "sweep.dtd">',
+        pretty_print=True,
+    )
+
+    # We are ready to run, gasp
+
     cmd = [
         payload.sweepexe,
-        f"-i{sweepinfn}",  # yuck
+        "-ierod.sweep",
         "-Erod",
     ]
-    if not run_command(cmd):
+    if not run_command(cmd, tempdir):
         return None
-    # Move the erod file into the sweepout directory
-    shutil.move(erodfn, sweepoutfn)
-    # 4. Harvest the result and profit.
-    erosion = None
-    with open(sweepoutfn, encoding="utf-8") as fh:
+    with open(f"{tempdir}/erod.erod", encoding="utf-8") as fh:
         tokens = fh.read().strip().split()
         # total soil loss, saltation loss, suspension loss, PM10 loss
         erosion = float(tokens[0])
@@ -209,7 +213,8 @@ def run(ch: Channel, delivery_tag, payload):
     try:
         # Parse and validate the payload using Pydantic model
         job = SweepJobPayload.model_validate_json(payload)
-        result = run_sweep(job)
+        with TemporaryDirectory() as tempdir:
+            result = run_sweep(tempdir, job)
         if result is not None:
             cb = partial(send_result, ch, result.model_dump_json())
             ch.connection.add_callback_threadsafe(cb)
@@ -284,7 +289,7 @@ def main(workers: int, drainme: bool, queue: str):
     """Go main Go."""
     jobfunc = run if not drainme else drain
     # Start a thread to print timing every 300 seconds
-    threading.Thread(target=print_timing).start()
+    threading.Thread(target=print_timing, daemon=True).start()
     while True:
         # Start a threadpool executor that is associated with a rabbitmq
         # connection.  Run until something bad happens, then start again!

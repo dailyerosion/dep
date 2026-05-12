@@ -49,10 +49,16 @@ def fpmagic(cursor, scenario, envfn, rows, huc12, fpath, mlrarsym):
         / YEARS
         * KG_M2_TO_TON_ACRE,
     }
-    for year in range(2007, 2025):
+    for year in range(2007, 2026):
         df2 = eventdf[eventdf["year"] == year]
         res[f"delivery_{year}_t/a"] = df2["delivery"].sum() * KG_M2_TO_TON_ACRE
+        res[f"precip_{year}_mm"] = df2["precip"].sum()
         res[f"runoff_{year}_mm"] = df2["runoff"].sum()
+        res[f"delivery_{year}_events"] = (df2["delivery"] > 0.0).sum()
+        res[f"runoff_{year}_events"] = (df2["runoff"] > 0.0).sum()
+        res[f"precip_{year}_events"] = (df2["precip"] > 0.0).sum()
+        res[f"precip_{year}_50mm_events"] = (df2["precip"] >= 50.0).sum()
+        res[f"detach_{year}_events"] = (df2["av_det"] > 0.0).sum()
     rows.append(res)
 
 
