@@ -184,9 +184,9 @@ none
 #
 # --CIRCULAR FIELD INFORMATION
 # Note: These fields are not used by the weps simulation.
-#       The shape and radius values are used by the user 
+#       The shape and radius values are used by the user
 #       interface to approximate a rectangular field.  They
-#       are included here so the reports can display the 
+#       are included here so the reports can display the
 #       correct field shape.
 #
 #   RFD-Shape
@@ -256,15 +256,6 @@ def run_weps(payload: WEPS2SweepJobPayload) -> None:
         process_erod(payload.huc_12, payload.fpath, tmpdir, simulation_day)
 
 
-def send_result(ch: Channel, payload: str):
-    """Send to RabbitMQ, back on the main thread."""
-    ch.basic_publish(
-        exchange="",
-        routing_key="sweep_results",
-        body=payload,
-    )
-
-
 def run(ch: Channel, delivery_tag, payload):
     """Actually run wepp for this event.
 
@@ -281,10 +272,7 @@ def run(ch: Channel, delivery_tag, payload):
     try:
         # Parse and validate the payload using Pydantic model
         job = WEPS2SweepJobPayload.model_validate_json(payload)
-        result = run_weps(job)
-        if result is not None:
-            cb = partial(send_result, ch, result.model_dump_json())
-            ch.connection.add_callback_threadsafe(cb)
+        run_weps(job)
 
     except ValidationError as exp:
         # Invalid payload structure - log the validation errors
