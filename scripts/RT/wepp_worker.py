@@ -16,6 +16,7 @@ from pyiem.util import logger
 
 from dailyerosion.util import get_rabbitmqconn
 from dailyerosion.workflows.wepprun import WeppJobPayload
+from dailyerosion.workflows.worker import sanitize_exe
 
 LOG = logger()
 MEMORY = {
@@ -41,7 +42,7 @@ def run_wepp(payload: WeppJobPayload):
     # We run timeout to keep things from hanging indefinitely, we tried 60
     # seconds but it was too short as sometimes latency happens.
     with subprocess.Popen(
-        ["timeout", "-s", "9", "600", payload.weppexe],
+        ["timeout", "-s", "9", "600", sanitize_exe(payload.weppexe)],
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stdin=subprocess.PIPE,
