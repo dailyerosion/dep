@@ -358,9 +358,10 @@ def plot_accum(
         # Plot the daily district data as a filled bar
         boxinfo = []
         positions = []
-        for dt, gdf in nass_all[nass_all["datum"] != "IA"].groupby("date"):
+        district_df = nass_all[nass_all["datum"] != "IA"]
+        for dt, gdf in district_df.groupby("date"):
             stats = gdf[f"{crop} planted"].describe()
-            if pd.isna(stats["mean"]):
+            if "mean" not in stats or pd.isna(stats["mean"]):
                 continue
             positions.append(date2num(dt))
             boxinfo.append(
@@ -372,16 +373,17 @@ def plot_accum(
                     "whishi": stats["max"],
                 }
             )
-        ax2.bxp(
-            boxinfo,
-            positions=positions,
-            widths=1,
-            showfliers=False,
-            showmeans=False,
-            shownotches=False,
-            manage_ticks=False,
-            label="District Range",
-        )
+        if boxinfo:
+            ax2.bxp(
+                boxinfo,
+                positions=positions,
+                widths=1,
+                showfliers=False,
+                showmeans=False,
+                shownotches=False,
+                manage_ticks=False,
+                label="District Range",
+            )
     if nass_all is not None:
         nass = nass_all[nass_all["datum"] == datum].copy().set_index("date")
         ax2.scatter(
