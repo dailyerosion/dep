@@ -358,7 +358,9 @@ def plot_accum(
         # Plot the daily district data as a filled bar
         boxinfo = []
         positions = []
-        district_df = nass_all[nass_all["datum"] != "IA"]
+        district_df = nass_all[
+            nass_all["datum"].astype(str).str.startswith("IA_")
+        ]
         for dt, gdf in district_df.groupby("date"):
             stats = gdf[f"{crop} planted"].describe()
             if "mean" not in stats or pd.isna(stats["mean"]):

@@ -62,7 +62,7 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
         and f.scenario = 0 and o.ofe = 1 and f.climate_file_id = c.id)
     select field_id, fpath, huc_12, st_x(pt) as lon, st_y(pt) as lat, crop,
     clifile from data
-    where row_number = 1 and crop in ('C', 'B') {huclimit} LIMIT 100
+    where row_number = 1 and crop in ('C', 'B') {huclimit}
         """,
                 huclimit=" and huc_12 = ANY(:hucs)" if myhucs else "",
             ),
@@ -73,6 +73,9 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
                 "charat": dt.year - 2007 + 1,
             },
         )
+    if fieldsdf.empty:
+        LOG.warning("No fields found with query, exiting")
+        return
     totaljobs = len(fieldsdf.index)
     connection, rabbit_config = get_rabbitmqconn()
     channel = connection.channel()
@@ -87,7 +90,6 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
             field_id=row.field_id,
             fpath=row.fpath,
             huc_12=row.huc_12,
-            crop=row.crop,
             dt=dt,
             scenario=scenario,
             lon=row.lon,

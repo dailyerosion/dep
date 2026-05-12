@@ -253,6 +253,7 @@ def run_weps(payload: WEPS2SweepJobPayload) -> None:
             LOG.error("Return code: %s", exp.returncode)
             LOG.error("STDOUT: %s", exp.stdout)
             LOG.error("STDERR: %s", exp.stderr)
+            return
         process_erod(payload.huc_12, payload.fpath, tmpdir, simulation_day)
 
 

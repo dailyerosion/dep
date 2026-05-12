@@ -43,12 +43,14 @@ def run_command(cmd: list[str], tempdir: str) -> bool:
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=tempdir
     ) as proc:
         (stdout, stderr) = proc.communicate()
-        LOG.error(
-            "Command %s failed with %s\n%s",
-            " ".join(cmd),
-            stdout.decode("utf-8"),
-            stderr.decode("utf-8"),
-        )
+        if proc.returncode != 0:
+            LOG.error(
+                "Command %s failed with %s\n%s",
+                " ".join(cmd),
+                stdout.decode("utf-8"),
+                stderr.decode("utf-8"),
+            )
+            return False
     return True
 
 
@@ -211,7 +213,7 @@ def run(ch: Channel, delivery_tag, payload):
     try:
         # Parse and validate the payload using Pydantic model
         job = SweepJobPayload.model_validate_json(payload)
-        with TemporaryDirectory(delete=False) as tempdir:  # TODO, delete
+        with TemporaryDirectory() as tempdir:
             result = run_sweep(tempdir, job)
         if result is not None:
             cb = partial(send_result, ch, result.model_dump_json())
