@@ -246,7 +246,7 @@ def ack_message(ch: Channel, delivery_tag):
     MEMORY["runs"] += 1
 
 
-def run_consumer(queue: str, jobfunc, executor):
+def run_consumer(queue: str, jobfunc, executor, prefetch_count: int):
     """Our main runloop."""
     LOG.info("Starting queue_worker for queue: %s", queue)
 
@@ -256,7 +256,7 @@ def run_consumer(queue: str, jobfunc, executor):
     # This is idempotent - safe to declare multiple times
     channel.queue_declare(queue, durable=True)
     # Limit unacknowledged messages to prevent overwhelming worker
-    channel.basic_qos(prefetch_count=300)
+    channel.basic_qos(prefetch_count=prefetch_count)
 
     def proxy(mychannel, method, _props, payload):
         """Wrapper around jobfunc."""
@@ -287,9 +287,21 @@ def print_timing():
 @click.option("--workers", type=int, required=True)
 @click.option("--drainme", is_flag=True)
 @click.option("--queue", default="depsweep", help="Queue name to consume from")
-def main(workers: int, drainme: bool, queue: str):
+@click.option(
+    "--prefetch-count",
+    type=int,
+    help="Maximum unacknowledged jobs to reserve per worker process",
+)
+def main(
+    workers: int,
+    drainme: bool,
+    queue: str,
+    prefetch_count: int | None,
+):
     """Go main Go."""
     jobfunc = run if not drainme else drain
+    if prefetch_count is None:
+        prefetch_count = workers
     # Start a thread to print timing every 300 seconds
     threading.Thread(target=print_timing, daemon=True).start()
     while True:
@@ -297,7 +309,7 @@ def main(workers: int, drainme: bool, queue: str):
         # connection.  Run until something bad happens, then start again!
         try:
             with ThreadPoolExecutor(max_workers=workers) as executor:
-                run_consumer(queue, jobfunc, executor)
+                run_consumer(queue, jobfunc, executor, prefetch_count)
             LOG.warning("run_consumer exited cleanly, sleeping 30 seconds")
             time.sleep(30)
         except KeyboardInterrupt:
