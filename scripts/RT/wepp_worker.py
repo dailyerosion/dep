@@ -44,7 +44,7 @@ def run_wepp(payload: WeppJobPayload):
     # seconds but it was too short as sometimes latency happens.
     with subprocess.Popen(
         [
-            "timeout",
+            "/usr/bin/timeout",
             "-s",
             "9",
             "600",
