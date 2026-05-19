@@ -11,6 +11,7 @@ class WEPS2SweepJobPayload(BaseModel):
 
     wepsexe: Annotated[str, Field(description="Name of wepsexe to use")]
     huc_12: Annotated[str, Field(description="HUC12 code")]
+    clifile: Annotated[str, Field(description="DEP breakpoint CLI file")]
     scenario: Annotated[int, Field(description="Scenario ID")] = 0
     field_id: Annotated[int, Field(description="Database Field Identifier")]
     fpath: Annotated[int, Field(description="Flowpath identifier in HUC12")]
