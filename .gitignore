@@ -2,6 +2,7 @@
 /.pydevproject
 /dist
 /data/
+/bin/
 /.buildpath
 **/*.egg-info
 *.o
