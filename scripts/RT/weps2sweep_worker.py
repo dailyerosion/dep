@@ -37,6 +37,7 @@ MEMORY = {
     "runs": 0,
     "timestamp": time.time(),
 }
+BINPATH = Path("/opt/dep/bin")
 
 
 def drain(ch, delivery_tag, _payload):
@@ -223,7 +224,7 @@ def run_weps(payload: WEPS2SweepJobPayload) -> None:
         ]:
             shutil.copyfile(f"/i/0/weps_test/{hack}", Path(tmpdir) / hack)
         cmd = [
-            sanitize_exe(payload.wepsexe),
+            sanitize_exe(BINPATH / payload.wepsexe),
             "-c0",  # no soil conditioning output
             "-E1",  # Don't run soil erosion, which we should not need
             "-e0",  # Don't create all sweep files

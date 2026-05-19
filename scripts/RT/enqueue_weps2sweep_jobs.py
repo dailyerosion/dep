@@ -86,7 +86,7 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
 
     for row in fieldsdf.itertuples():
         payload = WEPS2SweepJobPayload(
-            wepsexe="/opt/dep/bin/weps_dep",
+            wepsexe="weps_dep",
             field_id=row.field_id,
             fpath=row.fpath,
             huc_12=row.huc_12,

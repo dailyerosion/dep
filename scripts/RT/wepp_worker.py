@@ -23,6 +23,7 @@ MEMORY = {
     "runs": 0,
     "timestamp": time.time(),
 }
+BINPATH = Path("/opt/dep/bin")
 
 
 def drain(ch, delivery_tag, _payload):
@@ -42,7 +43,13 @@ def run_wepp(payload: WeppJobPayload):
     # We run timeout to keep things from hanging indefinitely, we tried 60
     # seconds but it was too short as sometimes latency happens.
     with subprocess.Popen(
-        ["timeout", "-s", "9", "600", sanitize_exe(payload.weppexe)],
+        [
+            "timeout",
+            "-s",
+            "9",
+            "600",
+            str(sanitize_exe(BINPATH / payload.weppexe)),
+        ],
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stdin=subprocess.PIPE,

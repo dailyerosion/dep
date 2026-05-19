@@ -30,6 +30,7 @@ MEMORY = {
     "timestamp": time.time(),
 }
 IEMRE = "http://mesonet.agron.iastate.edu/iemre/hourly"
+BINPATH = Path("/opt/dep/bin")
 
 
 def drain(ch, delivery_tag, _payload):
@@ -168,7 +169,7 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
     # We are ready to run, gasp
 
     cmd = [
-        sanitize_exe(payload.sweepexe),
+        sanitize_exe(BINPATH / payload.sweepexe),
         "-ierod.sweep",
         "-Erod",
     ]

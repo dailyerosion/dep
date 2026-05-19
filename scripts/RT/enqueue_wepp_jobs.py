@@ -19,7 +19,8 @@ from dailyerosion.workflows.wepprun import (
 )
 
 YEARS = date.today().year - 2006
-WEPPEXE = "wepp20240930"
+# suboptimal hardcode at the moment...
+WEPPEXE = "wepp_dep"
 
 # These are HUC12s that we currently need graph output for SWEEP
 # Note adding HUC12s here requires running rot2verbose.py
