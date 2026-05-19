@@ -216,11 +216,11 @@ def run_weps(payload: WEPS2SweepJobPayload) -> None:
         runfile = generate_runfile(payload.lon, payload.lat)
         with open(Path(tmpdir) / "weps.run", "w") as fh:
             fh.write(runfile)
+        shutil.copyfile(payload.clifile, Path(tmpdir) / "weps.cli")
         for hack in [
             "interpolated.win",
             "Bearden_I119A_70_SICL.ifc",
             "corn_soybean_3high_mulch.man",
-            "weps.cli",
         ]:
             shutil.copyfile(f"/i/0/weps_test/{hack}", Path(tmpdir) / hack)
         cmd = [

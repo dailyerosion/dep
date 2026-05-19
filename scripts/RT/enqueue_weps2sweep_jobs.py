@@ -7,7 +7,7 @@ threading an ugly neddle here.
 Division of Labor
 =================
 
- - Enqueue WEPS jobs to rabbitmq for `weps_worker.py` to deal with
+ - Enqueue WEPS jobs to rabbitmq for `weps2sweep_worker.py` to deal with
 
 """
 
@@ -90,6 +90,7 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
             field_id=row.field_id,
             fpath=row.fpath,
             huc_12=row.huc_12,
+            clifile=row.clifile,
             dt=dt,
             scenario=scenario,
             lon=row.lon,
