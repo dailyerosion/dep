@@ -217,8 +217,12 @@ def run_weps(payload: WEPS2SweepJobPayload) -> None:
         with open(Path(tmpdir) / "weps.run", "w") as fh:
             fh.write(runfile)
         shutil.copyfile(payload.clifile, Path(tmpdir) / "weps.cli")
+        # We bring in a wind file that is all zeros, hopefully this works
+        # without messing up the soil state.
+        shutil.copyfile(
+            "/i/0/wind/zeros.win", Path(tmpdir) / "interpolated.win"
+        )
         for hack in [
-            "interpolated.win",
             "Bearden_I119A_70_SICL.ifc",
             "corn_soybean_3high_mulch.man",
         ]:
