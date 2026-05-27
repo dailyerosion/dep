@@ -220,9 +220,10 @@ def run_weps(payload: WEPSJobPayload) -> None:
         shutil.copyfile(payload.clifile, Path(tmpdir) / "weps.cli")
         # We bring in a wind file that is all zeros, hopefully this works
         # without messing up the soil state.
-        shutil.copyfile(
-            "/i/0/wind/zeros.win", Path(tmpdir) / "interpolated.win"
-        )
+        if payload.for_sweep:
+            payload.windfile = "/i/0/wind/zeros.win"
+
+        shutil.copyfile(payload.windfile, Path(tmpdir) / "interpolated.win")
         for hack in [
             "Bearden_I119A_70_SICL.ifc",
             "corn_soybean_3high_mulch.man",
@@ -231,7 +232,7 @@ def run_weps(payload: WEPSJobPayload) -> None:
         cmd = [
             sanitize_exe(BINPATH / payload.wepsexe),
             "-c0",  # no soil conditioning output
-            "-E1",  # Don't run soil erosion, which we should not need
+            "-E1",  # Run WEPS erosion, needs to be on always for -o to work
             "-e0",  # Don't create all sweep files
             "-H0",  # No heartbeat output
             "-i3",  # temp debuggin
@@ -245,7 +246,7 @@ def run_weps(payload: WEPSJobPayload) -> None:
             "-u0",  # No resurfacing of buried roots, perf opt?
         ]
         try:
-            proc = subprocess.run(
+            subprocess.run(
                 cmd,
                 check=True,
                 capture_output=True,
@@ -253,15 +254,24 @@ def run_weps(payload: WEPSJobPayload) -> None:
                 encoding="utf-8",
                 errors="replace",
             )
-            LOG.debug("STDOUT: %s", proc.stdout)
-            LOG.debug("STDERR: %s", proc.stderr)
+            if not payload.for_sweep:
+                plotfn = Path(tmpdir) / "plot.out"
+                savefn = (
+                    Path("/i/0/weps")
+                    / payload.huc_12[:8]
+                    / payload.huc_12[8:]
+                    / f"{payload.huc_12}_{payload.fpath}.out"
+                )
+                savefn.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(plotfn, savefn)
         except subprocess.CalledProcessError as exp:
             LOG.error("WEPS command failed: %s", " ".join(exp.cmd))
             LOG.error("Return code: %s", exp.returncode)
             LOG.error("STDOUT: %s", exp.stdout)
             LOG.error("STDERR: %s", exp.stderr)
             return
-        process_erod(payload.huc_12, payload.fpath, tmpdir, simulation_day)
+        if payload.for_sweep:
+            process_erod(payload.huc_12, payload.fpath, tmpdir, simulation_day)
 
 
 def run(ch: Channel, delivery_tag, payload):

@@ -7,9 +7,28 @@ from pydantic import BaseModel, Field
 
 
 class WEPSJobPayload(BaseModel):
-    """Payload for a WEPS2Sweep job."""
+    """Payload for a WEPS job."""
 
     wepsexe: Annotated[str, Field(description="Name of wepsexe to use")]
+    for_sweep: Annotated[
+        bool,
+        Field(
+            description=(
+                "Flag indicating if this job is being for the purposes of "
+                "bootstraping a SWEEP run.  If True, this implies the usage "
+                "of a faked wind file."
+            )
+        ),
+    ]
+    windfile: Annotated[
+        str,
+        Field(
+            description=(
+                "Find name to use for hourly wind info. This is ignored if "
+                "for_sweep is True"
+            )
+        ),
+    ]
     huc_12: Annotated[str, Field(description="HUC12 code")]
     clifile: Annotated[str, Field(description="DEP breakpoint CLI file")]
     scenario: Annotated[int, Field(description="Scenario ID")] = 0

@@ -20,6 +20,7 @@ import pandas as pd
 import pika
 from enqueue_wepp_jobs import GRAPH_HUC12
 from pyiem.database import get_sqlalchemy_conn, sql_helper
+from pyiem.iemre import get_gid
 from pyiem.util import logger
 
 from dailyerosion.util import get_rabbitmqconn
@@ -35,12 +36,21 @@ LOG = logger()
     "-d",
     required=True,
     type=click.DateTime(),
-    help="Date to run for",
+    help="Date to run for, but ignored when not run for SWEEP.",
 )
 @click.option("-s", "--scenario", type=int, help="Scenario ID", default=0)
 @click.option("--myhucs", help="Specify file of HUC12s to filter job.")
 @click.option("--queue", help="RabbitMQ destination", default=QUEUES.WEPS)
-def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
+@click.option(
+    "--for_sweep", is_flag=True, help="Is this job to bootstrap SWEEP runs."
+)
+def main(
+    date: datetime,
+    scenario: int,
+    myhucs: str | None,
+    queue: str,
+    for_sweep: bool,
+):
     """Go main Go."""
     dt = date.date()
     if myhucs:
@@ -84,10 +94,16 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
     # This is idempotent - safe to declare multiple times
     channel.queue_declare(queue=queue, durable=True)
     sts = datetime.now()
+    windfile = ""
 
     for row in fieldsdf.itertuples():
+        if not for_sweep:
+            gid = f"{get_gid(row.lon, row.lat):06.0f}"
+            windfile = f"/i/0/wind/{gid[:3]}/{gid}.win"
         payload = WEPSJobPayload(
             wepsexe="weps_dep",
+            for_sweep=for_sweep,
+            windfile=windfile,
             field_id=row.field_id,
             fpath=row.fpath,
             huc_12=row.huc_12,
