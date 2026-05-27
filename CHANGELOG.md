@@ -9,7 +9,7 @@
 
 ### New Features
 
-- Add workflow for `weps2sweep`.
+- Generalize `weps2sweep` workflow as just `weps`.
 - Allow provision of the RabbitMQ settings file for `get_rabbitmqconn`.
 
 ### Bug Fixes

@@ -7,7 +7,7 @@ threading an ugly neddle here.
 Division of Labor
 =================
 
- - Enqueue WEPS jobs to rabbitmq for `weps2sweep_worker.py` to deal with
+ - Enqueue WEPS jobs to rabbitmq for `weps_worker.py` to deal with
 
 """
 
@@ -20,10 +20,12 @@ import pandas as pd
 import pika
 from enqueue_wepp_jobs import GRAPH_HUC12
 from pyiem.database import get_sqlalchemy_conn, sql_helper
+from pyiem.iemre import get_gid
 from pyiem.util import logger
 
 from dailyerosion.util import get_rabbitmqconn
-from dailyerosion.workflows.weps2sweeprun import WEPS2SweepJobPayload
+from dailyerosion.workflows import QUEUES
+from dailyerosion.workflows.wepsrun import WEPSJobPayload
 
 LOG = logger()
 
@@ -32,21 +34,38 @@ LOG = logger()
 @click.option(
     "--date",
     "-d",
-    required=True,
+    required=False,
     type=click.DateTime(),
-    help="Date to run for",
+    help="Date to run for when for_sweep is set.",
 )
 @click.option("-s", "--scenario", type=int, help="Scenario ID", default=0)
 @click.option("--myhucs", help="Specify file of HUC12s to filter job.")
-@click.option("--queue", help="RabbitMQ destination", default="depweps")
-def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
+@click.option("--queue", help="RabbitMQ destination", default=QUEUES.WEPS)
+@click.option(
+    "--for_sweep", is_flag=True, help="Is this job to bootstrap SWEEP runs."
+)
+def main(
+    date: datetime | None,
+    scenario: int,
+    myhucs: str | None,
+    queue: str,
+    for_sweep: bool,
+):
     """Go main Go."""
-    dt = date.date()
+    # First, do some checking that args make sense.
+    if date is None and for_sweep:
+        LOG.error("Must specify --date when --for_sweep is set")
+        return
+    if date is not None and not for_sweep:
+        LOG.error("--date is only used when --for_sweep is set")
+        return
     if myhucs:
         LOG.warning("Using %s to filter job submission", myhucs)
         with open(myhucs, encoding="ascii") as fh:
             myhucs = [s.strip() for s in fh]
 
+    # We are making an assumption below about filtering corn/soybean fields
+    dt = datetime.now().date() if date is None else date.date()
     with get_sqlalchemy_conn("idep") as conn:
         fieldsdf = pd.read_sql(
             sql_helper(
@@ -83,10 +102,16 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
     # This is idempotent - safe to declare multiple times
     channel.queue_declare(queue=queue, durable=True)
     sts = datetime.now()
+    windfile = ""
 
     for row in fieldsdf.itertuples():
-        payload = WEPS2SweepJobPayload(
+        if not for_sweep:
+            gid = f"{get_gid(row.lon, row.lat):06.0f}"
+            windfile = f"/i/0/wind/{gid[:3]}/{gid}.win"
+        payload = WEPSJobPayload(
             wepsexe="weps_dep",
+            for_sweep=for_sweep,
+            windfile=windfile,
             field_id=row.field_id,
             fpath=row.fpath,
             huc_12=row.huc_12,

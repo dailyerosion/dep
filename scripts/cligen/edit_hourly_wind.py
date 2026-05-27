@@ -130,7 +130,12 @@ def daily_workflow(progress: tqdm, dt: date):
     type=click.DateTime(),
     help="Date to edit in YYYY-MM-DD format",
 )
-def main(init: bool, dt: datetime | None):
+@click.option(
+    "--overwrite",
+    is_flag=True,
+    help=("For init runs, force the generation of files (overwrite)."),
+)
+def main(init: bool, dt: datetime | None, overwrite: bool):
     """Go Main Go."""
     # Get all the gids from IEMRE
     with get_sqlalchemy_conn("iemre") as conn:
@@ -153,6 +158,8 @@ def main(init: bool, dt: datetime | None):
         for gid, row in progress:
             fn = Path("/i/0/wind") / f"{gid:06.0f}"[:3] / f"{gid:06.0f}.win"
             progress.set_description(str(fn))
+            if fn.is_file() and not overwrite:
+                continue
             init_workflow(fn, row["gridx"], row["gridy"])
         return
     daily_workflow(progress, dt.date())

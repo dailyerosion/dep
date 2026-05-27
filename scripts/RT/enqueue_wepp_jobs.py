@@ -12,6 +12,7 @@ from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
 
 from dailyerosion.util import get_rabbitmqconn
+from dailyerosion.workflows import QUEUES
 from dailyerosion.workflows.wepprun import (
     WeppJobPayload,
     WeppRunConfig,
@@ -39,7 +40,7 @@ GRAPH_HUC12 = (
     "--runerrors", is_flag=True, help="Run previous runs that errored."
 )
 @click.option("--myhucs", help="Specify file of HUC12s to filter job.")
-@click.option("--queue", help="RabbitMQ destination", default="dep")
+@click.option("--queue", help="RabbitMQ destination", default=QUEUES.WEPP)
 def main(scenario: int, runerrors: bool, myhucs: str | None, queue: str):
     """Go main Go."""
     log = logger()

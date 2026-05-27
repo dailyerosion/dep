@@ -15,6 +15,7 @@ from pydantic import ValidationError
 from pyiem.util import logger
 
 from dailyerosion.util import get_rabbitmqconn
+from dailyerosion.workflows import QUEUES
 from dailyerosion.workflows.wepprun import WeppJobPayload
 from dailyerosion.workflows.worker import sanitize_exe
 
@@ -159,7 +160,9 @@ def print_timing():
 @click.command()
 @click.option("--workers", type=int, required=True)
 @click.option("--drainme", is_flag=True)
-@click.option("--queue", default="dep", help="Queue name to consume from")
+@click.option(
+    "--queue", default=QUEUES.WEPP, help="Queue name to consume from"
+)
 @click.option(
     "--prefetch-count",
     type=int,
