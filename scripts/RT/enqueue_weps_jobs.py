@@ -7,7 +7,7 @@ threading an ugly neddle here.
 Division of Labor
 =================
 
- - Enqueue WEPS jobs to rabbitmq for `weps2sweep_worker.py` to deal with
+ - Enqueue WEPS jobs to rabbitmq for `weps_worker.py` to deal with
 
 """
 
@@ -34,9 +34,9 @@ LOG = logger()
 @click.option(
     "--date",
     "-d",
-    required=True,
+    required=False,
     type=click.DateTime(),
-    help="Date to run for, but ignored when not run for SWEEP.",
+    help="Date to run for when for_sweep is set.",
 )
 @click.option("-s", "--scenario", type=int, help="Scenario ID", default=0)
 @click.option("--myhucs", help="Specify file of HUC12s to filter job.")
@@ -45,19 +45,27 @@ LOG = logger()
     "--for_sweep", is_flag=True, help="Is this job to bootstrap SWEEP runs."
 )
 def main(
-    date: datetime,
+    date: datetime | None,
     scenario: int,
     myhucs: str | None,
     queue: str,
     for_sweep: bool,
 ):
     """Go main Go."""
-    dt = date.date()
+    # First, do some checking that args make sense.
+    if date is None and for_sweep:
+        LOG.error("Must specify --date when --for_sweep is set")
+        return
+    if date is not None and not for_sweep:
+        LOG.error("--date is only used when --for_sweep is set")
+        return
     if myhucs:
         LOG.warning("Using %s to filter job submission", myhucs)
         with open(myhucs, encoding="ascii") as fh:
             myhucs = [s.strip() for s in fh]
 
+    # We are making an assumption below about filtering corn/soybean fields
+    dt = datetime.now().date() if date is None else date.date()
     with get_sqlalchemy_conn("idep") as conn:
         fieldsdf = pd.read_sql(
             sql_helper(

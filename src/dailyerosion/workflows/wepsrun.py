@@ -34,6 +34,9 @@ class WEPSJobPayload(BaseModel):
     scenario: Annotated[int, Field(description="Scenario ID")] = 0
     field_id: Annotated[int, Field(description="Database Field Identifier")]
     fpath: Annotated[int, Field(description="Flowpath identifier in HUC12")]
-    dt: Annotated[date, Field(description="Date to Run for")]
+    dt: Annotated[
+        date | None,
+        Field(description="Date to Run for, unused for not for_sweep"),
+    ] = None
     lon: Annotated[float, Field(description="Longitude of Point")]
     lat: Annotated[float, Field(description="Latitude of Point")]
