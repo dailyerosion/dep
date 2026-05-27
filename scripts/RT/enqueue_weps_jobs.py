@@ -23,7 +23,8 @@ from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
 
 from dailyerosion.util import get_rabbitmqconn
-from dailyerosion.workflows.weps2sweeprun import WEPS2SweepJobPayload
+from dailyerosion.workflows import QUEUES
+from dailyerosion.workflows.wepsrun import WEPSJobPayload
 
 LOG = logger()
 
@@ -38,7 +39,7 @@ LOG = logger()
 )
 @click.option("-s", "--scenario", type=int, help="Scenario ID", default=0)
 @click.option("--myhucs", help="Specify file of HUC12s to filter job.")
-@click.option("--queue", help="RabbitMQ destination", default="depweps")
+@click.option("--queue", help="RabbitMQ destination", default=QUEUES.WEPS)
 def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
     """Go main Go."""
     dt = date.date()
@@ -85,7 +86,7 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
     sts = datetime.now()
 
     for row in fieldsdf.itertuples():
-        payload = WEPS2SweepJobPayload(
+        payload = WEPSJobPayload(
             wepsexe="weps_dep",
             field_id=row.field_id,
             fpath=row.fpath,

@@ -13,6 +13,7 @@ from pyiem.util import logger
 from sqlalchemy.engine import Connection
 
 from dailyerosion.util import get_rabbitmqconn
+from dailyerosion.workflows import QUEUES
 from dailyerosion.workflows.sweeprun import SweepJobPayload
 
 LOG = logger()
@@ -43,7 +44,7 @@ def clean_database(conn: Connection, dt, hucs):
 )
 @click.option("-s", "--scenario", type=int, help="Scenario ID", default=0)
 @click.option("--myhucs", help="Specify file of HUC12s to filter job.")
-@click.option("--queue", help="RabbitMQ destination", default="depsweep")
+@click.option("--queue", help="RabbitMQ destination", default=QUEUES.SWEEP)
 def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
     """Go main Go."""
     dt = date.date()

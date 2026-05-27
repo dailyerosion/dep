@@ -29,7 +29,8 @@ from pydantic import ValidationError
 from pyiem.util import logger
 
 from dailyerosion.util import get_rabbitmqconn
-from dailyerosion.workflows.weps2sweeprun import WEPS2SweepJobPayload
+from dailyerosion.workflows import QUEUES
+from dailyerosion.workflows.wepsrun import WEPSJobPayload
 from dailyerosion.workflows.worker import sanitize_exe
 
 LOG = logger()
@@ -203,7 +204,7 @@ circle
 """
 
 
-def run_weps(payload: WEPS2SweepJobPayload) -> None:
+def run_weps(payload: WEPSJobPayload) -> None:
     """Actually run WEPS, really.
 
     Parameters
@@ -278,7 +279,7 @@ def run(ch: Channel, delivery_tag, payload):
     # We should be fully within a thread at this point...
     try:
         # Parse and validate the payload using Pydantic model
-        job = WEPS2SweepJobPayload.model_validate_json(payload)
+        job = WEPSJobPayload.model_validate_json(payload)
         run_weps(job)
 
     except ValidationError as exp:
@@ -345,7 +346,9 @@ def print_timing():
 @click.command()
 @click.option("--workers", type=int, required=True)
 @click.option("--drainme", is_flag=True)
-@click.option("--queue", default="depweps", help="Queue name to consume from")
+@click.option(
+    "--queue", default=QUEUES.WEPS, help="Queue name to consume from"
+)
 @click.option(
     "--prefetch-count",
     type=int,

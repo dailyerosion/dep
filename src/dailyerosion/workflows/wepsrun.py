@@ -1,4 +1,4 @@
-"""Elements of WEPS2Sweep Run."""
+"""Elements of WEPS Run."""
 
 from datetime import date
 from typing import Annotated
@@ -6,7 +6,7 @@ from typing import Annotated
 from pydantic import BaseModel, Field
 
 
-class WEPS2SweepJobPayload(BaseModel):
+class WEPSJobPayload(BaseModel):
     """Payload for a WEPS2Sweep job."""
 
     wepsexe: Annotated[str, Field(description="Name of wepsexe to use")]
