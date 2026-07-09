@@ -1,5 +1,7 @@
 """Compute the climatology of a HUC12 limiter."""
 
+from datetime import date
+
 import click
 import pandas as pd
 
@@ -9,7 +11,7 @@ def main():
     """Go Main Go."""
     statsdf = None
     total = 0
-    for year in range(2007, 2026):
+    for year in range(2007, date.today().year + 1):
         for dt in pd.date_range(f"{year}-04-11", f"{year}-06-12"):
             total += 1
             huc12data = pd.read_feather(

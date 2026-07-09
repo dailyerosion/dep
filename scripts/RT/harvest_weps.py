@@ -31,7 +31,7 @@ def main(alldates: bool, wanteddt: datetime | None):
     select p.huc12_fpath_num, h.huc12_code, o.field_id
     from flowpath p
     JOIN flowpath_ofe o ON (p.flowpath_id = o.flowpath_id)
-    JOIN fields f ON (o.field_id = f.field_id)
+    JOIN field f ON (o.field_id = f.field_id)
     JOIN huc12 h on (p.huc12_id = h.huc12_id) WHERE
     p.scenario_id = 0 and o.ofe = 1
     """
