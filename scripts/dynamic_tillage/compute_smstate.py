@@ -61,7 +61,7 @@ def job(dates: list[date], tmpdir, huc12: str) -> int:
     substr(o.landuse, :charat, 1) as crop
     from
     flowpaths p LEFT JOIN flowpath_ofes o on p.fid = o.flowpath
-      LEFT JOIN fields f on o.field_id = f.field_id
+      LEFT JOIN field f on o.field_id = f.field_id
       LEFT JOIN gssurgo g on o.gssurgo_id = g.id
       LEFT JOIN toplayer tl on g.mukey = tl.mukey::int
       LEFT JOIN huc12 h on f.huc12_id = h.huc12_id

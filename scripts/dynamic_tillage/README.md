@@ -54,7 +54,7 @@ in the remaining operations for dates in the future.
 Mud it in report
 
     with myfields as (
-        select f.scenario, f.isag, field_id, acres from fields f JOIN huc12 h
+        select f.scenario, f.isag, field_id, acres from field f JOIN huc12 h
         on (f.huc12 = h.huc_12) WHERE f.scenario = 0 and h.scenario = 0 and
         (h.states = 'IA' or h.states = 'MN'))
     select year, sum(case when to_char(plant, 'mmdd') >= '0611'

@@ -28,7 +28,8 @@ def do_flowpath(
     """Process a given flowpath."""
     # Get the rotation file for OFE1, since we only process it.
     rotfn = (
-        f"/i/{scenario}/rot/{metadata['huc12_code'][:8]}/{metadata['huc12_code'][8:]}"
+        f"/i/{scenario}/rot/{metadata['huc12_code'][:8]}/"
+        f"{metadata['huc12_code'][8:]}"
         f"/{metadata['huc12_code']}_{metadata['huc12_fpath_num']}_1.rot"
     )
     # Our generated man file.
@@ -50,6 +51,7 @@ def do_flowpath(
         for line in rotfh:
             if line.startswith("Name = "):
                 rotcode = line.split("=")[1].strip().split("-")[0]
+                continue
             if (
                 " Tillage " not in line
                 and "Harvest" not in line
@@ -68,16 +70,16 @@ def do_flowpath(
             if oplabel in ["Harvest-Annual", "Cut-Perennial"]:
                 payload = weps_operations[f"HARVEST_{cropcode}"]
             elif oplabel == "Plant-Perennial":
-                payload = weps_operations[f"FCSTACDP_{cropcode}"]
+                payload = weps_operations[f"PLNT_{cropcode}"]
             else:
                 opcropdef = opcropdef.replace("OpCropDef.", "")
-                # Handled later
-                if opcropdef == "FCSTACDP" and cropcode != "W":
-                    continue
                 # Unhandled
-                if opcropdef in ["ANHYDROS", "HASPTCT", "DRDDO", "CHISCOST"]:
+                if opcropdef in ["ANHYDROS", "HASPTCT"]:
                     continue
-                if opcropdef.startswith("PL") or opcropdef == "DRNTFRFC":
+                if opcropdef.startswith("PL") or opcropdef in [
+                    "DRNTFRFC",
+                    "DRDDO",
+                ]:
                     opcropdef = f"{opcropdef}_{cropcode}"
                 try:
                     payload = weps_operations[opcropdef]
@@ -127,9 +129,7 @@ def main(scenario: int):
         from flowpath p JOIN flowpath_ofe o on (p.flowpath_id = o.flowpath_id)
         JOIN field f on (o.field_id = f.field_id)
         JOIN huc12 h on (h.huc12_id = f.huc12_id)
-        WHERE p.scenario_id = :scenario and (
-        strpos(landuse, 'C') > 0 or strpos(landuse, 'B') > 0
-        )
+        WHERE p.scenario_id = :scenario and o.ofe = 1
         ORDER by huc12_code ASC
             """),
             pgconn,

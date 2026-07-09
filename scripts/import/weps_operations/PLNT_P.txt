@@ -40,3 +40,4 @@ P 51 Seeding Configuration
 + 0.0536 0.0536 0.0536 0.0536 0.2 0.0045 20 5.227942
 + -1.20379 0.604887 0.0 0 0 0.0 0.0 0.0
 T Perennial, legume, hay or forage. 
+t Archive:Size rangesJ.J. rquez-Ortiz

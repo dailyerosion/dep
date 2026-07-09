@@ -92,7 +92,7 @@ def plot_map_progress(
 @click.option("--year", required=True, type=int, help="Year to plot")
 def main(huc12: str, year: int):
     """Go Main Go."""
-    with get_sqlalchemy_conn("idep") as conn:
+    with get_sqlalchemy_conn("dep") as conn:
         huc12df = gpd.read_postgis(
             sql_helper("""
     select huc_12, name, ST_Transform(geom, 4326) as geom
@@ -107,7 +107,7 @@ def main(huc12: str, year: int):
         fieldsdf = gpd.read_postgis(
             sql_helper("""
     select o.*, ST_Transform(f.geom, 4326) as geom, 0 as tillage_events
-    from fields f LEFT JOIN field_operations o
+    from field f LEFT JOIN field_operations o
     on (f.field_id = o.field_id and o.year = :year)
     where huc12 = :huc12
         """),

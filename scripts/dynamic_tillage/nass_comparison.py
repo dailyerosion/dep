@@ -218,11 +218,11 @@ def get_fields(year, datum: str, ugc: str | None, crop) -> pd.DataFrame:
     charidx = year - 2007 + 1
     boundsdf = get_geo_bounds(datum, ugc)
     # Figure out the planting dates
-    with get_sqlalchemy_conn("idep") as conn:
+    with get_sqlalchemy_conn("dep") as conn:
         return pd.read_sql(
             sql_helper("""
             select plant, huc12, fbndid, acres
-            from fields f JOIN field_operations o
+            from field f JOIN field_operations o
             on (f.field_id = o.field_id and o.year = :year)
             where scenario = 0 and substr(landuse, :charidx, 1) = :ccode and
             ST_Intersects(geom, ST_SetSRID(ST_GeomFromEWKT(:geom), 5070))
