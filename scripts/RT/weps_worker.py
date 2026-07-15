@@ -101,6 +101,9 @@ def generate_runfile(
     windfile: str,
     manfile: str,
     ifcfile: str,
+    rectangle_length_m: float,
+    rectangle_width_m: float,
+    rectangle_rotation_deg: float,
 ) -> str:
     """Create the run file settings."""
     return f"""
@@ -163,25 +166,25 @@ null
 #
 # --SIMULATION REGION INFORMATION
 #   RFD-RegionAngle(degrees clockwise from North)
-0.0
+{rectangle_rotation_deg}
 #   Origin coordinates of simulation region (meters)
 0.0  0.0
 #    RFD-XLength(meters)  RFD-YLength(meters)
-714.08  714.08
+{rectangle_length_m}  {rectangle_width_m}
 #   RFD-Scales(place holder line - needed for older versions of WEPS)
 5.5 5.5
 #
 #   RFD-AccNo
 1
 #   Accounting region coordinates (meters)
-    0.0  0.0
-714.08  714.08
+0.0  0.0
+{rectangle_length_m}  {rectangle_width_m}
 #
 #   RFD-SubregionNo
 1
 #   Subregion region coordinates (meters)
 0.0  0.0
-714.08  714.08
+{rectangle_length_m}  {rectangle_width_m}
 #   RFD-AverageSlope(ratio m/m)
 -1
 #   RFD-BarrierNo
@@ -233,6 +236,9 @@ def run_weps(payload: WEPSJobPayload) -> None:
             windfile.name,
             manfile.name,
             ifcfile.name,
+            payload.rectangle_length_m,
+            payload.rectangle_width_m,
+            payload.rectangle_rotation_deg,
         )
         with open(Path(tmpdir) / "weps.run", "w") as fh:
             fh.write(runfile)

@@ -77,7 +77,8 @@ def main(
             partition by o.field_id ORDER by huc12_fpath_num asc),
         substr(f.landuse, :charat, 1) as crop, p.huc12_fpath_num, h.huc12_code,
         st_pointn(st_transform(o.geom, 4326), 1) as pt, c.filepath as clifile,
-        g.mukey
+        g.mukey, f.rectangle_length_m, f.rectangle_width_m,
+        f.rectangle_rotation_deg
         from flowpath_ofe o
         JOIN flowpath p on (o.flowpath_id = p.flowpath_id)
         JOIN field f ON (o.field_id = f.field_id)
@@ -86,9 +87,10 @@ def main(
         JOIN gssurgo g on (o.gssurgo_id = g.gssurgo_id)
         where (h.states ~* 'MN' or h.huc12_code = ANY(:graphhucs))
         and f.scenario_id = :scenario_id and p.scenario_id = :scenario_id
-        and o.ofe = 1)
+        and o.ofe = 1 and f.rectangle_length_m > 0)
     select field_id, huc12_fpath_num, huc12_code, st_x(pt) as lon,
-    st_y(pt) as lat, crop, clifile, mukey from data
+    st_y(pt) as lat, crop, clifile, mukey, rectangle_length_m,
+    rectangle_width_m, rectangle_rotation_deg from data
     where row_number = 1 and crop in ('C', 'B') {huclimit}
         """,
                 huclimit=" and huc12_code = ANY(:hucs)" if myhucs else "",
@@ -142,6 +144,9 @@ def main(
             scenario=scenario,
             lon=row.lon,
             lat=row.lat,
+            rectangle_length_m=row.rectangle_length_m,
+            rectangle_width_m=row.rectangle_width_m,
+            rectangle_rotation_deg=row.rectangle_rotation_deg,
         )
         # Publish to default exchange ("") with routing_key=queue name
         # This directly routes the message to the named queue
