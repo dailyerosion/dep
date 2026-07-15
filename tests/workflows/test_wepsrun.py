@@ -19,6 +19,9 @@ def test_wepsjobpayload_valid():
         dt=None,
         lon=0.0,
         lat=0.0,
+        rectangle_length_m=100.0,
+        rectangle_width_m=50.0,
+        rectangle_rotation_deg=0.0,
     )
     assert payload.wepsexe == "wepp20240930"
     assert payload.for_sweep is False

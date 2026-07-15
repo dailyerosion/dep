@@ -7,5 +7,5 @@ class QUEUES(StrEnum):
     """RabbitMQ queue names used with versioning to support payload updates."""
 
     WEPP = "wepp_v1"
-    WEPS = "weps_v3"
+    WEPS = "weps_v4"
     SWEEP = "sweep_v2"

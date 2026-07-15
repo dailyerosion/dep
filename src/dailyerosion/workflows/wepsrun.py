@@ -46,3 +46,19 @@ class WEPSJobPayload(BaseModel):
     ] = None
     lon: Annotated[float, Field(description="Longitude of Point")]
     lat: Annotated[float, Field(description="Latitude of Point")]
+    rectangle_length_m: Annotated[
+        float,
+        Field(description="Length of the field modelled.", gt=0),
+    ]
+    rectangle_width_m: Annotated[
+        float,
+        Field(description="Width of the field modelled.", gt=0),
+    ]
+    rectangle_rotation_deg: Annotated[
+        float,
+        Field(
+            description="Rotation of the field modelled in degrees.",
+            ge=0,
+            le=180,
+        ),
+    ]
