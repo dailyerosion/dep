@@ -8,12 +8,13 @@ from pyiem.database import get_dbconn
 from pyiem.util import logger
 
 LOG = logger()
+MIN_ENVELOPE_AREA = 0.1  # Prevent a division by zero, likely GIGO though
 
 
 @click.command()
 @click.option("-s", "--scenario", type=int, required=True)
 def main(scenario: int):
-    """Do great things."""
+    """Our main loop."""
     pgconn = get_dbconn("dep")
     while True:
         cursor = pgconn.cursor()
@@ -37,7 +38,7 @@ def main(scenario: int):
             *,
             ST_Distance(p1, p2) AS d12,
             ST_Distance(p2, p3) AS d23,
-            sqrt(poly_area / greatest(ST_Area(env), 0.1)) AS scale
+            sqrt(poly_area / greatest(ST_Area(env), %s)) AS scale
             FROM pts
         ), newvals as (
         SELECT
@@ -73,15 +74,15 @@ def main(scenario: int):
         else n.rotation_deg end)
         FROM newvals n WHERE f.field_id = n.field_id
             """,
-            (scenario,),
+            (scenario, MIN_ENVELOPE_AREA),
         )
         updates = cursor.rowcount
         LOG.info(f"Computed {updates} field rectangles")
         cursor.close()
+        pgconn.commit()
         if updates < 10_000:
             LOG.info("Exhausted...")
             break
-        pgconn.commit()
     pgconn.close()
 
 
