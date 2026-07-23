@@ -26,9 +26,11 @@ from dailyerosion.workflows.sweeprun import SweepJobPayload, SweepJobResult
 from dailyerosion.workflows.worker import sanitize_exe
 
 LOG = logger()
-MEMORY = {
+STATE = {
+    "constant_biomass": None,
     "runs": 0,
     "timestamp": time.time(),
+    "save_input": False,
 }
 IEMRE = "http://mesonet.agron.iastate.edu/iemre/hourly"
 BINPATH = Path("/opt/dep/bin")
@@ -105,13 +107,14 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
         Validated SWEEP job payload containing runfile content and executable.
     """
     # Build the SWEEP XML filepath
+    fnprefix = f"{payload.huc_12}_{payload.fpath}"
     basefn = (
         Path("/i")
         / f"{payload.scenario}"
         / "sweepin"
         / f"{payload.huc_12[:8]}"
         / f"{payload.huc_12[8:12]}"
-        / f"{payload.huc_12}_{payload.fpath}"
+        / f"{fnprefix}"
     )
     # Get the wind information
     drct, windobs = get_wind_obs(payload.dt, payload.lon, payload.lat)
@@ -141,17 +144,31 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
         node.text = f"{windobs[i]:.14f}"
 
     # Copy in and update the references to various files
-    shutil.copyfile(f"{basefn}.treat", f"{tempdir}/sweep.treat")
-    shutil.copyfile(f"{basefn}.soilsurf", f"{tempdir}/sweep.soilsurf")
+    shutil.copyfile(f"{basefn}.treat", f"{tempdir}/{fnprefix}.treat")
+    shutil.copyfile(f"{basefn}.soilsurf", f"{tempdir}/{fnprefix}.soilsurf")
+
+    if STATE["constant_biomass"] is not None:
+        ttree = etree.parse(f"{tempdir}/{fnprefix}.treat")
+        troot = ttree.getroot()
+        tnode = troot.find("./SCI_BiomassFlatCover")
+        tnode.text = f"{STATE['constant_biomass']:.3f}"
+        ttree.write(
+            f"{tempdir}/{fnprefix}.treat",
+            encoding="ISO-8859-1",
+            xml_declaration=True,
+            doctype='<!DOCTYPE TreatmentData SYSTEM "treatment.dtd">',
+            pretty_print=True,
+        )
+
     sci_treat = root.find("./SCI_Subregions/SCI_Subregion/SCI_treat")
-    sci_treat.text = "sweep.treat"
+    sci_treat.text = f"{fnprefix}.treat"
     sci_soilsurf = root.find("./SCI_Subregions/SCI_Subregion/SCI_soilsurf")
-    sci_soilsurf.text = "sweep.soilsurf"
+    sci_soilsurf.text = f"{fnprefix}.soilsurf"
 
     # hacks again
     sci_ifc = root.find("./SCI_Subregions/SCI_Subregion/GUI_soilifc")
-    sci_ifc.text = "sweep.ifc"
-    shutil.copyfile(payload.ifcfile, f"{tempdir}/sweep.ifc")
+    sci_ifc.text = f"{fnprefix}.ifc"
+    shutil.copyfile(payload.ifcfile, f"{tempdir}/{fnprefix}.ifc")
     shutil.copyfile("/i/0/weps_test/erod.grdx", f"{tempdir}/erod.grdx")
     grdnode = root.find("./SCI_GridFile")
     grdnode.text = "erod.grdx"
@@ -165,8 +182,19 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
         pretty_print=True,
     )
 
-    # We are ready to run, gasp
+    if STATE["save_input"]:
+        # Save the updated SWEEP input file to the original location
+        tree.write(
+            f"{basefn}.sweep",
+            encoding="ISO-8859-1",
+            xml_declaration=True,
+            doctype='<!DOCTYPE sweepData SYSTEM "sweep.dtd">',
+            pretty_print=True,
+        )
+        # Redundantly save the soil file
+        shutil.copyfile(f"{tempdir}/{fnprefix}.ifc", f"{basefn}.ifc")
 
+    # We are ready to run, gasp
     cmd = [
         sanitize_exe(BINPATH / payload.sweepexe),
         "-ierod.sweep",
@@ -242,7 +270,7 @@ def ack_message(ch: Channel, delivery_tag):
         # Channel is already closed, so we can't ACK this message;
         # log and/or do something that makes sense for your app in this case.
         pass
-    MEMORY["runs"] += 1
+    STATE["runs"] += 1
 
 
 def run_consumer(queue: str, jobfunc, executor, prefetch_count: int):
@@ -272,11 +300,11 @@ def print_timing():
     """Print timing information."""
     while True:
         time.sleep(300)
-        runs = MEMORY["runs"]
-        dt = time.time() - MEMORY["timestamp"]
+        runs = STATE["runs"]
+        dt = time.time() - STATE["timestamp"]
         rate = runs / dt
-        MEMORY["runs"] = 0
-        MEMORY["timestamp"] = time.time()
+        STATE["runs"] = 0
+        STATE["timestamp"] = time.time()
         if runs == 0:
             continue
         LOG.info("%s runs over %.3fs for %.3f r/s", runs, dt, rate)
@@ -293,13 +321,27 @@ def print_timing():
     type=int,
     help="Maximum unacknowledged jobs to reserve per worker process",
 )
+@click.option(
+    "--save-input",
+    is_flag=True,
+    help=("Save SWEEP input files {soil,sweepin} to the original location."),
+)
+@click.option(
+    "--constant-biomass",
+    type=float,
+    help=("For sensitivity work, hard code a biomass value (0-1)"),
+)
 def main(
     workers: int,
     drainme: bool,
     queue: str,
     prefetch_count: int | None,
+    save_input: bool,
+    constant_biomass: float | None,
 ):
     """Go main Go."""
+    STATE["save_input"] = save_input
+    STATE["constant_biomass"] = constant_biomass
     jobfunc = run if not drainme else drain
     if prefetch_count is None:
         prefetch_count = workers
