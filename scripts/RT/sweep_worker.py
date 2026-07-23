@@ -148,7 +148,7 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
     shutil.copyfile(f"{basefn}.soilsurf", f"{tempdir}/{fnprefix}.soilsurf")
 
     if STATE["constant_biomass"] is not None:
-        ttree = etree.parse(f"{tempdir}/sweep.treat")
+        ttree = etree.parse(f"{tempdir}/{fnprefix}.treat")
         troot = ttree.getroot()
         tnode = troot.find("./SCI_BiomassFlatCover")
         tnode.text = f"{STATE['constant_biomass']:.3f}"
