@@ -1,30 +1,39 @@
-O 03 Planter, sprig, no-till
-+ 3.7415698 0.52 2.2351363 0.0 2.2351363 1.3410819 2.6821637
-T Begin growth, sprigs are planted with little soil disturbance, also use for manual sprigging.User inputs: crop/grass type, target yield
-t Planter used to plant sprigs.  Similar to a light finishing disk 11-14-02 DTLLMOD and WEPS update correlation; new WEPS operation record, as previous translate,Planter, sprig, no-till|rename|Planter, sprig conventional, 160410 jkp
+O 03 Planter, double disk opnr, fluted coulter
++ 5.0511193 2.44 2.2351363 0.0 2.2351363 1.5645955 2.9056773
+T Begin growth, double disk openers and fluted coulters on 30 inch row spacing.
+t REVISED102403 DTL
+t This is a standard planter on 30 in sp with a fluted coulter and a 1 in ridge ht.  MAS 8/7/07
+t G2 was added into file in front of the flattening (P24), burial (P25), and resurfacing (P26) factors because the area affected is less than 1.0 and
+t the RUSLE values were normalized to 1.0.  This change will imulate the correct residue changes based on the method set forth in RUSLE.
+t RUSLE's factors have been redused to based on the area affected.
+t The stalk fall rate factor (P34) was moved ahead of the new (G2) factor to set the fall rate to the less than 1.0 area affected.  8/7/07 MAS
+t LMOD and WEPS update correlation; new WEPS operation record, as previous translate,
+t Planter, double disk opnr w/fluted coulter |rename|Planter, double disk opnr, fluted coulter, 160410 jkp
 + 
 G 01 Tillage
-+ 50.800102 0.5 0.05 50.800102 25.400051 76.20015
++ 63.500126 0.4 0.20 63.500126 50.800102 101.600204
 P 01 Break Crust
 P 02 Random Roughness
-+ 1 15.240031
++ 1 10.160021
 P 05 Ridges and Dikes
-+ 1 25.400051 609.6012 508.001 0.0 0.0
++ 1 25.400051 762.0015 635.0013 0.0 0.0
 P 11 Aggregate Crushing
 + 2.4 2.0
 P 12 Soil Loosening
-+ 0.8
++ 0.65
 P 13 Soil Layer Mixing
-+ 0.25
-P 24 Flatten Standing Biomass
-+ 0 0.85 0.7 0.6 0.5 1.0
-P 25 Bury Flat Biomass
-+ 1 .73 0.63 .55 .4 .73
-P 26 Resurface Buried Biomass
-+ 0.02 0.04 0.02 0.05 0.02
++ 0.3
 P 34 Change Standing Biomass Fall Rate
 + 7 3.0 2.5 2.0 1.5 1.0
 + 0.5 0.6 0.7 0.8 1.0
+G 02 Biomass Manipulation
++ 1.0
+P 24 Flatten Standing Biomass
++ 0 0.35 0.30 0.25 0.1 1.0
+P 25 Bury Flat Biomass
++ 1 0.065 0.055 0.045 0.017 0.90
+P 26 Resurface Buried Biomass
++ 0.01 0.01 0.01 0.02 0.01
 G 03 Crop Name
 + Corn, grain, seed
 P 51 Seeding Configuration
@@ -32,11 +41,13 @@ P 51 Seeding Configuration
 + 7.413448 1 1 112 1 1 0
 + bu/ac
 + 15.5 159.3 4 0.8 0.65 0.8
-+ 3.048037 0.05 1.5240185 10 30 0 120 1200
-+ -5 -15 0.01 0.95 0 40
++ 2.601 0.05 1.5240185 10 28 0 120 1200
++ -5.0 -15.0 0.01 0.95 0 40
 + 0.0031 0.9233 0.3266 -0.044 0 0.976 0.511 0.0287
 + 0.3266 -0.044 0.22259772 0.72 17.4 0.05 0 0.9
 + 333.33334 333.33334 3 0.03 0 0 0 3
-+ 0.016 0.016 0.016 0.016 0.153 0.01 20 3.3812115
++ 0.016 0.016 0.016 0.016 0.153 0.037 20 3.3812115
 + -1.20379 0.604887 0.9194 0.056871932 0 0.0 0.0 0.0
-T Annual, grass, warm season, grain production,suggest harvest oprn: Harvest, killing crop with percent standing stubble,
+T Annual, grass, warm season, seed. Suggest harvest op: Harvest, killing crop with percent standing stubble. Target Yield calibration:  YES
+t Archive:
+t This record is from the 90 day corn. It is a test file to see if one corn record can work in all CMZs.  MAS 10-19-06
