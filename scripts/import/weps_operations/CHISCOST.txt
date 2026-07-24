@@ -1,31 +1,12 @@
-O 03 Chisel plow, coulter, st. pts.
-+ 11.2247095 52.65 2.2351363 0.0 2.2351363 1.5645955 2.9056773
-T Tillage operation, Coulter caddy and a chisel - straight points. Vegetation killed.
-t Chisel plow with coulters and straight points  062806 DTL REV 110207 DTL
-t Created 11-16-07 MAS
-t Corrected a database error in the Standard Depth, from 7.0 to 2.0 inches.  MAS 10-27-08
+O 03 Chisel, st. pt
++ 9.353924 45.5 2.2351363 0.0 2.2351363 1.5645955 2.9056773
+T Tillage operation, Chisel - straight points. Vegetation killed.
 t Edit process order and correlate standard operation parameters with WEPS and RUSLE2, 151104 JKP
-t LMOD and WEPS update correlation; existing WEPS operation record, 160410 jkp
+t LMOD and WEPS update correlation; existing WEPS operation record,adjusted name, 160410 jkp
 +
 G 01 Tillage
-+ 50.800102 0.4 0.55 50.800102 38.100075 63.500126
-P 01 Break Crust
-P 11 Aggregate Crushing
-+ 2.4 2.0
-P 12 Soil Loosening
-+ 0.85
-P 13 Soil Layer Mixing
-+ 0.01
-P 31 Kill or Defoliate Growing Crop
-+ 2
-G 02 Biomass Manipulation
-+ 1.0
-P 25 Bury Flat Biomass
-+ 1 0.19 0.14 0.11 0.055 0.11
-P 26 Resurface Buried Biomass
-+ 0.01 0.01 0.01 0.02 0.01
-G 01 Tillage
 + 177.80035 0.75 1.0 177.80035 101.600204 203.20041
+P 01 Break Crust
 P 02 Random Roughness
 + 1 38.100075
 P 05 Ridges and Dikes
@@ -36,11 +17,13 @@ P 12 Soil Loosening
 + 0.85
 P 13 Soil Layer Mixing
 + 0.37
+P 31 Kill or Defoliate Growing Crop
++ 2
 P 34 Change Standing Biomass Fall Rate
 + 7 3.0 2.5 2.0 1.5 1.0
 + 0.5 0.6 0.7 0.8 1.0
 P 24 Flatten Standing Biomass
-+ 0 0.65 0.5 0.45 0.15 1.0
++ 0 0.6 0.4 0.25 0.1 1.0
 P 25 Bury Flat Biomass
 + 1 0.76 0.68 0.58 0.5 0.9
 P 26 Resurface Buried Biomass
