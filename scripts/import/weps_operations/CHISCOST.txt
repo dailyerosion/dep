@@ -1,7 +1,8 @@
 O 03 Chisel, st. pt
-+ 9.353924 45.5 2.2351363 0 2.2351363 1.5645955 2.9056773
++ 9.353924 45.5 2.2351363 0.0 2.2351363 1.5645955 2.9056773
 T Tillage operation, Chisel - straight points. Vegetation killed.
-t Edit process order and correlate standard operation parameters with WEPS and RUSLE2, 151104 JKP LMOD and WEPS update correlation; existing WEPS operation record,adjusted name, 160410 jkp
+t Edit process order and correlate standard operation parameters with WEPS and RUSLE2, 151104 JKP
+t LMOD and WEPS update correlation; existing WEPS operation record,adjusted name, 160410 jkp
 +
 G 01 Tillage
 + 177.80035 0.75 1.0 177.80035 101.600204 203.20041
@@ -27,4 +28,3 @@ P 25 Bury Flat Biomass
 + 1 0.76 0.68 0.58 0.5 0.9
 P 26 Resurface Buried Biomass
 + 0.05 0.06 0.07 0.2 0.05
-

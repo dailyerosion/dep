@@ -1,30 +1,33 @@
-O 03 Cultivator, field 6-12 in sweeps
-+ 6.921904 26 2.2351363 0.0 2.2351363 1.5645955 2.9056773
-T Field Cultivator used for seedbed preparation, 1 or more gangs 6-12 inch sweeps,vegetation killed.
-t Corrected Speed of operation numbers 11-1-11 MASLMOD and WEPS update correlation; existing WEPS operation record, 160410 jkp
+O 03 Disk, tandem secondary
++ 4.4898834 32.5 2.2351363 0.0 2.2351363 1.3410819 2.6821637
+T Tandem Disk, 9 inch spacing, with a rolling basket. Common use seedbed prep and 
+T applied material incorporation. Vegetation killed.
+t 9-in. Spacing, Front and Rear; Good for seedbed preparation/chemical incorporation in medium to heavy soils
+t Works well in primary tillage in light to medium soils
+t Provides good residue-handling capability.  MAS 10-26-06
+t LMOD and WEPS update correlation; existing WEPS operation record, 160410 jkp
 +
 G 01 Tillage
-+ 101.600204 0.4 1.0 101.600204 50.800102 152.4003
++ 127.00027 0.75 1.0 127.00026 76.20015 152.4003
 P 01 Break Crust
 P 02 Random Roughness
 + 1 15.240031
 P 05 Ridges and Dikes
-+ 1 50.800102 228.60045 0.0 0.0 0.0
++ 1 50.800102 228.60046 0.0 0.0 0.0
 P 11 Aggregate Crushing
-+ 3.0 1.0
++ 2.8 0.75
 P 12 Soil Loosening
-+ 0.65
++ 0.85
 P 13 Soil Layer Mixing
-+ 0.3
++ 0.4
 P 31 Kill or Defoliate Growing Crop
 + 2
-P 40 End crop Biomass Manipulation
-P 24 Flatten Standing Biomass
-+ 0 0.7 0.4 0.3 0.2 1.0
-P 25 Bury Flat Biomass
-+ 1 0.4 0.35 0.3 0.2 0.85
-P 26 Resurface Buried Biomass
-+ 0.05 0.06 0.07 0.2 0.05
 P 34 Change Standing Biomass Fall Rate
 + 7 3.0 2.5 2.0 1.5 1.0
 + 0.5 0.6 0.7 0.8 1.0
+P 24 Flatten Standing Biomass
++ 0 0.85 0.7 0.6 0.5 1.0
+P 25 Bury Flat Biomass
++ 1 0.73 0.63 0.55 0.4 0.73
+P 26 Resurface Buried Biomass
++ 0.02 0.04 0.02 0.05 0.02

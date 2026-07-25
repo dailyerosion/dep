@@ -1,10 +1,10 @@
 O 03 Planter, double disk opnr
 + 4.1157265 2.4375 2.2351363 0 2.2351363 1.5645955 2.9056773
-T Begin growth, double disk opener on 30 in spacing.User inputs: crop and target yield
-t This is a standard planter on 30 in sp with a 1 in ridge.  Created in RUSLE 6/7/01.  MAS 8/7/07G2 was added into file in front of the flattening (P24), burial (P25), and resurfacing (P26) factors because the area affected is less than 1.0 andthe RUSLE values were normalized to 1.0.  This change will imulate the correct residue changes based on the method set forth in RUSLE.RUSLE's factors have been redused to based on the area affected.The stalk fall rate factor (P34) was moved ahead of the new (G2) factor to set the fall rate to the less than 1.0 area affected.  8/7/07 MASLMOD and WEPS update correlation; existing WEPS operation record, 160410 jkp
-+
+T Begin growth, double disk opener on 30 in spacing.  User inputs: crop and target yield.
+t This is a standard planter on 30 in sp with a 1 in ridge.  Created in RUSLE 6/7/01.  MAS 8/7/07 G2 was added into file in front of the flattening (P24), burial (P25), and resurfacing (P26) factors because the area affected is less than 1.0 and the RUSLE values were normalized to 1.0.  This change will imulate the correct residue changes based on the method set forth in RUSLE. RUSLE's factors have been redused to based on the area affected. The stalk fall rate factor (P34) was moved ahead of the new (G2) factor to set the fall rate to the less than 1.0 area affected.  8/7/07 MAS LMOD and WEPS update correlation; existing WEPS operation record, 160410 jkp note that for all four of the Planter double disk opener 30", 40", 18" and 15" that the RUSLE disturbance value was used for a regular 30" planter and P25 was adjusted to increase burial to reflect additional disturbance from a 15 ' and 18" planter and slightly less with a 40" planter using the G2 process to normalize to the entire surface. Mjk 3-22-22
++ 
 G 01 Tillage
-+ 63.500126 0.4 .15 63.500126 50.800102 101.600204
++ 63.500126 0.4 0.15 63.500126 50.800102 101.600204
 P 01 Break Crust
 P 02 Random Roughness
 + 1 10.160021
@@ -22,23 +22,24 @@ P 34 Change Standing Biomass Fall Rate
 G 02 Biomass Manipulation
 + 1.0
 P 24 Flatten Standing Biomass
-+ 0 .3 .25 .2 0.1 1.0
++ 0 0.3 0.25 0.2 0.1 1.0
 P 25 Bury Flat Biomass
-+ 1 .0525 0.0375 .03 .015 .03
++ 1 0.0525 0.038 0.03 0.015 0.03
 P 26 Resurface Buried Biomass
-+ .01 .01 .01 .02 .01
++ 0.01 0.01 0.01 0.02 0.01
 G 03 Crop Name
 + Corn, grain, seed
 P 51 Seeding Configuration
 + 1 0.0 2
-+ 7.413448 1 1 112 1 1 0
++ 7.413448 1 1 112.0 1 1 0
 + bu/ac
 + 15.5 159.3 4 0.8 0.65 0.8
-+ 3.048037 0.05 1.5240185 10 30 0 120 1200
-+ -5 -15 0.01 0.95 0 40
++ 2.601 0.05 1.5240185 10 28 0 120 1200
++ -5.0 -15.0 0.01 0.95 0 40
 + 0.0031 0.9233 0.3266 -0.044 0 0.976 0.511 0.0287
 + 0.3266 -0.044 0.22259772 0.72 17.4 0.05 0 0.9
 + 333.33334 333.33334 3 0.03 0 0 0 3
-+ 0.016 0.016 0.016 0.016 0.153 0.01 20 3.3812115
++ 0.016 0.016 0.016 0.016 0.153 0.037 20 3.3812115
 + -1.20379 0.604887 0.9194 0.056871932 0 0.0 0.0 0.0
-T Annual, grass, warm season, grain production,suggest harvest oprn: Harvest, killing crop with percent standing stubble,
+T Annual, grass, warm season, seed. Suggest harvest op: Harvest, killing crop with percent standing stubble. Target Yield calibration:  YES
+t Archive: This record is from the 90 day corn. It is a test file to see if one corn record can work in all CMZs.  MAS 10-19-06
