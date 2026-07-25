@@ -1,8 +1,10 @@
 """Persist the SWEEP results to a database."""
 
 import json
+import signal
 import threading
 import time
+import traceback
 from queue import Queue
 
 from pika.exceptions import AMQPConnectionError
@@ -15,7 +17,9 @@ RABBITMQ_QUEUE = "sweep_results"
 RECONNECT_DELAY_SECONDS = 5
 
 
-# Placeholder for database persistence
+def _handle_sigterm(_signum, _frame):
+    """Handle SIGTERM signal."""
+    raise KeyboardInterrupt()
 
 
 def persist_to_database(cursor, result: SweepJobResult):
@@ -40,6 +44,7 @@ def persist_to_database(cursor, result: SweepJobResult):
 
 def main():
     """Go Main Go."""
+    signal.signal(signal.SIGTERM, _handle_sigterm)
     db_queue = Queue()
 
     def db_worker():
@@ -92,7 +97,8 @@ def main():
         except AMQPConnectionError as exp:
             print(
                 "RabbitMQ connection lost: "
-                f"{exp}. Reconnecting in {RECONNECT_DELAY_SECONDS}s..."
+                f"{exp}. Reconnecting in {RECONNECT_DELAY_SECONDS}s...\n"
+                f"{traceback.format_exc()}"
             )
             time.sleep(RECONNECT_DELAY_SECONDS)
         except Exception as exp:
@@ -109,6 +115,11 @@ def main():
 
     db_queue.put(None)  # Stop db_worker
     worker_thread.join(timeout=5)
+    if worker_thread.is_alive():
+        print(
+            "Warning: db_worker did not finish within timeout; "
+            "some results may not have been persisted."
+        )
 
 
 if __name__ == "__main__":
