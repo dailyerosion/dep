@@ -7,6 +7,8 @@
 
 ### New Features
 
+- Added `consume_queue` worker helper for a common DEP code pattern.
+
 ### Bug Fixes
 
 ## **1.1.3** (24 Jun 2026)
