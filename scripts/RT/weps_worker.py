@@ -32,6 +32,7 @@ from dailyerosion.workflows import QUEUES
 from dailyerosion.workflows.wepsrun import WEPSJobPayload
 from dailyerosion.workflows.worker import consume_queue, sanitize_exe
 
+DAY1 = date(2007, 1, 1)
 LOG = logger()
 MEMORY = {
     "runs": 0,
@@ -88,9 +89,6 @@ def process_erod(huc_12: str, fpath: int, tmpdir, simulation_day):
         Path(tmpdir) / f"saeros{simulation_day}" / sci_soilsurf.text,
         f"{savebase}.soilsurf",
     )
-
-
-DAY1 = date(2007, 1, 1)
 
 
 def generate_runfile(
@@ -291,10 +289,15 @@ def run_weps(payload: WEPSJobPayload) -> None:
                 savefn.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(plotfn, savefn)
         except subprocess.CalledProcessError as exp:
-            LOG.error("WEPS command failed: %s", " ".join(exp.cmd))
-            LOG.error("Return code: %s", exp.returncode)
-            LOG.error("STDOUT: %s", exp.stdout)
-            LOG.error("STDERR: %s", exp.stderr)
+            LOG.error(
+                "WEPS [%s_%s] command `%s` returned %s",
+                payload.huc_12,
+                payload.fpath,
+                " ".join(exp.cmd),
+                exp.returncode,
+            )
+            LOG.info("STDOUT: %s", exp.stdout)
+            LOG.info("STDERR: %s", exp.stderr)
             return
         if payload.for_sweep:
             process_erod(payload.huc_12, payload.fpath, tmpdir, simulation_day)
