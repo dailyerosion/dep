@@ -95,19 +95,21 @@ def create_flowpath_id(cursor, scenario, huc12, fpath) -> int:
     return cursor.fetchone()[0]
 
 
-def fillout_codes(df):
+def fillout_codes(df: pd.DataFrame):
     """ "Get the right full-string codes."""
     if KNOBS["CONSTANT_LANDUSE"] is None:
         s = df[ROTATION_FIELD].str
-        df["landuse"] = s[1] + s[0] + s[1] + s[:] + s[-1] + s[-2]
-        if df["landuse"].str.len().min() != YEARS:
+        # Careful here with the proper repeats forward and backward in time
+        df["landuse"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1]
+        if any(df["landuse"].str.len() != YEARS):
             raise ValueError(f"landuse is not {YEARS} chars")
     else:
         df["landuse"] = KNOBS["CONSTANT_LANDUSE"] * YEARS
     if KNOBS["CONSTANT_MANAGEMENT"] is None:
         s = df["Management_CY_2024"].str
-        df["management"] = s[1] + s[0] + s[1] + s[:] + s[-1] + s[-2]
-        if df["management"].str.len().min() != YEARS:
+        # Careful here with the proper repeats forward and backward in time
+        df["management"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1]
+        if any(df["management"].str.len() != YEARS):
             raise ValueError(f"management is not {YEARS} chars")
     else:
         df["management"] = KNOBS["CONSTANT_MANAGEMENT"] * YEARS
