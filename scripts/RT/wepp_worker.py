@@ -14,10 +14,9 @@ import click
 from pydantic import ValidationError
 from pyiem.util import logger
 
-from dailyerosion.util import get_rabbitmqconn
 from dailyerosion.workflows import QUEUES
 from dailyerosion.workflows.wepprun import WeppJobPayload
-from dailyerosion.workflows.worker import sanitize_exe
+from dailyerosion.workflows.worker import consume_queue, sanitize_exe
 
 LOG = logger()
 MEMORY = {
@@ -120,29 +119,6 @@ def ack_message(ch, delivery_tag):
     MEMORY["runs"] += 1
 
 
-def run_consumer(queue: str, jobfunc, executor, prefetch_count: int):
-    """Our main runloop."""
-    LOG.info("Starting queue_worker for queue: %s", queue)
-
-    conn, _config = get_rabbitmqconn()
-    channel = conn.channel()
-    # Declare queue as durable (must match producer)
-    # This is idempotent - safe to declare multiple times
-    channel.queue_declare(queue, durable=True)
-    # Limit unacknowledged messages to prevent overwhelming worker
-    channel.basic_qos(prefetch_count=prefetch_count)
-
-    def proxy(mychannel, method, _props, payload):
-        """Wrapper around jobfunc."""
-        delivery_tag = method.delivery_tag
-        executor.submit(jobfunc, mychannel, delivery_tag, payload)
-
-    # Consume from queue with manual acknowledgment for reliability
-    channel.basic_consume(queue, proxy, auto_ack=False)
-    # blocks
-    channel.start_consuming()
-
-
 def print_timing():
     """Print timing information."""
     while True:
@@ -185,7 +161,7 @@ def main(
         # connection.  Run until something bad happens, then start again!
         try:
             with ThreadPoolExecutor(max_workers=workers) as executor:
-                run_consumer(queue, jobfunc, executor, prefetch_count)
+                consume_queue(queue, jobfunc, executor, prefetch_count, LOG)
             LOG.warning("run_consumer exited cleanly, sleeping 30 seconds")
             time.sleep(30)
         except KeyboardInterrupt:

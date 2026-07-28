@@ -28,11 +28,11 @@ from pika.channel import Channel
 from pydantic import ValidationError
 from pyiem.util import logger
 
-from dailyerosion.util import get_rabbitmqconn
 from dailyerosion.workflows import QUEUES
 from dailyerosion.workflows.wepsrun import WEPSJobPayload
-from dailyerosion.workflows.worker import sanitize_exe
+from dailyerosion.workflows.worker import consume_queue, sanitize_exe
 
+DAY1 = date(2007, 1, 1)
 LOG = logger()
 MEMORY = {
     "runs": 0,
@@ -89,9 +89,6 @@ def process_erod(huc_12: str, fpath: int, tmpdir, simulation_day):
         Path(tmpdir) / f"saeros{simulation_day}" / sci_soilsurf.text,
         f"{savebase}.soilsurf",
     )
-
-
-DAY1 = date(2007, 1, 1)
 
 
 def generate_runfile(
@@ -292,10 +289,15 @@ def run_weps(payload: WEPSJobPayload) -> None:
                 savefn.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(plotfn, savefn)
         except subprocess.CalledProcessError as exp:
-            LOG.error("WEPS command failed: %s", " ".join(exp.cmd))
-            LOG.error("Return code: %s", exp.returncode)
-            LOG.error("STDOUT: %s", exp.stdout)
-            LOG.error("STDERR: %s", exp.stderr)
+            LOG.error(
+                "WEPS [%s_%s] command `%s` returned %s",
+                payload.huc_12,
+                payload.fpath,
+                " ".join(exp.cmd),
+                exp.returncode,
+            )
+            LOG.info("STDOUT: %s", exp.stdout)
+            LOG.info("STDERR: %s", exp.stderr)
             return
         if payload.for_sweep:
             process_erod(payload.huc_12, payload.fpath, tmpdir, simulation_day)
@@ -342,28 +344,6 @@ def ack_message(ch: Channel, delivery_tag):
         # log and/or do something that makes sense for your app in this case.
         pass
     MEMORY["runs"] += 1
-
-
-def run_consumer(queue: str, jobfunc, executor, prefetch_count: int):
-    """Our main runloop."""
-    LOG.info("Starting queue_worker for queue: %s", queue)
-
-    conn, _config = get_rabbitmqconn()
-    channel = conn.channel()
-    # Declare queue as durable (must match producer)
-    # This is idempotent - safe to declare multiple times
-    channel.queue_declare(queue, durable=True)
-    channel.basic_qos(prefetch_count=prefetch_count)
-
-    def proxy(mychannel, method, _props, payload):
-        """Wrapper around jobfunc."""
-        delivery_tag = method.delivery_tag
-        executor.submit(jobfunc, mychannel, delivery_tag, payload)
-
-    # Consume from queue with manual acknowledgment for reliability
-    channel.basic_consume(queue, proxy, auto_ack=False)
-    # blocks
-    channel.start_consuming()
 
 
 def print_timing():
@@ -416,7 +396,7 @@ def main(
         # connection.  Run until something bad happens, then start again!
         try:
             with ThreadPoolExecutor(max_workers=workers) as executor:
-                run_consumer(queue, jobfunc, executor, prefetch_count)
+                consume_queue(queue, jobfunc, executor, prefetch_count, LOG)
             LOG.warning("run_consumer exited cleanly, sleeping 30 seconds")
             time.sleep(30)
         except KeyboardInterrupt:
