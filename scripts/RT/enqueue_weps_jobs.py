@@ -113,13 +113,10 @@ def main(
     # This is idempotent - safe to declare multiple times
     channel.queue_declare(queue=queue, durable=True)
     sts = datetime.now()
-    # When we are for_sweep mode, we hopefully do not need real wind data
-    windfile = "/i/0/wind/zeros.win"
     missing_soilfile_cnt = 0
     for row in fieldsdf.itertuples():
-        if not for_sweep:
-            gid = f"{get_gid(row.lon, row.lat):06.0f}"
-            windfile = f"/i/0/wind/{gid[:3]}/{gid}.win"
+        gid = f"{get_gid(row.lon, row.lat):06.0f}"
+        windfile = f"/i/0/wind/{gid[:3]}/{gid}.win"
         # Presently, the database is actually at FY2025, but we don't have
         # a source for the files.  Thankfully, there is only a small variance
         # between the releases.
