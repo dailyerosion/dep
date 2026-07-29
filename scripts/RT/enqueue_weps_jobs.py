@@ -12,7 +12,7 @@ Division of Labor
 """
 
 import time
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 import click
@@ -31,44 +31,11 @@ from dailyerosion.workflows.wepsrun import WEPSJobPayload
 LOG = logger()
 
 
-@click.command()
-@click.option(
-    "--date",
-    "-d",
-    required=False,
-    type=click.DateTime(),
-    help="Date to run for when for_sweep is set.",
-)
-@click.option("-s", "--scenario", type=int, help="Scenario ID", default=0)
-@click.option("--myhucs", help="Specify file of HUC12s to filter job.")
-@click.option("--queue", help="RabbitMQ destination", default=QUEUES.WEPS)
-@click.option(
-    "--for_sweep", is_flag=True, help="Is this job to bootstrap SWEEP runs."
-)
-def main(
-    date: datetime | None,
-    scenario: int,
-    myhucs: str | None,
-    queue: str,
-    for_sweep: bool,
-):
-    """Go main Go."""
-    # First, do some checking that args make sense.
-    if date is None and for_sweep:
-        LOG.error("Must specify --date when --for_sweep is set")
-        return
-    if date is not None and not for_sweep:
-        LOG.error("--date is only used when --for_sweep is set")
-        return
-    if myhucs:
-        LOG.warning("Using %s to filter job submission", myhucs)
-        with open(myhucs, encoding="ascii") as fh:
-            myhucs = [s.strip() for s in fh]
-
+def get_fields(dt: date, scenario: int, myhucs: list[str]) -> pd.DataFrame:
+    """See what our database has."""
     # We are making an assumption below about filtering corn/soybean fields
-    dt = datetime.now().date() if date is None else date.date()
     with get_sqlalchemy_conn("dep") as conn:
-        fieldsdf = pd.read_sql(
+        return pd.read_sql(
             sql_helper(
                 """
     with data as (
@@ -103,23 +70,21 @@ def main(
                 "scenario_id": scenario,
             },
         )
-    if fieldsdf.empty:
-        LOG.warning("No fields found with query, exiting")
-        return
-    totaljobs = len(fieldsdf.index)
-    connection, rabbit_config = get_rabbitmqconn()
-    channel = connection.channel()
-    # Declare queue as durable (survives broker restart)
-    # This is idempotent - safe to declare multiple times
-    channel.queue_declare(queue=queue, durable=True)
-    sts = datetime.now()
-    # When we are for_sweep mode, we hopefully do not need real wind data
-    windfile = "/i/0/wind/zeros.win"
+
+
+def submit_jobs(
+    fieldsdf: pd.DataFrame,
+    for_sweep: bool,
+    dt: date,
+    scenario: int,
+    queue: str,
+    channel,
+) -> None:
+    """Do the actual work of submitting jobs to the queue."""
     missing_soilfile_cnt = 0
     for row in fieldsdf.itertuples():
-        if not for_sweep:
-            gid = f"{get_gid(row.lon, row.lat):06.0f}"
-            windfile = f"/i/0/wind/{gid[:3]}/{gid}.win"
+        gid = f"{get_gid(row.lon, row.lat):06.0f}"
+        windfile = f"/i/0/wind/{gid[:3]}/{gid}.win"
         # Presently, the database is actually at FY2025, but we don't have
         # a source for the files.  Thankfully, there is only a small variance
         # between the releases.
@@ -161,9 +126,60 @@ def main(
         )
     LOG.warning(
         "Enqueued %s jobs, %s missing soil files",
-        totaljobs,
+        len(fieldsdf.index),
         missing_soilfile_cnt,
     )
+
+
+@click.command()
+@click.option(
+    "--date",
+    "-d",
+    "dt",
+    required=False,
+    type=click.DateTime(),
+    help="Date to run for when for_sweep is set.",
+)
+@click.option("-s", "--scenario", type=int, help="Scenario ID", default=0)
+@click.option("--myhucs", help="Specify file of HUC12s to filter job.")
+@click.option("--queue", help="RabbitMQ destination", default=QUEUES.WEPS)
+@click.option(
+    "--for_sweep", is_flag=True, help="Is this job to bootstrap SWEEP runs."
+)
+def main(
+    dt: datetime | None,
+    scenario: int,
+    myhucs: str | None,
+    queue: str,
+    for_sweep: bool,
+):
+    """Go main Go."""
+    # First, do some checking that args make sense.
+    if dt is None and for_sweep:
+        LOG.error("Must specify --date when --for_sweep is set")
+        return
+    if dt is not None and not for_sweep:
+        LOG.error("--date is only used when --for_sweep is set")
+        return
+    if myhucs:
+        LOG.warning("Using %s to filter job submission", myhucs)
+        with open(myhucs, encoding="ascii") as fh:
+            myhucs = [s.strip() for s in fh]
+    dt = datetime.now().date() if dt is None else dt.date()
+
+    fieldsdf = get_fields(dt, scenario, myhucs)
+
+    if fieldsdf.empty:
+        LOG.warning("No fields found with query, exiting")
+        return
+    totaljobs = len(fieldsdf.index)
+    connection, rabbit_config = get_rabbitmqconn()
+    channel = connection.channel()
+    # Declare queue as durable (survives broker restart)
+    # This is idempotent - safe to declare multiple times
+    channel.queue_declare(queue=queue, durable=True)
+    submit_jobs(fieldsdf, for_sweep, dt, scenario, queue, channel)
+    sts = datetime.now()
     # Wait a few seconds for the dust to settle
     time.sleep(10)
     connection.close()
