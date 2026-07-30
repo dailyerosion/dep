@@ -278,16 +278,15 @@ def run_weps(payload: WEPSJobPayload) -> None:
                 )
                 savefn.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(Path(tmpdir) / "weps.run", savefn)
-            if not payload.for_sweep:
-                plotfn = Path(tmpdir) / "plot.out"
-                savefn = (
-                    Path("/i/0/weps")
-                    / payload.huc_12[:8]
-                    / payload.huc_12[8:]
-                    / f"{payload.huc_12}_{payload.fpath}.out"
-                )
-                savefn.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(plotfn, savefn)
+            plotfn = Path(tmpdir) / "plot.out"
+            savefn = (
+                Path("/i/0/weps")
+                / payload.huc_12[:8]
+                / payload.huc_12[8:]
+                / f"{payload.huc_12}_{payload.fpath}.out"
+            )
+            savefn.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(plotfn, savefn)
         except subprocess.CalledProcessError as exp:
             LOG.error(
                 "WEPS [%s_%s] command `%s` returned %s",
