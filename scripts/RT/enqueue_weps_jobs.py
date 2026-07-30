@@ -31,7 +31,7 @@ from dailyerosion.workflows.wepsrun import WEPSJobPayload
 LOG = logger()
 
 
-def get_fields(dt: date, scenario: int, myhucs: list[str]) -> pd.DataFrame:
+def get_fields(scenario: int, myhucs: list[str]) -> pd.DataFrame:
     """See what our database has."""
     # We filter the fields to crop codes that we currently support and
     # requiring no fallow years.
@@ -169,7 +169,7 @@ def main(
             myhucs = [s.strip() for s in fh]
     dt = datetime.now().date() if dt is None else dt.date()
 
-    fieldsdf = get_fields(dt, scenario, myhucs)
+    fieldsdf = get_fields(scenario, myhucs)
 
     if fieldsdf.empty:
         LOG.warning("No fields found with query, exiting")
