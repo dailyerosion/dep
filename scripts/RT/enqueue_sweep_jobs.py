@@ -14,7 +14,7 @@ from pyiem.util import logger
 from sqlalchemy.engine import Connection
 
 from dailyerosion.util import get_rabbitmqconn
-from dailyerosion.workflows import QUEUES
+from dailyerosion.workflows import LANDUSE_DB_RE, QUEUES
 from dailyerosion.workflows.sweeprun import SweepJobPayload
 
 LOG = logger()
@@ -66,7 +66,7 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
         select o.field_id,
         row_number() over (
             partition by f.field_id ORDER by p.huc12_fpath_num asc),
-        substr(f.landuse, :charat, 1) as crop, p.huc12_fpath_num, h.huc12_code,
+        p.huc12_fpath_num, h.huc12_code,
         st_pointn(st_transform(o.geom, 4326), 1) as pt, g.mukey
         from flowpath_ofe o
         JOIN flowpath p on (o.flowpath_id = p.flowpath_id)
@@ -74,11 +74,11 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
         JOIN huc12 h on (p.huc12_id = h.huc12_id)
         JOIN gssurgo g on (o.gssurgo_id = g.gssurgo_id)
         where (h.states ~* 'MN' or h.huc12_code = ANY(:graphhucs))
-        and p.scenario_id = 0 and o.ofe = 1)
+        and p.scenario_id = 0 and o.ofe = 1 and not landuse ~ :landuse_db_re)
     select field_id, huc12_fpath_num, huc12_code, st_x(pt) as lon,
-    st_y(pt) as lat, crop, mukey
+    st_y(pt) as lat, mukey
     from data
-    where row_number = 1 and crop in ('C', 'B') {huclimit}
+    where row_number = 1 {huclimit}
         """,
                 huclimit=" and huc12_code = ANY(:hucs)" if myhucs else "",
             ),
@@ -86,7 +86,7 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
             params={
                 "graphhucs": GRAPH_HUC12,
                 "hucs": myhucs,
-                "charat": dt.year - 2007 + 1,
+                "landuse_db_re": LANDUSE_DB_RE,
             },
         )
         if fieldsdf.empty:
@@ -116,7 +116,6 @@ def main(date: datetime, scenario: int, myhucs: str | None, queue: str):
             fpath=row.huc12_fpath_num,
             ifcfile=str(ifcfile),
             huc_12=row.huc12_code,
-            crop=row.crop,
             dt=dt,
             scenario=scenario,
             lon=row.lon,

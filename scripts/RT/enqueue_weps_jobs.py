@@ -25,7 +25,7 @@ from pyiem.iemre import get_gid
 from pyiem.util import logger
 
 from dailyerosion.util import get_rabbitmqconn
-from dailyerosion.workflows import QUEUES
+from dailyerosion.workflows import LANDUSE_DB_RE, QUEUES
 from dailyerosion.workflows.wepsrun import WEPSJobPayload
 
 LOG = logger()
@@ -33,7 +33,8 @@ LOG = logger()
 
 def get_fields(dt: date, scenario: int, myhucs: list[str]) -> pd.DataFrame:
     """See what our database has."""
-    # We are making an assumption below about filtering corn/soybean fields
+    # We filter the fields to crop codes that we currently support and
+    # requiring no fallow years.
     with get_sqlalchemy_conn("dep") as conn:
         return pd.read_sql(
             sql_helper(
@@ -42,7 +43,7 @@ def get_fields(dt: date, scenario: int, myhucs: list[str]) -> pd.DataFrame:
         select o.field_id,
         row_number() over (
             partition by o.field_id ORDER by huc12_fpath_num asc),
-        substr(f.landuse, :charat, 1) as crop, p.huc12_fpath_num, h.huc12_code,
+        p.huc12_fpath_num, h.huc12_code,
         st_pointn(st_transform(o.geom, 4326), 1) as pt, c.filepath as clifile,
         g.mukey, f.rectangle_length_m, f.rectangle_width_m,
         f.rectangle_rotation_deg
@@ -53,12 +54,13 @@ def get_fields(dt: date, scenario: int, myhucs: list[str]) -> pd.DataFrame:
         JOIN climate_file c on (p.climate_file_id = c.climate_file_id)
         JOIN gssurgo g on (o.gssurgo_id = g.gssurgo_id)
         where (h.states ~* 'MN' or h.huc12_code = ANY(:graphhucs))
-        and f.scenario_id = :scenario_id and p.scenario_id = :scenario_id
-        and o.ofe = 1 and f.rectangle_length_m > 0)
+        and f.scenario_id = :scenario_id and f.scenario_id = p.scenario_id
+        and o.ofe = 1 and f.rectangle_length_m > 0
+        and not landuse ~ :landuse_db_re)
     select field_id, huc12_fpath_num, huc12_code, st_x(pt) as lon,
-    st_y(pt) as lat, crop, clifile, mukey, rectangle_length_m,
+    st_y(pt) as lat, clifile, mukey, rectangle_length_m,
     rectangle_width_m, rectangle_rotation_deg from data
-    where row_number = 1 and crop in ('C', 'B') {huclimit}
+    where row_number = 1 {huclimit}
         """,
                 huclimit=" and huc12_code = ANY(:hucs)" if myhucs else "",
             ),
@@ -66,8 +68,8 @@ def get_fields(dt: date, scenario: int, myhucs: list[str]) -> pd.DataFrame:
             params={
                 "graphhucs": GRAPH_HUC12,
                 "hucs": myhucs,
-                "charat": dt.year - 2007 + 1,
                 "scenario_id": scenario,
+                "landuse_db_re": LANDUSE_DB_RE,
             },
         )
 
