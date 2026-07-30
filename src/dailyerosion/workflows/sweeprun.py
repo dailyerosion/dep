@@ -29,7 +29,6 @@ class SweepJobPayload(BaseModel):
     field_id: Annotated[int, Field(description="Database Field Identifier")]
     fpath: Annotated[int, Field(description="Flowpath identifier in HUC12")]
     ifcfile: Annotated[str, Field(description="Path to the WEPS Soil File.")]
-    crop: Annotated[str, Field(description="Crop Code for the year")]
     dt: Annotated[date, Field(description="Date to Run for")]
     lon: Annotated[float, Field(description="Longitude of Point")]
     lat: Annotated[float, Field(description="Latitude of Point")]

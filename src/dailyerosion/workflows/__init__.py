@@ -2,10 +2,14 @@
 
 from enum import StrEnum
 
+# This defines which crop codes we know about, a constant shared within
+# the workflows
+LANDUSE_DB_RE = "[^CBPW]"
+
 
 class QUEUES(StrEnum):
     """RabbitMQ queue names used with versioning to support payload updates."""
 
     WEPP = "wepp_v1"
     WEPS = "weps_v4"
-    SWEEP = "sweep_v2"
+    SWEEP = "sweep_v3"

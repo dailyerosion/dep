@@ -18,6 +18,5 @@ def test_sweepjobpayload_valid():
         dt=date(2026, 5, 27),
         lon=0.0,
         lat=0.0,
-        crop="C",
     )
     assert payload.sweepexe == "sweep20240930"
