@@ -5,26 +5,26 @@ Here's a listing of project landuse codes used
                      No-till (1)   (2-5)
   B - Soy               B1          B25    IniCropDef.Default
   F - forest            F1          F25    IniCropDef.Tre_2239
-  G - Sorghum
+  G - Small grains, was Sorghum.
+  H - Sorghum
   P - Pasture           P1          P25    IniCropDef.gra_3425
       (If all P, then pasture.  If P intermixed, then Alfalfa see GH270)
   C - Corn              C1          C25    IniCropDef.Default
   R - Other crops (Barley?)  R1          R25    IniCropDef.Aft_12889
-  T - Water (could have flooded out for one year, wetlands)
+  T - water/wetland and may be interpreted for GenLU as Flood-prone cropland
   U - Developed
   X - Unclassified
   I - Idle
   L - Double Crop  (started previous year) (winter wheat + soybea)
-  W - Wheat
+  W - all wheats; spring, winter, durum
   S - Durum/Spring Wheat
   E - Sugarbeets
   J - Rice
   N - Cotton
   a - Nuts
   d - Fruit
-  g - Small Grains
-  m - Legumes
-  o - Oilseed
+  M - legumes = Dry Beans, ChickPeas, Lentils, Peas, Vetch
+  O - oil crops = Sunflower, Canola, Flaxseed, Safflower, RapeSeed
   p - Grapes
   q - Orchards
   v - Vegetables
