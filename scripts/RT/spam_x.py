@@ -23,9 +23,9 @@ def get_client(conn: Connection | None = None):
         (o.iembot_account_id = a.id) WHERE o.screen_name = 'dailyerosion'
         """)
     )
-    if res.rowcount == 0:
-        raise ValueError("No oauth for dailyerosion")
     row = res.mappings().fetchone()
+    if res is None:
+        raise ValueError("No oauth for dailyerosion")
     auth = tweepy.OAuth1UserHandler(
         props.get("bot.twitter.consumerkey"),
         props.get("bot.twitter.consumersecret"),
