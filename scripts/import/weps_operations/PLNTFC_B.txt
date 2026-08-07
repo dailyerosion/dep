@@ -1,26 +1,19 @@
-O 03 Planter, double disk opnr, fluted coulter
-+ 5.0511193 2.44 2.2351363 0.0 2.2351363 1.5645955 2.9056773
-T Begin growth, double disk openers and fluted coulters on 30 inch row spacing.
-t REVISED102403 DTL
-t This is a standard planter on 30 in sp with a fluted coulter and a 1 in ridge ht.  MAS 8/7/07
-t G2 was added into file in front of the flattening (P24), burial (P25), and resurfacing (P26) factors because the area affected is less than 1.0 and
-t the RUSLE values were normalized to 1.0.  This change will imulate the correct residue changes based on the method set forth in RUSLE.
-t RUSLE's factors have been redused to based on the area affected.
-t The stalk fall rate factor (P34) was moved ahead of the new (G2) factor to set the fall rate to the less than 1.0 area affected.  8/7/07 MAS
-t LMOD and WEPS update correlation; new WEPS operation record, as previous translate,
-t Planter, double disk opnr w/fluted coulter |rename|Planter, double disk opnr, fluted coulter, 160410 jkp
-+
+O 03 Drill or air seeder, double disk
++ 3.3674128 6.34 2.2351363 0 2.2351363 1.5645955 2.9056773
+T Begin growth, double disk openers on 7 to 10 inch spacing.  User inputs: crop and target yield.
+t Drill or air seeder with double disk openers on 7 to 10 inch spacings.  Rev102403 DTL  RUSLE MAS 10-26-06 G2 was added into file in front of the flattening (P24), burial (P25), and resurfacing (P26) factors because the area affected is less than 1.0 and the RUSLE values were normalized to 1.0.  This change will imulate the correct residue changes based on the method set forth in RUSLE. RUSLE's factors have been redused to based on the area affected. The stalk fall rate factor (P34) was moved ahead of the new (G2) factor to set the fall rate to the  less than 1.0 area affected.  8/8/07 MAS  Deleted the G2 process because all process only affect 0.65 of the surface.  This is set a 0.65 with G1 process in the beginning. 5-11-11 MAS LMOD and WEPS update correlation; existing WEPS operation record, 160410 jkp
++ 
 G 01 Tillage
-+ 63.500126 0.4 0.20 63.500126 50.800102 101.600204
++ 38.100075 0.4 0.55 38.100075 25.400051 50.800102
 P 01 Break Crust
 P 02 Random Roughness
-+ 1 10.160021
++ 1 7.6200156
 P 05 Ridges and Dikes
-+ 1 25.400051 762.0015 635.0013 0.0 0.0
++ 1 25.400051 203.20041 25.400051 0.0 0.0
 P 11 Aggregate Crushing
-+ 2.4 2.0
++ 2.8 0.75
 P 12 Soil Loosening
-+ 0.65
++ 0.6
 P 13 Soil Layer Mixing
 + 0.3
 P 34 Change Standing Biomass Fall Rate
@@ -29,15 +22,15 @@ P 34 Change Standing Biomass Fall Rate
 G 02 Biomass Manipulation
 + 1.0
 P 24 Flatten Standing Biomass
-+ 0 0.35 0.30 0.25 0.1 1.0
++ 0 0.6 0.4 0.35 0.15 1.0
 P 25 Bury Flat Biomass
-+ 1 0.065 0.055 0.045 0.017 0.90
++ 1 0.19 0.14 0.11 0.06 0.11
 P 26 Resurface Buried Biomass
 + 0.01 0.01 0.01 0.02 0.01
 G 03 Crop Name
 + Soybean, grain
 P 51 Seeding Configuration
-+ 1 0.0 2
++ 1 0.0 0
 + 27.0 1.0 1 45 1.0 1.0 0
 + bu/ac
 + 13 148.7 1 0.8 0.65 .8
