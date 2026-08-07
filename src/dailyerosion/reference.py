@@ -1,5 +1,7 @@
 """dailyerosion static reference data."""
 
+from enum import StrEnum
+
 # Classification of slope % into classes (right inclusive)
 SLOPE_CLASSES = [-99, 2, 4, 6, 12]
 
@@ -26,3 +28,14 @@ RAMPS = {
         [0.25, 25.0, 50.0, 125.0, 200.0, 300.0, 500.0, 750.0, 1000.0],
     ],
 }
+
+
+class CROP_CODES(StrEnum):
+    """Crop codes from ACPF that get used in DEP."""
+
+    ALFALFA = "P"  # This has some quirks when this becomes 'Pasture'
+    CORN = "C"
+    DOUBLECROP = "L"  # Placeholder
+    SOYBEAN = "B"
+    SORGHUM = "H"
+    WHEAT = "W"

@@ -8,6 +8,7 @@ from pyiem.database import get_dbconnc, get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
 from tqdm import tqdm
 
+from dailyerosion.reference import CROP_CODES
 from dailyerosion.tillage import make_tillage
 
 LOG = logger()
@@ -45,7 +46,7 @@ def main(year: int, scenario: int):
             params={
                 "scenario": scenario,
                 "dbcolidx": dbcolidx,
-                "crops": ["B", "C"],
+                "crops": [CROP_CODES.SOYBEAN, CROP_CODES.CORN],
             },
             index_col="field_id",
         )

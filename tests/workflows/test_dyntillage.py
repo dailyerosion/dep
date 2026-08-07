@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 
+from dailyerosion.reference import CROP_CODES
 from dailyerosion.workflows.dyntillage import do_huc12, do_planting, do_tillage
 
 
@@ -16,7 +17,7 @@ def fields() -> pd.DataFrame:
     return pd.DataFrame(
         {
             "acres": np.ones(10) * 100,
-            "crop": ["C"] * 5 + ["B"] * 5,
+            "crop": [CROP_CODES.CORN] * 5 + [CROP_CODES.SOYBEAN] * 5,
             "plant_needed": [True] * 10,
             "till_needed": [True] * 10,
             "till1": pd.to_datetime([date(2000, 7, 1)] * 10),  # Future
@@ -93,7 +94,7 @@ def test_do_huc12():
 def test_soybeans_early_too_aggressive(fields):
     """Test that we are not too aggressive early in season with soybeans."""
     # Scenario is 9 fields of soybeans and one of corn
-    fields["crop"] = ["B"] * 9 + ["C"]
+    fields["crop"] = [CROP_CODES.SOYBEAN] * 9 + [CROP_CODES.CORN]
     # Goose acres to get a three pass result
     fields["acres"] = [1, 1, 1, 1, 1, 1, 1, 1, 100, 1]
     # Clear out tillage
@@ -103,7 +104,12 @@ def test_soybeans_early_too_aggressive(fields):
     acres_planted = do_planting(fields, dt, False, 0)
     # Only the first soybean field should have been planted
     assert (
-        len(fields[(fields["crop"] == "B") & fields["operation_done"]].index)
+        len(
+            fields[
+                (fields["crop"] == CROP_CODES.SOYBEAN)
+                & fields["operation_done"]
+            ].index
+        )
         == 1
     )
     assert acres_planted == 2
@@ -130,7 +136,7 @@ def test_mud_it_in_no_planting(fields):
 def test_no_soybeans_planted_before_season_starts(fields):
     """Test scenario with no soybeans planted, hopefully."""
     # Set everything to soybeans, ready to plant
-    fields["crop"] = "B"
+    fields["crop"] = CROP_CODES.SOYBEAN
     fields["till_needed"] = False
     dt = date(2000, 4, 4)
     acres_planted = do_planting(fields, dt, False, 0)
@@ -144,7 +150,7 @@ def test_no_soybeans_planted_preferred_corn_fields(fields):
     dt = date(2000, 4, 16)
     acres_planted = do_planting(fields, dt, False, 0)
     assert acres_planted == 100.0
-    assert fields[fields["operation_done"]].iloc[0]["crop"] == "C"
+    assert fields[fields["operation_done"]].iloc[0]["crop"] == CROP_CODES.CORN
 
 
 def test_one_field_tilled(fields):

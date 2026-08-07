@@ -1,17 +1,32 @@
 """Test dailyerosion.tillage."""
 
 from dailyerosion import tillage
+from dailyerosion.reference import CROP_CODES
 
 
 def test_gh266_pasture():
     """Test that an initial planting operation is created."""
-    res = tillage.make_tillage(0, "IA_NORTH", "P", "P", "P", 1, 1)
+    res = tillage.make_tillage(
+        0,
+        "IA_NORTH",
+        CROP_CODES.ALFALFA,
+        CROP_CODES.ALFALFA,
+        CROP_CODES.ALFALFA,
+        1,
+        1,
+    )
     assert "Plant-Perennial" in res
 
 
 def test_simple():
     """Test import of API."""
-    plants = ["C", "B", "W", "P", "G"]
+    plants = [
+        CROP_CODES.CORN,
+        CROP_CODES.SOYBEAN,
+        CROP_CODES.WHEAT,
+        CROP_CODES.ALFALFA,
+        CROP_CODES.SORGHUM,
+    ]
     cfactors = list(range(1, 7))
     zones = ["IA_NORTH", "IA_SOUTH", "KS_NORTH"]
     for bp in plants:

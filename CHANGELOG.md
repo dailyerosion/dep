@@ -8,6 +8,7 @@
 ### New Features
 
 - Added `consume_queue` worker helper for a common DEP code pattern.
+- Introduce `dailyerosion.reference.CROP_CODES` to centralize abbreviations.
 
 ### Bug Fixes
 
