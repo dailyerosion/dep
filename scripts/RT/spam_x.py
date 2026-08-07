@@ -1,37 +1,44 @@
-"""Publish messages to twitter denoting interesting things"""
+"""Publish message to X when daily erosion output is available."""
 
 import datetime
 from io import BytesIO
 
 import requests
 import tweepy
-from pyiem.database import get_dbconn
+from pyiem.database import sql_helper, with_sqlalchemy_conn
 from pyiem.util import exponential_backoff, get_properties, logger
+from sqlalchemy.engine import Connection
 
 LOG = logger()
 
 
-def get_client():
+@with_sqlalchemy_conn("iembot")
+def get_client(conn: Connection | None = None):
     """Do the tweeting."""
     props = get_properties()
-    cursor = get_dbconn("mesosite").cursor()
-    cursor.execute(
-        "select access_token, access_token_secret from "
-        "iembot_twitter_oauth WHERE screen_name = 'dailyerosion'",
+    res = conn.execute(
+        sql_helper("""
+        select access_token, access_token_secret
+        from iembot_twitter_oauth o JOIN iembot_accounts a on
+        (o.iembot_account_id = a.id) WHERE o.screen_name = 'dailyerosion'
+        """)
     )
-    row = cursor.fetchone()
+    if res.rowcount == 0:
+        raise ValueError("No oauth for dailyerosion")
+    row = res.mappings().fetchone()
     auth = tweepy.OAuth1UserHandler(
         props.get("bot.twitter.consumerkey"),
         props.get("bot.twitter.consumersecret"),
-        row[0],
-        row[1],
+        row["access_token"],
+        row["access_token_secret"],
     )
-    return auth, tweepy.Client(
+    client = tweepy.Client(
         consumer_key=props.get("bot.twitter.consumerkey"),
         consumer_secret=props.get("bot.twitter.consumersecret"),
-        access_token=row[0],
-        access_token_secret=row[1],
+        access_token=row["access_token"],
+        access_token_secret=row["access_token_secret"],
     )
+    return auth, client
 
 
 def main():
@@ -65,9 +72,7 @@ def main():
     )
 
     res = twitter.create_tweet(text=status, media_ids=media_ids)
-    LOG.warning(
-        "Posted https://twitter.com/dailyerosion/status/%s", res.data["id"]
-    )
+    LOG.warning("Posted https://x.com/dailyerosion/status/%s", res.data["id"])
 
 
 if __name__ == "__main__":
