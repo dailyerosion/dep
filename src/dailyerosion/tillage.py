@@ -3,6 +3,8 @@
 import os
 from datetime import date, timedelta
 
+from dailyerosion.reference import CROP_CODES
+
 WHEAT_PLANT = {
     "KS_SOUTH": date(2000, 5, 25),
     "KS_CENTRAL": date(2000, 5, 25),
@@ -95,7 +97,9 @@ def make_tillage(scenario, zone, prevcode, code, nextcode, cfactor, year: int):
     if not data.endswith("\n"):
         data = f"{data}\n"
     # Special consideration for planting alfalfa
-    if code == "P" and (prevcode != "P" or year == 1):
+    if code == CROP_CODES.ALFALFA and (
+        prevcode != CROP_CODES.ALFALFA or year == 1
+    ):
         # Best we can do now is plant it on Apr 15 with a simple disk the
         # day before
         data = (
@@ -104,13 +108,13 @@ def make_tillage(scenario, zone, prevcode, code, nextcode, cfactor, year: int):
             f"{data}"
         )
     # Remove fall chisel after corn when going into soybeans for 2
-    if cfactor == "2" and nextcode == "B":
+    if cfactor == "2" and nextcode == CROP_CODES.SOYBEAN:
         pos = data.find("11  1")
         if pos > 0:
             data = data[:pos]
 
     # The fall tillage operation is governed by the next year crop
-    if cfactor == "5" and nextcode in ["C", "G"]:
+    if cfactor == "5" and nextcode in [CROP_CODES.CORN, CROP_CODES.SORGHUM]:
         # Replace 11  1 operation with plow
         pos = data.find("11  1")
         if pos > 0:
@@ -120,7 +124,7 @@ def make_tillage(scenario, zone, prevcode, code, nextcode, cfactor, year: int):
             )
 
     # Anhydrous ammonia application when we are going into Corn
-    if nextcode in ["C", "G"]:
+    if nextcode in [CROP_CODES.CORN, CROP_CODES.SORGHUM]:
         # HACK: look for a present 1 Nov operation and insert this before it
         pos = data.find("11  1")
         extra = ""
@@ -139,30 +143,30 @@ def make_tillage(scenario, zone, prevcode, code, nextcode, cfactor, year: int):
     pdatem15 = ""
     plant = ""
     # We currently only have zone specific files for Corn and Soybean
-    if code == "C":
+    if code == CROP_CODES.CORN:
         date = CORN_PLANT.get(scenario, CORN_PLANT[zone])
         pdate = date.strftime("%m    %d")
         pdatem5 = (date - timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (date - timedelta(days=10)).strftime("%m    %d")
         pdatem15 = (date - timedelta(days=15)).strftime("%m    %d")
         plant = CORN[zone]
-    elif code in ["B", "L"]:  # TODO support double crop
+    elif code in [CROP_CODES.SOYBEAN, CROP_CODES.DOUBLECROP]:  # TODO
         date = SOYBEAN_PLANT.get(scenario, SOYBEAN_PLANT[zone])
         pdate = date.strftime("%m    %d")
         pdatem5 = (date - timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (date - timedelta(days=10)).strftime("%m    %d")
         pdatem15 = (date - timedelta(days=15)).strftime("%m    %d")
         plant = SOYBEAN[zone]
-    elif code == "G":
+    elif code == CROP_CODES.SORGHUM:
         date = SORGHUM_PLANT.get(scenario, SORGHUM_PLANT[zone])
         plant = SORGHUM[zone]
         pdate = date.strftime("%m    %d")
         pdatem5 = (date - timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (date - timedelta(days=10)).strftime("%m    %d")
         pdatem15 = (date - timedelta(days=15)).strftime("%m    %d")
-    elif code == "W":
-        date = SOYBEAN_PLANT.get(scenario, SOYBEAN_PLANT[zone])  # TODO
-        plant = WHEAT_PLANT[zone]
+    elif code == CROP_CODES.WHEAT:
+        date = WHEAT_PLANT.get(scenario, WHEAT_PLANT[zone])
+        plant = WHEAT[zone]
         pdate = date.strftime("%m    %d")
         pdatem5 = (date - timedelta(days=5)).strftime("%m    %d")
         pdatem10 = (date - timedelta(days=10)).strftime("%m    %d")

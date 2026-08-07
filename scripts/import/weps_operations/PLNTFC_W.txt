@@ -1,0 +1,46 @@
+O 03 Drill or air seeder, double disk
++ 3.3674128 6.34 2.2351363 0 2.2351363 1.5645955 2.9056773
+T Begin growth, double disk openers on 7 to 10 inch spacing.  User inputs: crop and target yield.
+t Drill or air seeder with double disk openers on 7 to 10 inch spacings.  Rev102403 DTL  RUSLE MAS 10-26-06 G2 was added into file in front of the flattening (P24), burial (P25), and resurfacing (P26) factors because the area affected is less than 1.0 and the RUSLE values were normalized to 1.0.  This change will imulate the correct residue changes based on the method set forth in RUSLE. RUSLE's factors have been redused to based on the area affected. The stalk fall rate factor (P34) was moved ahead of the new (G2) factor to set the fall rate to the  less than 1.0 area affected.  8/8/07 MAS  Deleted the G2 process because all process only affect 0.65 of the surface.  This is set a 0.65 with G1 process in the beginning. 5-11-11 MAS LMOD and WEPS update correlation; existing WEPS operation record, 160410 jkp
++ 
+G 01 Tillage
++ 38.100075 0.4 0.55 38.100075 25.400051 50.800102
+P 01 Break Crust
+P 02 Random Roughness
++ 1 7.6200156
+P 05 Ridges and Dikes
++ 1 25.400051 203.20041 25.400051 0.0 0.0
+P 11 Aggregate Crushing
++ 2.8 0.75
+P 12 Soil Loosening
++ 0.6
+P 13 Soil Layer Mixing
++ 0.3
+P 34 Change Standing Biomass Fall Rate
++ 7 3.0 2.5 2.0 1.5 1.0
++ 0.5 0.6 0.7 0.8 1.0
+G 02 Biomass Manipulation
++ 1.0
+P 24 Flatten Standing Biomass
++ 0 0.6 0.4 0.35 0.15 1.0
+P 25 Bury Flat Biomass
++ 1 0.19 0.14 0.11 0.06 0.11
+P 26 Resurface Buried Biomass
++ 0.01 0.01 0.01 0.02 0.01
+G 03 Crop Name
++ Wheat, spring, grain
+P 51 Seeding Configuration
++ 1 0.0 0
++ 220.0 8.0 1 30.0 1 1.0 0
++ bu/ac
++ 13.5 148.7 4 0.8 0.6 0.8
++ 0.8 0.025 1.22 3.0 25.0 0 70 1800.0
++ -5.0 -12.0 0.005 0.95 0.0 30.0
++ 0.013 0.8013 0.4293 -0.086 -0.018 0.932 0.556 0.0736
++ 0.4293 -0.086 2.87 1.0 20.0 0.05 0 0.3
++ 28.571428 335.0 1.4 0.012 0 0 0.0 2
++ 0.0133 0.0133 0.0133 0.0133 0.12 0.005 17.1 5.227942
++ -2.08165 0.548606 1.1667 0.026900401 0.0 0.0 0.0 0.0
+T Annual, grass, cool season, spring grain. Use Wheat, winter, grain crop when planting in late fall through early spring i.e. April 1st or before and Wheat, spring, grain crop when planting later in the spring/early summer after April 1st in the Northern Plains and Pacific Northwest. Suggest harvest op: Harvest, killing crop with percent standing stubble. Target Yield calibration: YES
+t Archive:
+t RUSLE Notes: Rev. 9/26/95 DTL 30 bu/ac yield based on 35bu ngp

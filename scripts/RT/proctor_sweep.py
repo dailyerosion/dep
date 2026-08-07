@@ -40,6 +40,7 @@ from sqlalchemy.engine import Connection
 from tqdm import tqdm
 
 from dailyerosion.io.man import man2df, read_man
+from dailyerosion.reference import CROP_CODES
 
 LOG = logger()
 IEMRE = "http://mesonet.agron.iastate.edu/iemre/hourly"
@@ -107,9 +108,9 @@ def compute_crop(manfn: str, year: int) -> str:
     )
     cropcode = "0"
     if cropname.startswith("Cor"):
-        cropcode = "C"
+        cropcode = CROP_CODES.CORN
     elif cropname.startswith("Soy"):
-        cropcode = "B"
+        cropcode = CROP_CODES.SOYBEAN
     return cropcode
 
 

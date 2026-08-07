@@ -7,6 +7,8 @@ import pandas as pd
 from pyiem.database import sql_helper
 from sqlalchemy.engine import Connection
 
+from dailyerosion.reference import CROP_CODES
+
 
 def get_soybeans_planting_fraction() -> np.ndarray:
     """Returns the ratio of acres planted to soybeans for a given doy."""
@@ -101,7 +103,7 @@ def do_planting(
     #    in the season, otherwise we don't maintain the ratios
     second_pass_limit = planting_acres_limit if soybeans_fract >= 0.5 else 0
     for crop, limit in zip(
-        ["B", "C", "B"],
+        [CROP_CODES.SOYBEAN, CROP_CODES.CORN, CROP_CODES.SOYBEAN],
         [soybean_acres_limit, corn_acres_limit, second_pass_limit],
         strict=True,
     ):
@@ -140,7 +142,7 @@ def do_huc12(
     dt = pd.Timestamp(dt)
     dbcolidx = dt.year - 2007 + 1
     # Only concerned about soybeans/corn for now
-    crops = ["B", "C"]
+    crops = [CROP_CODES.SOYBEAN, CROP_CODES.CORN]
     # No limits, other than 1 operation per field per day
     mud_it_in = f"{dt:%m%d}" >= "0610"
     # build up the cross reference of everyhing we need to know
