@@ -221,11 +221,13 @@ def get_fields(year, datum: str, ugc: str | None, crop) -> pd.DataFrame:
     with get_sqlalchemy_conn("dep") as conn:
         return pd.read_sql(
             sql_helper("""
-            select plant, huc12, fbndid, acres
+            select plant, huc12_code, huc12_fbndid_num, acres
             from field f JOIN field_operations o
             on (f.field_id = o.field_id and o.year = :year)
-            where scenario = 0 and substr(landuse, :charidx, 1) = :ccode and
-            ST_Intersects(geom, ST_SetSRID(ST_GeomFromEWKT(:geom), 5070))
+            JOIN huc12 h on (f.huc12_id = h.huc12_id)
+            where f.scenario_id = 0 and substr(landuse, :charidx, 1) = :ccode
+            and
+            ST_Intersects(f.geom, ST_SetSRID(ST_GeomFromEWKT(:geom), 5070))
             """),
             conn,
             params={
@@ -527,7 +529,7 @@ def main(
     xticks, xticklabels = get_labels(year)
 
     # Spatially filter fields that are inside the climdiv region
-    daily_limits = compute_limits(fields["huc12"].unique(), year)
+    daily_limits = compute_limits(fields["huc12_code"].unique(), year)
 
     # accumulate acres planted by date
     fgb = fields[["plant", "acres"]].groupby("plant")

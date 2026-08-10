@@ -6,10 +6,17 @@ from compute_county_district import DISTRICTS, NAMES, XREF
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.plot import figure_axes
 
+from dailyerosion.reference import CROP_CODES
+
 
 @click.command()
 @click.option("--year", type=int, required=True)
-@click.option("--crop", type=str, default="corn")
+@click.option(
+    "--crop",
+    type=click.Choice(["corn", "soybean"]),
+    default="corn",
+    help="corn or soybean",
+)
 @click.option("--district", type=str, default="IAC005")
 def main(year: int, crop: str, district: str):
     """Go main Go."""
@@ -36,6 +43,9 @@ def main(year: int, crop: str, district: str):
                 conn,
                 params={"metric": f"{crop} planted", "year": year},
             )
+    cropcode = CROP_CODES.CORN
+    if crop == "soybean":
+        cropcode = CROP_CODES.SOYBEAN
 
     with get_sqlalchemy_conn("dep") as conn:
         dep = pd.read_sql(
@@ -44,12 +54,17 @@ def main(year: int, crop: str, district: str):
     field f JOIN field_operations o on (f.field_id = o.field_id)
     JOIN huc12 h on (f.huc12_id = h.huc12_id)
     WHERE o.year = :year and
-    substr(f.landuse, :pos, 1) = 'B' and
+    substr(f.landuse, :pos, 1) = :crop and
     h.scenario_id = 0 and h.ugc = ANY(:fips)
     group by plant order by plant;
                                       """),
             conn,
-            params={"year": year, "pos": year - 2007 + 1, "fips": counties},
+            params={
+                "year": year,
+                "pos": year - 2007 + 1,
+                "crop": cropcode,
+                "fips": counties,
+            },
         )
 
     (fig, ax) = figure_axes(

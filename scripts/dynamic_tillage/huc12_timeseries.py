@@ -12,21 +12,19 @@ from pyiem.plot import figure
 def get_plastic_limit(huc12: str, year: int) -> pd.DataFrame:
     """Figure out what the plastic limit is."""
     charat = year - 2007 + 1
-    with get_sqlalchemy_conn("idep") as conn:
+    with get_sqlalchemy_conn("dep") as conn:
         # build up the cross reference of everyhing we need to know
         return pd.read_sql(
             sql_helper(
                 """
-                select o.ofe, p.fpath, f.fbndid,
-                g.wepp_min_sw1 + (g.wepp_max_sw1 - g.wepp_min_sw1) * 0.58
+                select ofe, huc12_fpath_num, huc12_fbndid_num,
+                wepp_min_sw1 + (wepp_max_sw1 - wepp_min_sw1) * 0.58
                 as plastic_limit58,
-                g.plastic_limit,
-                p.fpath || '_' || o.ofe as combo,
-                substr(f.landuse, :charat, 1) as crop
-                from flowpaths p, flowpath_ofes o, gssurgo g, fields f
-                WHERE o.flowpath = p.fid and p.huc_12 = :huc12
-                and p.scenario = 0 and o.gssurgo_id = g.id
-                and o.field_id = f.field_id
+                plastic_limit,
+                huc12_fpath_num || '_' || ofe as combo,
+                substr(landuse, :charat, 1) as crop
+                from ofe_view
+                WHERE huc12_code = :huc12 and scenario_id = 0
             """
             ),
             conn,
@@ -63,7 +61,9 @@ def main(huc12: str, year: int):
     huc12sm = pd.concat(smdfs)
     huc12sm = huc12sm[huc12sm["crop"].isin(["C", "B"])]
     huc12sm["combo"] = (
-        huc12sm["fpath"].astype(str) + "_" + huc12sm["ofe"].astype(str)
+        huc12sm["huc12_fpath_num"].astype(str)
+        + "_"
+        + huc12sm["ofe"].astype(str)
     )
     huc12sm["pl0.8"] = (
         huc12sm["combo"].map(pldf.set_index("combo")["plastic_limit"]) * 0.8
