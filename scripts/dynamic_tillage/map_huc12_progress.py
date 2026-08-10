@@ -107,9 +107,10 @@ def main(huc12: str, year: int):
         fieldsdf = gpd.read_postgis(
             sql_helper("""
     select o.*, ST_Transform(f.geom, 4326) as geom, 0 as tillage_events
-    from field f LEFT JOIN field_operations o
+    from field f JOIN huc12 h on (f.huc12_id = h.huc12_id)
+    LEFT JOIN field_operations o
     on (f.field_id = o.field_id and o.year = :year)
-    where huc12_code = :huc12
+    where h.huc12_code = :huc12
         """),
             conn,
             params={"year": year, "huc12": huc12},

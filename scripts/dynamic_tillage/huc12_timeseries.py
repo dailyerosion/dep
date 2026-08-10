@@ -61,7 +61,9 @@ def main(huc12: str, year: int):
     huc12sm = pd.concat(smdfs)
     huc12sm = huc12sm[huc12sm["crop"].isin(["C", "B"])]
     huc12sm["combo"] = (
-        huc12sm["fpath"].astype(str) + "_" + huc12sm["ofe"].astype(str)
+        huc12sm["huc12_fpath_num"].astype(str)
+        + "_"
+        + huc12sm["ofe"].astype(str)
     )
     huc12sm["pl0.8"] = (
         huc12sm["combo"].map(pldf.set_index("combo")["plastic_limit"]) * 0.8

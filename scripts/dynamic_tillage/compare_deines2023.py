@@ -11,7 +11,12 @@ from dailyerosion.reference import CROP_CODES
 
 @click.command()
 @click.option("--year", type=int, required=True)
-@click.option("--crop", type=str, default="corn", help="corn or soybean")
+@click.option(
+    "--crop",
+    type=click.Choice(["corn", "soybean"]),
+    default="corn",
+    help="corn or soybean",
+)
 @click.option("--district", type=str, default="IAC005")
 def main(year: int, crop: str, district: str):
     """Go main Go."""

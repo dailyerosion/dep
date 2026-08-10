@@ -20,7 +20,7 @@ def main():
             conn,
             params={"hucs": huc12s},
             geom_col="geom",
-            index_col="huc_12",
+            index_col="huc12_code",
         )  # type: ignore
         hucdf.to_csv("plots/myhucs.csv")
         mlras = hucdf["mlra_id"].unique().tolist()

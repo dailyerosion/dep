@@ -30,7 +30,7 @@ def main(dt: date, crop: str):
             sql_helper("""
     with myfields as (
         select field_id, huc12_id from field WHERE
-        substr(landuse, :charat, 1) = :crop and scenario_id = 0 
+        substr(landuse, :charat, 1) = :crop and scenario_id = 0
     ), plant_status as (
         select o.field_id, o.plant, f.huc12_id
         from field_operations o JOIN myfields f
