@@ -127,7 +127,7 @@ def main(workable: float):
                 val = 0
             elif row["plant_needed"]:
                 val = 2
-            data[ypos, idx] = val
+            data[ypos, int(idx)] = val
         possible = (
             total_acres * get_planting_fraction()[dt.timetuple().tm_yday - 1]
         )

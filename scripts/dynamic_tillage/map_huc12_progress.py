@@ -95,21 +95,21 @@ def main(huc12: str, year: int):
     with get_sqlalchemy_conn("dep") as conn:
         huc12df = gpd.read_postgis(
             sql_helper("""
-    select huc_12, name, ST_Transform(geom, 4326) as geom
-    from huc12 where huc_12 = :huc12 and scenario = 0
+    select huc12_code, name, ST_Transform(geom, 4326) as geom
+    from huc12 where huc12_code = :huc12 and scenario_id = 0
         """),
             conn,
             params={"huc12": huc12},
-            index_col="huc_12",
+            index_col="huc12_code",
             geom_col="geom",
             crs="EPSG:4326",
-        )
+        )  # type: ignore
         fieldsdf = gpd.read_postgis(
             sql_helper("""
     select o.*, ST_Transform(f.geom, 4326) as geom, 0 as tillage_events
     from field f LEFT JOIN field_operations o
     on (f.field_id = o.field_id and o.year = :year)
-    where huc12 = :huc12
+    where huc12_code = :huc12
         """),
             conn,
             params={"year": year, "huc12": huc12},
@@ -117,7 +117,7 @@ def main(huc12: str, year: int):
             parse_dates=["till1", "till2", "till3", "plant"],
             geom_col="geom",
             crs="EPSG:4326",
-        )
+        )  # type: ignore
         fieldsdf.loc[fieldsdf["till1"].notna(), "tillage_events"] = 1
         fieldsdf.loc[fieldsdf["till2"].notna(), "tillage_events"] = 2
         fieldsdf.loc[fieldsdf["till3"].notna(), "tillage_events"] = 3

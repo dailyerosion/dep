@@ -10,18 +10,18 @@ def main():
     """Go Main Go."""
     with open("myhucs.txt") as fh:
         huc12s = [line.strip() for line in fh]
-    with get_sqlalchemy_conn("idep") as conn:
+    with get_sqlalchemy_conn("dep") as conn:
         hucdf = gpd.read_postgis(
             sql_helper("""
-                select huc_12, geom, mlra_id, dominant_tillage,
-                average_slope_ratio, name from huc12
-                where huc_12 = ANY(:hucs) and scenario = 0
+                select huc12_code, geom, mlra_id, dominant_tillage,
+                average_slope_ratio, huc12_name from huc12
+                where huc12_code = ANY(:hucs) and scenario_id = 0
             """),
             conn,
             params={"hucs": huc12s},
             geom_col="geom",
             index_col="huc_12",
-        )
+        )  # type: ignore
         hucdf.to_csv("plots/myhucs.csv")
         mlras = hucdf["mlra_id"].unique().tolist()
         mlradf = gpd.read_postgis(
@@ -32,7 +32,7 @@ def main():
             params={"mlras": mlras},
             geom_col="geom",
             index_col="mlra_id",
-        )
+        )  # type: ignore
     _subtitle = f"{len(hucdf.index)} HUC12s selected over {len(mlras)} MLRAs"
     print(_subtitle)
     mp = MapPlot(

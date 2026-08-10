@@ -33,7 +33,7 @@ def plot_map_progress(i, dt):
             params={"year": dt.year, "dt": dt, "charidx": charidx},
             index_col="huc12_code",
             geom_col="geom",
-        )
+        )  # type: ignore
     huc12df["progress"] = huc12df["planted"] / huc12df["total"] * 100.0
     bins = np.arange(0, 101, 10)
     cmap = get_cmap("jet")

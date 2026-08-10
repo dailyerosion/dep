@@ -60,7 +60,7 @@ def job(dates: list[date], tmpdir, huc12: str) -> int:
     p.huc12_fpath_num || '_' || o.ofe as combo, h.huc12_code as huc12,
     substr(o.landuse, :charat, 1) as crop
     from
-    flowpaths p LEFT JOIN flowpath_ofes o on p.fid = o.flowpath
+    flowpath p LEFT JOIN flowpath_ofe o on p.fid = o.flowpath
       LEFT JOIN field f on o.field_id = f.field_id
       LEFT JOIN gssurgo g on o.gssurgo_id = g.id
       LEFT JOIN toplayer tl on g.mukey = tl.mukey::int
@@ -137,7 +137,7 @@ def main(dt, huc12, year):
             params={"huc12": huc12},
             geom_col="geom",
             index_col="huc12_code",
-        )
+        )  # type: ignore
     progress = tqdm(total=len(huc12df.index), disable=not os.isatty(1))
     with (
         Pool(min([8, int(cpu_count() / 2)])) as pool,

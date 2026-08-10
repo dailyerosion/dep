@@ -16,22 +16,22 @@ def main():
     """Go Main Go."""
     states = load_geodf("us_states", 4326)
 
-    with get_sqlalchemy_conn("idep") as conn:
+    with get_sqlalchemy_conn("dep") as conn:
         huc12df = gpd.read_postgis(
             sql_helper("""
-    SELECT huc_12, st_transform(simple_geom, 4326) as geom
-    from huc12 where scenario = 0 and
+    SELECT huc12_code, st_transform(simple_geom, 4326) as geom
+    from huc12 where scenario_id = 0 and
     (states ~* 'IA' or states ~* 'MN' or states ~* 'NE')
             """),
             conn,
             geom_col="geom",
-            index_col="huc_12",
-        )
+            index_col="huc12_code",
+        )  # type: ignore
 
     huc12data = pd.read_csv(
         "plots/huc12_limiter_climo.csv",
-        index_col="huc12",
-        dtype={"huc12": str},
+        index_col="huc12_code",
+        dtype={"huc12_code": str},
     )
     huc12df = huc12df.join(huc12data, how="inner")
     for col in huc12df.columns:
@@ -54,7 +54,7 @@ def main():
     ]
     labels = ["a", "b", "c", "d"]
     for i, opt in enumerate(opts):
-        ax = fig.add_axes([opt[0], opt[1], 0.37, 0.42])
+        ax = fig.add_axes((opt[0], opt[1], 0.37, 0.42))
         ax.set_xticklabels([])
         ax.set_yticklabels([])
         ax.set_title(opt[2], fontsize=16)
@@ -81,7 +81,7 @@ def main():
         )
 
     # Add a colorbar
-    cax = fig.add_axes([0.87, 0.03, 0.02, 0.8])
+    cax = fig.add_axes((0.87, 0.03, 0.02, 0.8))
     cbar = fig.colorbar(
         ScalarMappable(norm=norm, cmap=cmap),
         cax=cax,

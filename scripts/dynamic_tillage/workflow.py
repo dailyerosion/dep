@@ -125,8 +125,12 @@ def estimate_soiltemp(huc12df: pd.DataFrame, dt: datetime):
                 tmin = np.min(nc.variables["tsoil"][1:7], axis=0) - 273.15
                 tavg = np.mean(nc.variables["tsoil"][1:7], axis=0) - 273.15
                 tmax = np.max(nc.variables["tsoil"][1:7], axis=0) - 273.15
-                y = np.digitize(huc12df["lat"].values, nc.variables["lat"][:])
-                x = np.digitize(huc12df["lon"].values, nc.variables["lon"][:])
+                y = np.digitize(
+                    huc12df["lat"].to_numpy(), nc.variables["lat"][:]
+                )
+                x = np.digitize(
+                    huc12df["lon"].to_numpy(), nc.variables["lon"][:]
+                )
                 for i, idx in enumerate(huc12df.index.values):
                     # The crude GFS may not have a soil temperature at the
                     # given grid cell, so we move left and down to find one.
@@ -224,7 +228,7 @@ def main(scenario, dt, huc12, edr, run_prj2wepp):
             params={"scenario": scenario, "huc12": huc12},
             geom_col="geom",
             index_col="huc12_code",
-        )
+        )  # type: ignore
     huc12df["tilled"] = pd.NA
     huc12df["planted"] = pd.NA
 
