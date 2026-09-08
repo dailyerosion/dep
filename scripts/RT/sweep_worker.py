@@ -58,11 +58,14 @@ def run_command(cmd: list[str], tempdir: str) -> bool:
     return True
 
 
-def get_wind_obs(dt: date, lon: float, lat: float) -> list[float, list[float]]:
+def get_wind_obs(
+    dt: date, lon: float, lat: float
+) -> tuple[float, list[float]]:
     """Get what we need from IEMRE."""
     # Hopefully the two decimal degrees results in some caching
     uri = f"{IEMRE}/{dt:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
     attempts = 0
+    drct = 0
     res = {"data": []}
     while attempts < 3:
         try:
@@ -76,9 +79,8 @@ def get_wind_obs(dt: date, lon: float, lat: float) -> list[float, list[float]]:
         attempts += 1
         if attempts == 3:
             LOG.warning("Failed to get %s, returning 1s", uri)
-            return [1.0] * 24
+            return drct, [1.0] * 24
     hourly = []
-    drct = 0
     maxvel = 0
     for entry in res["data"]:
         try:
