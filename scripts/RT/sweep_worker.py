@@ -28,6 +28,9 @@ LOG = logger()
 STATE = {
     "constant_biomass": None,
     "constant_soilmoisture": None,
+    "constant_windspeed": None,
+    "constant_drct": None,
+    "wind_delta": None,
     "runs": 0,
     "timestamp": time.time(),
     "save_input": False,
@@ -94,6 +97,8 @@ def get_wind_obs(
                 ).magnitude
         except Exception:
             vel = 1.0
+        if STATE["wind_delta"] is not None:
+            vel += STATE["wind_delta"]
         hourly.append(vel)
     for _i in range(len(hourly), 24):
         hourly.append(1.0)
@@ -149,7 +154,14 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
         / f"{fnprefix}"
     )
     # Get the wind information
-    drct, windobs = get_wind_obs(payload.dt, payload.lon, payload.lat)
+    if STATE["constant_windspeed"] is not None:
+        # This is sub-optimal hardcode for now
+        drct = 325
+        windobs = [STATE["constant_windspeed"]] * 24
+    else:
+        drct, windobs = get_wind_obs(payload.dt, payload.lon, payload.lat)
+    if STATE["constant_drct"] is not None:
+        drct = STATE["constant_drct"]
     # Load the XML
     tree = etree.parse(str(basefn) + ".sweep")
     # Update the XML with the provided content
@@ -335,6 +347,24 @@ def print_timing():
     type=float,
     help=("For sensitivity work, hard code a soil moisture value (0-1)"),
 )
+@click.option(
+    "--wind-delta",
+    type=float,
+    help="Apply an delta offset to wind-speeds, in mps",
+)
+@click.option(
+    "--constant-windspeed",
+    type=float,
+    help=(
+        "For sensitivity work, hard code a wind speed value (mps). Wind drct "
+        "is set to NW, unless you set constant-drct."
+    ),
+)
+@click.option(
+    "--constant-drct",
+    type=int,
+    help=("For sensitivity work, hard code a wind direction value (degrees)"),
+)
 def main(
     workers: int,
     drainme: bool,
@@ -343,11 +373,17 @@ def main(
     save_input: bool,
     constant_biomass: float | None,
     constant_soilmoisture: float | None,
+    wind_delta: float | None,
+    constant_windspeed: float | None,
+    constant_drct: int | None,
 ):
     """Go main Go."""
     STATE["save_input"] = save_input
     STATE["constant_biomass"] = constant_biomass
     STATE["constant_soilmoisture"] = constant_soilmoisture
+    STATE["wind_delta"] = wind_delta
+    STATE["constant_windspeed"] = constant_windspeed
+    STATE["constant_drct"] = constant_drct
     jobfunc = run if not drainme else drain
     if prefetch_count is None:
         prefetch_count = workers
