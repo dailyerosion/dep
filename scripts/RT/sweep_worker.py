@@ -27,6 +27,7 @@ from dailyerosion.workflows.worker import consume_queue, sanitize_exe
 LOG = logger()
 STATE = {
     "constant_biomass": None,
+    "constant_soilmoisture": None,
     "runs": 0,
     "timestamp": time.time(),
     "save_input": False,
@@ -99,6 +100,36 @@ def get_wind_obs(
     return drct, hourly
 
 
+def do_scenario_work(tempdir: Path, fnprefix: str):
+    """Apply any one-off scenario work."""
+    if STATE["constant_biomass"] is not None:
+        ttree = etree.parse(f"{tempdir}/{fnprefix}.treat")
+        troot = ttree.getroot()
+        tnode = troot.find("./SCI_BiomassFlatCover")
+        tnode.text = f"{STATE['constant_biomass']:.3f}"
+        ttree.write(
+            f"{tempdir}/{fnprefix}.treat",
+            encoding="ISO-8859-1",
+            xml_declaration=True,
+            doctype='<!DOCTYPE TreatmentData SYSTEM "treatment.dtd">',
+            pretty_print=True,
+        )
+    if STATE["constant_soilmoisture"] is not None:
+        ttree = etree.parse(f"{tempdir}/{fnprefix}.treat")
+        troot = ttree.getroot()
+        for tnode in troot.findall(
+            "./SCI_SurfaceSubDayWaters/SCI_SurfaceSubDayWater"
+        ):
+            tnode.text = f"{STATE['constant_soilmoisture']:.3f}"
+        ttree.write(
+            f"{tempdir}/{fnprefix}.treat",
+            encoding="ISO-8859-1",
+            xml_declaration=True,
+            doctype='<!DOCTYPE TreatmentData SYSTEM "treatment.dtd">',
+            pretty_print=True,
+        )
+
+
 def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
     """Actually run wepp, really.
 
@@ -148,18 +179,7 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
     shutil.copyfile(f"{basefn}.treat", f"{tempdir}/{fnprefix}.treat")
     shutil.copyfile(f"{basefn}.soilsurf", f"{tempdir}/{fnprefix}.soilsurf")
 
-    if STATE["constant_biomass"] is not None:
-        ttree = etree.parse(f"{tempdir}/{fnprefix}.treat")
-        troot = ttree.getroot()
-        tnode = troot.find("./SCI_BiomassFlatCover")
-        tnode.text = f"{STATE['constant_biomass']:.3f}"
-        ttree.write(
-            f"{tempdir}/{fnprefix}.treat",
-            encoding="ISO-8859-1",
-            xml_declaration=True,
-            doctype='<!DOCTYPE TreatmentData SYSTEM "treatment.dtd">',
-            pretty_print=True,
-        )
+    do_scenario_work(tempdir, fnprefix)
 
     sci_treat = root.find("./SCI_Subregions/SCI_Subregion/SCI_treat")
     sci_treat.text = f"{fnprefix}.treat"
@@ -192,8 +212,9 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
             doctype='<!DOCTYPE sweepData SYSTEM "sweep.dtd">',
             pretty_print=True,
         )
-        # Redundantly save the soil file
+        # Redundantly save files that may have been modified
         shutil.copyfile(f"{tempdir}/{fnprefix}.ifc", f"{basefn}.ifc")
+        shutil.copyfile(f"{tempdir}/{fnprefix}.treat", f"{basefn}.treat")
 
     # We are ready to run, gasp
     cmd = [
@@ -309,6 +330,11 @@ def print_timing():
     type=float,
     help=("For sensitivity work, hard code a biomass value (0-1)"),
 )
+@click.option(
+    "--constant-soilmoisture",
+    type=float,
+    help=("For sensitivity work, hard code a soil moisture value (0-1)"),
+)
 def main(
     workers: int,
     drainme: bool,
@@ -316,10 +342,12 @@ def main(
     prefetch_count: int | None,
     save_input: bool,
     constant_biomass: float | None,
+    constant_soilmoisture: float | None,
 ):
     """Go main Go."""
     STATE["save_input"] = save_input
     STATE["constant_biomass"] = constant_biomass
+    STATE["constant_soilmoisture"] = constant_soilmoisture
     jobfunc = run if not drainme else drain
     if prefetch_count is None:
         prefetch_count = workers
