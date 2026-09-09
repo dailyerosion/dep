@@ -179,6 +179,9 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
             f"Expected 24 hourly wind values, found {len(windobs)}"
         )
 
+    drct_node = root.find("./SCI_WindDirection")
+    drct_node.text = f"{drct:.1f}"
+
     # Honor SCI_index if present so we always set the intended hour.
     wind_nodes = sorted(
         wind_nodes,
