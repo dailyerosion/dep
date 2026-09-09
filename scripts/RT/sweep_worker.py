@@ -27,6 +27,10 @@ from dailyerosion.workflows.worker import consume_queue, sanitize_exe
 LOG = logger()
 STATE = {
     "constant_biomass": None,
+    "constant_soilmoisture": None,
+    "constant_windspeed": None,
+    "constant_drct": None,
+    "wind_delta": None,
     "runs": 0,
     "timestamp": time.time(),
     "save_input": False,
@@ -58,11 +62,14 @@ def run_command(cmd: list[str], tempdir: str) -> bool:
     return True
 
 
-def get_wind_obs(dt: date, lon: float, lat: float) -> list[float, list[float]]:
+def get_wind_obs(
+    dt: date, lon: float, lat: float
+) -> tuple[float, list[float]]:
     """Get what we need from IEMRE."""
     # Hopefully the two decimal degrees results in some caching
     uri = f"{IEMRE}/{dt:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
     attempts = 0
+    drct = 0
     res = {"data": []}
     while attempts < 3:
         try:
@@ -76,9 +83,8 @@ def get_wind_obs(dt: date, lon: float, lat: float) -> list[float, list[float]]:
         attempts += 1
         if attempts == 3:
             LOG.warning("Failed to get %s, returning 1s", uri)
-            return [1.0] * 24
+            return drct, [1.0] * 24
     hourly = []
-    drct = 0
     maxvel = 0
     for entry in res["data"]:
         try:
@@ -91,10 +97,42 @@ def get_wind_obs(dt: date, lon: float, lat: float) -> list[float, list[float]]:
                 ).magnitude
         except Exception:
             vel = 1.0
+        if STATE["wind_delta"] is not None:
+            vel += STATE["wind_delta"]
         hourly.append(vel)
     for _i in range(len(hourly), 24):
         hourly.append(1.0)
     return drct, hourly
+
+
+def do_scenario_work(tempdir: Path, fnprefix: str):
+    """Apply any one-off scenario work."""
+    if STATE["constant_biomass"] is not None:
+        ttree = etree.parse(f"{tempdir}/{fnprefix}.treat")
+        troot = ttree.getroot()
+        tnode = troot.find("./SCI_BiomassFlatCover")
+        tnode.text = f"{STATE['constant_biomass']:.3f}"
+        ttree.write(
+            f"{tempdir}/{fnprefix}.treat",
+            encoding="ISO-8859-1",
+            xml_declaration=True,
+            doctype='<!DOCTYPE TreatmentData SYSTEM "treatment.dtd">',
+            pretty_print=True,
+        )
+    if STATE["constant_soilmoisture"] is not None:
+        ttree = etree.parse(f"{tempdir}/{fnprefix}.treat")
+        troot = ttree.getroot()
+        for tnode in troot.findall(
+            "./SCI_SurfaceSubDayWaters/SCI_SurfaceSubDayWater"
+        ):
+            tnode.text = f"{STATE['constant_soilmoisture']:.3f}"
+        ttree.write(
+            f"{tempdir}/{fnprefix}.treat",
+            encoding="ISO-8859-1",
+            xml_declaration=True,
+            doctype='<!DOCTYPE TreatmentData SYSTEM "treatment.dtd">',
+            pretty_print=True,
+        )
 
 
 def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
@@ -116,7 +154,14 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
         / f"{fnprefix}"
     )
     # Get the wind information
-    drct, windobs = get_wind_obs(payload.dt, payload.lon, payload.lat)
+    if STATE["constant_windspeed"] is not None:
+        # This is sub-optimal hardcode for now
+        drct = 325
+        windobs = [STATE["constant_windspeed"]] * 24
+    else:
+        drct, windobs = get_wind_obs(payload.dt, payload.lon, payload.lat)
+    if STATE["constant_drct"] is not None:
+        drct = STATE["constant_drct"]
     # Load the XML
     tree = etree.parse(str(basefn) + ".sweep")
     # Update the XML with the provided content
@@ -134,6 +179,9 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
             f"Expected 24 hourly wind values, found {len(windobs)}"
         )
 
+    drct_node = root.find("./SCI_WindDirection")
+    drct_node.text = f"{drct:.1f}"
+
     # Honor SCI_index if present so we always set the intended hour.
     wind_nodes = sorted(
         wind_nodes,
@@ -146,18 +194,7 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
     shutil.copyfile(f"{basefn}.treat", f"{tempdir}/{fnprefix}.treat")
     shutil.copyfile(f"{basefn}.soilsurf", f"{tempdir}/{fnprefix}.soilsurf")
 
-    if STATE["constant_biomass"] is not None:
-        ttree = etree.parse(f"{tempdir}/{fnprefix}.treat")
-        troot = ttree.getroot()
-        tnode = troot.find("./SCI_BiomassFlatCover")
-        tnode.text = f"{STATE['constant_biomass']:.3f}"
-        ttree.write(
-            f"{tempdir}/{fnprefix}.treat",
-            encoding="ISO-8859-1",
-            xml_declaration=True,
-            doctype='<!DOCTYPE TreatmentData SYSTEM "treatment.dtd">',
-            pretty_print=True,
-        )
+    do_scenario_work(tempdir, fnprefix)
 
     sci_treat = root.find("./SCI_Subregions/SCI_Subregion/SCI_treat")
     sci_treat.text = f"{fnprefix}.treat"
@@ -190,8 +227,9 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
             doctype='<!DOCTYPE sweepData SYSTEM "sweep.dtd">',
             pretty_print=True,
         )
-        # Redundantly save the soil file
+        # Redundantly save files that may have been modified
         shutil.copyfile(f"{tempdir}/{fnprefix}.ifc", f"{basefn}.ifc")
+        shutil.copyfile(f"{tempdir}/{fnprefix}.treat", f"{basefn}.treat")
 
     # We are ready to run, gasp
     cmd = [
@@ -307,6 +345,29 @@ def print_timing():
     type=float,
     help=("For sensitivity work, hard code a biomass value (0-1)"),
 )
+@click.option(
+    "--constant-soilmoisture",
+    type=float,
+    help=("For sensitivity work, hard code a soil moisture value (0-1)"),
+)
+@click.option(
+    "--wind-delta",
+    type=float,
+    help="Apply an delta offset to wind-speeds, in mps",
+)
+@click.option(
+    "--constant-windspeed",
+    type=float,
+    help=(
+        "For sensitivity work, hard code a wind speed value (mps). Wind drct "
+        "is set to NW, unless you set constant-drct."
+    ),
+)
+@click.option(
+    "--constant-drct",
+    type=int,
+    help=("For sensitivity work, hard code a wind direction value (degrees)"),
+)
 def main(
     workers: int,
     drainme: bool,
@@ -314,10 +375,18 @@ def main(
     prefetch_count: int | None,
     save_input: bool,
     constant_biomass: float | None,
+    constant_soilmoisture: float | None,
+    wind_delta: float | None,
+    constant_windspeed: float | None,
+    constant_drct: int | None,
 ):
     """Go main Go."""
     STATE["save_input"] = save_input
     STATE["constant_biomass"] = constant_biomass
+    STATE["constant_soilmoisture"] = constant_soilmoisture
+    STATE["wind_delta"] = wind_delta
+    STATE["constant_windspeed"] = constant_windspeed
+    STATE["constant_drct"] = constant_drct
     jobfunc = run if not drainme else drain
     if prefetch_count is None:
         prefetch_count = workers
