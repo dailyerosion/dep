@@ -12,7 +12,7 @@ from sqlalchemy.engine import Connection
 LOG = logger()
 
 
-@with_sqlalchemy_conn("iembot")
+@with_sqlalchemy_conn("iembot", user="nobody")
 def get_client(conn: Connection | None = None):
     """Do the tweeting."""
     props = get_properties()
