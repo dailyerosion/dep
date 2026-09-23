@@ -20,13 +20,13 @@ classifiers = [
 dynamic = [ "version" ]
 dependencies = [
   "gdal",
-  "httpx",
   "numpy",
   "pandas",
   "pika",
   "pydantic",
   "pyiem",
   "rasterio",
+  "requests",
   "scipy",
   "sqlalchemy",
   "tqdm",

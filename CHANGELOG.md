@@ -5,6 +5,8 @@
 
 ### API Changes
 
+- Revert back to `requests` dependency from `httpx`.
+
 ### New Features
 
 - Added `consume_queue` worker helper for a common DEP code pattern.

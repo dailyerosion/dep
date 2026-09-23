@@ -11,10 +11,10 @@ from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 from zoneinfo import ZoneInfo
 
-import httpx
 import numpy as np
 import pandas as pd
 import rasterio
+import requests
 from affine import Affine
 from osgeo import gdal
 from pyiem.database import get_sqlalchemy_conn, sql_helper
@@ -115,7 +115,7 @@ def preflight_check(dt: date, domain: str) -> bool:
         f"http://mesonet.agron.iastate.edu/iemre/daily/{dt:%Y-%m-%d}/"
         f"{lat:.2f}/{lon:.2f}/json"
     )
-    resp = httpx.get(url, timeout=60)
+    resp = requests.get(url, timeout=60)
     if resp.status_code != 200 or not resp.json().get("data", []):
         LOG.warning("URL: %s returned %s %s", url, resp.status_code, resp.text)
         return False

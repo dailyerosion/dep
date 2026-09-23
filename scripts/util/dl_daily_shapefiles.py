@@ -2,7 +2,7 @@
 
 from datetime import date, timedelta
 
-import httpx
+import requests
 
 
 def main():
@@ -18,7 +18,7 @@ def main():
             now.strftime("%Y-%m-%d"),
         )
         fn = "dep%s.zip" % (now.strftime("%Y%m%d"),)
-        req = httpx.get(uri)
+        req = requests.get(uri, timeout=60)
         with open(fn, "wb") as fp:
             fp.write(req.content)
         now += interval
