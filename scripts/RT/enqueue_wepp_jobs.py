@@ -5,9 +5,9 @@ import time
 from datetime import date, datetime
 
 import click
-import httpx
 import pandas as pd
 import pika
+import requests
 from pyiem.database import get_sqlalchemy_conn, sql_helper
 from pyiem.util import logger
 
@@ -128,7 +128,7 @@ def main(scenario: int, runerrors: bool, myhucs: str | None, queue: str):
     percentile = 1.0001
     while True:
         now = datetime.now()
-        req = httpx.get(
+        req = requests.get(
             f"http://{rabbit_config['host']}:15672/api/queues/%2F/{queue}",
             auth=(rabbit_config["user"], rabbit_config["password"]),
             timeout=60,

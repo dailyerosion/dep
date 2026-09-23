@@ -11,8 +11,8 @@ import re
 from datetime import date, timedelta
 
 import pytest
+import responses
 from pyiem.util import utc
-from pytest_httpx import HTTPXMock
 
 from dailyerosion.io.wepp import read_cli
 from dailyerosion.workflows.clifile import (
@@ -27,14 +27,19 @@ from dailyerosion.workflows.clifile import (
 DUMMY_SCENARIO = -1
 
 
-def test_preflight_check(httpx_mock: HTTPXMock):
+def test_preflight_check():
     """Test that this works as we goose the response."""
     content = (
         b'{"data": [{"daily_high_f": 300, "daily_low_f": 200, '
         b'"avg_windspeed_mps": 5, "srad_mj": 100}]}'
     )
-    httpx_mock.add_response(content=content)
-    assert preflight_check(date(1800, 1, 1), "conus")
+    with responses.RequestsMock() as rsps:
+        rsps.add(
+            responses.GET,
+            re.compile(r"http://mesonet.agron.iastate.edu/iemre/daily/.*"),
+            body=content,
+        )
+        assert preflight_check(date(1800, 1, 1), "conus")
 
 
 def test_preflight_check_future():
@@ -143,20 +148,12 @@ def test_china():
     assert abs(clidf.at["2025-07-21", "pcpn"] - 0.0) < 0.01
 
 
-def test_faked_stage4(httpx_mock: HTTPXMock):
+def test_faked_stage4():
     """CI provides some faked data for 2 Jan 2017."""
     with open("tests/data/a2m_201701020000.png", "rb") as fh:
         content = fh.read()
     with open("tests/data/n0r_201701010025.png", "rb") as fh:
         n0r_content = fh.read()
-    httpx_mock.add_response(
-        content=content, url=re.compile(".*mrms.*"), is_reusable=True
-    )
-    # Presently, MRMS will fail as there are too many zeros where there is
-    # lots of faked data within stage IV, so n0r requests get generated.
-    httpx_mock.add_response(
-        content=n0r_content, url=re.compile(".*n0r.*"), is_reusable=True
-    )
     tile = Tile(
         west=-101,
         east=-96,
@@ -166,6 +163,11 @@ def test_faked_stage4(httpx_mock: HTTPXMock):
         dt=date(2017, 1, 2),
         domain="conus",
     )
-    daily_editor_workflow(tile)
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, re.compile(".*mrms.*"), body=content)
+        # Presently, MRMS will fail as there are too many zeros where there is
+        # lots of faked data within stage IV, so n0r requests get generated.
+        rsps.add(responses.GET, re.compile(".*n0r.*"), body=n0r_content)
+        daily_editor_workflow(tile)
     clidf = read_cli("/tmp/096.01x42.99.cli")
     assert abs(clidf.at["2017-01-02", "pcpn"] - 331.5) < 0.01
