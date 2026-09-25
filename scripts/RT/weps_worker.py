@@ -23,6 +23,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import click
+import requests
 from lxml import etree
 from pika.channel import Channel
 from pydantic import ValidationError
@@ -38,6 +39,7 @@ MEMORY = {
     "runs": 0,
     "timestamp": time.time(),
     "save_runfile": False,
+    "download_weather_files": False,
 }
 BINPATH = Path("/opt/dep/bin")
 
@@ -239,8 +241,38 @@ def run_weps(payload: WEPSJobPayload) -> None:
         )
         with open(Path(tmpdir) / "weps.run", "w") as fh:
             fh.write(runfile)
+        if MEMORY["save_runfile"]:
+            savefn = (
+                Path("/i/0/weps")
+                / payload.huc_12[:8]
+                / payload.huc_12[8:]
+                / f"{payload.huc_12}_{payload.fpath}.run"
+            )
+            savefn.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(Path(tmpdir) / "weps.run", savefn)
+
+        if not clifile.exists() and MEMORY["download_weather_files"]:
+            resp = requests.get(
+                "https://mesonet-dep.agron.iastate.edu/dl/climatefile.py?"
+                f"lon={payload.lon}&lat={payload.lat}",
+                timeout=10,
+            )
+            clifile.parent.mkdir(parents=True, exist_ok=True)
+            with open(clifile, "wb") as fh:
+                fh.write(resp.content)
         shutil.copyfile(clifile, Path(tmpdir) / clifile.name)
+
+        if not windfile.exists() and MEMORY["download_weather_files"]:
+            resp = requests.get(
+                "https://mesonet-dep.agron.iastate.edu/dl/weps_hourly_wind.py?"
+                f"lon={payload.lon}&lat={payload.lat}",
+                timeout=10,
+            )
+            windfile.parent.mkdir(parents=True, exist_ok=True)
+            with open(windfile, "wb") as fh:
+                fh.write(resp.content)
         shutil.copyfile(windfile, Path(tmpdir) / windfile.name)
+
         shutil.copyfile(manfile, Path(tmpdir) / manfile.name)
         shutil.copyfile(ifcfile, Path(tmpdir) / ifcfile.name)
 
@@ -269,15 +301,6 @@ def run_weps(payload: WEPSJobPayload) -> None:
                 encoding="utf-8",
                 errors="replace",
             )
-            if MEMORY["save_runfile"]:
-                savefn = (
-                    Path("/i/0/weps")
-                    / payload.huc_12[:8]
-                    / payload.huc_12[8:]
-                    / f"{payload.huc_12}_{payload.fpath}.run"
-                )
-                savefn.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(Path(tmpdir) / "weps.run", savefn)
             plotfn = Path(tmpdir) / "plot.out"
             savefn = (
                 Path("/i/0/weps")
@@ -375,15 +398,22 @@ def print_timing():
     is_flag=True,
     help="Save the generated input file for future usage.",
 )
+@click.option(
+    "--download-weather-files",
+    is_flag=True,
+    help="Download the weather files for the job, if they do not exist.",
+)
 def main(
     workers: int,
     drainme: bool,
     queue: str,
     prefetch_count: int | None,
     save_runfile: bool,
+    download_weather_files: bool,
 ):
     """Go main Go."""
     MEMORY["save_runfile"] = save_runfile
+    MEMORY["download_weather_files"] = download_weather_files
     jobfunc = run if not drainme else drain
     if prefetch_count is None:
         prefetch_count = workers
