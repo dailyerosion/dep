@@ -257,9 +257,10 @@ def run_weps(payload: WEPSJobPayload) -> None:
                 f"lon={payload.lon}&lat={payload.lat}",
                 timeout=10,
             )
-            clifile.parent.mkdir(parents=True, exist_ok=True)
-            with open(clifile, "wb") as fh:
-                fh.write(resp.content)
+            if resp.status_code == 200:
+                clifile.parent.mkdir(parents=True, exist_ok=True)
+                with open(clifile, "wb") as fh:
+                    fh.write(resp.content)
         shutil.copyfile(clifile, Path(tmpdir) / clifile.name)
 
         if not windfile.exists() and MEMORY["download_weather_files"]:
@@ -268,9 +269,10 @@ def run_weps(payload: WEPSJobPayload) -> None:
                 f"lon={payload.lon}&lat={payload.lat}",
                 timeout=10,
             )
-            windfile.parent.mkdir(parents=True, exist_ok=True)
-            with open(windfile, "wb") as fh:
-                fh.write(resp.content)
+            if resp.status_code == 200:
+                windfile.parent.mkdir(parents=True, exist_ok=True)
+                with open(windfile, "wb") as fh:
+                    fh.write(resp.content)
         shutil.copyfile(windfile, Path(tmpdir) / windfile.name)
 
         shutil.copyfile(manfile, Path(tmpdir) / manfile.name)

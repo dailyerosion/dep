@@ -56,6 +56,7 @@ def do_flowpath(
                 " Tillage " not in line
                 and "Harvest" not in line
                 and "Perennial" not in line
+                and "Residue" not in line
             ):
                 continue
             (month, day, year, _, oplabel, opcropdef, *_) = line.split()
@@ -83,7 +84,9 @@ def do_flowpath(
             elif oplabel == "Plant-Perennial":
                 payload = weps_operations[f"PLNT_{cropcode}"]
             else:
-                opcropdef = opcropdef.replace("OpCropDef.", "")
+                opcropdef = opcropdef.replace("OpCropDef.", "").replace(
+                    "ResidueDef.", ""
+                )
                 # Unhandled
                 if opcropdef in ["ANHYDROS", "HASPTCT"]:
                     continue
