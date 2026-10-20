@@ -1,0 +1,30 @@
+O 03 Harvest, shallow root crops, residue surface
++ 17.491838 13.752375 1.3410819 0 1.5645955 1.3410819 2.9056773
+T Harvest operation, with a tillage process, surface is rough, dig shallow root crops like  onions, peanuts, majority residue left on the surface. Crop is killed.
+t Harvest, root crops like potatoes, sugar beets, carrots, and onions. Surface is rough with 4 ridges and much of the residue is buried. Rev 11-18-04 DTL RUSLE MAS 10-26-06  P24 was changed to show that all residue types are flattened. This havest now flattens all residue types 100%.  MAS 1-18-11 Corrected P25 decimal value "bury flat residue"  07 to 0.07:  jkp 130910 LMOD and WEPS update correlation; existing WEPS operation record, 160410 jkp Matched to RUSLE2 Harvest Onions
++ 
+G 01 Tillage
++ 50.8 1.0 1.0 50.8 25.4 76.2
+P 01 Break Crust
+P 02 Random Roughness
++ 1 7.62
+P 05 Ridges and Dikes
++ 1 50.8 762.0015 76.20015 0.0 0.0
+P 11 Aggregate Crushing
++ 1.4 -1.2
+P 12 Soil Loosening
++ 0.7
+P 13 Soil Layer Mixing
++ 0.9
+P 31 Kill or Defoliate Growing Crop
++ 2
+G 02 Biomass Manipulation
++ 1.0
+P 62 Remove (by age pool) Plant/Residue Material
++ 1 1 0 1 1 7 2 0.0 0.0 0.0 1.0 0.0
+P 24 Flatten Standing Biomass
++ 0 1.0 1.0 1.0 1.0 1.0
+P 25 Bury Flat Biomass
++ 2 0.15 0.15 0.10 0.05 0.15
+P 26 Resurface Buried Biomass
++ 0.05 0.05 0.05 0.07 0.05

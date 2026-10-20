@@ -1,0 +1,5 @@
+4 24 %(yr)s  1 Tillage OpCropDef.FCSTACDP      {0.101600, 2}
+4 25 %(yr)s  1 Tillage    OpCropDef.PLDDO    {0.050800, 2}
+4 25 %(yr)s  1 Plant-Annual   CropDef.POTATO     {0.762000}
+9 1  %(yr)s  1 Harvest-Annual   CropDef.POTATO    {}
+9 2  %(yr)s  1 Tillage  OpCropDef.CHISSTSP    {0.203200, 1}

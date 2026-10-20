@@ -30,6 +30,8 @@ STATE = {
     "constant_soilmoisture": None,
     "constant_windspeed": None,
     "constant_drct": None,
+    "constant_gmd": None,
+    "gmd_delta": None,
     "wind_delta": None,
     "runs": 0,
     "timestamp": time.time(),
@@ -107,6 +109,24 @@ def get_wind_obs(
 
 def do_scenario_work(tempdir: Path, fnprefix: str):
     """Apply any one-off scenario work."""
+    if STATE["constant_gmd"] is not None or STATE["gmd_delta"] is not None:
+        ttree = etree.parse(f"{tempdir}/{fnprefix}.soilsurf")
+        troot = ttree.getroot()
+        tnodes = troot.findall("./SCI_SoilLays/SCI_SoilLay/SCI_AggregateGMD")
+        if STATE["gmd_delta"] is not None:
+            # Prevent values of 0 or negative
+            newval = max(float(tnodes[0].text) + STATE["gmd_delta"], 0.01)
+            tnodes[0].text = f"{newval:.3f}"
+        else:
+            tnodes[0].text = f"{STATE['constant_gmd']:.3f}"
+        ttree.write(
+            f"{tempdir}/{fnprefix}.soilsurf",
+            encoding="ISO-8859-1",
+            xml_declaration=True,
+            doctype='<!DOCTYPE SoilSurfaceData SYSTEM "soilsurf.dtd">',
+            pretty_print=True,
+        )
+
     if STATE["constant_biomass"] is not None:
         ttree = etree.parse(f"{tempdir}/{fnprefix}.treat")
         troot = ttree.getroot()
@@ -230,6 +250,7 @@ def run_sweep(tempdir: str, payload: SweepJobPayload) -> SweepJobResult | None:
         # Redundantly save files that may have been modified
         shutil.copyfile(f"{tempdir}/{fnprefix}.ifc", f"{basefn}.ifc")
         shutil.copyfile(f"{tempdir}/{fnprefix}.treat", f"{basefn}.treat")
+        shutil.copyfile(f"{tempdir}/{fnprefix}.soilsurf", f"{basefn}.soilsurf")
 
     # We are ready to run, gasp
     cmd = [
@@ -368,6 +389,16 @@ def print_timing():
     type=int,
     help=("For sensitivity work, hard code a wind direction value (degrees)"),
 )
+@click.option(
+    "--constant-gmd",
+    type=float,
+    help="For sensitivity work, hard code the GMD value (mm).",
+)
+@click.option(
+    "--gmd-delta",
+    type=float,
+    help="Apply an delta offset to the GMD value (mm)",
+)
 def main(
     workers: int,
     drainme: bool,
@@ -379,14 +410,22 @@ def main(
     wind_delta: float | None,
     constant_windspeed: float | None,
     constant_drct: int | None,
+    constant_gmd: float | None,
+    gmd_delta: float | None,
 ):
     """Go main Go."""
+    if constant_gmd is not None and gmd_delta is not None:
+        raise click.UsageError(
+            "Cannot specify both --constant-gmd and --gmd-delta"
+        )
     STATE["save_input"] = save_input
     STATE["constant_biomass"] = constant_biomass
     STATE["constant_soilmoisture"] = constant_soilmoisture
     STATE["wind_delta"] = wind_delta
     STATE["constant_windspeed"] = constant_windspeed
     STATE["constant_drct"] = constant_drct
+    STATE["constant_gmd"] = constant_gmd
+    STATE["gmd_delta"] = gmd_delta
     jobfunc = run if not drainme else drain
     if prefetch_count is None:
         prefetch_count = workers

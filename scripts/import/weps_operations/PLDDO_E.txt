@@ -1,0 +1,45 @@
+O 03 Planter, double disk opnr
++ 4.1157265 2.4375 2.2351363 0 2.2351363 1.5645955 2.9056773
+T Begin growth, double disk opener on 30 in spacing.  User inputs: crop and target yield.
+t This is a standard planter on 30 in sp with a 1 in ridge.  Created in RUSLE 6/7/01.  MAS 8/7/07 G2 was added into file in front of the flattening (P24), burial (P25), and resurfacing (P26) factors because the area affected is less than 1.0 and the RUSLE values were normalized to 1.0.  This change will imulate the correct residue changes based on the method set forth in RUSLE. RUSLE's factors have been redused to based on the area affected. The stalk fall rate factor (P34) was moved ahead of the new (G2) factor to set the fall rate to the less than 1.0 area affected.  8/7/07 MAS LMOD and WEPS update correlation; existing WEPS operation record, 160410 jkp note that for all four of the Planter double disk opener 30", 40", 18" and 15" that the RUSLE disturbance value was used for a regular 30" planter and P25 was adjusted to increase burial to reflect additional disturbance from a 15 ' and 18" planter and slightly less with a 40" planter using the G2 process to normalize to the entire surface. Mjk 3-22-22
++ 
+G 01 Tillage
++ 63.500126 0.4 0.15 63.500126 50.800102 101.600204
+P 01 Break Crust
+P 02 Random Roughness
++ 1 10.160021
+P 05 Ridges and Dikes
++ 1 50.800102 762.0015 635.0013 0.0 0.0
+P 11 Aggregate Crushing
++ 2.8 0.75
+P 12 Soil Loosening
++ 0.6
+P 13 Soil Layer Mixing
++ 0.35
+P 34 Change Standing Biomass Fall Rate
++ 7 3.0 2.5 2.0 1.5 1.0
++ 0.5 0.6 0.7 0.8 1.0
+G 02 Biomass Manipulation
++ 1.0
+P 24 Flatten Standing Biomass
++ 0 0.3 0.25 0.2 0.1 1.0
+P 25 Bury Flat Biomass
++ 1 0.0525 0.038 0.03 0.015 0.03
+P 26 Resurface Buried Biomass
++ 0.01 0.01 0.01 0.02 0.01
+G 03 Crop Name
++ Sugarbeet, sugar
+P 51 Seeding Configuration
++ 1 0.0 2
++ 6.0 1 1 20.0 1 1 5
++ tons/ac
++ 82 4.465 7 1 0.65 0.9
++ 0.6 0.025 1.7 4.0 21.0 0 145 2300
++ -5.0 -15.0 0.01 0.95 0 35
++ 0.05 0.935 0.25 -0.06 0.02 0.9 0.3537 0.08
++ 0.2206 -0.066 2 1 20 0.05 0 0.6449227
++ 20.833334 20.833334 1.3 0.01 0 0 1 1
++ 0.02 0.02 0.02 0.02 0.2 0.015 20 5.227942
++ -1.20379 0.604887 0.09 0.0448340021071981 0 0.0 0.0 0.0
+T Annual, broadleaf, root crop. Suggest harvest op:  Harvest, dig root crop. Target Yield calibration:  YES
+t Archive: Data sources: Kropff, M.J. adn C.J.T. Spitters. 1992. An eco-physiological model for interspecific competition, applied to the influence of Chenopodium album L on sugar beet. I. Model description and parameterization. Weed Research, Volume 32, 437-450 Reference provided growth temperatures, partitioning curves, light extinction coefficient, specific leaf area, dry matter partitioning, and plant height. Data in the article also shows that the hard coded fibrous root partitioning does not properly account for sugar beet fibrous partitioning. The model partition to fibrous root is 0.4 at the season start, and 0.2 at season end. The article shows it starting at 0.2 and ending at 0.0 This should be compensated but would require significant model changes.  Davidoff, B. and R. J. Hanks. 1989. Sugar beet production as influenced by limited irrigation. Irrigation Science, vol 10:1-17 Rooting depth inferred from water extraction data in the 1.8 to 2.4 meter depth.  Doering, E. J. 1976. Sugarbeet Yield and Theoretical Photosynthesis in the Northern Great Plains. Journal of the American Society of Sugar Beet Technologists, vol 19, no 2, pp. 163-175 Noted that the Sugar Beet will give higher yields, and grow for a longer season, in Ft. Collins CO, and give lower yields and grow for a shorter season in Carrington North Dakota. It is probably not best modeled with a fixed heat unit total season sum. The article seems to imply that once it reaches the root filling stage, extending that stage results in increased yields. At present the model cannot handle that mode of growth. It is probably best handled by adjusting the season length to the location. As configured, longer seasons do give higher yields.  This record was review and is now certified to grow in Clay Co. MN, and Lapeer Co. MN.  Changing the soil texture in the runs causes considerable yield change. The MN runs were set to 20 ton/ac yields.  The biomass eff factor was 33 and has been adjusted to 35.  Calibration will likely need to be done in other locations MAS 10-2-07

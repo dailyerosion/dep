@@ -4,7 +4,7 @@ from enum import StrEnum
 
 # This defines which crop codes we know about, a constant shared within
 # the workflows
-LANDUSE_DB_RE = "[^CBPW]"
+LANDUSE_DB_RE = "[^CBPWEMGOIV]"
 
 
 class QUEUES(StrEnum):

@@ -85,6 +85,7 @@ def submit_jobs(
     """Do the actual work of submitting jobs to the queue."""
     missing_soilfile_cnt = 0
     for row in fieldsdf.itertuples():
+        huc12: str = row.huc12_code
         gid = f"{get_gid(row.lon, row.lat):06.0f}"
         windfile = f"/i/0/wind/{gid[:3]}/{gid}.win"
         # Presently, the database is actually at FY2025, but we don't have
@@ -99,13 +100,13 @@ def submit_jobs(
             for_sweep=for_sweep,
             windfile=windfile,
             manfile=(
-                f"/i/0/weps_man/{row.huc12_code[:8]}/{row.huc12_code[8:]}/"
+                f"/i/0/weps_man/{huc12[:8]}/{huc12[8:]}/"
                 f"{row.huc12_code}_{row.huc12_fpath_num}.man"
             ),
             ifcfile=str(ifcfile),
             field_id=row.field_id,
             fpath=row.huc12_fpath_num,
-            huc_12=row.huc12_code,
+            huc_12=huc12,
             clifile=row.clifile,
             dt=dt,
             scenario=scenario,

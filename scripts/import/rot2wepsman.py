@@ -56,6 +56,7 @@ def do_flowpath(
                 " Tillage " not in line
                 and "Harvest" not in line
                 and "Perennial" not in line
+                and "Residue" not in line
             ):
                 continue
             (month, day, year, _, oplabel, opcropdef, *_) = line.split()
@@ -64,15 +65,28 @@ def do_flowpath(
             if cropcode == "F":
                 continue
             # Going to default to Soybean for anything we currently don't know
-            # about. This will get fixed eventually.
-            if cropcode not in ["C", "B", "P", "W"]:
+            # about. This will get fixed eventually. TODO
+            if cropcode not in [
+                "C",
+                "B",
+                "P",
+                "W",
+                "O",
+                "V",
+                "M",
+                "E",
+                "I",
+                "G",
+            ]:
                 cropcode = "B"
             if oplabel in ["Harvest-Annual", "Cut-Perennial"]:
                 payload = weps_operations[f"HARVEST_{cropcode}"]
             elif oplabel == "Plant-Perennial":
                 payload = weps_operations[f"PLNT_{cropcode}"]
             else:
-                opcropdef = opcropdef.replace("OpCropDef.", "")
+                opcropdef = opcropdef.replace("OpCropDef.", "").replace(
+                    "ResidueDef.", ""
+                )
                 # Unhandled
                 if opcropdef in ["ANHYDROS", "HASPTCT"]:
                     continue

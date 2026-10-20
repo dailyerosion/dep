@@ -1,0 +1,4 @@
+4 29  %(yr)s  1 Tillage OpCropDef.FCSTACDP      {0.101600, 2}
+4 30  %(yr)s  1 Tillage    OpCropDef.PLDDO    {0.050800, 2}
+4 30  %(yr)s  1 Plant-Annual    CropDef.SUGRBEET     {0.762000}
+9 30  %(yr)s  1 Harvest-Annual  CropDef.SUGRBEET    {}

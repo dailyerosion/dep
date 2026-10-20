@@ -1,0 +1,5 @@
+4 30 %(yr)s  1 Tillage  OpCropDef.TAND0002      {0.101600, 2}
+5 1  %(yr)s  1 Tillage    OpCropDef.PLDDO    {0.050800, 2}
+5 1  %(yr)s  1 Plant-Annual    CropDef.canola2     {0.762000}
+8 20  %(yr)s  1 Harvest-Annual    CropDef.canola2    {}
+8 21 %(yr)s  1 Tillage  OpCropDef.TAND0002      {0.101600, 2}
