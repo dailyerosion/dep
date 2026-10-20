@@ -1,0 +1,33 @@
+O 03 Harvest, knife, windrow, combine
++ 31.803343 6.56 2.2351363 0 2.2351363 1.5645955 2.9056773
+T Harvest operation, includes an undercutting tillage operation and combine process.  Example dry bean crops, pinto, northern, plant residue post harvest returned to soil surface.  Annual crop killed.
+t Created operation to harvest dry beans by under cutting, windrowing and then combining using a pickup header all in one operation. Was not sucessful in making these separate operations since the undercutting made crop all residue, which is not properly harvested, in that some critical crop properties for harvesting are not carried over to residue pool. Fred Fox RUSLE Notes:2/95 DDB MN & ND Knife or undercut field beans.   Bean stems and some roots placed  in a windrow for harvest. Rev for RUSLE2 10/11/01 DTL This operation can be used for WA dry bean harvest and Peanut harvest also.  MAS 8/8/07 LMOD and WEPS update correlation; existing WEPS operation record, 160410 jkp Residue flattening, burial and resurfacing set to match RUSLE2
++ 
+G 01 Tillage
++ 50.800102 0.5 1.0 50.800102 50.800102 76.20015
+P 01 Break Crust
+P 02 Random Roughness
++ 1 10.160021
+P 05 Ridges and Dikes
++ 1 76.20015 762.0015 304.8006 0.0 0.0
+P 11 Aggregate Crushing
++ 2.4 -2.0
+P 12 Soil Loosening
++ 0.7
+P 13 Soil Layer Mixing
++ 0.25
+P 34 Change Standing Biomass Fall Rate
++ 7 3.0 2.5 2.0 1.5 1.0
++ 0.5 0.6 0.7 0.8 1.0
+P 24 Flatten Standing Biomass
++ 14 1.0 0.9 1.0 0.7 0.5
+P 25 Bury Flat Biomass
++ 4 0.25 0.15 0.10 0.05 0.25
+P 26 Resurface Buried Biomass
++ 0.02 0.03 0.05 0.07 0.02
+P 24 Flatten Standing Biomass
++ 1 1.0 1.0 1.0 1.0 1.0
+P 31 Kill or Defoliate Growing Crop
++ 2
+P 62 Remove (by age pool) Plant/Residue Material
++ 1 1 0 1 3 3 2 1.0 0.0 0.0 0.0 0.0

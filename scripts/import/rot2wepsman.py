@@ -64,8 +64,19 @@ def do_flowpath(
             if cropcode == "F":
                 continue
             # Going to default to Soybean for anything we currently don't know
-            # about. This will get fixed eventually.
-            if cropcode not in ["C", "B", "P", "W"]:
+            # about. This will get fixed eventually. TODO
+            if cropcode not in [
+                "C",
+                "B",
+                "P",
+                "W",
+                "O",
+                "V",
+                "M",
+                "E",
+                "I",
+                "G",
+            ]:
                 cropcode = "B"
             if oplabel in ["Harvest-Annual", "Cut-Perennial"]:
                 payload = weps_operations[f"HARVEST_{cropcode}"]

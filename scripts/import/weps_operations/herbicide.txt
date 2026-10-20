@@ -1,0 +1,14 @@
+O 04 Sprayer, post emergence
++ 1.2499 0.15
+T Herbicide application, spray operation post emerge, crop is not killed.  User input:  weed residue type killed and amount lbs/acre dry matter.
+t Spray pest control chemicals on growing crop.  Crop is not killed. In the MCREW management screen the user must select the kind of weeds killed in the growing crop as external residue.   080404 DTL Cloned from Defoliate (spray) crop.oprn, Changed the P31 to No crop kill and added G4 to add material to field MAS 9-28-06 DO NOT LEAVE CROP COLUMN SET TO "Select a Crop or Residue".  User must select the crop and then drill into the operation and specify the amount of weed mass that will be killed and turned into residue. LMOD and WEPS DB correlation, existing WEPS operation record, 160410 jp
++ 
+G 03 Crop Name
++ weed residue; 0-3 mo
+P 65 Add Crop Residue Amounts
++ 0.0 0.0 0.0 0.028021249999999998 1
++ 0.0 0.0 0.0056042504 152.4003
++ 0.025 0.025 0.025 0.025 0.169 0.005 17.1 1.0
++ -1.20379 0.604887
+T Applied residue type, pre or post emergent weeds that are allowed to grow during non-cropped fallow periods for less than 3 months. Use a Sprayer for pre or post emergent weeds operation to spray weeds. Typically 100 lbs/ac of dry matter per acre or less from killed weeds.
+t residue conv coeff adjusted to match WEPP les credit given for 0-3 mo weeds MJK 11-6-2020.

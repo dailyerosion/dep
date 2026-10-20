@@ -1,0 +1,6 @@
+5 30 %(yr)s  1 Tillage  OpCropDef.CHISSTSP    {0.203200, 1}
+5 31 %(yr)s  1 Tillage OpCropDef.FCSTACDP      {0.101600, 2}
+6 1  %(yr)s  1 Tillage    OpCropDef.PLDDO    {0.050800, 2}
+6 1  %(yr)s  1 Plant-Annual  CropDef.PEASSD     {0.762000}
+9 20 %(yr)s  1 Harvest-Annual   CropDef.PEASSD    {}
+10 8 %(yr)s  1 Tillage  OpCropDef.CHISSTSP    {0.203200, 1}

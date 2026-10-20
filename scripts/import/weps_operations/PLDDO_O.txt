@@ -1,0 +1,45 @@
+O 03 Drill or air seeder, double disk
++ 3.3674128 6.34 2.2351363 0 2.2351363 1.5645955 2.9056773
+T Begin growth, double disk openers on 7 to 10 inch spacing.  User inputs: crop and target yield.
+t Drill or air seeder with double disk openers on 7 to 10 inch spacings.  Rev102403 DTL  RUSLE MAS 10-26-06 G2 was added into file in front of the flattening (P24), burial (P25), and resurfacing (P26) factors because the area affected is less than 1.0 and the RUSLE values were normalized to 1.0.  This change will imulate the correct residue changes based on the method set forth in RUSLE. RUSLE's factors have been redused to based on the area affected. The stalk fall rate factor (P34) was moved ahead of the new (G2) factor to set the fall rate to the  less than 1.0 area affected.  8/8/07 MAS  Deleted the G2 process because all process only affect 0.65 of the surface.  This is set a 0.65 with G1 process in the beginning. 5-11-11 MAS LMOD and WEPS update correlation; existing WEPS operation record, 160410 jkp
++ 
+G 01 Tillage
++ 38.100075 0.4 0.55 38.100075 25.400051 50.800102
+P 01 Break Crust
+P 02 Random Roughness
++ 1 7.6200156
+P 05 Ridges and Dikes
++ 1 25.400051 203.20041 25.400051 0.0 0.0
+P 11 Aggregate Crushing
++ 2.8 0.75
+P 12 Soil Loosening
++ 0.6
+P 13 Soil Layer Mixing
++ 0.3
+P 34 Change Standing Biomass Fall Rate
++ 7 3.0 2.5 2.0 1.5 1.0
++ 0.5 0.6 0.7 0.8 1.0
+G 02 Biomass Manipulation
++ 1.0
+P 24 Flatten Standing Biomass
++ 0 0.6 0.4 0.35 0.15 1.0
+P 25 Bury Flat Biomass
++ 1 0.19 0.14 0.11 0.06 0.11
+P 26 Resurface Buried Biomass
++ 0.01 0.01 0.01 0.02 0.01
+G 03 Crop Name
++ Canola, spring, grain
+P 51 Seeding Configuration
++ 1 0.0 0
++ 215 1 1 1200.0 1.0 1.0 0
++ lbs/ac
++ 10.0 8930.0 4 0.4 0.65 0.8
++ 1.0 0.01 1.4 3.0 20.0 0 105 1500
++ -5.0 -15.0 0.01 0.95 0 35
++ 6.0E-4 0.7149 0.4297 -0.072 -0.0195 0.995 0.5077 0.0849
++ 0.4297 -0.072 1.8 1.0 17.5 0.05 0 0.3
++ 4 4.0 1.5 0.01 0.0 0.0 0.0 1
++ 0.015 0.015 0.015 0.015 0.18 0.015 17.1 5.1827016
++ -1.20379 0.604887 1.86 0.01921137 0.0 0.0 0.0 0.0
+T Annual, broadleaf, grain. Suggest harvest op: Harvest, killing crop with percent standing stubble. Target Yield calibration:  YES
+t Archive: spring canola, 1200 lbs yield  rev 061801 dtl Adjusted the biomass efficiency from 25 to 35 to match the yields (1200 lbs/ac) for Northern ND. 12-29-11 MAS  RUSLE2 says 2400#/ac residue for 1200#/ac yield  Residue/Yield Intercept:  900#/ac  Yield/Residue Ratio:  (2400-900)/1200 = 1.5
