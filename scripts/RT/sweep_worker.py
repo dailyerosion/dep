@@ -68,7 +68,7 @@ def get_wind_obs(
     dt: date, lon: float, lat: float
 ) -> tuple[float, list[float]]:
     """Get what we need from IEMRE."""
-    # Hopefully the two decimal degrees results in some caching
+    # Don't get crazy with lat/lon res as upstream is 1/8 degree
     uri = f"{IEMRE}/{dt:%Y-%m-%d}/{lat:.2f}/{lon:.2f}/json"
     attempts = 0
     drct = 0
