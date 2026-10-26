@@ -66,8 +66,10 @@ PROCESSING_COUNTS = {
     "flowpaths_deleted": 0,
     "flowpath_ofes_deleted": 0,
     "flowpath_points_all_t": 0,
+    "flowpath_points_null_landuse": 0,
     "fields_deleted": 0,
     "fields_inserted": 0,
+    "fields_null_landuse": 0,
     "field_operations_deleted": 0,
 }
 TRANSFORMER = pyproj.Transformer.from_crs(
@@ -199,6 +201,11 @@ def get_data(progress: tqdm, filename: str):
     df["FBndID"] = (
         df["FBndID"].fillna("FUNUSED_-1").str.split("_").str[1].astype(int)
     )
+    # Cull any null landuse rows
+    missing_rots = df[ROTATION_FIELD].isna()
+    if missing_rots.any():
+        PROCESSING_COUNTS["flowpath_points_null_landuse"] += missing_rots.sum()
+        df = df.loc[~missing_rots]
     fillout_codes(df)
     fld_df = None
     fldfn = filename.replace("smpl3m_mean18", "FB")
@@ -215,6 +222,11 @@ def get_data(progress: tqdm, filename: str):
                 f"Found {invalid_cnt} invalid geomtries, calling buffer(0)"
             )
             fld_df["geometry"] = fld_df["geometry"].buffer(0)
+        # Cull any null landuse rows
+        missing_rots = fld_df[ROTATION_FIELD].isna()
+        if missing_rots.any():
+            PROCESSING_COUNTS["fields_null_landuse"] += missing_rots.sum()
+            fld_df = fld_df.loc[~missing_rots]
         fillout_codes(fld_df)
     else:
         LOG.warning("Missing %s", fldfn)
