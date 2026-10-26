@@ -30,6 +30,7 @@ from dailyerosion.util import (
     get_kwfact_class,
     get_slope_class,
 )
+from dailyerosion.workflows.importer import clean_water_landuse
 
 LOG = logger()
 print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")
@@ -64,6 +65,7 @@ PROCESSING_COUNTS = {
     "flowpaths_inconsistent_gridorder": 0,
     "flowpaths_deleted": 0,
     "flowpath_ofes_deleted": 0,
+    "flowpath_points_all_t": 0,
     "fields_deleted": 0,
     "fields_inserted": 0,
     "field_operations_deleted": 0,
@@ -569,6 +571,14 @@ def process(
     Returns:
       None
     """
+    # Address transient water `T` fields and flowpath points
+    clean_water_landuse(fp_df)
+    clean_water_landuse(fld_df)
+    # Any flowpath points that are all T should be culled.
+    all_t = fp_df["landuse"].str.count("T") == fp_df["landuse"].str.len()
+    if all_t.any():
+        fp_df = fp_df.loc[~all_t]
+        PROCESSING_COUNTS["flowpath_points_all_t"] += all_t.sum()
     fod, fpd, fopd, fldd = clear_huc12data(cursor, huc12, scenario)
     PROCESSING_COUNTS["flowpath_ofes_deleted"] += fod
     PROCESSING_COUNTS["flowpaths_deleted"] += fpd
