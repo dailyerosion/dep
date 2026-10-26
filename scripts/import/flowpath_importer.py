@@ -517,6 +517,7 @@ def delete_flowpath(cursor, fid):
 
 def process_fields(cursor, scenario, huc12, fld_df, progress):
     """Database update this information."""
+    inserted_fields = 0
     for fbndid, row in fld_df.iterrows():
         if row["geometry"] is None:
             print("null geom", row)
@@ -544,7 +545,8 @@ def process_fields(cursor, scenario, huc12, fld_df, progress):
             ),
         )
         fld_df.at[fbndid, "field_id"] = cursor.fetchone()[0]
-    PROCESSING_COUNTS["fields_inserted"] += len(fld_df.index)
+        inserted_fields += 1
+    PROCESSING_COUNTS["fields_inserted"] += inserted_fields
 
 
 def process(
