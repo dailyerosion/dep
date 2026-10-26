@@ -11,6 +11,8 @@
 
 - Added `consume_queue` worker helper for a common DEP code pattern.
 - Introduce `dailyerosion.reference.CROP_CODES` to centralize abbreviations.
+- Introduce `dailyerosion.workflows.importer` to centralize helpers used during
+  the import of ACPF/flowpath information.
 - Support additional minor crops per #453.
 
 ### Bug Fixes

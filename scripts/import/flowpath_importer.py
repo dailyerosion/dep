@@ -30,6 +30,7 @@ from dailyerosion.util import (
     get_kwfact_class,
     get_slope_class,
 )
+from dailyerosion.workflows.importer import clean_water_landuse
 
 LOG = logger()
 print(" * BE CAREFUL!  The GeoJSON files may not be 5070, but 26915")
@@ -47,8 +48,10 @@ KNOBS = {
 
 YEARS = 2026 - 2007 + 1
 SOILFY = 2025
-ROTATION_FIELD = "CropRotatn_CY_2024"  # Tied to ACPF
 SOILCOL = f"SOL_FY_{SOILFY}"
+# These are tied to ACPF version being used
+MANAGEMENT_FIELD = "Management_CY_2024"
+ROTATION_FIELD = "CropRotatn_CY_2024"
 GENLU_CODES = {}
 PROCESSING_COUNTS = {
     "flowpaths_found": 0,
@@ -62,6 +65,7 @@ PROCESSING_COUNTS = {
     "flowpaths_inconsistent_gridorder": 0,
     "flowpaths_deleted": 0,
     "flowpath_ofes_deleted": 0,
+    "flowpath_points_all_t": 0,
     "fields_deleted": 0,
     "fields_inserted": 0,
     "field_operations_deleted": 0,
@@ -106,7 +110,7 @@ def fillout_codes(df: pd.DataFrame):
     else:
         df["landuse"] = KNOBS["CONSTANT_LANDUSE"] * YEARS
     if KNOBS["CONSTANT_MANAGEMENT"] is None:
-        s = df["Management_CY_2024"].str
+        s = df[MANAGEMENT_FIELD].str
         # Careful here with the proper repeats forward and backward in time
         df["management"] = s[1] + s[0] + s[1] + s[:] + s[-2] + s[-1]
         if any(df["management"].str.len() != YEARS):
@@ -253,14 +257,14 @@ def dedupe(df):
     return df
 
 
-def compute_ofe(df):
+def compute_ofe(df: pd.DataFrame):
     """Figure out what the OFE should be after prj2wepp does magic."""
     # Default
     df["ofe"] = 1
     # OFEs are breaks in management, landuse and or soils
     cols = ["FBndID", SOILCOL, "management", "landuse"]
     locs = df[cols].ne(df[cols].shift()).apply(lambda x: x.index[x].tolist())
-    indices = locs.apply(pd.Series).stack().unique()
+    indices = locs.apply(pd.Series).stack().unique()  # type: ignore
     ofeid = 0
     values = df.index.to_list()
     for idx in values:
@@ -271,7 +275,7 @@ def compute_ofe(df):
     return df
 
 
-def simplify(df):
+def simplify(df: pd.DataFrame):
     """WEPP can only handle 100 slope points per OFE."""
     df["useme"] = False
     for _ofe, gdf in df.groupby("ofe"):
@@ -292,7 +296,7 @@ def simplify(df):
     return df[df["useme"]].copy()
 
 
-def compute_slope(df):
+def compute_slope(df: pd.DataFrame):
     """Figure out the slope values."""
     # Compute slope
     df["slope"] = (df["elev"] - df["elev"].shift()) / (
@@ -515,6 +519,7 @@ def delete_flowpath(cursor, fid):
 
 def process_fields(cursor, scenario, huc12, fld_df, progress):
     """Database update this information."""
+    inserted_fields = 0
     for fbndid, row in fld_df.iterrows():
         if row["geometry"] is None:
             print("null geom", row)
@@ -542,23 +547,38 @@ def process_fields(cursor, scenario, huc12, fld_df, progress):
             ),
         )
         fld_df.at[fbndid, "field_id"] = cursor.fetchone()[0]
-    PROCESSING_COUNTS["fields_inserted"] += len(fld_df.index)
+        inserted_fields += 1
+    PROCESSING_COUNTS["fields_inserted"] += inserted_fields
 
 
-def process(cursor, scenario, huc12df, fld_df, progress: tqdm):
+def process(
+    cursor,
+    scenario,
+    fp_df: gpd.GeoDataFrame,
+    fld_df,
+    progress: tqdm,
+    huc12: str,
+) -> None:
     """Processing of a HUC12's data into the database
 
     Args:
       cursor (psycopg.cursor): database cursor
         scenario (int): the scenario to process
-      huc12df (pd.DataFrame): the dataframe containing the data
+      fp_df (gpd.GeoDataFrame): the dataframe containing the data
       fld_df (gpd.GeoDataFrame): The associated fields.
+      huc12 (str): The HUC12 string this data is valid for.
 
     Returns:
       None
     """
-    # Hack compute the huc12 by finding the fp field name
-    huc12 = huc12df.iloc[0]["huc12"]
+    # Address transient water `T` fields and flowpath points
+    clean_water_landuse(fp_df)
+    clean_water_landuse(fld_df)
+    # Any flowpath points that are all T should be culled.
+    all_t = fp_df["landuse"].str.count("T") == fp_df["landuse"].str.len()
+    if all_t.any():
+        fp_df = fp_df.loc[~all_t]
+        PROCESSING_COUNTS["flowpath_points_all_t"] += all_t.sum()
     fod, fpd, fopd, fldd = clear_huc12data(cursor, huc12, scenario)
     PROCESSING_COUNTS["flowpath_ofes_deleted"] += fod
     PROCESSING_COUNTS["flowpaths_deleted"] += fpd
@@ -567,9 +587,9 @@ def process(cursor, scenario, huc12df, fld_df, progress: tqdm):
     if fld_df is not None:
         process_fields(cursor, scenario, huc12, fld_df, progress)
     # With fields processed, we can join the field_id to the flowpath points
-    huc12df["field_id"] = huc12df["FBndID"].map(fld_df["field_id"])
+    fp_df["field_id"] = fp_df["FBndID"].map(fld_df["field_id"])
 
-    for flowpath_num, df in huc12df.groupby("fp"):
+    for flowpath_num, df in fp_df.groupby("fp"):
         # These are upstream errors I should ignore
         if flowpath_num == 0 or len(df.index) < 3:
             continue
@@ -582,7 +602,6 @@ def process(cursor, scenario, huc12df, fld_df, progress: tqdm):
             LOG.info("flowpath_num: %s hit exception", flowpath_num)
             logging.error(exp, exc_info=True)
             delete_flowpath(cursor, db_fid)
-    return huc12
 
 
 def scan_file_attributes(fns: list):
@@ -657,7 +676,7 @@ def main(
                 logging.error(exp, exc_info=True)
                 continue
             # Sometimes we get no flowpaths, so skip writing those
-            huc12 = process(cursor, scenario, fp_df, fld_df, progress)
+            process(cursor, scenario, fp_df, fld_df, progress, huc12)
             if not fp_df.empty:
                 fh.write(f"{huc12}\n")
             i += 1
