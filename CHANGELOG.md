@@ -1,7 +1,7 @@
 <!-- markdownlint-configure-file {"MD024": { "siblings_only": true } } -->
 # Changelog for dailyerosion Python library
 
-## Unreleased Version
+## **1.1.4** (27 Oct 2026)
 
 ### API Changes
 
