@@ -153,9 +153,6 @@ def read_flowpaths(progress: tqdm, filename: str) -> pd.DataFrame | bool:
         )
         return False
 
-    # Ensure that landuse and management columns are of expected size.
-    fillout_codes(df)
-
     return df
 
 
