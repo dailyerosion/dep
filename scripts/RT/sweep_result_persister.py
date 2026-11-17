@@ -27,8 +27,10 @@ def persist_to_database(cursor, result: SweepJobResult):
     cursor.execute(
         """
     insert into field_wind_erosion_results (field_id, scenario_id,
-    valid, erosion_kgm2, avg_wind_speed_mps, max_wind_speed_mps, drct) values
-    (%s,%s,%s,%s,%s,%s,%s)
+    valid, erosion_kgm2, avg_wind_speed_mps, max_wind_speed_mps, drct,
+    salt_creep_kgm2, pm10_kgm2
+    ) values
+    (%s,%s,%s,%s,%s,%s,%s,%s,%s)
     """,
         (
             result.field_id,
@@ -38,6 +40,8 @@ def persist_to_database(cursor, result: SweepJobResult):
             result.avg_wmps,
             result.max_wmps,
             result.drct,
+            result.salt_creep,
+            result.pm10,
         ),
     )
 
